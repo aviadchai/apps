@@ -126,8 +126,8 @@ header{display:flex;align-items:center;gap:10px;padding:12px 16px;padding-top:ca
 #mic-btn.rec{background:rgba(255,69,58,0.15);border-color:var(--danger);color:var(--danger);animation:pulse 1s infinite;}
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
 @keyframes blueGlow{
-  0%,100%{box-shadow:0 0 0 1.5px rgba(59,130,246,0.9),0 0 10px rgba(59,130,246,0.35),0 8px 32px rgba(0,0,0,0.4);}
-  50%{box-shadow:0 0 0 2.5px rgba(59,130,246,0.45),0 0 24px rgba(59,130,246,0.65),0 8px 32px rgba(0,0,0,0.4);}
+  0%,100%{box-shadow:0 0 0 1.5px rgba(59,130,246,0.8),0 0 20px rgba(59,130,246,0.35),0 0 50px rgba(59,130,246,0.15),0 8px 32px rgba(0,0,0,0.4);}
+  50%{box-shadow:0 0 0 2px rgba(59,130,246,0.5),0 0 40px rgba(59,130,246,0.55),0 0 80px rgba(59,130,246,0.2),0 8px 32px rgba(0,0,0,0.4);}
 }
 #send-btn{background:linear-gradient(145deg,#5b9fff,#1d4ed8);border:none;color:#fff;border-radius:50%;padding:0;cursor:pointer;height:42px;width:42px;flex-shrink:0;transition:opacity 0.2s;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 12px rgba(29,78,216,0.5),inset 0 1px 0 rgba(255,255,255,0.25);}
 #send-btn:hover{opacity:0.82;}
@@ -172,7 +172,7 @@ header{display:flex;align-items:center;gap:10px;padding:12px 16px;padding-top:ca
     position:fixed;left:14px;right:14px;
     bottom:max(8px,env(safe-area-inset-bottom));
     z-index:100;background:transparent;padding:0;
-    display:flex;flex-direction:column;
+    display:flex;flex-direction:column;overflow:visible;
   }
   #input-row{
     margin:0;padding:7px 7px 7px 12px;
@@ -210,7 +210,7 @@ header{display:flex;align-items:center;gap:10px;padding:12px 16px;padding-top:ca
     width:min(640px, calc(100% - 28px));
     bottom:16px;
     z-index:100;background:transparent;padding:0;
-    display:flex;flex-direction:column;
+    display:flex;flex-direction:column;overflow:visible;
   }
   #input-row{
     margin:0;padding:7px 7px 7px 12px;
@@ -588,7 +588,7 @@ function closePopup() {
   document.getElementById('item-popup')?.classList.remove('open');
 }
 document.addEventListener('click', e => {
-  if (!e.target.closest('#item-popup') && !e.target.closest('.info-btn')) closePopup();
+  if (!e.target.closest('#item-popup') && !e.target.closest('.dyk-btn')) closePopup();
 });
 
 // ── Category collapse ─────────────────────────────────────
@@ -1075,7 +1075,11 @@ async function toggleMic() {
   recog.onend = () => {
     isRec = false;
     document.getElementById('mic-btn').classList.remove('rec');
-    if (document.getElementById('txt').value.trim()) sendMsg();
+    const txt = document.getElementById('txt');
+    if (txt.value.trim()) {
+      txt.focus();
+      // let user review/correct before sending — press Enter or Send to confirm
+    }
   };
   recog.start();
 }
