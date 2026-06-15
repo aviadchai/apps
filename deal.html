@@ -9,8 +9,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="דיל כושר">
 <link rel="manifest" href="deal-manifest.json">
-<link rel="icon" type="image/svg+xml" href="icon.svg">
-<link rel="apple-touch-icon" href="icon.svg">
+<link rel="icon" type="image/png" sizes="192x192" href="fitness-icon-192.png">
+<link rel="apple-touch-icon" sizes="192x192" href="fitness-icon-192.png">
 <style>
 :root {
   --bg:#061412;--bg2:#1A2C29;--bg3:#253935;--bg4:#304542;
@@ -204,6 +204,14 @@ html,body{height:100%;height:100dvh;font-family:Roboto,system-ui,-apple-system,s
 /* Toast */
 #toast{position:fixed;top:calc(52px + var(--safe-top));left:50%;transform:translateX(-50%);background:#304542;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:500;white-space:nowrap;z-index:200;opacity:0;pointer-events:none;transition:opacity 0.2s;box-shadow:0 4px 14px rgba(0,0,0,0.5);}
 #toast.show{opacity:1;}
+
+/* Install banner */
+#install-banner{position:fixed;bottom:calc(88px + var(--safe-bottom) + 12px);left:16px;right:16px;background:#1A3530;border:1px solid var(--accent);border-radius:16px;padding:14px 16px;display:none;align-items:center;gap:12px;z-index:90;box-shadow:0 4px 20px rgba(0,0,0,0.5);}
+#install-banner.show{display:flex;}
+.ib-icon{width:40px;height:40px;border-radius:10px;flex-shrink:0;object-fit:cover;}
+.ib-text{flex:1;font-size:13px;line-height:1.5;color:var(--label2);}
+.ib-text strong{color:var(--label);display:block;font-size:14px;margin-bottom:2px;}
+.ib-close{background:none;border:none;color:var(--label3);font-size:20px;cursor:pointer;padding:4px;line-height:1;}
 
 .no-deal{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;flex:1;text-align:center;padding:32px;}
 .no-deal .icon-ring{width:80px;height:80px;border-radius:50%;background:var(--accent-cont);display:flex;align-items:center;justify-content:center;}
@@ -424,6 +432,15 @@ canvas.confetti{position:fixed;inset:0;pointer-events:none;z-index:999;}
 </button>
 
 <div id="toast"></div>
+
+<div id="install-banner">
+  <img class="ib-icon" src="fitness-icon-192.png" alt="">
+  <div class="ib-text">
+    <strong>הוסף למסך הבית</strong>
+    לחץ על שתף ← "הוסף למסך הבית" כדי לקבל תזכורות
+  </div>
+  <button class="ib-close" onclick="dismissInstallBanner()">×</button>
+</div>
 
 <script>
 // ═══════════════ DATA ═══════════════
@@ -1144,6 +1161,38 @@ function launchConfetti() {
 }
 
 // ═══════════════ NOTIFICATIONS ═══════════════
+let _reminderTimer = null;
+
+function scheduleInAppReminder() {
+  clearTimeout(_reminderTimer);
+  if (!DATA.settings?.notificationsEnabled) return;
+  if (Notification.permission !== 'granted') return;
+  if (!DATA.deal?.active) return;
+
+  const now = new Date();
+  const reminderH = DATA.settings.reminderHour || 20;
+  const target = new Date();
+  target.setHours(reminderH, 0, 0, 0);
+
+  // If reminder time already passed today, schedule for tomorrow
+  if (now >= target) target.setDate(target.getDate() + 1);
+
+  const msUntil = target - now;
+  _reminderTimer = setTimeout(() => {
+    if (!isTodayDone()) {
+      new Notification('דיל כושר', {
+        body: `יש לך דיל פתוח — עוד ${totalDue()} ${exUnit()} להיום`,
+        icon: './fitness-icon-192.png',
+        dir: 'rtl',
+        lang: 'he',
+      });
+      DATA.lastNotif = todayStr() + '-reminder';
+      save();
+    }
+    scheduleInAppReminder(); // reschedule for tomorrow
+  }, msUntil);
+}
+
 function checkNotifications() {
   if (!DATA.settings?.notificationsEnabled) return;
   if (Notification.permission !== 'granted') return;
@@ -1155,19 +1204,35 @@ function checkNotifications() {
   const reminderH = DATA.settings.reminderHour || 20;
   const lastNotif = DATA.lastNotif || '';
 
-  // End-of-day: if past reminder hour and deal not done
   if (h >= reminderH && lastNotif !== todayKey + '-reminder') {
-    const logged = todayLogged();
-    const target = DATA.deal.dailyTarget;
-    if (logged < target) {
+    if (!isTodayDone()) {
       new Notification('דיל כושר', {
-        body: `יש לך דיל פתוח — עוד ${totalDue()} חזרות להיום`,
-        icon: '/deal-icon.png'
+        body: `יש לך דיל פתוח — עוד ${totalDue()} ${exUnit()} להיום`,
+        icon: './fitness-icon-192.png',
+        dir: 'rtl',
+        lang: 'he',
       });
       DATA.lastNotif = todayKey + '-reminder';
       save();
     }
   }
+
+  scheduleInAppReminder();
+}
+
+// ═══════════════ INSTALL BANNER ═══════════════
+function checkInstallBanner() {
+  // Show only on iOS Safari (not in standalone mode)
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone = window.navigator.standalone === true;
+  const dismissed = localStorage.getItem('install_banner_dismissed');
+  if (isIOS && !isStandalone && !dismissed) {
+    document.getElementById('install-banner').classList.add('show');
+  }
+}
+function dismissInstallBanner() {
+  document.getElementById('install-banner').classList.remove('show');
+  localStorage.setItem('install_banner_dismissed', '1');
 }
 
 // ═══════════════ INIT ═══════════════
@@ -1184,6 +1249,7 @@ function init() {
     show('ob');
     document.getElementById('fab').classList.add('show');
   }
+  checkInstallBanner();
 }
 
 init();
