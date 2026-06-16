@@ -13,7 +13,7 @@ curl -fsSL "$BASE/index.html" -o index.html
 
 echo "==> Committing and pushing fixes to main..."
 git add index.html
-git commit -m "Fix FAB visibility, notification toggle, and deal start timing"
+git commit -m "Fix FAB visibility, notification toggle, deal start timing; support multiple simultaneous challenges"
 git push origin main
 
 echo ""
