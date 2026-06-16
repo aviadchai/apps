@@ -106,6 +106,7 @@ html,body{height:100%;height:100dvh;font-family:Roboto,system-ui,-apple-system,s
 .ring-num.r-done{color:var(--green);}
 .ring-label{font-size:14px;color:var(--label2);}
 .ring-sub{font-size:13px;color:var(--label3);margin-top:2px;}
+.ring-countdown{font-size:12px;color:var(--label3);margin-top:6px;}
 
 .chips-row{display:flex;gap:10px;justify-content:center;}
 .chip{background:var(--bg2);border-radius:12px;padding:10px 18px;text-align:center;display:flex;flex-direction:column;gap:2px;}
@@ -332,7 +333,7 @@ canvas.confetti{position:fixed;inset:0;pointer-events:none;z-index:999;}
       <div class="summary-row"><span class="summary-key">תרגיל</span><span id="sum-exercise" class="summary-val">שכיבות סמיכה</span></div>
       <div class="summary-row"><span class="summary-key">יעד יומי</span><span id="sum-target" class="summary-val">25 חזרות</span></div>
       <div class="summary-row"><span class="summary-key">קנס</span><span id="sum-penalty" class="summary-val">כפול ×2</span></div>
-      <div class="summary-row"><span class="summary-key">מתחיל</span><span class="summary-val">מחר בבוקר</span></div>
+      <div class="summary-row"><span class="summary-key">מתחיל</span><span class="summary-val">היום</span></div>
     </div>
     <p class="ob-body" style="font-size:13px">לחץ על הכפתור כדי לחתום על הדיל</p>
     <button class="sign-btn" id="sign-btn" onclick="signDeal()">
@@ -591,6 +592,7 @@ let currentScreen = 'ob';
 
 function show(name) {
   if (currentScreen === 'log' && name !== 'log') stopCamera();
+  if (name !== 'main' && _countdownTimer) { clearInterval(_countdownTimer); _countdownTimer = null; }
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   const el = document.getElementById('s-' + name);
@@ -599,11 +601,17 @@ function show(name) {
   if (nb) nb.classList.add('active');
   currentScreen = name;
 
-  if (name === 'main') { renderMain(); updateFab(); }
+  if (name === 'main') renderMain();
   if (name === 'cal') renderCalendar();
   if (name === 'stat') renderStats();
   if (name === 'set') renderSettings();
   if (name === 'log') renderLog();
+
+  if (name === 'ob' || name === 'log') {
+    document.getElementById('fab').classList.remove('show');
+  } else {
+    updateFab();
+  }
 }
 
 // ═══════════════ EXERCISES ═══════════════
@@ -729,13 +737,12 @@ function signDeal() {
   btn.style.background = 'var(--green)';
   setTimeout(() => {
     const pct = parseInt(document.getElementById('pct-input').value) || 20;
-    const tomorrow = addDays(todayStr(), 1);
     DATA.deal = {
       exercise: obExercise,
       dailyTarget: obTarget,
       penaltyType: obPenalty,
       penaltyPercent: pct,
-      startDate: tomorrow,
+      startDate: todayStr(),
       active: true,
       createdAt: todayStr()
     };
@@ -756,6 +763,8 @@ async function requestNotifications() {
   if (DATA.settings) DATA.settings.notificationsEnabled = (perm === 'granted');
   else DATA.settings = { notificationsEnabled: perm === 'granted', reminderHour: 20 };
   save();
+  if (perm === 'denied') showToast('ההתראות חסומות בדפדפן - יש לאפשר אותן בהגדרות המכשיר');
+  if (currentScreen === 'set') renderSettings();
 }
 
 // ═══════════════ MAIN SCREEN ═══════════════
@@ -838,14 +847,31 @@ function renderMain() {
         <div class="ring-center">
           <div class="ring-num ${numClass}">${done ? '✓' : due}</div>
           <div class="ring-label">${done ? 'הושלם היום!' : 'לביצוע היום'}</div>
-          ${logged > 0 && !done ? `<div class="ring-sub">${logged} / ${total}</div>` : ''}
+          ${!done ? `<div class="ring-sub">${logged} / ${total}</div>` : ''}
         </div>
       </div>
+      ${!done ? `<div class="ring-countdown" id="ring-countdown"></div>` : ''}
       ${chipsHtml}
     </div>
     ${capHtml}
     ${!done ? `<button class="main-cta" onclick="show('log')"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>רשום אימון</button>` : ''}
   `;
+
+  clearInterval(_countdownTimer);
+  if (!done) { updateCountdown(); _countdownTimer = setInterval(updateCountdown, 30000); }
+}
+
+let _countdownTimer = null;
+function updateCountdown() {
+  const el = document.getElementById('ring-countdown');
+  if (!el) { clearInterval(_countdownTimer); _countdownTimer = null; return; }
+  const now = new Date();
+  const midnight = new Date(now);
+  midnight.setHours(24, 0, 0, 0);
+  const msLeft = midnight - now;
+  const h = Math.floor(msLeft / 3600000);
+  const m = Math.floor((msLeft % 3600000) / 60000);
+  el.textContent = `עוד ${h} שע' ו-${m} דק' לסגירת היום`;
 }
 
 // ═══════════════ LOG SCREEN ═══════════════
@@ -1242,12 +1268,10 @@ function init() {
     processDebt();
     document.getElementById('nav').classList.add('show');
     show('main');
-    updateFab();
     checkNotifications();
   } else {
     obStep = 0;
     show('ob');
-    document.getElementById('fab').classList.add('show');
   }
   checkInstallBanner();
 }
