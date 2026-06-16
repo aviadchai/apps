@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="דיל כושר">
-<link rel="manifest" href="deal-manifest.json">
+<link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="192x192" href="fitness-icon-192.png">
 <link rel="apple-touch-icon" sizes="192x192" href="fitness-icon-192.png">
 <style>
@@ -57,10 +57,16 @@ html,body{height:100%;height:100dvh;font-family:Roboto,system-ui,-apple-system,s
 .ob-dot{width:8px;height:8px;border-radius:4px;background:var(--bg4);transition:all 0.25s;}
 .ob-dot.on{width:22px;background:var(--accent);}
 
-.target-row{display:flex;align-items:center;gap:28px;margin:4px 0;}
 .qty-btn{width:52px;height:52px;border-radius:50%;background:var(--bg2);border:none;color:var(--label);font-size:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.12s;}
 .qty-btn:active{background:var(--bg3);transform:scale(0.9);}
-#target-display{font-size:64px;font-weight:700;letter-spacing:-3px;min-width:90px;text-align:center;}
+.qty-btn.small{width:36px;height:36px;font-size:18px;}
+
+.ob-targets-list{display:flex;flex-direction:column;gap:8px;width:100%;}
+.target-row-compact{display:flex;align-items:center;gap:12px;width:100%;background:var(--bg2);border-radius:12px;padding:10px 14px;}
+.target-ex-name{flex:1;font-size:14px;text-align:right;}
+.target-stepper{display:flex;align-items:center;gap:10px;}
+.target-val{font-size:18px;font-weight:700;min-width:32px;text-align:center;}
+.target-unit-label{font-size:12px;color:var(--label3);min-width:42px;text-align:left;}
 
 .penalty-cards{display:flex;flex-direction:column;gap:10px;width:100%;}
 .penalty-card{background:var(--bg2);border-radius:14px;padding:16px 18px;cursor:pointer;text-align:right;transition:all 0.18s;border:2px solid transparent;}
@@ -106,6 +112,25 @@ html,body{height:100%;height:100dvh;font-family:Roboto,system-ui,-apple-system,s
 .ring-num.r-done{color:var(--green);}
 .ring-label{font-size:14px;color:var(--label2);}
 .ring-sub{font-size:13px;color:var(--label3);margin-top:2px;}
+.ring-countdown{font-size:12px;color:var(--label3);margin-top:6px;}
+
+.deals-grid{display:flex;flex-direction:column;gap:16px;width:100%;}
+.deal-card{background:var(--bg2);border-radius:20px;padding:20px;width:100%;display:flex;flex-direction:column;align-items:center;gap:12px;}
+.deal-card-header{display:flex;align-items:center;justify-content:space-between;width:100%;}
+.deal-card-title{font-size:16px;font-weight:600;}
+.deal-card-streak{font-size:12px;color:var(--label2);}
+.ring-wrap.small{width:150px;height:150px;}
+.ring-svg.small{width:150px;height:150px;}
+.ring-svg.small .ring-track,.ring-svg.small .ring-fill{stroke-width:14;}
+.ring-num.small{font-size:38px;letter-spacing:-2px;}
+.ring-label.small{font-size:12px;}
+.ring-sub.small{font-size:11px;}
+.ring-countdown.small{font-size:10px;}
+.main-cta.small{padding:13px;font-size:14px;}
+.cap-card.small{padding:14px;}
+.deal-tabs{display:flex;gap:8px;width:100%;overflow-x:auto;padding-bottom:2px;}
+.deal-tab{flex-shrink:0;background:var(--bg2);border:2px solid transparent;border-radius:50px;padding:8px 18px;font-size:14px;font-weight:500;color:var(--label2);cursor:pointer;transition:all 0.18s;font-family:inherit;}
+.deal-tab.active{border-color:var(--accent);background:var(--accent-cont);color:var(--label);}
 
 .chips-row{display:flex;gap:10px;justify-content:center;}
 .chip{background:var(--bg2);border-radius:12px;padding:10px 18px;text-align:center;display:flex;flex-direction:column;gap:2px;}
@@ -117,12 +142,6 @@ html,body{height:100%;height:100dvh;font-family:Roboto,system-ui,-apple-system,s
 .main-cta{width:100%;background:var(--accent);color:#003731;border:none;border-radius:50px;padding:18px;font-family:inherit;font-size:16px;font-weight:700;cursor:pointer;transition:opacity 0.15s;display:flex;align-items:center;justify-content:center;gap:10px;letter-spacing:0.02em;}
 .main-cta:active{opacity:0.75;}
 .main-cta svg{width:20px;height:20px;fill:none;stroke:#003731;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
-
-.start-card{background:var(--bg2);border-radius:20px;padding:28px 24px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;}
-.start-icon-ring{width:72px;height:72px;border-radius:50%;background:var(--accent-cont);display:flex;align-items:center;justify-content:center;}
-.start-icon-ring svg{width:36px;height:36px;fill:none;stroke:var(--accent);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
-.start-title{font-size:20px;font-weight:500;}
-.start-sub{font-size:15px;color:var(--label2);line-height:1.65;}
 
 .cap-card{background:rgba(207,102,121,0.12);border-radius:16px;padding:18px;width:100%;display:flex;flex-direction:column;gap:8px;}
 .cap-title{font-size:16px;font-weight:600;color:var(--red);}
@@ -267,28 +286,10 @@ canvas.confetti{position:fixed;inset:0;pointer-events:none;z-index:999;}
     <div class="ob-icon-ring">
       <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
     </div>
-    <h2 class="ob-title">בחר אתגר</h2>
-    <div class="exercise-cards-row">
-      <div class="exercise-card selected" data-ex="pushups" onclick="selectExercise('pushups')">
-        <div class="ec-ring"><svg viewBox="0 0 24 24"><path d="M18 3a3 3 0 00-3 3v12a3 3 0 003 3 3 3 0 003-3 3 3 0 00-3-3H6a3 3 0 00-3 3 3 3 0 003 3 3 3 0 003-3V6a3 3 0 00-3-3 3 3 0 00-3 3 3 3 0 003 3h12a3 3 0 003-3 3 3 0 00-3-3z"/></svg></div>
-        <div class="ec-name">שכיבות סמיכה</div>
-      </div>
-      <div class="exercise-card" data-ex="situps" onclick="selectExercise('situps')">
-        <div class="ec-ring"><svg viewBox="0 0 24 24"><path d="M12 2a2 2 0 110 4 2 2 0 010-4zM4 18l4-8 2 4 3-4 5 8"/></svg></div>
-        <div class="ec-name">כפיפות בטן</div>
-      </div>
-      <div class="exercise-card" data-ex="plank" onclick="selectExercise('plank')">
-        <div class="ec-ring"><svg viewBox="0 0 24 24"><path d="M12 2a2 2 0 110 4 2 2 0 010-4zM3 18l18-8"/></svg></div>
-        <div class="ec-name">פלאנקים</div>
-      </div>
-    </div>
-    <p class="ob-body" style="font-size:14px">כמה <span id="target-unit">חזרות</span> ביום?</p>
-    <div class="target-row">
-      <button class="qty-btn" onclick="changeTarget(-5)">−</button>
-      <div id="target-display">25</div>
-      <button class="qty-btn" onclick="changeTarget(5)">+</button>
-    </div>
-    <p class="ob-body" style="font-size:12px">מומלץ להתחיל ריאליסטי</p>
+    <h2 class="ob-title">בחר אתגרים</h2>
+    <p class="ob-body" style="font-size:13px">אפשר לבחור יותר מאחד</p>
+    <div class="exercise-cards-row" id="ob-exercise-cards"></div>
+    <div class="ob-targets-list" id="ob-targets-list"></div>
     <div class="ob-dots">
       <div class="ob-dot"></div><div class="ob-dot on"></div><div class="ob-dot"></div>
     </div>
@@ -329,10 +330,9 @@ canvas.confetti{position:fixed;inset:0;pointer-events:none;z-index:999;}
     </div>
     <h2 class="ob-title">הדיל שלך</h2>
     <div id="deal-summary">
-      <div class="summary-row"><span class="summary-key">תרגיל</span><span id="sum-exercise" class="summary-val">שכיבות סמיכה</span></div>
-      <div class="summary-row"><span class="summary-key">יעד יומי</span><span id="sum-target" class="summary-val">25 חזרות</span></div>
+      <div id="sum-exercises-list"></div>
       <div class="summary-row"><span class="summary-key">קנס</span><span id="sum-penalty" class="summary-val">כפול ×2</span></div>
-      <div class="summary-row"><span class="summary-key">מתחיל</span><span class="summary-val">מחר בבוקר</span></div>
+      <div class="summary-row"><span class="summary-key">מתחיל</span><span class="summary-val">היום</span></div>
     </div>
     <p class="ob-body" style="font-size:13px">לחץ על הכפתור כדי לחתום על הדיל</p>
     <button class="sign-btn" id="sign-btn" onclick="signDeal()">
@@ -345,7 +345,6 @@ canvas.confetti{position:fixed;inset:0;pointer-events:none;z-index:999;}
 <div id="s-main" class="screen">
   <div class="s-header">
     <h2>דיל כושר</h2>
-    <span id="streak-badge" style="font-size:13px;color:var(--label2);display:none"></span>
   </div>
   <div class="main-body" id="main-body"></div>
 </div>
@@ -356,7 +355,7 @@ canvas.confetti{position:fixed;inset:0;pointer-events:none;z-index:999;}
     <div class="sheet-handle"></div>
     <div class="log-header-row">
       <div>
-        <div class="log-title">רישום אימון</div>
+        <div class="log-title" id="log-title">רישום אימון</div>
         <div class="log-sub" id="log-sub">יעד היום: 25</div>
       </div>
       <button class="camera-btn" id="camera-btn" onclick="toggleCamera()" title="מצלמה">
@@ -391,6 +390,7 @@ canvas.confetti{position:fixed;inset:0;pointer-events:none;z-index:999;}
       <div class="legend-item"><div class="legend-dot ld-missed"></div>פוספס</div>
       <div class="legend-item"><div class="legend-dot ld-today"></div>היום</div>
     </div>
+    <div id="cal-tabs"></div>
     <div id="cal-container"></div>
   </div>
 </div>
@@ -398,7 +398,10 @@ canvas.confetti{position:fixed;inset:0;pointer-events:none;z-index:999;}
 <!-- ═══════════════ STATS ═══════════════ -->
 <div id="s-stat" class="screen">
   <div class="s-header"><h2>סטטיסטיקות</h2></div>
-  <div class="stat-body" id="stat-body"></div>
+  <div class="stat-body">
+    <div id="stat-tabs"></div>
+    <div id="stat-content"></div>
+  </div>
 </div>
 
 <!-- ═══════════════ SETTINGS ═══════════════ -->
@@ -449,8 +452,34 @@ let DATA = {};
 
 function load() {
   try { DATA = JSON.parse(localStorage.getItem(STORE_KEY)) || {}; } catch { DATA = {}; }
+  migrateData();
 }
 function save() { localStorage.setItem(STORE_KEY, JSON.stringify(DATA)); }
+
+function migrateData() {
+  if (DATA.deal && !DATA.deals) {
+    const d = DATA.deal;
+    DATA.deals = [{
+      exercise: d.exercise,
+      dailyTarget: d.dailyTarget,
+      penaltyType: d.penaltyType,
+      penaltyPercent: d.penaltyPercent,
+      startDate: d.startDate,
+      active: d.active,
+      createdAt: d.createdAt,
+      logs: DATA.logs || {},
+      debt: DATA.debt || 0,
+      lastProcessed: DATA.lastProcessed,
+      debtOverCap: DATA.debtOverCap || false,
+    }];
+    delete DATA.deal;
+    delete DATA.logs;
+    delete DATA.debt;
+    delete DATA.lastProcessed;
+    delete DATA.debtOverCap;
+  }
+  if (!DATA.deals) DATA.deals = [];
+}
 load();
 
 // ═══════════════ DATE UTILS ═══════════════
@@ -477,32 +506,35 @@ function getMonthLabel(s) {
 const HE_DAYS_SHORT = ['א','ב','ג','ד','ה','ו','ש'];
 
 // ═══════════════ DEBT ENGINE ═══════════════
+function activeDeals() { return (DATA.deals || []).filter(d => d.active); }
+function getDeal(exercise) { return (DATA.deals || []).find(d => d.exercise === exercise); }
+
 function processDebt() {
-  if (!DATA.deal?.active) return;
-  const { dailyTarget, penaltyType, penaltyPercent, startDate } = DATA.deal;
-  if (!DATA.debt) DATA.debt = 0;
-  if (!DATA.logs) DATA.logs = {};
+  activeDeals().forEach(processDealDebt);
+  save();
+}
+
+function processDealDebt(deal) {
+  const { dailyTarget, penaltyType, penaltyPercent, startDate } = deal;
+  if (!deal.debt) deal.debt = 0;
+  if (!deal.logs) deal.logs = {};
   const tod = todayStr();
 
   // Determine start of processing
-  let cursor = DATA.lastProcessed ? addDays(DATA.lastProcessed, 1) : startDate;
+  let cursor = deal.lastProcessed ? addDays(deal.lastProcessed, 1) : startDate;
 
   while (cursor < tod) {
     if (cursor >= startDate) {
       // Apply compound interest to existing debt first
-      if (penaltyType === 'percent' && DATA.debt > 0) {
+      if (penaltyType === 'percent' && deal.debt > 0) {
         const pct = parseFloat(penaltyPercent) || 20;
-        DATA.debt = Math.ceil(DATA.debt * (1 + pct / 100));
+        deal.debt = Math.ceil(deal.debt * (1 + pct / 100));
       }
       // Add missed reps
-      const logged = DATA.logs[cursor] || 0;
+      const logged = deal.logs[cursor] || 0;
       const missed = Math.max(0, dailyTarget - logged);
       if (missed > 0) {
-        if (penaltyType === 'double') {
-          DATA.debt += missed * 2;
-        } else {
-          DATA.debt += missed;
-        }
+        deal.debt += penaltyType === 'double' ? missed * 2 : missed;
       }
     }
     cursor = addDays(cursor, 1);
@@ -510,38 +542,38 @@ function processDebt() {
 
   // Debt cap: max 5× target — use >= so flag persists after debt is clamped
   const cap = dailyTarget * 5;
-  DATA.debtOverCap = DATA.debt >= cap;
-  DATA.debt = Math.min(DATA.debt, cap);
-  DATA.lastProcessed = addDays(tod, -1);
-  save();
+  deal.debtOverCap = deal.debt >= cap;
+  deal.debt = Math.min(deal.debt, cap);
+  deal.lastProcessed = addDays(tod, -1);
 }
 
-function todayLogged() { return (DATA.logs && DATA.logs[todayStr()]) || 0; }
-function todayRemaining() { return Math.max(0, (DATA.deal?.dailyTarget || 0) - todayLogged()); }
-function totalDue() { return todayRemaining() + (DATA.debt || 0); }
-function isTodayDone() { return todayLogged() >= (DATA.deal?.dailyTarget || 1); }
+function dealLogged(deal) { return (deal.logs && deal.logs[todayStr()]) || 0; }
+function dealRemaining(deal) { return Math.max(0, deal.dailyTarget - dealLogged(deal)); }
+function dealDue(deal) { return dealRemaining(deal) + (deal.debt || 0); }
+function dealDone(deal) { return dealLogged(deal) >= deal.dailyTarget && (deal.debt || 0) === 0; }
 
-function addLog(reps) {
-  if (!DATA.logs) DATA.logs = {};
+function addLogToDeal(exercise, reps) {
+  const deal = getDeal(exercise);
+  if (!deal) return;
+  if (!deal.logs) deal.logs = {};
   const tod = todayStr();
-  const before = DATA.logs[tod] || 0;
-  DATA.logs[tod] = before + reps;
+  const before = deal.logs[tod] || 0;
+  deal.logs[tod] = before + reps;
 
   // Reps beyond today's target reduce debt
-  const target = DATA.deal.dailyTarget;
-  const overTarget = Math.max(0, (before + reps) - target);
-  if (overTarget > 0 && DATA.debt > 0) {
-    DATA.debt = Math.max(0, DATA.debt - overTarget);
+  const overTarget = Math.max(0, (before + reps) - deal.dailyTarget);
+  if (overTarget > 0 && deal.debt > 0) {
+    deal.debt = Math.max(0, deal.debt - overTarget);
   }
   save();
 }
 
-function getDayStatus(d) {
+function getDealDayStatus(deal, d) {
   const tod = todayStr();
-  if (!DATA.deal || d < DATA.deal.startDate) return 'no-deal';
+  if (d < deal.startDate) return 'no-deal';
   if (d > tod) return 'future';
-  const logged = (DATA.logs && DATA.logs[d]) || 0;
-  const target = DATA.deal.dailyTarget;
+  const logged = (deal.logs && deal.logs[d]) || 0;
+  const target = deal.dailyTarget;
   if (d === tod) {
     if (logged >= target) return 'complete';
     if (logged > 0) return 'today-partial';
@@ -552,23 +584,22 @@ function getDayStatus(d) {
   return 'missed';
 }
 
-function getStreak() {
-  if (!DATA.deal?.active) return { current: 0, best: 0 };
+function getDealStreak(deal) {
   const tod = todayStr();
   let cur = 0, best = 0, d = tod;
   // count backwards
   while (true) {
-    const s = getDayStatus(d);
+    const s = getDealDayStatus(deal, d);
     if (s === 'complete' || s === 'today-partial') { cur++; best = Math.max(best, cur); }
     else if (s === 'today' || s === 'future') { /* skip today if not done yet */ }
     else break;
-    if (d <= DATA.deal.startDate) break;
+    if (d <= deal.startDate) break;
     d = addDays(d, -1);
   }
   // Also compute all-time best
-  let brun = 0, cursor2 = DATA.deal.startDate;
+  let brun = 0, cursor2 = deal.startDate;
   while (cursor2 <= tod) {
-    const s = getDayStatus(cursor2);
+    const s = getDealDayStatus(deal, cursor2);
     if (s === 'complete') { brun++; best = Math.max(best, brun); }
     else { brun = 0; }
     cursor2 = addDays(cursor2, 1);
@@ -576,14 +607,9 @@ function getStreak() {
   return { current: cur, best };
 }
 
-function getTotalReps() {
-  if (!DATA.logs) return 0;
-  return Object.values(DATA.logs).reduce((a, b) => a + (b || 0), 0);
-}
-
-function getDebtRepaid() {
-  if (!DATA.debtRepaid) DATA.debtRepaid = 0;
-  return DATA.debtRepaid;
+function getDealTotalReps(deal) {
+  if (!deal.logs) return 0;
+  return Object.values(deal.logs).reduce((a, b) => a + (b || 0), 0);
 }
 
 // ═══════════════ SCREEN SYSTEM ═══════════════
@@ -591,6 +617,7 @@ let currentScreen = 'ob';
 
 function show(name) {
   if (currentScreen === 'log' && name !== 'log') stopCamera();
+  if (name !== 'main' && _countdownTimer) { clearInterval(_countdownTimer); _countdownTimer = null; }
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   const el = document.getElementById('s-' + name);
@@ -599,39 +626,40 @@ function show(name) {
   if (nb) nb.classList.add('active');
   currentScreen = name;
 
-  if (name === 'main') { renderMain(); updateFab(); }
+  if (name === 'main') renderMain();
   if (name === 'cal') renderCalendar();
   if (name === 'stat') renderStats();
   if (name === 'set') renderSettings();
   if (name === 'log') renderLog();
+
+  if (name === 'ob' || name === 'log') {
+    document.getElementById('fab').classList.remove('show');
+  } else {
+    updateFab();
+  }
 }
 
 // ═══════════════ EXERCISES ═══════════════
 const EXERCISES = {
-  pushups: { name: 'שכיבות סמיכה', unit: 'חזרות', defaultTarget: 25 },
-  situps:  { name: 'כפיפות בטן',   unit: 'חזרות', defaultTarget: 20 },
-  plank:   { name: 'פלאנקים',      unit: 'שניות', defaultTarget: 60 },
+  pushups: { name: 'שכיבות סמיכה', unit: 'חזרות', defaultTarget: 25, icon: '<path d="M18 3a3 3 0 00-3 3v12a3 3 0 003 3 3 3 0 003-3 3 3 0 00-3-3H6a3 3 0 00-3 3 3 3 0 003 3 3 3 0 003-3V6a3 3 0 00-3-3 3 3 0 00-3 3 3 3 0 003 3h12a3 3 0 003-3 3 3 0 00-3-3z"/>' },
+  situps:  { name: 'כפיפות בטן',   unit: 'חזרות', defaultTarget: 20, icon: '<path d="M12 2a2 2 0 110 4 2 2 0 010-4zM4 18l4-8 2 4 3-4 5 8"/>' },
+  plank:   { name: 'פלאנקים',      unit: 'שניות', defaultTarget: 60, icon: '<path d="M12 2a2 2 0 110 4 2 2 0 010-4zM3 18l18-8"/>' },
 };
-function exName() { return EXERCISES[DATA.deal?.exercise || 'pushups']?.name || 'שכיבות סמיכה'; }
-function exUnit() { return EXERCISES[DATA.deal?.exercise || 'pushups']?.unit || 'חזרות'; }
 
 // ═══════════════ FAB ═══════════════
 function updateFab() {
   const fab = document.getElementById('fab');
   if (!fab) return;
-  if (!DATA.deal?.active) {
-    fab.classList.add('show');
-    fab.title = 'דיל חדש';
-  } else if (todayStr() < DATA.deal.startDate) {
+  const activeCount = activeDeals().length;
+  if (activeCount >= Object.keys(EXERCISES).length) {
     fab.classList.remove('show');
   } else {
     fab.classList.add('show');
-    fab.title = 'רשום אימון';
+    fab.title = activeCount === 0 ? 'דיל חדש' : 'הוסף אתגר';
   }
 }
 function fabAction() {
-  if (!DATA.deal?.active) { obStep = 0; show('ob'); }
-  else show('log');
+  startObFlow(activeDeals().length > 0);
 }
 
 // ═══════════════ CAMERA ═══════════════
@@ -670,38 +698,87 @@ function closeLog() {
 
 // ═══════════════ ONBOARDING ═══════════════
 let obStep = 0;
-let obTarget = 25;
+let obSelected = new Set();
+let obTargets = {};
 let obPenalty = 'double';
-let obExercise = 'pushups';
+let obAdding = false;
 
-function selectExercise(type) {
-  obExercise = type;
-  document.querySelectorAll('.exercise-card').forEach(c =>
-    c.classList.toggle('selected', c.dataset.ex === type));
-  obTarget = EXERCISES[type].defaultTarget;
-  document.getElementById('target-display').textContent = obTarget;
-  document.getElementById('target-unit').textContent = EXERCISES[type].unit;
+function startObFlow(adding) {
+  obAdding = adding;
+  obSelected = new Set();
+  obTargets = {};
+  obPenalty = 'double';
+  obStep = adding ? 1 : 0;
+  document.querySelectorAll('.ob-step').forEach(s => s.classList.remove('active'));
+  document.getElementById('ob-step-' + obStep).classList.add('active');
+  if (obStep === 1) renderExerciseCards();
+  show('ob');
+}
+
+function renderExerciseCards() {
+  const container = document.getElementById('ob-exercise-cards');
+  const activeNames = new Set(activeDeals().map(d => d.exercise));
+  const available = Object.keys(EXERCISES).filter(ex => !activeNames.has(ex));
+  container.innerHTML = available.map(ex => {
+    const e = EXERCISES[ex];
+    const sel = obSelected.has(ex) ? 'selected' : '';
+    return `<div class="exercise-card ${sel}" data-ex="${ex}" onclick="toggleExercise('${ex}')">
+      <div class="ec-ring"><svg viewBox="0 0 24 24">${e.icon}</svg></div>
+      <div class="ec-name">${e.name}</div>
+    </div>`;
+  }).join('');
+  renderObTargets();
+}
+
+function toggleExercise(type) {
+  if (obSelected.has(type)) {
+    obSelected.delete(type);
+    delete obTargets[type];
+  } else {
+    obSelected.add(type);
+    obTargets[type] = EXERCISES[type].defaultTarget;
+  }
+  renderExerciseCards();
+}
+
+function renderObTargets() {
+  const container = document.getElementById('ob-targets-list');
+  container.innerHTML = [...obSelected].map(ex => {
+    const e = EXERCISES[ex];
+    return `<div class="target-row-compact">
+      <div class="target-ex-name">${e.name}</div>
+      <div class="target-stepper">
+        <button class="qty-btn small" onclick="changeObTarget('${ex}',-5)">−</button>
+        <div class="target-val">${obTargets[ex]}</div>
+        <button class="qty-btn small" onclick="changeObTarget('${ex}',5)">+</button>
+      </div>
+      <div class="target-unit-label">${e.unit}</div>
+    </div>`;
+  }).join('');
+}
+
+function changeObTarget(type, delta) {
+  obTargets[type] = Math.max(1, Math.min(200, (obTargets[type] || 0) + delta));
+  renderObTargets();
 }
 
 function obNext() {
+  if (obStep === 1 && obSelected.size === 0) { showToast('בחר לפחות תרגיל אחד'); return; }
   document.getElementById('ob-step-' + obStep).classList.remove('active');
   obStep++;
   const el = document.getElementById('ob-step-' + obStep);
   if (el) {
     el.classList.add('active');
+    if (obStep === 1) renderExerciseCards();
     if (obStep === 3) updateSummary();
   }
 }
 
 function obPrev() {
+  if (obStep === 1 && obAdding) { show('main'); return; }
   document.getElementById('ob-step-' + obStep).classList.remove('active');
   obStep--;
   document.getElementById('ob-step-' + obStep).classList.add('active');
-}
-
-function changeTarget(delta) {
-  obTarget = Math.max(1, Math.min(200, obTarget + delta));
-  document.getElementById('target-display').textContent = obTarget;
 }
 
 function selectPenalty(type) {
@@ -712,9 +789,11 @@ function selectPenalty(type) {
 }
 
 function updateSummary() {
-  const ex = EXERCISES[obExercise];
-  document.getElementById('sum-exercise').textContent = ex.name;
-  document.getElementById('sum-target').textContent = obTarget + ' ' + ex.unit;
+  const list = document.getElementById('sum-exercises-list');
+  list.innerHTML = [...obSelected].map(ex => {
+    const e = EXERCISES[ex];
+    return `<div class="summary-row"><span class="summary-key">${e.name}</span><span class="summary-val">${obTargets[ex]} ${e.unit}</span></div>`;
+  }).join('');
   if (obPenalty === 'double') {
     document.getElementById('sum-penalty').textContent = 'כפול ×2';
   } else {
@@ -729,24 +808,27 @@ function signDeal() {
   btn.style.background = 'var(--green)';
   setTimeout(() => {
     const pct = parseInt(document.getElementById('pct-input').value) || 20;
-    const tomorrow = addDays(todayStr(), 1);
-    DATA.deal = {
-      exercise: obExercise,
-      dailyTarget: obTarget,
-      penaltyType: obPenalty,
-      penaltyPercent: pct,
-      startDate: tomorrow,
-      active: true,
-      createdAt: todayStr()
-    };
-    DATA.logs = {};
-    DATA.debt = 0;
-    DATA.lastProcessed = todayStr();
+    if (!DATA.deals) DATA.deals = [];
+    [...obSelected].forEach(ex => {
+      DATA.deals.push({
+        exercise: ex,
+        dailyTarget: obTargets[ex],
+        penaltyType: obPenalty,
+        penaltyPercent: pct,
+        startDate: todayStr(),
+        active: true,
+        createdAt: todayStr(),
+        logs: {},
+        debt: 0,
+        lastProcessed: todayStr(),
+        debtOverCap: false
+      });
+    });
     save();
     launchConfetti();
     document.getElementById('nav').classList.add('show');
     show('main');
-    setTimeout(requestNotifications, 500);
+    if (!obAdding) setTimeout(requestNotifications, 500);
   }, 600);
 }
 
@@ -756,109 +838,128 @@ async function requestNotifications() {
   if (DATA.settings) DATA.settings.notificationsEnabled = (perm === 'granted');
   else DATA.settings = { notificationsEnabled: perm === 'granted', reminderHour: 20 };
   save();
+  if (perm === 'denied') showToast('ההתראות חסומות בדפדפן - יש לאפשר אותן בהגדרות המכשיר');
+  if (currentScreen === 'set') renderSettings();
 }
 
 // ═══════════════ MAIN SCREEN ═══════════════
 function renderMain() {
   processDebt();
   const body = document.getElementById('main-body');
-  const streakBadge = document.getElementById('streak-badge');
+  const deals = activeDeals();
 
-  if (!DATA.deal?.active) {
+  if (deals.length === 0) {
     body.innerHTML = `<div class="no-deal">
       <div class="icon-ring"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
       <p>אין דיל פעיל.<br>לחץ + כדי להתחיל.</p>
     </div>`;
+    stopAllCountdowns();
     return;
   }
 
-  if (todayStr() < DATA.deal.startDate) {
-    const startFmt = formatDate(DATA.deal.startDate);
-    const ex = EXERCISES[DATA.deal.exercise] || EXERCISES.pushups;
-    body.innerHTML = `
-      <div class="start-card">
-        <div class="start-icon-ring"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
-        <div class="start-title">הדיל נחתם!</div>
-        <div class="start-sub">האימון הראשון מתחיל<br><strong>${startFmt}</strong></div>
-      </div>
-      <div class="start-card" style="gap:6px;align-items:flex-start;">
-        <div style="font-size:12px;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;font-weight:500;margin-bottom:4px">הדיל שלך</div>
-        <div style="display:flex;justify-content:space-between;width:100%;font-size:15px;padding:6px 0;border-bottom:1px solid var(--sep)"><span style="color:var(--label2)">תרגיל</span><span style="font-weight:600">${ex.name}</span></div>
-        <div style="display:flex;justify-content:space-between;width:100%;font-size:15px;padding:6px 0;border-bottom:1px solid var(--sep)"><span style="color:var(--label2)">יעד יומי</span><span style="font-weight:600">${DATA.deal.dailyTarget} ${ex.unit}</span></div>
-        <div style="display:flex;justify-content:space-between;width:100%;font-size:15px;padding:6px 0"><span style="color:var(--label2)">קנס</span><span style="font-weight:600">${DATA.deal.penaltyType==='double'?'כפול ×2':'ריבית '+DATA.deal.penaltyPercent+'%'}</span></div>
-      </div>`;
-    streakBadge.style.display = 'none';
-    return;
-  }
+  body.innerHTML = `<div class="deals-grid">${deals.map(renderDealCard).join('')}</div>`;
+  startAllCountdowns();
+}
 
-  const target = DATA.deal.dailyTarget;
-  const logged = todayLogged();
-  const debt = DATA.debt || 0;
-  const due = totalDue();
-  const done = isTodayDone() && debt === 0;
-  const { current: streak } = getStreak();
-
-  if (streak > 1) {
-    streakBadge.textContent = `${streak} ימים`;
-    streakBadge.style.display = 'inline';
-  } else {
-    streakBadge.style.display = 'none';
-  }
+function renderDealCard(deal) {
+  const ex = EXERCISES[deal.exercise];
+  const target = deal.dailyTarget;
+  const logged = dealLogged(deal);
+  const debt = deal.debt || 0;
+  const due = dealDue(deal);
+  const done = dealDone(deal);
+  const { current: streak } = getDealStreak(deal);
 
   const total = target + debt;
   const pct = total > 0 ? Math.min(1, logged / total) : 1;
-  const C = 502.65;
+  const C = 345.58;
   const offset = (C * (1 - pct)).toFixed(1);
   const ringColor = done ? 'var(--green)' : debt > 0 ? 'var(--orange)' : 'var(--accent)';
   const numClass = done ? 'r-done' : '';
 
-  const unit = exUnit();
   let chipsHtml = `<div class="chips-row">
     <div class="chip"><div class="chip-val">${target}</div><div class="chip-key">יעד</div></div>`;
   if (debt > 0) chipsHtml += `<div class="chip c-debt"><div class="chip-val">${debt}</div><div class="chip-key">חוב</div></div>`;
-  chipsHtml += `<div class="chip c-done"><div class="chip-val">${logged}</div><div class="chip-key">${unit}</div></div></div>`;
+  chipsHtml += `<div class="chip c-done"><div class="chip-val">${logged}</div><div class="chip-key">${ex.unit}</div></div></div>`;
 
   let capHtml = '';
-  if (DATA.debtOverCap) {
-    capHtml = `<div class="cap-card">
+  if (deal.debtOverCap) {
+    capHtml = `<div class="cap-card small">
       <div class="cap-title">תקרת חוב הגיעה</div>
-      <div class="cap-body">החוב הגיע לגבול (${target*5} ${unit}). ניתן לפרוס אותו על פני כמה ימים.</div>
-      <button class="cap-btn" onclick="showSettle()">הסדר חוב</button>
+      <div class="cap-body">החוב הגיע לגבול (${target*5} ${ex.unit}). ניתן לפרוס אותו על פני כמה ימים.</div>
+      <button class="cap-btn" onclick="showSettle('${deal.exercise}')">הסדר חוב</button>
     </div>`;
   }
 
-  body.innerHTML = `
-    <div class="ring-section">
-      <div class="ring-wrap">
-        <svg class="ring-svg" viewBox="0 0 200 200">
-          <circle class="ring-track" cx="100" cy="100" r="80"/>
-          <circle class="ring-fill" id="ring-prog" cx="100" cy="100" r="80"
-            style="stroke-dashoffset:${offset};stroke:${ringColor}"/>
-        </svg>
-        <div class="ring-center">
-          <div class="ring-num ${numClass}">${done ? '✓' : due}</div>
-          <div class="ring-label">${done ? 'הושלם היום!' : 'לביצוע היום'}</div>
-          ${logged > 0 && !done ? `<div class="ring-sub">${logged} / ${total}</div>` : ''}
-        </div>
-      </div>
-      ${chipsHtml}
+  return `<div class="deal-card">
+    <div class="deal-card-header">
+      <div class="deal-card-title">${ex.name}</div>
+      ${streak > 1 ? `<div class="deal-card-streak">${streak} ימים</div>` : ''}
     </div>
+    <div class="ring-wrap small">
+      <svg class="ring-svg small" viewBox="0 0 140 140">
+        <circle class="ring-track" cx="70" cy="70" r="55"/>
+        <circle class="ring-fill" cx="70" cy="70" r="55"
+          style="stroke-dasharray:${C};stroke-dashoffset:${offset};stroke:${ringColor}"/>
+      </svg>
+      <div class="ring-center">
+        <div class="ring-num small ${numClass}">${done ? '✓' : due}</div>
+        <div class="ring-label small">${done ? 'הושלם היום!' : 'לביצוע היום'}</div>
+        ${!done ? `<div class="ring-sub small">${logged} / ${total}</div>` : ''}
+      </div>
+    </div>
+    ${!done ? `<div class="ring-countdown small" data-countdown="${deal.exercise}"></div>` : ''}
+    ${chipsHtml}
     ${capHtml}
-    ${!done ? `<button class="main-cta" onclick="show('log')"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>רשום אימון</button>` : ''}
-  `;
+    ${!done ? `<button class="main-cta small" onclick="openLog('${deal.exercise}')"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>רשום ${ex.name}</button>` : ''}
+  </div>`;
+}
+
+let _countdownTimer = null;
+function updateAllCountdowns() {
+  const els = document.querySelectorAll('[data-countdown]');
+  if (els.length === 0) return;
+  const now = new Date();
+  const midnight = new Date(now);
+  midnight.setHours(24, 0, 0, 0);
+  const msLeft = midnight - now;
+  const h = Math.floor(msLeft / 3600000);
+  const m = Math.floor((msLeft % 3600000) / 60000);
+  const text = `עוד ${h} שע' ו-${m} דק' לסגירת היום`;
+  els.forEach(el => el.textContent = text);
+}
+function startAllCountdowns() {
+  clearInterval(_countdownTimer);
+  _countdownTimer = null;
+  if (document.querySelectorAll('[data-countdown]').length === 0) return;
+  updateAllCountdowns();
+  _countdownTimer = setInterval(updateAllCountdowns, 30000);
+}
+function stopAllCountdowns() {
+  clearInterval(_countdownTimer);
+  _countdownTimer = null;
 }
 
 // ═══════════════ LOG SCREEN ═══════════════
 let currentReps = 0;
+let currentLogExercise = null;
+
+function openLog(exercise) {
+  currentLogExercise = exercise;
+  show('log');
+}
 
 function renderLog() {
   currentReps = 0;
   document.getElementById('reps-display').textContent = '0';
-  const logged = todayLogged();
-  const due = totalDue();
-  const unit = exUnit();
+  const deal = getDeal(currentLogExercise);
+  if (!deal) { closeLog(); return; }
+  const ex = EXERCISES[deal.exercise];
+  document.getElementById('log-title').textContent = 'רישום ' + ex.name;
+  const logged = dealLogged(deal);
+  const due = dealDue(deal);
   document.getElementById('log-sub').textContent =
-    logged > 0 ? `כבר רשמת ${logged} — עוד ${Math.max(0, due - logged)} ${unit}` : `יעד היום: ${due} ${unit}`;
+    logged > 0 ? `כבר רשמת ${logged} — עוד ${Math.max(0, due - logged)} ${ex.unit}` : `יעד היום: ${due} ${ex.unit}`;
   document.getElementById('log-all-btn').textContent =
     due > 0 ? `כל היעד (${due})` : 'כל היעד';
 }
@@ -869,7 +970,9 @@ function changeReps(delta) {
 }
 
 function logAll() {
-  currentReps = totalDue();
+  const deal = getDeal(currentLogExercise);
+  if (!deal) return;
+  currentReps = dealDue(deal);
   document.getElementById('reps-display').textContent = currentReps;
 }
 
@@ -879,26 +982,48 @@ function handleLogBg(e) {
 
 function saveLog() {
   if (currentReps <= 0) { showToast('הכנס כמות'); return; }
-  addLog(currentReps);
-  const todayDone = isTodayDone();
+  const deal = getDeal(currentLogExercise);
+  if (!deal) return;
+  addLogToDeal(currentLogExercise, currentReps);
+  const ex = EXERCISES[deal.exercise];
+  const done = dealDone(deal);
   closeLog();
-  if (todayDone) {
-    setTimeout(() => { launchConfetti(); showToast('הדיל הושלם היום!'); }, 200);
+  if (done) {
+    setTimeout(() => { launchConfetti(); showToast(`${ex.name} הושלם היום!`); }, 200);
   } else {
-    showToast(`נרשמו ${currentReps} ${exUnit()}`);
+    showToast(`נרשמו ${currentReps} ${ex.unit}`);
   }
 }
 
 // ═══════════════ CALENDAR ═══════════════
+let calSelectedExercise = null;
+
+function selectCalTab(exercise) {
+  calSelectedExercise = exercise;
+  renderCalendar();
+}
+
 function renderCalendar() {
+  const tabsEl = document.getElementById('cal-tabs');
   const container = document.getElementById('cal-container');
-  if (!DATA.deal?.active) {
+  const deals = activeDeals();
+
+  if (deals.length === 0) {
+    tabsEl.innerHTML = '';
     container.innerHTML = '<div class="no-deal"><div class="icon-ring"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><p>אין דיל פעיל</p></div>';
     return;
   }
 
+  if (!calSelectedExercise || !deals.find(d => d.exercise === calSelectedExercise)) {
+    calSelectedExercise = deals[0].exercise;
+  }
+
+  tabsEl.innerHTML = deals.length > 1
+    ? `<div class="deal-tabs">${deals.map(d => `<button class="deal-tab ${d.exercise===calSelectedExercise?'active':''}" onclick="selectCalTab('${d.exercise}')">${EXERCISES[d.exercise].name}</button>`).join('')}</div>`
+    : '';
+
+  const deal = deals.find(d => d.exercise === calSelectedExercise);
   const tod = todayStr();
-  const start = DATA.deal.startDate;
 
   // Build last 90 days
   const days = [];
@@ -931,14 +1056,14 @@ function renderCalendar() {
       <div class="cal-grid">
         ${cells.map(d => {
           if (!d) return '<div class="cal-cell empty"></div>';
-          const s = getDayStatus(d);
-          const logged = (DATA.logs && DATA.logs[d]) || 0;
+          const s = getDealDayStatus(deal, d);
+          const logged = (deal.logs && deal.logs[d]) || 0;
           const cls = {
             'complete': 'complete', 'partial': 'partial', 'missed': 'missed',
             'today': 'today', 'today-partial': 'today',
             'future': 'future', 'no-deal': 'future'
           }[s] || '';
-          return `<div class="cal-cell ${cls}" title="${d}: ${logged} חזרות"></div>`;
+          return `<div class="cal-cell ${cls}" title="${d}: ${logged} ${EXERCISES[deal.exercise].unit}"></div>`;
         }).join('')}
       </div>
     </div>`;
@@ -947,23 +1072,44 @@ function renderCalendar() {
 }
 
 // ═══════════════ STATS ═══════════════
+let statSelectedExercise = null;
+
+function selectStatTab(exercise) {
+  statSelectedExercise = exercise;
+  renderStats();
+}
+
 function renderStats() {
-  const body = document.getElementById('stat-body');
-  if (!DATA.deal?.active) {
-    body.innerHTML = '<div class="no-deal"><div class="icon-ring"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div><p>אין דיל פעיל</p></div>';
+  const tabsEl = document.getElementById('stat-tabs');
+  const content = document.getElementById('stat-content');
+  const deals = activeDeals();
+
+  if (deals.length === 0) {
+    tabsEl.innerHTML = '';
+    content.innerHTML = '<div class="no-deal"><div class="icon-ring"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div><p>אין דיל פעיל</p></div>';
     return;
   }
 
-  const target = DATA.deal.dailyTarget;
-  const totalReps = getTotalReps();
-  const { current: streak, best: bestStreak } = getStreak();
-  const debt = DATA.debt || 0;
+  if (!statSelectedExercise || !deals.find(d => d.exercise === statSelectedExercise)) {
+    statSelectedExercise = deals[0].exercise;
+  }
+
+  tabsEl.innerHTML = deals.length > 1
+    ? `<div class="deal-tabs">${deals.map(d => `<button class="deal-tab ${d.exercise===statSelectedExercise?'active':''}" onclick="selectStatTab('${d.exercise}')">${EXERCISES[d.exercise].name}</button>`).join('')}</div>`
+    : '';
+
+  const deal = deals.find(d => d.exercise === statSelectedExercise);
+  const unit = EXERCISES[deal.exercise].unit;
+  const target = deal.dailyTarget;
+  const totalReps = getDealTotalReps(deal);
+  const { current: streak, best: bestStreak } = getDealStreak(deal);
+  const debt = deal.debt || 0;
 
   // Days since start
   const tod = todayStr();
-  const daysSinceStart = Math.max(0, daysBetween(DATA.deal.startDate, tod));
+  const daysSinceStart = Math.max(0, daysBetween(deal.startDate, tod));
   const completedDays = daysSinceStart > 0
-    ? Object.keys(DATA.logs || {}).filter(d => d >= DATA.deal.startDate && d <= tod && (DATA.logs[d] || 0) >= target).length
+    ? Object.keys(deal.logs || {}).filter(d => d >= deal.startDate && d <= tod && (deal.logs[d] || 0) >= target).length
     : 0;
   const completionRate = daysSinceStart > 0 ? Math.round(completedDays / daysSinceStart * 100) : 0;
 
@@ -971,7 +1117,7 @@ function renderStats() {
   const last7 = [];
   for (let i = 6; i >= 0; i--) {
     const d = addDays(tod, -i);
-    last7.push({ d, logged: (DATA.logs && DATA.logs[d]) || 0, target });
+    last7.push({ d, logged: (deal.logs && deal.logs[d]) || 0, target });
   }
   const max7 = Math.max(...last7.map(x => x.logged), target);
   const bars = last7.map(x => {
@@ -984,10 +1130,10 @@ function renderStats() {
     </div>`;
   }).join('');
 
-  body.innerHTML = `
+  content.innerHTML = `
     <div class="stat-row">
       <div class="stat-card">
-        <div class="stat-label">סה"כ חזרות</div>
+        <div class="stat-label">סה"כ ${unit}</div>
         <div class="stat-value">${totalReps.toLocaleString('he')}<span class="stat-unit"> 💪</span></div>
       </div>
       <div class="stat-card">
@@ -1017,7 +1163,7 @@ function renderStats() {
       <div class="stat-card">
         <div class="stat-label">חוב פתוח</div>
         <div class="stat-value" style="color:${debt>0?'var(--orange)':'var(--green)'}">
-          ${debt > 0 ? debt : '✓'}<span class="stat-unit">${debt > 0 ? ' חז\'':''}</span>
+          ${debt > 0 ? debt : '✓'}<span class="stat-unit">${debt > 0 ? ' '+unit:''}</span>
         </div>
       </div>
     </div>
@@ -1029,27 +1175,29 @@ function renderSettings() {
   const body = document.getElementById('set-body');
   if (!DATA.settings) DATA.settings = { notificationsEnabled: false, reminderHour: 20 };
   const s = DATA.settings;
-  const deal = DATA.deal;
+  const deals = activeDeals();
 
-  let dealSection = '';
-  if (deal?.active) {
+  let dealsSection = '';
+  deals.forEach(deal => {
+    const ex = EXERCISES[deal.exercise];
     const penStr = deal.penaltyType === 'double' ? 'כפול ×2' : `ריבית ${deal.penaltyPercent}%`;
-    dealSection = `
-      <div class="set-section-hdr">הדיל הפעיל</div>
+    dealsSection += `
+      <div class="set-section-hdr">${ex.name}</div>
       <div class="set-group">
-        <div class="set-row"><span class="set-label">תרגיל</span><span class="set-value">שכיבות סמיכה 💪</span></div>
-        <div class="set-row"><span class="set-label">יעד יומי</span><span class="set-value">${deal.dailyTarget} חזרות</span></div>
+        <div class="set-row"><span class="set-label">יעד יומי</span><span class="set-value">${deal.dailyTarget} ${ex.unit}</span></div>
         <div class="set-row"><span class="set-label">קנס</span><span class="set-value">${penStr}</span></div>
         <div class="set-row"><span class="set-label">התחיל</span><span class="set-value">${formatDate(deal.startDate)}</span></div>
-        <div class="set-row"><span class="set-label">חוב פתוח</span><span class="set-value" style="color:${DATA.debt>0?'var(--orange)':'var(--green)'}">${DATA.debt > 0 ? DATA.debt + ' חזרות' : 'אין ✓'}</span></div>
+        <div class="set-row"><span class="set-label">חוב פתוח</span><span class="set-value" style="color:${deal.debt>0?'var(--orange)':'var(--green)'}">${deal.debt > 0 ? deal.debt + ' ' + ex.unit : 'אין ✓'}</span></div>
+        <div class="set-row"><button class="danger-btn" style="padding:10px" onclick="removeDeal('${deal.exercise}')">הסר אתגר</button></div>
       </div>`;
-  }
+  });
 
   const notifToggle = s.notificationsEnabled ? 'on' : '';
   const reminderTime = `${String(s.reminderHour||20).padStart(2,'0')}:00`;
+  const canAddMore = deals.length < Object.keys(EXERCISES).length;
 
   body.innerHTML = `
-    ${dealSection}
+    ${dealsSection}
     <div class="set-section-hdr">התראות</div>
     <div class="set-group">
       <div class="set-row">
@@ -1062,9 +1210,10 @@ function renderSettings() {
       </div>
     </div>
     <div class="set-danger">
-      ${deal?.active
-        ? `<button class="danger-btn" onclick="confirmReset()">אתחל דיל מחדש</button>`
-        : `<button class="btn-primary" onclick="startNewDeal()">+ צור דיל חדש</button>`}
+      ${deals.length > 0 && canAddMore ? `<button class="btn-primary" onclick="addNewChallenge()" style="margin-bottom:10px">+ הוסף אתגר</button>` : ''}
+      ${deals.length > 0
+        ? `<button class="danger-btn" onclick="confirmReset()">אתחל הכל מחדש</button>`
+        : `<button class="btn-primary" onclick="addNewChallenge()">+ צור דיל חדש</button>`}
     </div>
   `;
 }
@@ -1088,33 +1237,49 @@ function setReminderTime(val) {
   showToast('שעת התזכורת עודכנה');
 }
 
-function confirmReset() {
-  const debt = DATA.debt || 0;
+function addNewChallenge() {
+  startObFlow(activeDeals().length > 0);
+}
+
+function removeDeal(exercise) {
+  const deal = getDeal(exercise);
+  if (!deal) return;
+  const ex = EXERCISES[exercise];
+  const debt = deal.debt || 0;
   const msg = debt > 0
-    ? `יש לך חוב פתוח של ${debt} חזרות. לאתחל את הדיל ולאבד את ההיסטוריה?`
-    : 'לאתחל את הדיל ולאבד את כל ההיסטוריה?';
+    ? `יש לך חוב פתוח של ${debt} ${ex.unit} ב${ex.name}. להסיר את האתגר ולאבד את ההיסטוריה?`
+    : `להסיר את אתגר ${ex.name} ולאבד את ההיסטוריה?`;
+  if (!confirm(msg)) return;
+  DATA.deals = DATA.deals.filter(d => d.exercise !== exercise);
+  save();
+  if (activeDeals().length === 0) {
+    document.getElementById('nav').classList.remove('show');
+    startObFlow(false);
+  } else {
+    renderSettings();
+    updateFab();
+  }
+}
+
+function confirmReset() {
+  const totalDebt = activeDeals().reduce((a, d) => a + (d.debt || 0), 0);
+  const msg = totalDebt > 0
+    ? `יש לך חוב פתוח כולל של ${totalDebt}. לאתחל את כל הדילים ולאבד את ההיסטוריה?`
+    : 'לאתחל את כל הדילים ולאבד את כל ההיסטוריה?';
   if (!confirm(msg)) return;
   DATA = {};
   save();
   document.getElementById('nav').classList.remove('show');
-  obStep = 0;
-  document.querySelectorAll('.ob-step').forEach(s => s.classList.remove('active'));
-  document.getElementById('ob-step-0').classList.add('active');
-  show('ob');
+  startObFlow(false);
 }
 
-function startNewDeal() {
-  obStep = 0;
-  document.querySelectorAll('.ob-step').forEach(s => s.classList.remove('active'));
-  document.getElementById('ob-step-0').classList.add('active');
-  document.getElementById('nav').classList.remove('show');
-  show('ob');
-}
-
-function showSettle() {
-  const target = DATA.deal?.dailyTarget || 25;
-  const days = Math.ceil((DATA.debt || 0) / target);
-  alert(`הסדר חוב:\nהחוב שלך (${DATA.debt} חזרות) יפרס ל-${days} ימים —\n${target} חזרות ביום בנוסף ליעד הרגיל.\n\n(הגדרה זו תיכנס לתוקף בגרסה הבאה)`);
+function showSettle(exercise) {
+  const deal = getDeal(exercise);
+  if (!deal) return;
+  const ex = EXERCISES[exercise];
+  const target = deal.dailyTarget;
+  const days = Math.ceil((deal.debt || 0) / target);
+  alert(`הסדר חוב ב${ex.name}:\nהחוב שלך (${deal.debt} ${ex.unit}) יפרס ל-${days} ימים —\n${target} ${ex.unit} ביום בנוסף ליעד הרגיל.\n\n(הגדרה זו תיכנס לתוקף בגרסה הבאה)`);
 }
 
 // ═══════════════ TOAST ═══════════════
@@ -1163,11 +1328,21 @@ function launchConfetti() {
 // ═══════════════ NOTIFICATIONS ═══════════════
 let _reminderTimer = null;
 
+function undoneDealsMessage() {
+  const undone = activeDeals().filter(d => !dealDone(d));
+  if (undone.length === 0) return null;
+  if (undone.length === 1) {
+    const d = undone[0];
+    return `יש לך דיל פתוח ב${EXERCISES[d.exercise].name} — עוד ${dealDue(d)} ${EXERCISES[d.exercise].unit} להיום`;
+  }
+  return `יש לך ${undone.length} דילים פתוחים היום — ${undone.map(d => EXERCISES[d.exercise].name).join(', ')}`;
+}
+
 function scheduleInAppReminder() {
   clearTimeout(_reminderTimer);
   if (!DATA.settings?.notificationsEnabled) return;
   if (Notification.permission !== 'granted') return;
-  if (!DATA.deal?.active) return;
+  if (activeDeals().length === 0) return;
 
   const now = new Date();
   const reminderH = DATA.settings.reminderHour || 20;
@@ -1179,9 +1354,10 @@ function scheduleInAppReminder() {
 
   const msUntil = target - now;
   _reminderTimer = setTimeout(() => {
-    if (!isTodayDone()) {
+    const msg = undoneDealsMessage();
+    if (msg) {
       new Notification('דיל כושר', {
-        body: `יש לך דיל פתוח — עוד ${totalDue()} ${exUnit()} להיום`,
+        body: msg,
         icon: './fitness-icon-192.png',
         dir: 'rtl',
         lang: 'he',
@@ -1196,7 +1372,7 @@ function scheduleInAppReminder() {
 function checkNotifications() {
   if (!DATA.settings?.notificationsEnabled) return;
   if (Notification.permission !== 'granted') return;
-  if (!DATA.deal?.active) return;
+  if (activeDeals().length === 0) return;
 
   const now = new Date();
   const h = now.getHours();
@@ -1205,9 +1381,10 @@ function checkNotifications() {
   const lastNotif = DATA.lastNotif || '';
 
   if (h >= reminderH && lastNotif !== todayKey + '-reminder') {
-    if (!isTodayDone()) {
+    const msg = undoneDealsMessage();
+    if (msg) {
       new Notification('דיל כושר', {
-        body: `יש לך דיל פתוח — עוד ${totalDue()} ${exUnit()} להיום`,
+        body: msg,
         icon: './fitness-icon-192.png',
         dir: 'rtl',
         lang: 'he',
@@ -1238,16 +1415,13 @@ function dismissInstallBanner() {
 // ═══════════════ INIT ═══════════════
 function init() {
   load();
-  if (DATA.deal?.active) {
+  if (activeDeals().length > 0) {
     processDebt();
     document.getElementById('nav').classList.add('show');
     show('main');
-    updateFab();
     checkNotifications();
   } else {
-    obStep = 0;
-    show('ob');
-    document.getElementById('fab').classList.add('show');
+    startObFlow(false);
   }
   checkInstallBanner();
 }

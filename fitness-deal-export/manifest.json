@@ -2,7 +2,7 @@
   "name": "דיל כושר",
   "short_name": "דיל כושר",
   "description": "מחויבות יומית לאימון — עם מערכת חוב ותגמול",
-  "start_url": "./deal.html",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
