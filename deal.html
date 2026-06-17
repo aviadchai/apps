@@ -665,11 +665,7 @@ function show(name) {
   if (name === 'set') renderSettings();
   if (name === 'log') renderLog();
 
-  if (name === 'ob' || name === 'log') {
-    document.getElementById('fab').classList.remove('show');
-  } else {
-    updateFab();
-  }
+  updateFab();
 }
 
 // ═══════════════ EXERCISES ═══════════════
@@ -684,12 +680,9 @@ function updateFab() {
   const fab = document.getElementById('fab');
   if (!fab) return;
   const activeCount = activeDeals().length;
-  if (activeCount >= Object.keys(EXERCISES).length) {
-    fab.classList.remove('show');
-  } else {
-    fab.classList.add('show');
-    fab.title = activeCount === 0 ? 'דיל חדש' : 'הוסף אתגר';
-  }
+  const showFab = currentScreen === 'main' && activeCount < Object.keys(EXERCISES).length;
+  fab.classList.toggle('show', showFab);
+  fab.title = activeCount === 0 ? 'דיל חדש' : 'הוסף אתגר';
 }
 function fabAction() {
   startObFlow(activeDeals().length > 0);
