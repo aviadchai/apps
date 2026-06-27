@@ -356,14 +356,30 @@ function QuizScreen({ letterStates, onEnd, onUpdate }) {
   }, []);
 
   function generateQuiz(states) {
-    const sorted = [...LETTERS].sort((a, b) => {
-      const sa = states[a.id], sb = states[b.id];
-      const accA = sa.quizTotal ? sa.quizCorrect / sa.quizTotal : 0;
-      const accB = sb.quizTotal ? sb.quizCorrect / sb.quizTotal : 0;
-      return accA - accB;
+    const weighted = LETTERS.map(letter => {
+      const s = states[letter.id];
+      const progress = s.quizCorrect || 0;
+      if (s.learned) return { letter, weight: 1 };
+      if (s.quizTotal === 0) return { letter, weight: 15 };
+      const accuracy = s.quizCorrect / s.quizTotal;
+      const weight = Math.max(2, Math.round((1 - accuracy) * 20) + (10 - progress));
+      return { letter, weight };
     });
-
-    const picked = sorted.slice(0, 12);
+    const pool = [];
+    weighted.forEach(({ letter, weight }) => {
+      for (let i = 0; i < weight; i++) pool.push(letter);
+    });
+    const picked = [];
+    const used = new Set();
+    while (picked.length < 12 && pool.length > 0) {
+      const idx = Math.floor(Math.random() * pool.length);
+      const letter = pool[idx];
+      if (!used.has(letter.id)) {
+        picked.push(letter);
+        used.add(letter.id);
+      }
+      pool.splice(idx, 1);
+    }
     const qs = [];
     const types = ["identify", "sound", "reverse"];
 
