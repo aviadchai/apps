@@ -896,14 +896,16 @@ function App() {
   function handleQuizUpdate(id, correct) {
     setLetterStates(prev => {
       const cur = prev[id];
-      const newCorrect = cur.quizCorrect + (correct ? 1 : 0);
+      const newCorrect = correct
+        ? cur.quizCorrect + 1
+        : Math.max(0, cur.quizCorrect - 3);
       return {
         ...prev,
         [id]: {
           ...cur,
           quizCorrect: newCorrect,
           quizTotal: cur.quizTotal + 1,
-          learned: newCorrect >= 10 ? true : cur.learned
+          learned: newCorrect >= 10 ? true : false
         }
       };
     });
