@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="108" fill="#16a34a"/>
+  <!-- Dumbbell -->
+  <g fill="#fff">
+    <!-- Bar -->
+    <rect x="140" y="240" width="232" height="32" rx="16"/>
+    <!-- Left weight -->
+    <rect x="100" y="180" width="48" height="152" rx="12"/>
+    <rect x="72" y="200" width="36" height="112" rx="10"/>
+    <!-- Right weight -->
+    <rect x="364" y="180" width="48" height="152" rx="12"/>
+    <rect x="404" y="200" width="36" height="112" rx="10"/>
+  </g>
+  <!-- Lightning bolt / deal spark -->
+  <g fill="#fbbf24">
+    <polygon points="280,80 240,160 272,160 248,220 312,130 276,130 300,80"/>
+  </g>
+</svg>
