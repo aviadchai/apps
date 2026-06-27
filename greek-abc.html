@@ -116,7 +116,7 @@ const DAY_PLAN = [
   {day:10,target:24}
 ];
 
-const STORAGE_KEY = "greek_abc_v1";
+const STORAGE_KEY = "greek_abc_v2";
 
 function loadData() {
   try { const r = localStorage.getItem(STORAGE_KEY); if (r) return JSON.parse(r); } catch(e) {}
@@ -346,7 +346,7 @@ function LetterModal({ letter, state, onClose }) {
   );
 }
 
-function QuizScreen({ letterStates, unlockedLevel, onEnd, onUpdate }) {
+function QuizScreen({ letterStates, focusLevel, onEnd, onUpdate }) {
   const [questions, setQuestions] = useState([]);
   const [qi, setQi] = useState(0);
   const [selected, setSelected] = useState(null);
@@ -358,14 +358,18 @@ function QuizScreen({ letterStates, unlockedLevel, onEnd, onUpdate }) {
   }, []);
 
   function generateQuiz(states) {
-    const available = LETTERS.filter(l => l.difficulty <= unlockedLevel);
-    const weighted = available.map(letter => {
+    const weighted = LETTERS.map(letter => {
       const s = states[letter.id];
       const progress = s.quizCorrect || 0;
-      if (s.learned) return { letter, weight: 1 };
-      if (s.quizTotal === 0) return { letter, weight: 15 };
-      const accuracy = s.quizCorrect / s.quizTotal;
-      const weight = Math.max(2, Math.round((1 - accuracy) * 20) + (10 - progress));
+      let weight;
+      if (s.learned) { weight = 1; }
+      else if (s.quizTotal === 0) { weight = 15; }
+      else {
+        const accuracy = s.quizCorrect / s.quizTotal;
+        weight = Math.max(2, Math.round((1 - accuracy) * 20) + (10 - progress));
+      }
+      if (letter.difficulty === focusLevel) weight *= 3;
+      else if (letter.difficulty > focusLevel) weight = Math.max(1, Math.ceil(weight / 3));
       return { letter, weight };
     });
     const pool = [];
@@ -388,7 +392,7 @@ function QuizScreen({ letterStates, unlockedLevel, onEnd, onUpdate }) {
 
     picked.forEach((letter, i) => {
       const type = types[i % 3];
-      const others = shuffle(available.filter(l => l.id !== letter.id)).slice(0, 3);
+      const others = shuffle(LETTERS.filter(l => l.id !== letter.id)).slice(0, 3);
       const options = shuffle([letter, ...others]);
 
       if (type === "identify") {
@@ -762,7 +766,7 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
           αβγ
         </h1>
         <p style={{ margin: "4px 0 0", color: "#6b7280", fontSize: 14 }}>
-          האלפבית היווני ב-10 ימים <span style={{ color: "#cbd5e1", fontSize: 10 }}>v9</span>
+          האלפבית היווני ב-10 ימים <span style={{ color: "#9ca3af", fontSize: 11 }}>(v10)</span>
         </p>
       </div>
 
@@ -874,32 +878,15 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
         display: "flex", gap: 8, marginBottom: 16, justifyContent: "center"
       }}>
         {[1,2,3].map(d => {
-          const active = d <= unlockedLevel;
           const count = d === 1 ? learnedEasy : d === 2 ? learnedMed : learnedHard;
-          const isFocus = d === unlockedLevel && count < 8;
           return (
             <div key={d} style={{
               flex: 1, textAlign: "center", padding: "8px 4px",
-              borderRadius: 10,
-              background: DIFF_BG[d],
-              border: isFocus ? `2px solid ${DIFF_COLORS[d]}` : "1px solid " + DIFF_COLORS[d] + "40"
+              borderRadius: 10, background: DIFF_BG[d],
+              border: "1px solid " + DIFF_COLORS[d] + "40"
             }}>
-              <div style={{ fontSize: 10, color: DIFF_COLORS[d], fontWeight: 600 }}>
-                {isFocus ? `▸ ${DIFF_NAMES[d]}` : DIFF_NAMES[d]}
-              </div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: DIFF_COLORS[d] }}>
-                {count}/8
-              </div>
-              {isFocus && d < 3 && count < UNLOCK_THRESHOLD && (
-                <div style={{ fontSize: 9, color: "#6b7280", marginTop: 2 }}>
-                  עוד {UNLOCK_THRESHOLD - count} לשלב הבא
-                </div>
-              )}
-              {!active && (
-                <div style={{ fontSize: 9, color: "#9ca3af", marginTop: 2 }}>
-                  עוד לא במבחן
-                </div>
-              )}
+              <div style={{ fontSize: 10, color: DIFF_COLORS[d], fontWeight: 600 }}>{DIFF_NAMES[d]}</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: DIFF_COLORS[d] }}>{count}/8</div>
             </div>
           );
         })}
@@ -1037,7 +1024,7 @@ function App() {
       {screen === "quiz" && (
         <QuizScreen
           letterStates={letterStates}
-          unlockedLevel={getUnlockedLevel(letterStates)}
+          focusLevel={getUnlockedLevel(letterStates)}
           onEnd={() => setScreen("home")}
           onUpdate={handleQuizUpdate}
         />
@@ -1060,7 +1047,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
 <script>
 (function(){
-  var APP_VER = 'abc_v9';
+  var APP_VER = 'abc_v10';
   if ('caches' in window && localStorage.getItem('abc_ver') !== APP_VER) {
     caches.keys().then(function(names) {
       return Promise.all(names.map(function(n){ return caches.delete(n); }));
