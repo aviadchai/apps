@@ -172,9 +172,22 @@ function daysSince(dateStr) {
   return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
 }
 
-function BingoCell({ letter, state, onClick, highlight }) {
+function BingoCell({ letter, state, onClick, highlight, locked }) {
   const learned = state?.learned;
   const diff = letter.difficulty;
+  if (locked) return (
+    <div style={{
+      position: "relative",
+      background: "#f1f5f9",
+      borderRadius: 10, padding: "6px 2px",
+      textAlign: "center", minHeight: 48,
+      border: "2px solid #e2e8f0",
+      opacity: 0.5
+    }}>
+      <div style={{ fontSize: 18, fontWeight: 700, color: "#cbd5e1", lineHeight: 1.1 }}>?</div>
+      <div style={{ fontSize: 9, color: "#cbd5e1", marginTop: 1 }}>{'🔒'}</div>
+    </div>
+  );
   return (
     <div onClick={onClick} style={{
       position: "relative",
@@ -346,7 +359,7 @@ function LetterModal({ letter, state, onClose }) {
   );
 }
 
-function QuizScreen({ letterStates, onEnd, onUpdate }) {
+function QuizScreen({ letterStates, unlockedLevel, onEnd, onUpdate }) {
   const [questions, setQuestions] = useState([]);
   const [qi, setQi] = useState(0);
   const [selected, setSelected] = useState(null);
@@ -358,7 +371,8 @@ function QuizScreen({ letterStates, onEnd, onUpdate }) {
   }, []);
 
   function generateQuiz(states) {
-    const weighted = LETTERS.map(letter => {
+    const available = LETTERS.filter(l => l.difficulty <= unlockedLevel);
+    const weighted = available.map(letter => {
       const s = states[letter.id];
       const progress = s.quizCorrect || 0;
       if (s.learned) return { letter, weight: 1 };
@@ -387,7 +401,7 @@ function QuizScreen({ letterStates, onEnd, onUpdate }) {
 
     picked.forEach((letter, i) => {
       const type = types[i % 3];
-      const others = shuffle(LETTERS.filter(l => l.id !== letter.id)).slice(0, 3);
+      const others = shuffle(available.filter(l => l.id !== letter.id)).slice(0, 3);
       const options = shuffle([letter, ...others]);
 
       if (type === "identify") {
@@ -729,11 +743,22 @@ function ReadingQuizScreen({ onEnd }) {
   );
 }
 
+const UNLOCK_THRESHOLD = 6;
+
+function getUnlockedLevel(letterStates) {
+  const learnedEasy = LETTERS.filter(l => l.difficulty === 1 && letterStates[l.id]?.learned).length;
+  const learnedMed = LETTERS.filter(l => l.difficulty === 2 && letterStates[l.id]?.learned).length;
+  if (learnedEasy >= UNLOCK_THRESHOLD && learnedMed >= UNLOCK_THRESHOLD) return 3;
+  if (learnedEasy >= UNLOCK_THRESHOLD) return 2;
+  return 1;
+}
+
 function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading, challengeStart }) {
   const learnedCount = LETTERS.filter(l => letterStates[l.id]?.learned).length;
   const learnedEasy = LETTERS.filter(l => l.difficulty === 1 && letterStates[l.id]?.learned).length;
   const learnedMed = LETTERS.filter(l => l.difficulty === 2 && letterStates[l.id]?.learned).length;
   const learnedHard = LETTERS.filter(l => l.difficulty === 3 && letterStates[l.id]?.learned).length;
+  const unlockedLevel = getUnlockedLevel(letterStates);
 
   const challengeDay = challengeStart
     ? Math.min(10, daysSince(challengeStart) + 1)
@@ -861,18 +886,31 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
       <div style={{
         display: "flex", gap: 8, marginBottom: 16, justifyContent: "center"
       }}>
-        {[1,2,3].map(d => (
-          <div key={d} style={{
-            flex: 1, textAlign: "center", padding: "8px 4px",
-            borderRadius: 10, background: DIFF_BG[d],
-            border: "1px solid " + DIFF_COLORS[d] + "40"
-          }}>
-            <div style={{ fontSize: 10, color: DIFF_COLORS[d], fontWeight: 600 }}>{DIFF_NAMES[d]}</div>
-            <div style={{ fontSize: 18, fontWeight: 800, color: DIFF_COLORS[d] }}>
-              {d === 1 ? learnedEasy : d === 2 ? learnedMed : learnedHard}/8
+        {[1,2,3].map(d => {
+          const locked = d > unlockedLevel;
+          const count = d === 1 ? learnedEasy : d === 2 ? learnedMed : learnedHard;
+          return (
+            <div key={d} style={{
+              flex: 1, textAlign: "center", padding: "8px 4px",
+              borderRadius: 10,
+              background: locked ? "#f1f5f9" : DIFF_BG[d],
+              border: "1px solid " + (locked ? "#e2e8f0" : DIFF_COLORS[d] + "40"),
+              opacity: locked ? 0.6 : 1
+            }}>
+              <div style={{ fontSize: 10, color: locked ? "#94a3b8" : DIFF_COLORS[d], fontWeight: 600 }}>
+                {locked ? `🔒 ${DIFF_NAMES[d]}` : DIFF_NAMES[d]}
+              </div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: locked ? "#94a3b8" : DIFF_COLORS[d] }}>
+                {locked ? `${UNLOCK_THRESHOLD}/8` : `${count}/8`}
+              </div>
+              {!locked && d < 3 && count < UNLOCK_THRESHOLD && (
+                <div style={{ fontSize: 9, color: "#6b7280", marginTop: 2 }}>
+                  עוד {UNLOCK_THRESHOLD - count} לפתוח הבא
+                </div>
+              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <div style={{
@@ -884,8 +922,9 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
             key={letter.id}
             letter={letter}
             state={letterStates[letter.id]}
-            highlight={!letterStates[letter.id]?.learned && challengeDay > 0}
-            onClick={() => onSelectLetter(letter)}
+            highlight={!letterStates[letter.id]?.learned && challengeDay > 0 && letter.difficulty <= unlockedLevel}
+            locked={letter.difficulty > unlockedLevel}
+            onClick={() => letter.difficulty <= unlockedLevel && onSelectLetter(letter)}
           />
         ))}
       </div>
@@ -1007,6 +1046,7 @@ function App() {
       {screen === "quiz" && (
         <QuizScreen
           letterStates={letterStates}
+          unlockedLevel={getUnlockedLevel(letterStates)}
           onEnd={() => setScreen("home")}
           onUpdate={handleQuizUpdate}
         />
