@@ -553,21 +553,42 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, challengeStart 
               transition: "width 0.6s"
             }} />
           </div>
-          <div style={{
-            display: "flex", gap: 6, marginTop: 10, justifyContent: "center", flexWrap: "wrap"
-          }}>
+          <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 4 }}>
             {DAY_PLAN.map((dp, i) => {
+              const dayNum = i + 1;
               const done = dp.ids.every(id => letterStates[id]?.learned);
-              const current = i + 1 === challengeDay;
+              const current = dayNum === challengeDay;
+              const doneCount = dp.ids.filter(id => letterStates[id]?.learned).length;
+              const dayLetters = dp.ids.map(id => LETTERS.find(l => l.id === id)).filter(Boolean);
               return (
                 <div key={i} style={{
-                  width: 28, height: 28, borderRadius: "50%",
-                  background: done ? "#10b981" : current ? "#2563eb" : "#e5e7eb",
-                  color: done || current ? "#fff" : "#9ca3af",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 11, fontWeight: 700
+                  display: "flex", alignItems: "center", gap: 8,
+                  padding: "5px 8px", borderRadius: 8,
+                  background: current ? "#dbeafe" : done ? "#f0fdf4" : "transparent",
+                  border: current ? "1px solid #93c5fd" : "1px solid transparent"
                 }}>
-                  {done ? "✓" : i + 1}
+                  <div style={{
+                    width: 22, height: 22, borderRadius: "50%", flexShrink: 0,
+                    background: done ? "#10b981" : current ? "#2563eb" : "#e5e7eb",
+                    color: done || current ? "#fff" : "#9ca3af",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 10, fontWeight: 700
+                  }}>
+                    {done ? "✓" : dayNum}
+                  </div>
+                  <div style={{ flex: 1, fontSize: 12, color: done ? "#6b7280" : "#1e293b", fontWeight: current ? 700 : 400 }}>
+                    {dp.title}
+                  </div>
+                  <div style={{ fontSize: 11, color: "#6b7280", direction: "ltr" }}>
+                    {dayLetters.map(l => l.upper).join(" ")}
+                  </div>
+                  <div style={{
+                    fontSize: 10, fontWeight: 600, padding: "2px 6px", borderRadius: 6,
+                    background: done ? "#dcfce7" : "#f1f5f9",
+                    color: done ? "#166534" : "#64748b"
+                  }}>
+                    {doneCount}/{dp.ids.length}
+                  </div>
                 </div>
               );
             })}
