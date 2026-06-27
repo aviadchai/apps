@@ -7,6 +7,8 @@
 <link rel="manifest" href="greek-abc-manifest.json">
 <link rel="icon" href="icon-greek.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" sizes="180x180" href="icon-greek-180.png">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
 <meta name="theme-color" content="#f8fafc">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -980,6 +982,12 @@ function App() {
 }
 
 ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+  navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
+}
 </script>
 </body>
 </html>
