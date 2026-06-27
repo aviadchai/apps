@@ -270,10 +270,17 @@ function LetterModal({ letter, state, onClose }) {
           </div>
 
           <div style={{
-            fontSize: 72, fontWeight: 800, color: "#1e3a5f",
-            lineHeight: 1
+            display: "flex", alignItems: "baseline", justifyContent: "center",
+            gap: 18, lineHeight: 1
           }}>
-            {letter.upper}{letter.lower}
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontSize: 11, color: "#9ca3af", marginBottom: 2 }}>גדולה</div>
+              <div style={{ fontSize: 72, fontWeight: 800, color: "#1e3a5f" }}>{letter.upper}</div>
+            </div>
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontSize: 11, color: "#9ca3af", marginBottom: 2 }}>קטנה</div>
+              <div style={{ fontSize: 72, fontWeight: 800, color: "#1e3a5f" }}>{letter.lower}</div>
+            </div>
           </div>
 
           <div style={{
@@ -790,7 +797,7 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
           αβγ
         </h1>
         <p style={{ margin: "4px 0 0", color: "#6b7280", fontSize: 14 }}>
-          האלפבית היווני ב-10 ימים <span style={{ color: "#9ca3af", fontSize: 11 }}>(v13)</span>
+          האלפבית היווני ב-10 ימים <span style={{ color: "#9ca3af", fontSize: 11 }}>(v14)</span>
         </p>
       </div>
 
@@ -1071,7 +1078,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
 <script>
 (function(){
-  var APP_VER = 'abc_v13';
+  var APP_VER = 'abc_v14';
   if ('caches' in window && localStorage.getItem('abc_ver') !== APP_VER) {
     caches.keys().then(function(names) {
       return Promise.all(names.map(function(n){ return caches.delete(n); }));
