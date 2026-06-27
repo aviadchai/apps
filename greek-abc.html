@@ -100,10 +100,10 @@ const READING_WORDS = [
 ];
 
 const SCENE_STYLES = {
-  menu: { bg: "linear-gradient(135deg, #fef3c7, #fde68a)", border: "#f59e0b", label: "📋 תפריט יווני", cardBg: "#fffbeb", textColor: "#92400e" },
-  sign: { bg: "linear-gradient(135deg, #dbeafe, #93c5fd)", border: "#3b82f6", label: "🪧 שלט ברחוב", cardBg: "#eff6ff", textColor: "#1e40af" },
-  greeting: { bg: "linear-gradient(135deg, #fce7f3, #f9a8d4)", border: "#ec4899", label: "💌 ברכה יוונית", cardBg: "#fdf2f8", textColor: "#9d174d" },
-  nature: { bg: "linear-gradient(135deg, #d1fae5, #6ee7b7)", border: "#10b981", label: "🏝️ נוף יווני", cardBg: "#ecfdf5", textColor: "#065f46" }
+  menu: { border: "#f59e0b", label: "📋 תפריט בטאברנה", img: "https://images.unsplash.com/photo-1602591546738-ceab3d349681?w=420&h=220&fit=crop&q=80" },
+  sign: { border: "#3b82f6", label: "🪧 שלט ברחוב יווני", img: "https://images.unsplash.com/photo-1782178394562-98661f4eba37?w=420&h=220&fit=crop&q=80" },
+  greeting: { border: "#ec4899", label: "💌 ברכה מסנטוריני", img: "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=420&h=220&fit=crop&q=80" },
+  nature: { border: "#10b981", label: "🏝️ נוף יווני", img: "https://images.unsplash.com/photo-1533105079780-92b9be482077?w=420&h=220&fit=crop&q=80" }
 };
 
 const DIFF_NAMES = {1:"קלה",2:"בינונית",3:"קשה"};
@@ -631,9 +631,9 @@ function ReadingQuizScreen({ onEnd }) {
   useEffect(() => {
     const picked = shuffle(READING_WORDS).slice(0, 10);
     const qs = picked.map(word => {
-      const others = shuffle(READING_WORDS.filter(w => w.en !== word.en)).slice(0, 3);
+      const others = shuffle(READING_WORDS.filter(w => w.he !== word.he)).slice(0, 3);
       const options = shuffle([word, ...others]);
-      return { word, options, correctEn: word.en };
+      return { word, options, correctId: word.gr };
     });
     setQuestions(qs);
   }, []);
@@ -668,12 +668,12 @@ function ReadingQuizScreen({ onEnd }) {
   }
 
   const q = questions[qi];
-  const isCorrect = selected !== null ? selected === q.correctEn : null;
+  const isCorrect = selected !== null ? selected === q.correctId : null;
 
-  function handleSelect(en) {
+  function handleSelect(id) {
     if (selected !== null) return;
-    setSelected(en);
-    const correct = en === q.correctEn;
+    setSelected(id);
+    const correct = id === q.correctId;
     setStats(s => ({ correct: s.correct + (correct ? 1 : 0), total: s.total + 1 }));
     if (correct) speak(q.word.gr);
   }
@@ -709,33 +709,42 @@ function ReadingQuizScreen({ onEnd }) {
         const scene = SCENE_STYLES[q.word.scene] || SCENE_STYLES.sign;
         return (
           <div style={{
-            background: scene.bg, borderRadius: 20, padding: "14px 14px 16px",
+            borderRadius: 20, overflow: "hidden",
             marginBottom: 20, border: `1.5px solid ${scene.border}`,
-            boxShadow: "0 4px 15px rgba(0,0,0,0.08)"
+            boxShadow: "0 4px 15px rgba(0,0,0,0.12)",
+            position: "relative"
           }}>
             <div style={{
-              fontSize: 11, fontWeight: 600, color: scene.textColor,
-              textAlign: "center", marginBottom: 8, opacity: 0.8
-            }}>{scene.label}</div>
-            <div style={{
-              background: scene.cardBg, borderRadius: 14, padding: "18px 16px",
-              textAlign: "center", border: `1px solid ${scene.border}33`
+              backgroundImage: `url(${scene.img})`,
+              backgroundSize: "cover", backgroundPosition: "center",
+              height: 120
             }}>
-              <div style={{ fontSize: 28, marginBottom: 6 }}>{q.word.emoji}</div>
               <div style={{
-                fontSize: 42, fontWeight: 800, color: scene.textColor,
+                position: "absolute", top: 0, left: 0, right: 0, height: 120,
+                background: "linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.4))"
+              }}/>
+              <div style={{
+                position: "absolute", top: 8, left: 0, right: 0,
+                fontSize: 11, fontWeight: 600, color: "#fff",
+                textAlign: "center", textShadow: "0 1px 4px rgba(0,0,0,0.5)"
+              }}>{scene.label}</div>
+            </div>
+            <div style={{
+              background: "#fff", padding: "18px 16px 14px",
+              textAlign: "center"
+            }}>
+              <div style={{ fontSize: 24, marginBottom: 4 }}>{q.word.emoji}</div>
+              <div style={{
+                fontSize: 42, fontWeight: 800, color: "#1e3a5f",
                 lineHeight: 1.2, cursor: "pointer", direction: "ltr",
                 letterSpacing: 1
               }} onClick={() => speak(q.word.gr)}>
                 {q.word.gr}
               </div>
-            </div>
-            <div style={{ textAlign: "center", marginTop: 10 }}>
               <button onClick={() => speak(q.word.gr)} style={{
-                padding: "6px 16px", borderRadius: 99,
-                background: "rgba(255,255,255,0.7)", border: `1px solid ${scene.border}66`,
-                color: scene.textColor, fontSize: 13, cursor: "pointer",
-                backdropFilter: "blur(4px)"
+                marginTop: 8, padding: "6px 16px", borderRadius: 99,
+                background: "#f1f5f9", border: "1px solid #e2e8f0",
+                color: "#475569", fontSize: 13, cursor: "pointer"
               }}>{'🔊'} שמע</button>
             </div>
           </div>
@@ -745,7 +754,7 @@ function ReadingQuizScreen({ onEnd }) {
       <div style={{
         fontSize: 14, color: "#6b7280", textAlign: "center", marginBottom: 12
       }}>
-        איך קוראים את המילה הזו?
+        מה המילה הזו אומרת?
       </div>
 
       <div style={{
@@ -753,22 +762,22 @@ function ReadingQuizScreen({ onEnd }) {
         gap: 10, marginBottom: 20
       }}>
         {q.options.map(opt => {
-          const isThis = selected === opt.en;
-          const isRight = opt.en === q.correctEn;
+          const isThis = selected === opt.gr;
+          const isRight = opt.gr === q.correctId;
           let bg = "#fff", border = "#e5e7eb", color = "#1e293b";
           if (selected !== null) {
             if (isRight) { bg = "#f0fdf4"; border = "#10b981"; color = "#166534"; }
             else if (isThis && !isRight) { bg = "#fef2f2"; border = "#ef4444"; color = "#991b1b"; }
           }
           return (
-            <button key={opt.en} onClick={() => handleSelect(opt.en)} style={{
+            <button key={opt.gr} onClick={() => handleSelect(opt.gr)} style={{
               padding: "14px 18px",
-              fontSize: 18, fontWeight: 600, fontFamily: "monospace",
+              fontSize: 18, fontWeight: 600,
               background: bg, color, border: `2px solid ${border}`,
               borderRadius: 14, textAlign: "center",
-              transition: "all 0.15s", direction: "ltr"
+              transition: "all 0.15s"
             }}>
-              {opt.en}
+              {opt.he}
               {selected !== null && isRight && " ✓"}
             </button>
           );
@@ -785,7 +794,7 @@ function ReadingQuizScreen({ onEnd }) {
           }}>
             {isCorrect
               ? `נכון! ${q.word.gr} = ${q.word.he}`
-              : `לא — ${q.word.gr} = ${q.correctEn} (${q.word.he})`}
+              : `לא — ${q.word.gr} = ${q.word.he} (${q.word.en})`}
           </div>
           <button onClick={() => { setSelected(null); setQi(qi + 1); }} style={{
             width: "100%", padding: "14px 0", fontSize: 16, fontWeight: 700,
@@ -832,7 +841,7 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
           αβγ
         </h1>
         <p style={{ margin: "4px 0 0", color: "#6b7280", fontSize: 14 }}>
-          האלפבית היווני ב-10 ימים <span style={{ color: "#9ca3af", fontSize: 11 }}>(v16)</span>
+          האלפבית היווני ב-10 ימים <span style={{ color: "#9ca3af", fontSize: 11 }}>(v17)</span>
         </p>
       </div>
 
@@ -1113,7 +1122,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
 <script>
 (function(){
-  var APP_VER = 'abc_v16';
+  var APP_VER = 'abc_v17';
   if ('caches' in window && localStorage.getItem('abc_ver') !== APP_VER) {
     caches.keys().then(function(names) {
       return Promise.all(names.map(function(n){ return caches.delete(n); }));
