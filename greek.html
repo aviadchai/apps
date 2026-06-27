@@ -648,15 +648,30 @@ function App() {
     setScreen("home");
   }, []);
 
-  const saveTimer = useRef(null);
+  const wordStateRef = useRef(wordState);
   useEffect(() => {
+    wordStateRef.current = wordState;
     if (!wordState) return;
-    if (saveTimer.current) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => {
-      saveData({ wordState, savedAt: new Date().toISOString() });
-    }, 500);
-    return () => clearTimeout(saveTimer.current);
+    saveData({ wordState, savedAt: new Date().toISOString() });
   }, [wordState]);
+
+  useEffect(() => {
+    function emergencySave() {
+      if (wordStateRef.current) {
+        saveData({ wordState: wordStateRef.current, savedAt: new Date().toISOString() });
+      }
+    }
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") emergencySave();
+    });
+    window.addEventListener("pagehide", emergencySave);
+    window.addEventListener("beforeunload", emergencySave);
+    return () => {
+      document.removeEventListener("visibilitychange", emergencySave);
+      window.removeEventListener("pagehide", emergencySave);
+      window.removeEventListener("beforeunload", emergencySave);
+    };
+  }, []);
 
   const handleUpdateWord = useCallback((id, updates) => {
     setWordState(prev => ({
