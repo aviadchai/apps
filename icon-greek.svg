@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="108" fill="#1e3a5f"/>
+  <g fill="#fff">
+    <!-- Greek temple columns -->
+    <rect x="120" y="140" width="272" height="20" rx="4"/>
+    <!-- Pediment triangle -->
+    <polygon points="256,80 100,140 412,140" fill="#fff" opacity="0.9"/>
+    <!-- Columns -->
+    <rect x="140" y="160" width="28" height="180" rx="4"/>
+    <rect x="200" y="160" width="28" height="180" rx="4"/>
+    <rect x="284" y="160" width="28" height="180" rx="4"/>
+    <rect x="344" y="160" width="28" height="180" rx="4"/>
+    <!-- Base -->
+    <rect x="110" y="340" width="292" height="20" rx="4"/>
+    <rect x="100" y="360" width="312" height="16" rx="4"/>
+  </g>
+  <!-- Greek letters -->
+  <text x="256" y="440" text-anchor="middle" fill="#60a5fa" font-family="serif" font-size="56" font-weight="bold" font-style="italic">αβγ</text>
+</svg>
