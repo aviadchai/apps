@@ -1028,10 +1028,30 @@ function App() {
 ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
 <script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js');
-  navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
-}
+(function(){
+  var APP_VER = 'abc_v7';
+  if ('caches' in window && localStorage.getItem('abc_ver') !== APP_VER) {
+    caches.keys().then(function(names) {
+      return Promise.all(names.map(function(n){ return caches.delete(n); }));
+    }).then(function(){
+      localStorage.setItem('abc_ver', APP_VER);
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(regs) {
+          return Promise.all(regs.map(function(r){ return r.unregister(); }));
+        }).then(function(){
+          navigator.serviceWorker.register('sw.js').then(function(){
+            window.location.reload();
+          });
+        });
+      }
+    });
+  } else {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js');
+      navigator.serviceWorker.addEventListener('controllerchange', function(){ window.location.reload(); });
+    }
+  }
+})();
 </script>
 </body>
 </html>
