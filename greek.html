@@ -97,7 +97,7 @@ const LEVEL_NAMES = {
   10:"שפה ותרבות"
 };
 
-const STORAGE_KEY = "greek_vocab_v4";
+const STORAGE_KEY = "greek_vocab_v5";
 
 function loadData() {
   try {
@@ -236,7 +236,7 @@ function StarRating({ score }) {
 
 function HomeScreen({ wordState, onStart, onRoadmap }) {
   const total = ALL_WORDS.length;
-  const learned = ALL_WORDS.filter(w => (wordState[w.id]?.streak || 0) >= 3).length;
+  const learned = ALL_WORDS.filter(w => (wordState[w.id]?.streak || 0) >= 5).length;
   const mastered = ALL_WORDS.filter(w => wordState[w.id]?.score >= 8).length;
   const weak = ALL_WORDS.filter(w =>
     wordState[w.id]?.attempts > 0 && wordState[w.id]?.score < 3
@@ -350,7 +350,7 @@ function RoadmapScreen({ wordState, onBack }) {
 
       {levels.map(lvl => {
         const words = ALL_WORDS.filter(w => w.level === lvl);
-        const attempted = words.filter(w => (wordState[w.id]?.streak || 0) >= 3).length;
+        const attempted = words.filter(w => (wordState[w.id]?.streak || 0) >= 5).length;
         const mastered = words.filter(w => wordState[w.id]?.score >= 8).length;
         const pct = Math.round((mastered / 50) * 100);
         const isActive = attempted > 0;
