@@ -210,7 +210,7 @@ function BingoCell({ letter, state, onClick, highlight }) {
           height: 3, borderRadius: 2, background: "rgba(0,0,0,0.1)", overflow: "hidden"
         }}>
           <div style={{
-            width: (state.quizCorrect / 5 * 100) + "%",
+            width: (state.quizCorrect / 10 * 100) + "%",
             height: "100%", borderRadius: 2,
             background: DIFF_COLORS[diff]
           }} />
@@ -324,17 +324,17 @@ function LetterModal({ letter, state, onClose }) {
           ) : (
             <div>
               <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 6 }}>
-                התקדמות: {state?.quizCorrect || 0} / 5 תשובות נכונות
+                התקדמות: {state?.quizCorrect || 0} / 10 תשובות נכונות
               </div>
               <div style={{ background: "#e5e7eb", borderRadius: 99, height: 8, overflow: "hidden" }}>
                 <div style={{
-                  width: Math.min(100, ((state?.quizCorrect || 0) / 5) * 100) + "%",
+                  width: Math.min(100, ((state?.quizCorrect || 0) / 10) * 100) + "%",
                   height: "100%", background: DIFF_COLORS[diff], borderRadius: 99,
                   transition: "width 0.4s"
                 }} />
               </div>
               <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 4 }}>
-                ענה נכון 5 פעמים במבחנים כדי לסמן כנלמדה
+                ענה נכון 10 פעמים במבחנים כדי לסמן כנלמדה
               </div>
             </div>
           )}
@@ -903,7 +903,7 @@ function App() {
           ...cur,
           quizCorrect: newCorrect,
           quizTotal: cur.quizTotal + 1,
-          learned: newCorrect >= 5 ? true : cur.learned
+          learned: newCorrect >= 10 ? true : cur.learned
         }
       };
     });
