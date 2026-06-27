@@ -465,6 +465,10 @@ body.light-mode .cal-cell.future .cal-date,body.light-mode .cal-cell.missed .cal
         <h3>×2 Double</h3>
         <p>Missed reps come back doubled. Miss 25 — owe 50. Simple.</p>
       </div>
+      <div class="penalty-card" id="pc-accumulate" onclick="selectPenalty('accumulate')">
+        <h3 id="pc-accumulate-title">Accumulate</h3>
+        <p id="pc-accumulate-desc">Missed reps simply add up. No multiplier, no interest.</p>
+      </div>
       <div class="penalty-card" id="pc-percent" onclick="selectPenalty('percent')">
         <h3>Compound Interest</h3>
         <p>Debt grows daily if unpaid. Interest on interest.</p>
@@ -630,6 +634,7 @@ const T = {
     chooseChallenges: 'Choose Challenges', pickOne: 'You can pick more than one',
     missedDay: 'What happens on<br>a missed day?',
     doubleTitle: '×2 Double', doubleDesc: 'Missed reps come back doubled. Miss 25 — owe 50. Simple.',
+    accumulateTitle: 'Accumulate', accumulateDesc: 'Missed reps simply add up. No multiplier, no interest.',
     compoundTitle: 'Compound Interest', compoundDesc: 'Debt grows daily if unpaid. Interest on interest.',
     dailyPct: 'Daily %:', yourDeal: 'Your Deal',
     penalty: 'Penalty', starts: 'Starts', today: 'Today',
@@ -681,6 +686,7 @@ const T = {
     dealsLeftToday: (n, names) => `${n} deals left today — ${names}`,
     dealLeft: (name, due, unit) => `${name}: ${due} ${unit} left today`,
     double: 'Double ×2',
+    accumulate: 'Accumulate',
     interest: (pct) => `Interest ${pct}%`,
     interestDaily: (pct) => `${pct}% daily interest`,
   },
@@ -693,6 +699,7 @@ const T = {
     chooseChallenges: 'בחר אתגרים', pickOne: 'אפשר לבחור יותר מאחד',
     missedDay: 'מה קורה ביום<br>שהוחמץ?',
     doubleTitle: '×2 כפול', doubleDesc: 'חזרות שהוחמצו חוזרות כפול. החמצת 25 — חייב 50. פשוט.',
+    accumulateTitle: 'צבירה', accumulateDesc: 'חזרות שהוחמצו פשוט נצברות. בלי כפל, בלי ריבית.',
     compoundTitle: 'ריבית דריבית', compoundDesc: 'החוב גדל יומיומית אם לא משולם. ריבית על ריבית.',
     dailyPct: '% יומי:', yourDeal: 'הדיל שלך',
     penalty: 'עונש', starts: 'מתחיל', today: 'היום',
@@ -744,6 +751,7 @@ const T = {
     dealsLeftToday: (n, names) => `${n} דילים נשארו היום — ${names}`,
     dealLeft: (name, due, unit) => `${name}: ${due} ${unit} נשארו היום`,
     double: 'כפול ×2',
+    accumulate: 'צבירה',
     interest: (pct) => `ריבית ${pct}%`,
     interestDaily: (pct) => `${pct}% ריבית יומית`,
   }
@@ -1130,6 +1138,12 @@ function updateObTranslations() {
   if (el('ob-title-0')) el('ob-title-0').textContent = t('obTitle');
   if (el('ob-body-0')) el('ob-body-0').innerHTML = t('obBody');
   if (el('ob-btn-0')) el('ob-btn-0').textContent = t('letsGo');
+  const pcD = el('pc-double');
+  if (pcD) { pcD.querySelector('h3').textContent = t('doubleTitle'); pcD.querySelector('p').textContent = t('doubleDesc'); }
+  const pcA = el('pc-accumulate');
+  if (pcA) { pcA.querySelector('h3').textContent = t('accumulateTitle'); pcA.querySelector('p').textContent = t('accumulateDesc'); }
+  const pcP = el('pc-percent');
+  if (pcP) { pcP.querySelector('h3').textContent = t('compoundTitle'); pcP.querySelector('p').textContent = t('compoundDesc'); }
 }
 
 function renderExerciseCards() {
@@ -1201,6 +1215,7 @@ function obPrev() {
 function selectPenalty(type) {
   obPenalty = type;
   document.getElementById('pc-double').classList.toggle('selected', type === 'double');
+  document.getElementById('pc-accumulate').classList.toggle('selected', type === 'accumulate');
   document.getElementById('pc-percent').classList.toggle('selected', type === 'percent');
   document.getElementById('pct-row').style.display = type === 'percent' ? 'flex' : 'none';
 }
@@ -1213,6 +1228,8 @@ function updateSummary() {
   }).join('');
   if (obPenalty === 'double') {
     document.getElementById('sum-penalty').textContent = t('double');
+  } else if (obPenalty === 'accumulate') {
+    document.getElementById('sum-penalty').textContent = t('accumulate');
   } else {
     const pct = document.getElementById('pct-input').value || 20;
     document.getElementById('sum-penalty').textContent = t('interestDaily')(pct);
@@ -1939,7 +1956,7 @@ function renderSettings() {
   deals.forEach(deal => {
     const ex = EXERCISES[deal.exercise];
     const eName = exName(deal.exercise);
-    const penStr = deal.penaltyType === 'double' ? t('double') : t('interest')(deal.penaltyPercent);
+    const penStr = deal.penaltyType === 'double' ? t('double') : deal.penaltyType === 'accumulate' ? t('accumulate') : t('interest')(deal.penaltyPercent);
     const startStr = new Date(deal.startDate + 'T12:00:00').toLocaleDateString(locale, {month:'short',day:'numeric',year:'numeric'});
     const setUnit = ex.unit === 'sec' ? 'MM:SS' : ex.unit;
     dealsSection += `
