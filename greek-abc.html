@@ -29,26 +29,24 @@ const { useState, useEffect, useCallback, useRef } = React;
 
 const LETTERS = [
   {id:1,upper:"Α",lower:"α",name:"Άλφα",nameHe:"אלפא",sound:"a",soundHe:"אַ",hint:"כמו A באנגלית",example:"αγάπη",exampleHe:"אהבה",difficulty:1},
-  {id:2,upper:"Ε",lower:"ε",name:"Έψιλον",nameHe:"אפסילון",sound:"e",soundHe:"אֶ",hint:"כמו E באנגלית",example:"ελιά",exampleHe:"זית",difficulty:1},
-  {id:3,upper:"Ι",lower:"ι",name:"Ιώτα",nameHe:"יוטה",sound:"i",soundHe:"אִי",hint:"כמו I באנגלית",example:"ιδέα",exampleHe:"רעיון",difficulty:1},
-  {id:4,upper:"Κ",lower:"κ",name:"Κάππα",nameHe:"קאפא",sound:"k",soundHe:"ק",hint:"כמו K באנגלית",example:"καλό",exampleHe:"טוב",difficulty:1},
-  {id:5,upper:"Μ",lower:"μ",name:"Μι",nameHe:"מי",sound:"m",soundHe:"מ",hint:"כמו M באנגלית",example:"μέρα",exampleHe:"יום",difficulty:1},
-  {id:6,upper:"Ο",lower:"ο",name:"Όμικρον",nameHe:"אומיקרון",sound:"o",soundHe:"אוֹ",hint:"כמו O באנגלית",example:"όνομα",exampleHe:"שם",difficulty:1},
-  {id:7,upper:"Τ",lower:"τ",name:"Ταυ",nameHe:"טאו",sound:"t",soundHe:"ט",hint:"כמו T באנגלית",example:"τώρα",exampleHe:"עכשיו",difficulty:1},
-  {id:8,upper:"Ζ",lower:"ζ",name:"Ζήτα",nameHe:"זיטה",sound:"z",soundHe:"ז",hint:"כמו Z באנגלית",example:"ζωή",exampleHe:"חיים",difficulty:1},
-
   {id:9,upper:"Β",lower:"β",name:"Βήτα",nameHe:"ויטה",sound:"v",soundHe:"ו",hint:"נראה כמו B אבל נשמע V!",example:"βιβλίο",exampleHe:"ספר",difficulty:2},
   {id:10,upper:"Γ",lower:"γ",name:"Γάμα",nameHe:"גמא",sound:"gh",soundHe:"ג׳",hint:"כמו G רכה, לפני e/i נשמע Y",example:"γάτα",exampleHe:"חתול",difficulty:2},
   {id:11,upper:"Δ",lower:"δ",name:"Δέλτα",nameHe:"דלתא",sound:"dh",soundHe:"ד׳",hint:"כמו TH ב-the (עם רטט)",example:"δρόμος",exampleHe:"דרך",difficulty:2},
+  {id:2,upper:"Ε",lower:"ε",name:"Έψιλον",nameHe:"אפסילון",sound:"e",soundHe:"אֶ",hint:"כמו E באנגלית",example:"ελιά",exampleHe:"זית",difficulty:1},
+  {id:8,upper:"Ζ",lower:"ζ",name:"Ζήτα",nameHe:"זיטה",sound:"z",soundHe:"ז",hint:"כמו Z באנגלית",example:"ζωή",exampleHe:"חיים",difficulty:1},
+  {id:17,upper:"Η",lower:"η",name:"Ήτα",nameHe:"איטה",sound:"i",soundHe:"אִי",hint:"נראה כמו H אבל נשמע ee!",example:"ήλιος",exampleHe:"שמש",difficulty:3},
+  {id:18,upper:"Θ",lower:"θ",name:"Θήτα",nameHe:"תיטה",sound:"th",soundHe:"ת׳",hint:"כמו TH ב-think (בלי רטט)",example:"θέμα",exampleHe:"נושא",difficulty:3},
+  {id:3,upper:"Ι",lower:"ι",name:"Ιώτα",nameHe:"יוטה",sound:"i",soundHe:"אִי",hint:"כמו I באנגלית",example:"ιδέα",exampleHe:"רעיון",difficulty:1},
+  {id:4,upper:"Κ",lower:"κ",name:"Κάππα",nameHe:"קאפא",sound:"k",soundHe:"ק",hint:"כמו K באנגלית",example:"καλό",exampleHe:"טוב",difficulty:1},
   {id:12,upper:"Λ",lower:"λ",name:"Λάμδα",nameHe:"למדא",sound:"l",soundHe:"ל",hint:"כמו L, הצורה שונה מלטינית",example:"λόγος",exampleHe:"מילה",difficulty:2},
+  {id:5,upper:"Μ",lower:"μ",name:"Μι",nameHe:"מי",sound:"m",soundHe:"מ",hint:"כמו M באנגלית",example:"μέρα",exampleHe:"יום",difficulty:1},
   {id:13,upper:"Ν",lower:"ν",name:"Νι",nameHe:"ני",sound:"n",soundHe:"נ",hint:"ν נראה כמו v אבל זה N!",example:"νερό",exampleHe:"מים",difficulty:2},
+  {id:19,upper:"Ξ",lower:"ξ",name:"Ξι",nameHe:"קסי",sound:"ks",soundHe:"קס",hint:"כמו X באנגלית, שני צלילים",example:"ξένος",exampleHe:"זר",difficulty:3},
+  {id:6,upper:"Ο",lower:"ο",name:"Όμικρον",nameHe:"אומיקרון",sound:"o",soundHe:"אוֹ",hint:"כמו O באנגלית",example:"όνομα",exampleHe:"שם",difficulty:1},
   {id:14,upper:"Π",lower:"π",name:"Πι",nameHe:"פי",sound:"p",soundHe:"פּ",hint:"הסימן המוכר π, נשמע P",example:"πόλη",exampleHe:"עיר",difficulty:2},
   {id:15,upper:"Ρ",lower:"ρ",name:"Ρο",nameHe:"רו",sound:"r",soundHe:"ר",hint:"נראה כמו P אבל נשמע R!",example:"ρόδα",exampleHe:"גלגל",difficulty:2},
   {id:16,upper:"Σ",lower:"σ/ς",name:"Σίγμα",nameHe:"סיגמא",sound:"s",soundHe:"ס",hint:"σ באמצע מילה, ς בסוף",example:"σπίτι",exampleHe:"בית",difficulty:2},
-
-  {id:17,upper:"Η",lower:"η",name:"Ήτα",nameHe:"איטה",sound:"i",soundHe:"אִי",hint:"נראה כמו H אבל נשמע ee!",example:"ήλιος",exampleHe:"שמש",difficulty:3},
-  {id:18,upper:"Θ",lower:"θ",name:"Θήτα",nameHe:"תיטה",sound:"th",soundHe:"ת׳",hint:"כמו TH ב-think (בלי רטט)",example:"θέμα",exampleHe:"נושא",difficulty:3},
-  {id:19,upper:"Ξ",lower:"ξ",name:"Ξι",nameHe:"קסי",sound:"ks",soundHe:"קס",hint:"כמו X באנגלית, שני צלילים",example:"ξένος",exampleHe:"זר",difficulty:3},
+  {id:7,upper:"Τ",lower:"τ",name:"Ταυ",nameHe:"טאו",sound:"t",soundHe:"ט",hint:"כמו T באנגלית",example:"τώρα",exampleHe:"עכשיו",difficulty:1},
   {id:20,upper:"Υ",lower:"υ",name:"Ύψιλον",nameHe:"איפסילון",sound:"i",soundHe:"אִי",hint:"נראה כמו Y אבל נשמע ee!",example:"ύπνος",exampleHe:"שינה",difficulty:3},
   {id:21,upper:"Φ",lower:"φ",name:"Φι",nameHe:"פי",sound:"f",soundHe:"פ",hint:"כמו F באנגלית",example:"φίλος",exampleHe:"חבר",difficulty:3},
   {id:22,upper:"Χ",lower:"χ",name:"Χι",nameHe:"חי",sound:"ch",soundHe:"ח",hint:"כמו ח׳ית בעברית!",example:"χρόνος",exampleHe:"זמן",difficulty:3},
@@ -89,12 +87,22 @@ function initState() {
   return m;
 }
 
+const LETTER_PRONUNCIATIONS = {
+  "Άλφα":"άλφα","Βήτα":"βήτα","Γάμα":"γάμμα","Δέλτα":"δέλτα",
+  "Έψιλον":"έψιλον","Ζήτα":"ζήτα","Ήτα":"ήτα","Θήτα":"θήτα",
+  "Ιώτα":"ιώτα","Κάππα":"κάππα","Λάμδα":"λάμδα","Μι":"μι",
+  "Νι":"νι","Ξι":"ξι","Όμικρον":"όμικρον","Πι":"πι",
+  "Ρο":"ρο","Σίγμα":"σίγμα","Ταυ":"ταυ","Ύψιλον":"ύψιλον",
+  "Φι":"φι","Χι":"χι","Ψι":"ψι","Ωμέγα":"ωμέγα"
+};
 function speak(text) {
   if (!window.speechSynthesis) return;
   window.speechSynthesis.cancel();
-  const utt = new SpeechSynthesisUtterance(text);
+  const pron = LETTER_PRONUNCIATIONS[text];
+  const sayText = pron || text;
+  const utt = new SpeechSynthesisUtterance(sayText);
   utt.lang = "el-GR";
-  utt.rate = 0.7;
+  utt.rate = 0.6;
   const voices = window.speechSynthesis.getVoices();
   const greek = voices.find(v => v.lang === "el-GR") || voices.find(v => v.lang.startsWith("el"));
   if (greek) utt.voice = greek;
@@ -126,25 +134,25 @@ function BingoCell({ letter, state, onClick, highlight }) {
     <div onClick={onClick} style={{
       position: "relative",
       background: learned ? DIFF_COLORS[diff] : DIFF_BG[diff],
-      borderRadius: 12,
-      padding: "10px 4px",
+      borderRadius: 10,
+      padding: "6px 2px",
       textAlign: "center",
       cursor: "pointer",
       border: highlight ? `3px solid ${DIFF_COLORS[diff]}` : "2px solid " + (learned ? "transparent" : DIFF_COLORS[diff] + "40"),
       transition: "all 0.2s",
-      minHeight: 68
+      minHeight: 48
     }}>
       <div style={{
-        fontSize: 26, fontWeight: 700,
+        fontSize: 18, fontWeight: 700,
         color: learned ? "#fff" : "#1e293b",
         lineHeight: 1.1
       }}>
         {letter.upper}
       </div>
       <div style={{
-        fontSize: 14,
+        fontSize: 11,
         color: learned ? "rgba(255,255,255,0.8)" : "#6b7280",
-        marginTop: 2
+        marginTop: 1
       }}>
         {letter.lower}
       </div>
@@ -493,6 +501,7 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, challengeStart 
     : 0;
   const todayPlan = challengeDay > 0 ? DAY_PLAN[challengeDay - 1] : null;
   const todayIds = new Set(todayPlan?.ids || []);
+  const todayRemaining = todayPlan ? todayPlan.ids.filter(id => !letterStates[id]?.learned).length : 0;
 
   return (
     <div style={{ padding: "20px 16px", maxWidth: 480, margin: "0 auto" }}>
@@ -518,6 +527,25 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, challengeStart 
             <span>יום {challengeDay}/10 — {todayPlan?.title}</span>
             <span>{learnedCount}/24</span>
           </div>
+          {todayRemaining > 0 ? (
+            <div style={{
+              fontSize: 13, color: "#b45309", fontWeight: 600,
+              marginBottom: 8, textAlign: "center",
+              padding: "6px 10px", borderRadius: 8,
+              background: "#fef3c7"
+            }}>
+              {'📋'} נשאר להיום: {todayRemaining} {todayRemaining === 1 ? "אות" : "אותיות"}
+            </div>
+          ) : todayPlan && (
+            <div style={{
+              fontSize: 13, color: "#166534", fontWeight: 600,
+              marginBottom: 8, textAlign: "center",
+              padding: "6px 10px", borderRadius: 8,
+              background: "#dcfce7"
+            }}>
+              {'✅'} סיימת את המשימה של היום!
+            </div>
+          )}
           <div style={{ background: "#e0f2fe", borderRadius: 99, height: 8, overflow: "hidden" }}>
             <div style={{
               width: (learnedCount / 24 * 100) + "%",
@@ -565,8 +593,8 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, challengeStart 
       </div>
 
       <div style={{
-        display: "grid", gridTemplateColumns: "repeat(4, 1fr)",
-        gap: 8, marginBottom: 20
+        display: "grid", gridTemplateColumns: "repeat(6, 1fr)",
+        gap: 6, marginBottom: 20
       }}>
         {LETTERS.map(letter => (
           <BingoCell
