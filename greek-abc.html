@@ -793,20 +793,50 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
             }} />
           </div>
           <div style={{
-            display: "flex", gap: 6, marginTop: 10, justifyContent: "center", flexWrap: "wrap"
+            display: "flex", gap: 4, marginTop: 10, justifyContent: "center", flexWrap: "wrap"
           }}>
             {DAY_PLAN.map((dp, i) => {
-              const done = dp.ids.every(id => letterStates[id]?.learned);
+              const doneCount = dp.ids.filter(id => letterStates[id]?.learned).length;
+              const total = dp.ids.length;
+              const allDone = doneCount === total;
               const current = i + 1 === challengeDay;
+              const pct = total > 0 ? doneCount / total : 0;
               return (
                 <div key={i} style={{
-                  width: 28, height: 28, borderRadius: "50%",
-                  background: done ? "#10b981" : current ? "#2563eb" : "#e5e7eb",
-                  color: done || current ? "#fff" : "#9ca3af",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 11, fontWeight: 700
+                  display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
+                  width: 30
                 }}>
-                  {done ? "✓" : i + 1}
+                  <div style={{
+                    position: "relative", width: 28, height: 28
+                  }}>
+                    <svg width="28" height="28" viewBox="0 0 28 28">
+                      <circle cx="14" cy="14" r="12" fill="none"
+                        stroke={allDone ? "#10b981" : current ? "#93c5fd" : "#e5e7eb"}
+                        strokeWidth="3" />
+                      {pct > 0 && !allDone && (
+                        <circle cx="14" cy="14" r="12" fill="none"
+                          stroke={current ? "#2563eb" : "#10b981"}
+                          strokeWidth="3"
+                          strokeDasharray={`${pct * 75.4} 75.4`}
+                          strokeLinecap="round"
+                          transform="rotate(-90 14 14)" />
+                      )}
+                    </svg>
+                    <div style={{
+                      position: "absolute", inset: 0,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: 10, fontWeight: 700,
+                      color: allDone ? "#10b981" : current ? "#2563eb" : "#9ca3af"
+                    }}>
+                      {allDone ? "✓" : i + 1}
+                    </div>
+                  </div>
+                  <div style={{
+                    fontSize: 8, fontWeight: 600,
+                    color: allDone ? "#10b981" : "#9ca3af"
+                  }}>
+                    {doneCount}/{total}
+                  </div>
                 </div>
               );
             })}
