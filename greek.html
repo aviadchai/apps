@@ -97,12 +97,22 @@ const LEVEL_NAMES = {
   10:"שפה ותרבות"
 };
 
-const STORAGE_KEY = "greek_vocab_v5";
+const STORAGE_KEY = "greek_vocab_v4";
 
 function loadData() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const data = JSON.parse(raw);
+      if (data && data.wordState) {
+        Object.keys(data.wordState).forEach(id => {
+          if (data.wordState[id].streak === undefined) {
+            data.wordState[id].streak = 0;
+          }
+        });
+      }
+      return data;
+    }
   } catch (e) {}
   return null;
 }
