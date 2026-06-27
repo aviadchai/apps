@@ -256,12 +256,12 @@ function HomeScreen({ wordState, onStart, onRoadmap }) {
   return (
     <div style={{ padding: "24px 20px", maxWidth: 480, margin: "0 auto" }}>
       <div style={{ textAlign: "center", marginBottom: 28 }}>
-        <div style={{ fontSize: 48, marginBottom: 8 }}>🇬🇷</div>
-        <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, color: "#1e3a5f", fontFamily: "sans-serif" }}>
-          יווניCal
+        <div style={{ fontSize: 48, marginBottom: 4 }}>🇬🇷</div>
+        <h1 style={{ margin: 0, fontSize: 28, fontWeight: 800, color: "#1e3a5f", fontFamily: "sans-serif", letterSpacing: -0.5 }}>
+          יווני<span style={{ color: "#2563eb" }}>Cal</span>
         </h1>
-        <p style={{ margin: "4px 0 0", color: "#6b7280", fontSize: 14 }}>
-          500 מילים לתייר שנחת הרגע
+        <p style={{ margin: "6px 0 0", color: "#6b7280", fontSize: 14 }}>
+          500 מילים לתייר שנחת הרגע <span style={{ color: "#9ca3af", fontSize: 11 }}>(v2)</span>
         </p>
       </div>
 
@@ -674,10 +674,12 @@ function App() {
   }, []);
 
   const handleUpdateWord = useCallback((id, updates) => {
-    setWordState(prev => ({
-      ...prev,
-      [id]: { ...prev[id], ...updates }
-    }));
+    setWordState(prev => {
+      const next = { ...prev, [id]: { ...prev[id], ...updates } };
+      wordStateRef.current = next;
+      try { saveData({ wordState: next, savedAt: new Date().toISOString() }); } catch(e) {}
+      return next;
+    });
   }, []);
 
   if (screen === "loading" || !wordState) {
