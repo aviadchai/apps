@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Redirecting...</title>
+<script>
+if ('caches' in window) {
+  caches.keys().then(function(names) {
+    return Promise.all(names.map(function(n){ return caches.delete(n); }));
+  });
+}
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(function(regs) {
+    regs.forEach(function(r){ r.unregister(); });
+  });
+}
+setTimeout(function(){
+  window.location.replace('greek-abc.html?r=' + Date.now());
+}, 1000);
+</script>
+</head>
+<body style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;background:#f8fafc;">
+<div style="text-align:center;">
+<div style="font-size:48px;margin-bottom:16px;">🔄</div>
+<div style="color:#6b7280;">מנקה קאש ומעדכן...</div>
+</div>
+</body>
+</html>
