@@ -116,19 +116,23 @@ function saveData(data) {
 function initWordState() {
   const map = {};
   ALL_WORDS.forEach(w => {
-    map[w.id] = { score: 0, attempts: 0, correct: 0, lastSeen: null };
+    map[w.id] = { score: 0, attempts: 0, correct: 0, lastSeen: null, pinned: false };
   });
   return map;
 }
 
-function pickWord(wordState, unlockedLevel) {
-  const pool = ALL_WORDS.filter(w => w.level <= unlockedLevel);
+function pickWord(wordState, unlockedLevel, mode) {
+  let pool = ALL_WORDS.filter(w => w.level <= unlockedLevel);
+  if (mode === "weak") pool = pool.filter(w => wordState[w.id]?.attempts > 0 && wordState[w.id]?.score < 3);
+  if (mode === "pinned") pool = pool.filter(w => wordState[w.id]?.pinned);
+  if (pool.length === 0) pool = ALL_WORDS.filter(w => w.level <= unlockedLevel);
   const weighted = pool.map(w => {
     const s = wordState[w.id];
     const daysSince = s.lastSeen
       ? (Date.now() - new Date(s.lastSeen)) / 86400000
       : 999;
-    const weight = Math.max(1, (10 - s.score) * 3 + Math.min(daysSince * 2, 20));
+    let weight = Math.max(1, (10 - s.score) * 3 + Math.min(daysSince * 2, 20));
+    if (s.pinned) weight *= 4;
     return { word: w, weight };
   });
   const total = weighted.reduce((a, b) => a + b.weight, 0);
@@ -146,7 +150,15 @@ function speak(text) {
   const utt = new SpeechSynthesisUtterance(text);
   utt.lang = "el-GR";
   utt.rate = 0.85;
+  const voices = window.speechSynthesis.getVoices();
+  const greek = voices.find(v => v.lang === "el-GR") ||
+                voices.find(v => v.lang.startsWith("el"));
+  if (greek) utt.voice = greek;
   window.speechSynthesis.speak(utt);
+}
+if (window.speechSynthesis) {
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
 }
 
 function normalize(s) {
@@ -221,6 +233,7 @@ function HomeScreen({ wordState, onStart, onRoadmap }) {
   const weak = ALL_WORDS.filter(w =>
     wordState[w.id]?.attempts > 0 && wordState[w.id]?.score < 3
   ).length;
+  const pinned = ALL_WORDS.filter(w => wordState[w.id]?.pinned).length;
 
   return (
     <div style={{ padding: "24px 20px", maxWidth: 480, margin: "0 auto" }}>
@@ -288,6 +301,17 @@ function HomeScreen({ wordState, onStart, onRoadmap }) {
           marginBottom: 12
         }}>
           חזרה על מילים קשות ({weak}) 🔄
+        </button>
+      )}
+
+      {pinned > 0 && (
+        <button onClick={() => onStart("pinned")} style={{
+          width: "100%", padding: "13px 0", fontSize: 16, fontWeight: 600,
+          background: "#fffbeb", color: "#d97706",
+          border: "2px solid #fcd34d", borderRadius: 14, cursor: "pointer",
+          marginBottom: 12
+        }}>
+          תרגול מילים נעוצות ({pinned}) 📌
         </button>
       )}
 
@@ -370,13 +394,13 @@ function PracticeScreen({ wordState, mode, onEnd, onUpdateWord }) {
   );
 
   const loadNext = useCallback(() => {
-    const word = pickWord(wordState, unlockedLevel);
+    const word = pickWord(wordState, unlockedLevel, mode);
     setCurrentWord(word);
     setInput("");
     setResult(null);
     setRevealed(false);
     setTimeout(() => inputRef.current?.focus(), 100);
-  }, [wordState, unlockedLevel]);
+  }, [wordState, unlockedLevel, mode]);
 
   useEffect(() => { loadNext(); }, []);
 
@@ -461,16 +485,29 @@ function PracticeScreen({ wordState, mode, onEnd, onUpdateWord }) {
           {wordState[currentWord.id]?.attempts || 0} ניסיונות
         </div>
 
-        <button
-          onClick={() => speak(currentWord.greek)}
-          style={{
-            marginTop: 16, padding: "8px 20px", borderRadius: 99,
-            background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.4)",
-            color: "#fff", fontSize: 15, cursor: "pointer", display: "inline-flex",
-            alignItems: "center", gap: 6
-          }}>
-          🔊 שמע
-        </button>
+        <div style={{ marginTop: 16, display: "flex", justifyContent: "center", gap: 10 }}>
+          <button
+            onClick={() => speak(currentWord.greek)}
+            style={{
+              padding: "8px 20px", borderRadius: 99,
+              background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.4)",
+              color: "#fff", fontSize: 15, cursor: "pointer", display: "inline-flex",
+              alignItems: "center", gap: 6
+            }}>
+            🔊 שמע
+          </button>
+          <button
+            onClick={() => onUpdateWord(currentWord.id, { pinned: !wordState[currentWord.id]?.pinned })}
+            style={{
+              padding: "8px 20px", borderRadius: 99,
+              background: wordState[currentWord.id]?.pinned ? "rgba(251,191,36,0.4)" : "rgba(255,255,255,0.2)",
+              border: wordState[currentWord.id]?.pinned ? "1px solid #fbbf24" : "1px solid rgba(255,255,255,0.4)",
+              color: "#fff", fontSize: 15, cursor: "pointer", display: "inline-flex",
+              alignItems: "center", gap: 6
+            }}>
+            📌 {wordState[currentWord.id]?.pinned ? "נעוץ" : "נעץ"}
+          </button>
+        </div>
       </div>
 
       <div style={{ marginBottom: 16 }}>
@@ -576,7 +613,7 @@ function App() {
     if (saved?.wordState) {
       const merged = initWordState();
       Object.keys(saved.wordState).forEach(id => {
-        if (merged[id] !== undefined) merged[id] = saved.wordState[id];
+        if (merged[id] !== undefined) merged[id] = { ...merged[id], ...saved.wordState[id] };
       });
       setWordState(merged);
     } else {

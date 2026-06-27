@@ -1,35 +1,50 @@
 <!DOCTYPE html>
-<html lang="he" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
-<title>דיל כושר</title>
-<meta name="theme-color" content="#0D1F1C">
+<title>Fitness Deal</title>
+<meta name="theme-color" content="#05080F">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="דיל כושר">
-<link rel="manifest" href="deal-manifest.json">
-<link rel="icon" type="image/svg+xml" href="icon.svg">
-<link rel="apple-touch-icon" href="icon.svg">
+<meta name="apple-mobile-web-app-title" content="Fitness Deal">
+<meta name="screen-orientation" content="portrait">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="fitness-icon-192.png">
+<link rel="apple-touch-icon" sizes="192x192" href="fitness-icon-192.png">
 <style>
 :root {
-  --bg:#061412;--bg2:#1A2C29;--bg3:#253935;--bg4:#304542;
-  --label:#E0F2F1;--label2:#80CBC4;--label3:rgba(224,242,241,0.38);
-  --sep:rgba(77,182,172,0.14);--fill:rgba(77,182,172,0.12);
-  --accent:#4DB6AC;--accent-cont:rgba(77,182,172,0.15);
-  --green:#69F0AE;--orange:#FFB300;--red:#CF6679;
+  --bg:#0A0A0F;--bg2:#141418;--bg3:#1C1C22;--bg4:#26262E;
+  --label:#F5F5FF;--label2:#888898;--label3:rgba(245,245,255,0.28);
+  --sep:rgba(255,255,255,0.07);--fill:rgba(255,107,0,0.08);
+  --accent:#FF6B00;--accent-dark:#1A0800;--accent-cont:rgba(255,107,0,0.15);
+  --green:#FFB800;--orange:#FF8C00;--red:#FF453A;
+  --ring1:#FF6B00;--ring2:#FF4D8C;--ring3:#4DA6FF;
+  --card-bg:linear-gradient(145deg,#1A1A20,#111116);--card-border:rgba(255,255,255,0.07);
   --safe-top:env(safe-area-inset-top);--safe-bottom:env(safe-area-inset-bottom);
+  --safe-left:env(safe-area-inset-left);--safe-right:env(safe-area-inset-right);
+}
+body.light-mode{
+  --bg:#F2F2F7;--bg2:#FFFFFF;--bg3:#E8E8EF;--bg4:#D4D4DC;
+  --label:#0A0A0F;--label2:#6E6E80;--label3:rgba(10,10,15,0.35);
+  --sep:rgba(0,0,0,0.08);--fill:rgba(255,85,0,0.06);
+  --accent:#FF5500;--accent-dark:#FFFFFF;--accent-cont:rgba(255,85,0,0.12);
+  --green:#FFB800;--orange:#FF6B00;--red:#FF3B30;
+  --ring1:#FF6B00;--ring2:#FF4D8C;--ring3:#4DA6FF;
+  --card-bg:linear-gradient(145deg,#FFFFFF,#F8F8FC);--card-border:rgba(0,0,0,0.08);
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-html,body{height:100%;height:100dvh;font-family:Roboto,system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--label);overflow:hidden;font-variant-numeric:tabular-nums;}
-#app{display:flex;flex-direction:column;height:100dvh;position:relative;}
+html{position:fixed;width:100%;height:100%;overflow:hidden;background:var(--bg);}
+body{width:100%;height:100%;height:100dvh;font-family:Roboto,system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--label);overflow:hidden;font-variant-numeric:tabular-nums;-webkit-text-size-adjust:100%;touch-action:manipulation;}
+#app{display:flex;flex-direction:column;height:100dvh;height:100%;position:relative;}
 
 .screen{position:absolute;inset:0;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity 0.22s ease;overflow:hidden;}
 .screen.active{opacity:1;pointer-events:all;}
 
 /* Nav — Material 3 Navigation Bar */
-#nav{display:none;position:fixed;bottom:0;left:0;right:0;background:#0D1F1C;border-top:1px solid var(--sep);padding:8px 0 calc(8px + var(--safe-bottom));flex-direction:row;z-index:100;}
+#nav{display:none;position:fixed;bottom:calc(12px + var(--safe-bottom));left:16px;right:16px;background:rgba(30,30,35,0.75);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);border:1px solid rgba(255,255,255,0.1);border-radius:28px;padding:10px 0;flex-direction:row;z-index:100;box-shadow:0 8px 32px rgba(0,0,0,0.3);}
 #nav.show{display:flex;}
+body.light-mode #nav{background:rgba(255,255,255,0.78);border-color:rgba(0,0,0,0.06);box-shadow:0 8px 32px rgba(0,0,0,0.1);}
 .nav-btn{flex:1;background:none;border:none;cursor:pointer;color:var(--label3);font-family:inherit;font-size:11px;font-weight:500;display:flex;flex-direction:column;align-items:center;gap:0;padding:0;transition:color 0.18s;}
 .nav-indicator{width:56px;height:28px;border-radius:14px;background:transparent;transition:background 0.22s;display:flex;align-items:center;justify-content:center;margin-bottom:3px;}
 .nav-btn.active .nav-indicator{background:var(--accent-cont);}
@@ -38,7 +53,8 @@ html,body{height:100%;height:100dvh;font-family:Roboto,system-ui,-apple-system,s
 .nav-btn.active svg{stroke-width:2.4;}
 
 /* Screen header — Material App Bar */
-.s-header{display:flex;align-items:center;gap:12px;padding:0 16px;padding-top:calc(14px + var(--safe-top));padding-bottom:14px;background:#0D1F1C;border-bottom:1px solid var(--sep);flex-shrink:0;}
+.s-header{display:flex;align-items:center;gap:12px;padding:0 16px;padding-top:calc(14px + var(--safe-top));padding-bottom:14px;background:rgba(5,8,15,0.88);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-bottom:1px solid rgba(255,255,255,0.07);flex-shrink:0;}
+body.light-mode .s-header { background: rgba(242,242,247,0.92); border-bottom: 1px solid rgba(0,0,0,0.1); }
 .s-header h2{font-size:20px;font-weight:500;flex:1;letter-spacing:0.15px;}
 .icon-btn{background:none;border:none;cursor:pointer;color:var(--label2);padding:8px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:background 0.15s;}
 .icon-btn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
@@ -57,12 +73,18 @@ html,body{height:100%;height:100dvh;font-family:Roboto,system-ui,-apple-system,s
 .ob-dot{width:8px;height:8px;border-radius:4px;background:var(--bg4);transition:all 0.25s;}
 .ob-dot.on{width:22px;background:var(--accent);}
 
-.target-row{display:flex;align-items:center;gap:28px;margin:4px 0;}
 .qty-btn{width:52px;height:52px;border-radius:50%;background:var(--bg2);border:none;color:var(--label);font-size:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.12s;}
 .qty-btn:active{background:var(--bg3);transform:scale(0.9);}
-#target-display{font-size:64px;font-weight:700;letter-spacing:-3px;min-width:90px;text-align:center;}
+.qty-btn.small{width:36px;height:36px;font-size:18px;}
 
-.penalty-cards{display:flex;flex-direction:column;gap:10px;width:100%;}
+.ob-targets-list{display:flex;flex-direction:column;gap:10px;width:100%;}
+.target-row-compact{display:flex;align-items:center;gap:12px;width:100%;background:var(--bg2);border-radius:12px;padding:10px 14px;}
+.target-ex-name{flex:1;font-size:14px;text-align:right;}
+.target-stepper{display:flex;align-items:center;gap:10px;}
+.target-val{font-size:18px;font-weight:700;min-width:32px;text-align:center;}
+.target-unit-label{font-size:12px;color:var(--label3);min-width:42px;text-align:left;}
+
+.penalty-cards{display:flex;flex-direction:column;gap:12px;width:100%;}
 .penalty-card{background:var(--bg2);border-radius:14px;padding:16px 18px;cursor:pointer;text-align:right;transition:all 0.18s;border:2px solid transparent;}
 .penalty-card.selected{border-color:var(--accent);background:var(--accent-cont);}
 .penalty-card h3{font-size:16px;font-weight:600;margin-bottom:4px;}
@@ -71,19 +93,19 @@ html,body{height:100%;height:100dvh;font-family:Roboto,system-ui,-apple-system,s
 .pct-row label{font-size:13px;color:var(--label2);flex-shrink:0;}
 #pct-input{flex:1;background:var(--bg3);border:none;border-radius:8px;color:var(--label);font-size:16px;font-family:inherit;padding:8px 12px;outline:none;text-align:center;max-width:90px;}
 
-.sign-btn{width:150px;height:150px;border-radius:50%;background:var(--accent);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 10px var(--accent-cont),0 8px 32px rgba(77,182,172,0.35);transition:all 0.2s;}
-.sign-btn:active{transform:scale(0.93);box-shadow:0 0 0 6px var(--accent-cont),0 4px 16px rgba(77,182,172,0.25);}
-.sign-btn svg{width:68px;height:68px;fill:none;stroke:#003731;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.sign-btn{width:150px;height:150px;border-radius:50%;background:var(--accent);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 12px var(--accent-cont),0 8px 40px rgba(255,107,0,0.3);transition:all 0.2s;}
+.sign-btn:active{transform:scale(0.93);box-shadow:0 0 0 6px var(--accent-cont),0 4px 16px rgba(255,107,0,0.2);}
+.sign-btn svg{width:68px;height:68px;fill:none;stroke:var(--accent-dark);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
 
 /* Summary card */
 #deal-summary{background:var(--bg2);border-radius:16px;overflow:hidden;width:100%;}
-.summary-row{display:flex;justify-content:space-between;font-size:15px;padding:13px 18px;border-bottom:1px solid var(--sep);}
+.summary-row{display:flex;justify-content:space-between;font-size:15px;padding:15px 18px;border-bottom:1px solid var(--sep);}
 .summary-row:last-child{border-bottom:none;}
 .summary-key{color:var(--label2);}
 .summary-val{font-weight:500;}
 
 /* Shared buttons */
-.btn-primary{background:var(--accent);color:#003731;border:none;border-radius:50px;padding:16px;font-family:inherit;font-size:16px;font-weight:700;cursor:pointer;width:100%;transition:opacity 0.15s;letter-spacing:0.02em;}
+.btn-primary{background:var(--accent);color:var(--accent-dark);border:none;border-radius:50px;padding:16px;font-family:inherit;font-size:16px;font-weight:700;cursor:pointer;width:100%;transition:opacity 0.15s;letter-spacing:0.02em;}
 .btn-primary:active{opacity:0.75;}
 .btn-text-cancel{background:none;border:none;color:var(--accent);font-family:inherit;font-size:16px;cursor:pointer;padding:12px;width:100%;text-align:center;}
 .btn-text-cancel:active{opacity:0.6;}
@@ -92,8 +114,8 @@ html,body{height:100%;height:100dvh;font-family:Roboto,system-ui,-apple-system,s
 .btn-back{background:none;border:none;color:var(--accent);font-family:inherit;font-size:16px;cursor:pointer;padding:12px 0;width:100%;text-align:center;}
 
 /* Main screen */
-#s-main{padding-bottom:calc(88px + var(--safe-bottom));}
-.main-body{flex:1;overflow-y:auto;padding:24px 20px;display:flex;flex-direction:column;align-items:center;gap:20px;}
+#s-main{padding-bottom:0;padding-top:var(--safe-top);}
+.main-body{flex:1;overflow-y:auto;padding:16px 20px calc(90px + var(--safe-bottom));display:flex;flex-direction:column;align-items:center;gap:16px;}
 
 /* Progress ring */
 .ring-section{display:flex;flex-direction:column;align-items:center;gap:20px;width:100%;}
@@ -101,28 +123,55 @@ html,body{height:100%;height:100dvh;font-family:Roboto,system-ui,-apple-system,s
 .ring-svg{width:220px;height:220px;transform:rotate(-90deg);}
 .ring-track{fill:none;stroke:var(--bg3);stroke-width:18;}
 .ring-fill{fill:none;stroke:var(--accent);stroke-width:18;stroke-linecap:round;stroke-dasharray:502.65;stroke-dashoffset:502.65;transition:stroke-dashoffset 0.8s cubic-bezier(0.4,0,0.2,1),stroke 0.3s;}
+.ring-svg{overflow:visible;}
 .ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;}
 .ring-num{font-size:64px;font-weight:700;letter-spacing:-3px;line-height:1;}
-.ring-num.r-done{color:var(--green);}
+.ring-num.r-done{color:var(--accent);}
 .ring-label{font-size:14px;color:var(--label2);}
 .ring-sub{font-size:13px;color:var(--label3);margin-top:2px;}
+.ring-countdown{font-size:12px;color:var(--label3);margin-top:6px;}
 
-.chips-row{display:flex;gap:10px;justify-content:center;}
+.deals-grid{display:flex;flex-direction:column;gap:16px;width:100%;}
+.deal-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:20px;padding:18px 18px;width:100%;display:flex;flex-direction:column;align-items:center;gap:12px;margin:0;}
+.deal-card-header{display:flex;align-items:center;justify-content:space-between;width:100%;}
+.deal-card-title{font-size:16px;font-weight:600;}
+.deal-card-streak{font-size:12px;color:var(--orange);font-weight:600;background:rgba(255,140,0,0.12);padding:3px 10px;border-radius:20px;}
+.ring-wrap.small{width:150px;height:150px;}
+.ring-svg.small{width:150px;height:150px;}
+.ring-svg.small .ring-track,.ring-svg.small .ring-fill{stroke-width:14;}
+.ring-num.small{font-size:38px;letter-spacing:-2px;}
+.ring-label.small{font-size:12px;}
+.ring-sub.small{font-size:11px;}
+.ring-countdown.small{font-size:10px;}
+.main-cta.small{padding:13px;font-size:14px;}
+.cap-card.small{padding:14px;}
+.deal-tabs{display:flex;gap:8px;width:100%;overflow-x:auto;padding-bottom:2px;}
+.deal-tab{flex-shrink:0;background:var(--bg2);border:2px solid transparent;border-radius:50px;padding:8px 18px;font-size:14px;font-weight:500;color:var(--label2);cursor:pointer;transition:all 0.18s;font-family:inherit;}
+.deal-tab.active{border-color:var(--accent);background:var(--accent-cont);color:var(--label);}
+
+.rings-hero{display:flex;flex-direction:column;align-items:center;gap:16px;padding:0;width:100%;}
+.rings-row{display:flex;justify-content:center;gap:16px;width:100%;}
+.rings-col{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;}
+.rings-col-label{font-size:10px;font-weight:600;color:var(--label3);text-transform:uppercase;letter-spacing:0.5px;}
+.rings-svg-wrap{width:100%;aspect-ratio:1;max-width:160px;}
+.rings-svg-wrap svg{width:100%;height:100%;transform:rotate(-90deg);}
+.rings-details{width:100%;padding:0 4px;}
+.ring-detail{padding:8px 0;display:flex;justify-content:space-between;align-items:baseline;}
+.ring-detail:not(:last-child){border-bottom:1px solid var(--sep);}
+.ring-detail-name{font-size:11px;font-weight:500;color:var(--label2);}
+.ring-detail-val{font-size:18px;font-weight:700;letter-spacing:-0.5px;}
+.ring-detail-unit{font-size:11px;font-weight:500;opacity:0.7;}
+
+.chips-row{display:flex;gap:12px;justify-content:center;}
 .chip{background:var(--bg2);border-radius:12px;padding:10px 18px;text-align:center;display:flex;flex-direction:column;gap:2px;}
 .chip-val{font-size:22px;font-weight:700;letter-spacing:-0.5px;}
 .chip-key{font-size:10px;color:var(--label2);font-weight:500;text-transform:uppercase;letter-spacing:0.06em;}
 .chip.c-debt .chip-val{color:var(--orange);}
-.chip.c-done .chip-val{color:var(--green);}
+.chip.c-done .chip-val{color:var(--accent);}
 
-.main-cta{width:100%;background:var(--accent);color:#003731;border:none;border-radius:50px;padding:18px;font-family:inherit;font-size:16px;font-weight:700;cursor:pointer;transition:opacity 0.15s;display:flex;align-items:center;justify-content:center;gap:10px;letter-spacing:0.02em;}
+.main-cta{width:100%;background:var(--accent);color:var(--accent-dark);border:none;border-radius:50px;padding:18px;font-family:inherit;font-size:16px;font-weight:700;cursor:pointer;transition:opacity 0.15s;display:flex;align-items:center;justify-content:center;gap:10px;letter-spacing:0.02em;}
 .main-cta:active{opacity:0.75;}
-.main-cta svg{width:20px;height:20px;fill:none;stroke:#003731;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
-
-.start-card{background:var(--bg2);border-radius:20px;padding:28px 24px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;}
-.start-icon-ring{width:72px;height:72px;border-radius:50%;background:var(--accent-cont);display:flex;align-items:center;justify-content:center;}
-.start-icon-ring svg{width:36px;height:36px;fill:none;stroke:var(--accent);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
-.start-title{font-size:20px;font-weight:500;}
-.start-sub{font-size:15px;color:var(--label2);line-height:1.65;}
+.main-cta svg{width:20px;height:20px;fill:none;stroke:var(--accent-dark);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
 
 .cap-card{background:rgba(207,102,121,0.12);border-radius:16px;padding:18px;width:100%;display:flex;flex-direction:column;gap:8px;}
 .cap-title{font-size:16px;font-weight:600;color:var(--red);}
@@ -131,64 +180,146 @@ html,body{height:100%;height:100dvh;font-family:Roboto,system-ui,-apple-system,s
 
 /* Log sheet */
 #s-log{background:rgba(0,0,0,0.6);justify-content:flex-end;align-items:center;z-index:110;}
-.log-sheet{background:var(--bg2);border-radius:28px 28px 0 0;padding:12px 24px calc(24px + var(--safe-bottom));width:100%;max-width:480px;display:flex;flex-direction:column;align-items:center;gap:16px;animation:slideUp 0.3s cubic-bezier(0.34,1.1,0.64,1);}
+.log-sheet{background:var(--bg2);border-radius:28px 28px 0 0;border-top:2px solid rgba(255,107,0,0.4);padding:12px 24px calc(24px + var(--safe-bottom));width:100%;max-width:480px;display:flex;flex-direction:column;align-items:center;gap:16px;animation:slideUp 0.3s cubic-bezier(0.34,1.1,0.64,1);}
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
 .sheet-handle{width:36px;height:4px;border-radius:2px;background:var(--bg4);margin-bottom:4px;}
 .log-title{font-size:20px;font-weight:500;align-self:flex-start;}
-.log-sub{font-size:14px;color:var(--label2);align-self:flex-start;margin-top:-10px;}
-.reps-display{font-size:88px;font-weight:700;letter-spacing:-5px;color:var(--accent);text-align:center;line-height:1;}
+.log-sub{font-size:14px;color:var(--label2);align-self:flex-start;margin-top:2px;}
+.reps-display{font-size:88px;font-weight:700;letter-spacing:-5px;color:var(--accent);text-align:center;line-height:1;cursor:pointer;-webkit-user-select:none;user-select:none;}
 .reps-controls{display:flex;align-items:center;gap:24px;}
 .reps-btn{width:64px;height:64px;border-radius:50%;background:var(--bg3);border:none;color:var(--label);font-size:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform 0.1s,background 0.12s;}
 .reps-btn:active{transform:scale(0.88);background:var(--bg4);}
-.small-btns{display:flex;gap:8px;width:100%;}
-.log-actions{display:flex;flex-direction:column;gap:4px;width:100%;}
+.log-actions{display:flex;gap:10px;width:100%;}
+.log-actions .btn-primary{flex:1;}
+.log-actions .btn-cancel{flex:1;background:var(--bg3);color:var(--label2);border:none;border-radius:50px;padding:16px;font-family:inherit;font-size:16px;font-weight:600;cursor:pointer;}
+.log-actions .btn-cancel:active{opacity:0.7;}
+
+/* Plank timer */
+.timer-section{display:none;flex-direction:column;align-items:center;gap:16px;width:100%;}
+.timer-section.show{display:flex;}
+.timer-display{font-size:48px;font-weight:700;letter-spacing:-2px;color:var(--accent);font-variant-numeric:tabular-nums;text-align:center;line-height:1;}
+.timer-display.done{color:var(--accent);}
+.timer-ring{position:relative;width:200px;height:200px;}
+.timer-ring svg{width:200px;height:200px;transform:rotate(-90deg);}
+.timer-ring .ring-track{fill:none;stroke:var(--bg3);stroke-width:12;}
+.timer-ring .ring-fill{fill:none;stroke:var(--accent);stroke-width:12;stroke-linecap:round;stroke-dasharray:502.65;stroke-dashoffset:502.65;transition:stroke-dashoffset 0.3s linear,stroke 0.3s;filter: drop-shadow(0 0 12px var(--accent)) drop-shadow(0 0 25px var(--accent));}
+.timer-ring .ring-fill.done{stroke:var(--accent);}
+.timer-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.timer-btn{width:100%;background:var(--accent);color:var(--accent-dark);border:none;border-radius:50px;padding:16px;font-family:inherit;font-size:18px;font-weight:700;cursor:pointer;transition:all 0.15s;letter-spacing:0.02em;}
+.timer-btn:active{opacity:0.75;}
+.timer-btn.running{background:var(--red);color:#fff;}
 
 /* Calendar */
-#s-cal{padding-bottom:calc(88px + var(--safe-bottom));}
-.cal-body{flex:1;overflow-y:auto;padding:16px 20px 20px;}
+#s-cal{padding-bottom:0;}
+.cal-body{flex:1;overflow-y:auto;padding:16px 20px calc(90px + var(--safe-bottom));}
 .cal-legend{display:flex;gap:14px;margin-bottom:20px;flex-wrap:wrap;}
 .legend-item{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--label2);}
-.legend-dot{width:10px;height:10px;border-radius:4px;}
-.ld-complete{background:var(--green);}
-.ld-partial{background:var(--orange);}
-.ld-missed{background:var(--red);}
-.ld-today{background:var(--accent);}
+.legend-dot{width:14px;height:14px;border-radius:50%;position:relative;overflow:hidden;background:var(--bg3);border:1.5px solid var(--sep);}
+.legend-dot::after{content:'';position:absolute;bottom:0;left:0;right:0;border-radius:0 0 50% 50%;}
+.ld-complete::after{height:100%;background:linear-gradient(to top,#CC5500,var(--accent));}
+.ld-partial::after{height:50%;background:linear-gradient(to top,#2A6BBF,#4DA6FF);}
+.ld-missed{opacity:0.5;}
+.ld-today{border-color:var(--accent);box-shadow:0 0 6px rgba(255,107,0,0.4);}
+.ld-today::after{height:40%;background:linear-gradient(to top,#CC5500,var(--accent));}
 .ld-none{background:var(--bg4);}
-.cal-month{margin-bottom:28px;}
-.cal-month-label{font-size:20px;font-weight:500;margin-bottom:12px;}
-.cal-week-labels{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px;}
-.cal-week-labels span{font-size:11px;color:var(--label3);text-align:center;font-weight:500;}
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
-.cal-cell{aspect-ratio:1;border-radius:8px;background:var(--bg2);}
-.cal-cell.complete{background:var(--green);}
-.cal-cell.partial{background:var(--orange);opacity:0.8;}
-.cal-cell.missed{background:var(--red);opacity:0.85;}
-.cal-cell.today{background:var(--accent);box-shadow:0 0 12px rgba(77,182,172,0.5);}
-.cal-cell.future{background:var(--bg2);opacity:0.3;}
-.cal-cell.empty{background:transparent;}
+.cal-month{margin-bottom:32px;}
+.cal-month-label{font-size:18px;font-weight:600;margin-bottom:14px;text-transform:uppercase;letter-spacing:0.05em;}
+.cal-week-labels{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px;}
+.cal-week-labels span{font-size:11px;color:var(--label3);text-align:center;font-weight:600;text-transform:uppercase;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;}
+.cal-cell{aspect-ratio:1;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--label2);position:relative;border:2px solid var(--sep);overflow:hidden;background:var(--bg3);transition:all 0.3s;}
+.cal-liquid{position:absolute;bottom:0;left:0;right:0;z-index:0;transition:height 0.6s cubic-bezier(0.4,0,0.2,1);opacity:0.85;}
+.cal-liquid::before{content:'';position:absolute;top:-3px;left:-10%;width:120%;height:7px;border-radius:50%;background:inherit;filter:brightness(1.2);animation:calWave 3s ease-in-out infinite alternate;}
+@keyframes calWave{0%{transform:translateX(-4%) scaleY(0.8);}100%{transform:translateX(4%) scaleY(1.2);}}
+.cal-date{position:relative;z-index:1;text-shadow:0 1px 3px rgba(0,0,0,0.5);}
+.cal-cell.complete{border-color:rgba(255,107,0,0.4);color:#fff;}
+.cal-cell.partial{border-color:rgba(77,166,255,0.3);color:#fff;}
+.cal-cell.missed{border-color:transparent;color:var(--label3);opacity:0.6;}
+.cal-cell.today{border-color:var(--accent);color:#fff;font-weight:800;box-shadow:0 0 12px rgba(255,107,0,0.5);}
+.cal-cell.future{background:var(--bg2);border-color:transparent;opacity:0.2;}
+.cal-cell.empty{background:transparent;border-color:transparent;}
+.cal-cell:not(.future):not(.empty){cursor:pointer;}
+
+/* Calendar popup */
+.cal-popup{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;}
+.cal-popup-content{background:var(--bg2);border-radius:20px;padding:24px;min-width:260px;max-width:320px;position:relative;}
+.cal-popup-date{font-size:18px;font-weight:600;margin-bottom:16px;text-align:center;}
+.cal-popup-body{display:flex;flex-direction:column;gap:12px;}
+.cal-popup-row{display:flex;justify-content:space-between;align-items:center;font-size:14px;}
+.cal-popup-row .popup-label{color:var(--label2);}
+.cal-popup-row .popup-val{font-weight:600;}
+.cal-popup-status{text-align:center;font-size:13px;padding:8px;border-radius:10px;margin-top:4px;}
+.cal-popup-status.complete{background:rgba(255,107,0,0.12);color:var(--accent);}
+.cal-popup-status.partial{background:rgba(255,140,0,0.12);color:var(--orange);}
+.cal-popup-status.missed{background:rgba(255,69,58,0.1);color:var(--red);}
+.cal-popup-close{position:absolute;top:12px;right:12px;background:none;border:none;color:var(--label2);font-size:18px;cursor:pointer;padding:4px 8px;}
 
 /* Stats */
-#s-stat{padding-bottom:calc(88px + var(--safe-bottom));}
-.stat-body{flex:1;overflow-y:auto;padding:16px 20px 20px;display:flex;flex-direction:column;gap:12px;}
-.stat-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-.stat-card{background:var(--bg2);border-radius:18px;padding:18px;}
-.stat-card.wide{grid-column:1/-1;}
-.stat-label{font-size:11px;color:var(--label2);margin-bottom:8px;font-weight:500;text-transform:uppercase;letter-spacing:0.06em;}
-.stat-value{font-size:40px;font-weight:700;letter-spacing:-2px;line-height:1;}
-.stat-unit{font-size:14px;color:var(--label2);font-weight:400;letter-spacing:0;}
-.week-bars{display:flex;align-items:flex-end;gap:6px;height:70px;margin-top:12px;}
-.week-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;}
-.week-bar{width:100%;border-radius:5px 5px 0 0;background:var(--accent-cont);min-height:3px;transition:height 0.4s ease;}
-.week-bar.done{background:var(--accent);}
-.week-bar-label{font-size:9px;color:var(--label3);font-weight:500;}
+#s-stat{padding-bottom:0;}
+.stat-body{flex:1;overflow-y:auto;padding:20px 20px calc(90px + var(--safe-bottom));display:flex;flex-direction:column;gap:28px;}
+.stat-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:20px;padding:32px 24px;margin-bottom:4px;box-shadow:0 2px 12px rgba(0,0,0,0.1);}
+.stat-card.wide{width:100%;}
+.stat-label{font-size:11px;color:var(--label2);margin-bottom:14px;font-weight:500;text-transform:uppercase;letter-spacing:0.06em;}
+
+.stat-hero{display:flex;align-items:center;gap:32px;padding:32px 24px;}
+.stat-hero-ring{position:relative;width:120px;height:120px;flex-shrink:0;}
+.stat-hero-ring svg{width:120px;height:120px;transform:rotate(-90deg);}
+.stat-hero-ring .h-track{fill:none;stroke:var(--bg4);stroke-width:10;}
+.stat-hero-ring .h-fill{fill:none;stroke-width:10;stroke-linecap:round;transition:stroke-dashoffset 0.8s cubic-bezier(0.4,0,0.2,1);}
+.stat-hero-pct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:700;letter-spacing:-1.5px;}
+.stat-hero-info{display:flex;flex-direction:column;gap:20px;flex:1;}
+.stat-hero-row{display:flex;align-items:baseline;gap:6px;}
+.stat-hero-num{font-size:28px;font-weight:700;letter-spacing:-1px;line-height:1;}
+.stat-hero-unit{font-size:13px;color:var(--label2);font-weight:400;}
+
+.streak-visual{display:flex;align-items:center;gap:24px;padding:32px 24px;}
+.streak-fire{font-size:36px;line-height:1;}
+.streak-info{flex:1;display:flex;flex-direction:column;gap:12px;}
+.streak-top{display:flex;align-items:baseline;gap:6px;}
+.streak-num{font-size:28px;font-weight:700;letter-spacing:-1px;}
+.streak-lbl{font-size:13px;color:var(--label2);}
+.streak-bar-bg{height:8px;border-radius:4px;background:var(--bg4);width:100%;overflow:hidden;}
+.streak-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--orange),var(--accent));transition:width 0.6s ease;}
+.streak-best{font-size:11px;color:var(--label3);text-align:left;}
+
+.progress-chart{display:flex;align-items:flex-end;gap:2px;height:140px;margin-top:16px;padding-top:8px;padding-bottom:8px;width:100%;position:relative;}
+.progress-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;min-width:0;gap:3px;}
+.progress-bar{width:100%;border-radius:3px 3px 0 0;min-height:2px;transition:height 0.3s ease;}
+.progress-labels{display:flex;justify-content:space-between;margin-top:4px;}
+.progress-labels span{font-size:10px;color:var(--label3);}
+
+/* Weekday circles */
+.weekday-circles{display:flex;justify-content:space-between;gap:8px;width:100%;}
+.weekday-circle{display:flex;flex-direction:column;align-items:center;gap:6px;}
+.weekday-ring{width:36px;height:36px;border-radius:50%;border:3px solid var(--bg4);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--label2);position:relative;}
+.weekday-ring.active{border-color:var(--accent);color:var(--accent);}
+.weekday-ring.strong{border-color:var(--accent);background:var(--accent);color:var(--accent-dark);}
+.weekday-label{font-size:9px;color:var(--label3);text-transform:uppercase;letter-spacing:0.06em;}
+
+/* Half-width stat row */
+.stat-row-half{display:flex;gap:16px;width:100%;}
+.stat-row-half .stat-card{flex:1;min-width:0;}
+
+.debt-banner{display:flex;align-items:center;gap:14px;background:rgba(255,179,0,0.1);border:1px solid rgba(255,179,0,0.25);border-radius:16px;padding:16px 20px;}
+.stat-big-num{font-size:80px;font-weight:800;letter-spacing:-5px;line-height:1;margin-bottom:4px;}
+.stat-vs-row{display:flex;gap:32px;margin-top:16px;}
+.stat-vs-item{display:flex;flex-direction:column;gap:4px;}
+.stat-vs-val{font-size:36px;font-weight:700;letter-spacing:-1.5px;line-height:1;}
+.stat-vs-lbl{font-size:11px;color:var(--label2);font-weight:500;text-transform:uppercase;letter-spacing:0.08em;}
+.stat-vs-bar{height:6px;border-radius:3px;background:var(--bg4);margin-top:10px;overflow:hidden;position:relative;}
+.stat-vs-bar-fill{height:100%;border-radius:3px;background:var(--accent);transition:width 0.6s ease;}
+.theme-toggle-row{display:flex;align-items:center;gap:12px;}
+.theme-icon{font-size:18px;line-height:1;}
+.debt-num{font-size:32px;font-weight:700;color:var(--orange);letter-spacing:-1.5px;}
+.debt-info{flex:1;font-size:14px;color:var(--label2);line-height:1.5;}
 
 /* Settings — Material 3 grouped */
-#s-set{padding-bottom:calc(88px + var(--safe-bottom));}
-.set-body{flex:1;overflow-y:auto;padding:8px 16px 32px;}
+#s-set{padding-bottom:0;}
+.set-body{flex:1;overflow-y:auto;padding:8px 16px calc(90px + var(--safe-bottom));}
 .set-section-hdr{font-size:12px;font-weight:500;color:var(--accent);text-transform:uppercase;letter-spacing:0.08em;padding:0 6px;margin-top:28px;margin-bottom:8px;}
 .set-section-hdr:first-child{margin-top:8px;}
-.set-group{background:var(--bg2);border-radius:16px;overflow:hidden;}
-.set-row{display:flex;align-items:center;padding:14px 16px;gap:12px;border-bottom:1px solid var(--sep);}
+.set-group{background:var(--card-bg);border:1px solid var(--card-border);border-radius:16px;overflow:hidden;}
+.set-row{display:flex;align-items:center;padding:16px 16px;gap:12px;border-bottom:1px solid var(--sep);}
 .set-row:last-child{border-bottom:none;}
 .set-label{flex:1;font-size:16px;}
 .set-value{font-size:16px;color:var(--label2);}
@@ -202,8 +333,18 @@ html,body{height:100%;height:100dvh;font-family:Roboto,system-ui,-apple-system,s
 .danger-btn:active{background:rgba(207,102,121,0.2);}
 
 /* Toast */
-#toast{position:fixed;top:calc(52px + var(--safe-top));left:50%;transform:translateX(-50%);background:#304542;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:500;white-space:nowrap;z-index:200;opacity:0;pointer-events:none;transition:opacity 0.2s;box-shadow:0 4px 14px rgba(0,0,0,0.5);}
+#toast{position:fixed;top:calc(52px + var(--safe-top));left:50%;transform:translateX(-50%);background:var(--bg2);border:1px solid rgba(255,107,0,0.3);border-radius:10px;padding:10px 20px;font-size:14px;font-weight:500;white-space:nowrap;z-index:200;opacity:0;pointer-events:none;transition:opacity 0.2s;box-shadow:0 4px 20px rgba(0,0,0,0.6);}
 #toast.show{opacity:1;}
+
+/* Install banner */
+#install-banner{position:fixed;bottom:calc(88px + var(--safe-bottom) + 12px);left:16px;right:16px;background:var(--bg2);border:1px solid rgba(255,107,0,0.4);border-radius:16px;padding:14px 16px;display:none;align-items:center;gap:12px;z-index:90;box-shadow:0 4px 20px rgba(0,0,0,0.6);}
+#install-banner.show{display:flex;}
+body.light-mode #toast { box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+body.light-mode #install-banner { box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+.ib-icon{width:40px;height:40px;border-radius:10px;flex-shrink:0;object-fit:cover;}
+.ib-text{flex:1;font-size:13px;line-height:1.5;color:var(--label2);}
+.ib-text strong{color:var(--label);display:block;font-size:14px;margin-bottom:2px;}
+.ib-close{background:none;border:none;color:var(--label3);font-size:20px;cursor:pointer;padding:4px;line-height:1;}
 
 .no-deal{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;flex:1;text-align:center;padding:32px;}
 .no-deal .icon-ring{width:80px;height:80px;border-radius:50%;background:var(--accent-cont);display:flex;align-items:center;justify-content:center;}
@@ -212,26 +353,70 @@ html,body{height:100%;height:100dvh;font-family:Roboto,system-ui,-apple-system,s
 canvas.confetti{position:fixed;inset:0;pointer-events:none;z-index:999;}
 ::-webkit-scrollbar{width:0;}
 
-/* FAB */
-.fab{position:fixed;bottom:calc(96px + var(--safe-bottom));left:50%;transform:translateX(-50%);width:60px;height:60px;border-radius:50%;background:var(--accent);border:none;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:0 4px 18px rgba(77,182,172,0.55),0 2px 8px rgba(0,0,0,0.4);z-index:50;transition:transform 0.15s,box-shadow 0.15s;}
-.fab.show{display:flex;}
-.fab:active{transform:translateX(-50%) scale(0.88);box-shadow:0 2px 8px rgba(77,182,172,0.35);}
-.fab svg{width:28px;height:28px;stroke:#003731;fill:none;stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round;}
+/* RTL support */
+[dir="rtl"] .s-header h2{text-align:right;}
+[dir="rtl"] .set-input{text-align:right;}
+[dir="rtl"] .toggle.on::after{right:auto;left:25px;}
+[dir="rtl"] .toggle::after{right:auto;left:3px;}
+[dir="rtl"] .streak-best{text-align:right;}
+[dir="rtl"] .log-title,[dir="rtl"] .log-sub{text-align:right;}
+[dir="rtl"] .target-ex-name{text-align:left;}
+[dir="rtl"] .stat-hero{flex-direction:row-reverse;}
+[dir="rtl"] .streak-visual{flex-direction:row-reverse;}
+[dir="rtl"] .debt-banner{flex-direction:row-reverse;}
+
 
 /* Exercise picker */
 .exercise-cards-row{display:flex;gap:8px;width:100%;}
 .exercise-card{flex:1;background:var(--bg2);border:2px solid transparent;border-radius:14px;padding:12px 6px;cursor:pointer;text-align:center;transition:all 0.18s;display:flex;flex-direction:column;align-items:center;gap:8px;}
 .exercise-card.selected{border-color:var(--accent);background:var(--accent-cont);}
-.ec-ring{width:44px;height:44px;border-radius:50%;background:rgba(77,182,172,0.1);display:flex;align-items:center;justify-content:center;}
+.ec-ring{width:44px;height:44px;border-radius:50%;background:rgba(255,107,0,0.12);display:flex;align-items:center;justify-content:center;}
 .ec-ring svg{width:22px;height:22px;fill:none;stroke:var(--accent);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
 .ec-name{font-size:12px;font-weight:600;line-height:1.3;}
 
 /* Camera preview in log sheet */
 .camera-preview{width:100%;border-radius:14px;object-fit:cover;display:none;background:#000;transform:scaleX(-1);aspect-ratio:4/3;max-height:200px;}
+.auto-count-badge{display:none;align-items:center;gap:6px;background:var(--accent-cont);border:1px solid var(--accent);border-radius:10px;padding:6px 14px;font-size:13px;color:var(--accent);font-weight:600;}
+.auto-count-badge.show{display:flex;}
+.auto-count-badge .pulse{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse-dot 1.2s infinite;}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:0.3}}
 .log-header-row{display:flex;align-items:center;justify-content:space-between;width:100%;}
 .camera-btn{background:none;border:none;padding:6px;cursor:pointer;color:var(--label3);border-radius:8px;transition:color 0.18s;}
 .camera-btn.on{color:var(--accent);}
 .camera-btn svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+
+/* Fact card */
+.fact-card{text-align:center;padding:24px 20px;}
+.fact-icon{font-size:32px;margin-bottom:8px;}
+.fact-label{font-size:11px;color:var(--label2);text-transform:uppercase;letter-spacing:0.5px;font-weight:500;margin-bottom:8px;}
+.fact-text{font-size:15px;color:var(--label);line-height:1.6;}
+
+
+/* Calendar liquid fill colors */
+.cal-liquid.liq-complete{background:linear-gradient(to top,#CC5500,var(--accent));}
+.cal-liquid.liq-partial{background:linear-gradient(to top,#2A6BBF,#4DA6FF);}
+.cal-liquid.liq-today{background:linear-gradient(to top,#CC5500,var(--accent));}
+.cal-liquid.liq-missed{background:var(--bg4);opacity:0.5;}
+body.light-mode .cal-cell{background:var(--bg3);border-color:rgba(0,0,0,0.06);}
+body.light-mode .cal-cell.complete{border-color:rgba(255,107,0,0.3);}
+body.light-mode .cal-cell.partial{border-color:rgba(77,166,255,0.2);}
+body.light-mode .cal-cell.today{border-color:var(--accent);box-shadow:0 0 12px rgba(255,85,0,0.3);}
+body.light-mode .cal-date{text-shadow:0 1px 2px rgba(0,0,0,0.3);}
+body.light-mode .cal-cell.future .cal-date,body.light-mode .cal-cell.missed .cal-date{text-shadow:none;color:var(--label3);}
+.cal-legend-bottom{display:flex;gap:16px;justify-content:center;padding:12px 0;font-size:11px;color:var(--label2);}
+.cal-legend-bottom span{display:flex;align-items:center;gap:4px;}
+
+/* BMI Calculator */
+.bmi-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:16px;padding:20px;}
+.bmi-title{font-size:14px;font-weight:600;margin-bottom:16px;}
+.bmi-inputs{display:flex;gap:12px;margin-bottom:16px;}
+.bmi-input{flex:1;display:flex;flex-direction:column;gap:4px;}
+.bmi-input label{font-size:11px;color:var(--label2);text-transform:uppercase;}
+.bmi-input input{background:var(--bg3);border:1px solid var(--sep);border-radius:10px;color:var(--label);font-size:16px;padding:10px 12px;font-family:inherit;outline:none;text-align:center;}
+.bmi-input input:focus{border-color:var(--accent);}
+.bmi-result{text-align:center;padding:16px;background:var(--bg2);border-radius:12px;}
+.bmi-value{font-size:36px;font-weight:700;letter-spacing:-1px;}
+.bmi-category{font-size:13px;color:var(--label2);margin-top:4px;}
 </style>
 </head>
 <body>
@@ -243,66 +428,48 @@ canvas.confetti{position:fixed;inset:0;pointer-events:none;z-index:999;}
     <div class="ob-icon-ring">
       <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
     </div>
-    <h1 class="ob-title">דיל כושר</h1>
-    <p class="ob-body">
-      אתה סוגר <strong>דיל</strong> עם עצמך — מחויבות יומית לאימון.<br><br>
-      יום שפוספס לא נמחק. הוא הופך ל<strong>חוב</strong> שגדל.<br><br>
-      כי התחייבות אמיתית לא מתאפסת.
+    <h1 class="ob-title" id="ob-title-0">Fitness Deal</h1>
+    <p class="ob-body" id="ob-body-0">
+      You make a <strong>deal</strong> with yourself — a daily commitment to train.<br><br>
+      A missed day doesn't disappear. It becomes <strong>debt</strong> that grows.<br><br>
+      Because real commitment doesn't reset.
     </p>
     <div class="ob-dots">
       <div class="ob-dot on"></div><div class="ob-dot"></div><div class="ob-dot"></div>
     </div>
-    <button class="btn-primary" onclick="obNext()">בואו נתחיל ←</button>
+    <button class="btn-primary" onclick="obNext()" id="ob-btn-0">Let's Go →</button>
   </div>
 
   <div id="ob-step-1" class="ob-step">
     <div class="ob-icon-ring">
       <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
     </div>
-    <h2 class="ob-title">בחר אתגר</h2>
-    <div class="exercise-cards-row">
-      <div class="exercise-card selected" data-ex="pushups" onclick="selectExercise('pushups')">
-        <div class="ec-ring"><svg viewBox="0 0 24 24"><path d="M18 3a3 3 0 00-3 3v12a3 3 0 003 3 3 3 0 003-3 3 3 0 00-3-3H6a3 3 0 00-3 3 3 3 0 003 3 3 3 0 003-3V6a3 3 0 00-3-3 3 3 0 00-3 3 3 3 0 003 3h12a3 3 0 003-3 3 3 0 00-3-3z"/></svg></div>
-        <div class="ec-name">שכיבות סמיכה</div>
-      </div>
-      <div class="exercise-card" data-ex="situps" onclick="selectExercise('situps')">
-        <div class="ec-ring"><svg viewBox="0 0 24 24"><path d="M12 2a2 2 0 110 4 2 2 0 010-4zM4 18l4-8 2 4 3-4 5 8"/></svg></div>
-        <div class="ec-name">כפיפות בטן</div>
-      </div>
-      <div class="exercise-card" data-ex="plank" onclick="selectExercise('plank')">
-        <div class="ec-ring"><svg viewBox="0 0 24 24"><path d="M12 2a2 2 0 110 4 2 2 0 010-4zM3 18l18-8"/></svg></div>
-        <div class="ec-name">פלאנקים</div>
-      </div>
-    </div>
-    <p class="ob-body" style="font-size:14px">כמה <span id="target-unit">חזרות</span> ביום?</p>
-    <div class="target-row">
-      <button class="qty-btn" onclick="changeTarget(-5)">−</button>
-      <div id="target-display">25</div>
-      <button class="qty-btn" onclick="changeTarget(5)">+</button>
-    </div>
-    <p class="ob-body" style="font-size:12px">מומלץ להתחיל ריאליסטי</p>
+    <h2 class="ob-title">Choose Challenges</h2>
+    <p class="ob-body" style="font-size:13px">You can pick more than one</p>
+    <div class="exercise-cards-row" id="ob-exercise-cards"></div>
+    <div class="ob-targets-list" id="ob-targets-list"></div>
     <div class="ob-dots">
       <div class="ob-dot"></div><div class="ob-dot on"></div><div class="ob-dot"></div>
     </div>
-    <button class="btn-primary" onclick="obNext()">המשך ←</button>
-    <button class="btn-back" onclick="obPrev()">חזור</button>
+    <button class="btn-primary" onclick="obNext()">Next →</button>
+    <button class="btn-back" onclick="obPrev()">Back</button>
   </div>
 
   <div id="ob-step-2" class="ob-step">
     <div class="ob-icon-ring">
       <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
     </div>
-    <h2 class="ob-title">מה קורה ביום<br>שפוספס?</h2>
+    <h2 class="ob-title">What happens on<br>a missed day?</h2>
     <div class="penalty-cards">
       <div class="penalty-card selected" id="pc-double" onclick="selectPenalty('double')">
-        <h3>×2 כפול</h3>
-        <p>יום שפוספס חוזר פעמיים. פספסת 25 — חוב של 50. פשוט וברור.</p>
+        <h3>×2 Double</h3>
+        <p>Missed reps come back doubled. Miss 25 — owe 50. Simple.</p>
       </div>
       <div class="penalty-card" id="pc-percent" onclick="selectPenalty('percent')">
-        <h3>ריבית מצטברת</h3>
-        <p>החוב גדל כל יום שעובר ללא פירעון. ריבית דריבית.</p>
+        <h3>Compound Interest</h3>
+        <p>Debt grows daily if unpaid. Interest on interest.</p>
         <div class="pct-row" id="pct-row" style="display:none">
-          <label>אחוז יומי:</label>
+          <label>Daily %:</label>
           <input id="pct-input" type="number" value="20" min="10" max="100" placeholder="20">
           <span style="font-size:13px;color:var(--label2)">%</span>
         </div>
@@ -311,22 +478,21 @@ canvas.confetti{position:fixed;inset:0;pointer-events:none;z-index:999;}
     <div class="ob-dots" style="margin-top:4px">
       <div class="ob-dot"></div><div class="ob-dot"></div><div class="ob-dot on"></div>
     </div>
-    <button class="btn-primary" onclick="obNext()">המשך ←</button>
-    <button class="btn-back" onclick="obPrev()">חזור</button>
+    <button class="btn-primary" onclick="obNext()">Next →</button>
+    <button class="btn-back" onclick="obPrev()">Back</button>
   </div>
 
   <div id="ob-step-3" class="ob-step">
     <div class="ob-icon-ring">
       <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/><polyline points="9 12 11 14 15 10"/></svg>
     </div>
-    <h2 class="ob-title">הדיל שלך</h2>
+    <h2 class="ob-title">Your Deal</h2>
     <div id="deal-summary">
-      <div class="summary-row"><span class="summary-key">תרגיל</span><span id="sum-exercise" class="summary-val">שכיבות סמיכה</span></div>
-      <div class="summary-row"><span class="summary-key">יעד יומי</span><span id="sum-target" class="summary-val">25 חזרות</span></div>
-      <div class="summary-row"><span class="summary-key">קנס</span><span id="sum-penalty" class="summary-val">כפול ×2</span></div>
-      <div class="summary-row"><span class="summary-key">מתחיל</span><span class="summary-val">מחר בבוקר</span></div>
+      <div id="sum-exercises-list"></div>
+      <div class="summary-row"><span class="summary-key">Penalty</span><span id="sum-penalty" class="summary-val">כפול ×2</span></div>
+      <div class="summary-row"><span class="summary-key">Starts</span><span class="summary-val">Today</span></div>
     </div>
-    <p class="ob-body" style="font-size:13px">לחץ על הכפתור כדי לחתום על הדיל</p>
+    <p class="ob-body" style="font-size:13px">Tap the button to sign your deal</p>
     <button class="sign-btn" id="sign-btn" onclick="signDeal()">
       <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
     </button>
@@ -336,8 +502,7 @@ canvas.confetti{position:fixed;inset:0;pointer-events:none;z-index:999;}
 <!-- ═══════════════ MAIN ═══════════════ -->
 <div id="s-main" class="screen">
   <div class="s-header">
-    <h2>דיל כושר</h2>
-    <span id="streak-badge" style="font-size:13px;color:var(--label2);display:none"></span>
+    <h2 id="main-title">Fitness Deal</h2>
   </div>
   <div class="main-body" id="main-body"></div>
 </div>
@@ -348,54 +513,73 @@ canvas.confetti{position:fixed;inset:0;pointer-events:none;z-index:999;}
     <div class="sheet-handle"></div>
     <div class="log-header-row">
       <div>
-        <div class="log-title">רישום אימון</div>
-        <div class="log-sub" id="log-sub">יעד היום: 25</div>
+        <div class="log-title" id="log-title">Log Workout</div>
+        <div class="log-sub" id="log-sub">Goal: 25</div>
       </div>
       <button class="camera-btn" id="camera-btn" onclick="toggleCamera()" title="מצלמה">
         <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
       </button>
     </div>
     <video id="camera-preview" class="camera-preview" autoplay playsinline muted></video>
-    <div class="reps-controls">
-      <button class="reps-btn" onclick="changeReps(-5)">−</button>
-      <div class="reps-display" id="reps-display">0</div>
-      <button class="reps-btn" onclick="changeReps(5)">+</button>
+    <canvas id="motion-canvas" style="display:none"></canvas>
+    <div class="auto-count-badge" id="auto-count-badge"><div class="pulse"></div>Auto Count</div>
+
+    <!-- Timer for plank -->
+    <div id="timer-section" class="timer-section">
+      <div class="timer-ring">
+        <svg viewBox="0 0 200 200">
+          <circle class="ring-track" cx="100" cy="100" r="80"/>
+          <circle class="ring-fill" id="timer-ring-fill" cx="100" cy="100" r="80"/>
+        </svg>
+        <div class="timer-center">
+          <div class="timer-display" id="timer-display">00:00</div>
+        </div>
+      </div>
+      <button class="timer-btn" id="timer-btn" onclick="toggleTimer()">Start</button>
     </div>
-    <div class="small-btns">
-      <button id="log-minus1" class="btn-outline" onclick="changeReps(-1)">−1</button>
-      <button id="log-plus1" class="btn-outline" onclick="changeReps(1)">+1</button>
-      <button class="btn-outline" style="flex:2" id="log-all-btn" onclick="logAll()">כל היעד</button>
+
+    <!-- Reps counter for non-timer exercises -->
+    <div id="reps-section">
+      <div class="reps-controls">
+        <button class="reps-btn" onclick="changeReps(-1)">−</button>
+        <div class="reps-display" id="reps-display" onclick="editRepsManual()">0</div>
+        <button class="reps-btn" onclick="changeReps(1)">+</button>
+      </div>
     </div>
     <div class="log-actions">
-      <button class="btn-primary" onclick="saveLog()">שמור</button>
-      <button class="btn-text-cancel" onclick="closeLog()">ביטול</button>
+      <button class="btn-primary" onclick="saveLog()" id="log-save-btn">Save</button>
+      <button class="btn-cancel" onclick="closeLog()" id="log-cancel-btn">Cancel</button>
     </div>
   </div>
 </div>
 
 <!-- ═══════════════ CALENDAR ═══════════════ -->
 <div id="s-cal" class="screen">
-  <div class="s-header"><h2>יומן אימונים</h2></div>
+  <div class="s-header"><h2 id="cal-title">Workout Calendar</h2></div>
   <div class="cal-body">
-    <div class="cal-legend">
-      <div class="legend-item"><div class="legend-dot ld-complete"></div>הושלם</div>
-      <div class="legend-item"><div class="legend-dot ld-partial"></div>חלקי</div>
-      <div class="legend-item"><div class="legend-dot ld-missed"></div>פוספס</div>
-      <div class="legend-item"><div class="legend-dot ld-today"></div>היום</div>
+    <div class="cal-legend" id="cal-legend">
+      <div class="legend-item"><div class="legend-dot ld-complete"></div>Done</div>
+      <div class="legend-item"><div class="legend-dot ld-partial"></div>Partial</div>
+      <div class="legend-item"><div class="legend-dot ld-missed"></div>Missed</div>
+      <div class="legend-item"><div class="legend-dot ld-today"></div>Today</div>
     </div>
+    <div id="cal-tabs"></div>
     <div id="cal-container"></div>
   </div>
 </div>
 
 <!-- ═══════════════ STATS ═══════════════ -->
 <div id="s-stat" class="screen">
-  <div class="s-header"><h2>סטטיסטיקות</h2></div>
-  <div class="stat-body" id="stat-body"></div>
+  <div class="s-header"><h2 id="stat-title">Statistics</h2></div>
+  <div class="stat-body">
+    <div id="stat-tabs"></div>
+    <div id="stat-content"></div>
+  </div>
 </div>
 
 <!-- ═══════════════ SETTINGS ═══════════════ -->
 <div id="s-set" class="screen">
-  <div class="s-header"><h2>הגדרות</h2></div>
+  <div class="s-header"><h2 id="set-title">Settings</h2></div>
   <div class="set-body" id="set-body"></div>
 </div>
 
@@ -403,37 +587,207 @@ canvas.confetti{position:fixed;inset:0;pointer-events:none;z-index:999;}
 <nav id="nav">
   <button class="nav-btn active" id="nav-main" onclick="show('main')">
     <div class="nav-indicator"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
-    ראשי
+    <span class="nav-text" data-t="home">Home</span>
   </button>
   <button class="nav-btn" id="nav-cal" onclick="show('cal')">
     <div class="nav-indicator"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
-    יומן
+    <span class="nav-text" data-t="calendar">Calendar</span>
   </button>
   <button class="nav-btn" id="nav-stat" onclick="show('stat')">
     <div class="nav-indicator"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
-    סטטיסטיקות
+    <span class="nav-text" data-t="stats">Stats</span>
   </button>
   <button class="nav-btn" id="nav-set" onclick="show('set')">
     <div class="nav-indicator"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></div>
-    הגדרות
+    <span class="nav-text" data-t="settings">Settings</span>
   </button>
 </nav>
 
-<button id="fab" class="fab" onclick="fabAction()">
-  <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-</button>
 
 <div id="toast"></div>
+
+<div id="install-banner">
+  <img class="ib-icon" src="fitness-icon-192.png" alt="">
+  <div class="ib-text">
+    <strong>Add to Home Screen</strong>
+    Tap Share → "Add to Home Screen" for reminders
+  </div>
+  <button class="ib-close" onclick="dismissInstallBanner()">×</button>
+</div>
 
 <script>
 // ═══════════════ DATA ═══════════════
 const STORE_KEY = 'deal_fitness_v1';
 let DATA = {};
 
+const T = {
+  en: {
+    appTitle: 'Fitness Deal',
+    home: 'Home', calendar: 'Calendar', stats: 'Stats', settings: 'Settings',
+    letsGo: "Let's Go →", next: 'Next →', back: 'Back',
+    obTitle: 'Fitness Deal',
+    obBody: 'You make a <strong>deal</strong> with yourself — a daily commitment to train.<br><br>A missed day doesn\'t disappear. It becomes <strong>debt</strong> that grows.<br><br>Because real commitment doesn\'t reset.',
+    chooseChallenges: 'Choose Challenges', pickOne: 'You can pick more than one',
+    missedDay: 'What happens on<br>a missed day?',
+    doubleTitle: '×2 Double', doubleDesc: 'Missed reps come back doubled. Miss 25 — owe 50. Simple.',
+    compoundTitle: 'Compound Interest', compoundDesc: 'Debt grows daily if unpaid. Interest on interest.',
+    dailyPct: 'Daily %:', yourDeal: 'Your Deal',
+    penalty: 'Penalty', starts: 'Starts', today: 'Today',
+    tapToSign: 'Tap the button to sign your deal',
+    logWorkout: 'Log', save: 'Save', cancel: 'Cancel',
+    start: 'Start', resume: 'Resume', stop: 'Stop',
+    autoCount: 'Auto Count',
+    done: 'Done', partial: 'Partial', missed: 'Missed',
+    workoutCalendar: 'Workout Calendar',
+    statistics: 'Statistics',
+    remaining: 'remaining', doneToday: 'Done today!',
+    goal: 'GOAL', debt: 'DEBT', doneLbl: 'DONE',
+    daysLeft: 'left today',
+    debtCapReached: 'Debt Cap Reached',
+    debtCapBody: (cap, unit) => `Debt hit the limit (${cap} ${unit}). You can spread it over several days.`,
+    settleDebt: 'Settle Debt',
+    logTitle: (name) => `Log ${name}`,
+    logSubDone: (logged, left, unit) => `Done ${logged} — ${left} ${unit} left`,
+    logSubGoal: (due, unit) => `Today's goal: ${due} ${unit}`,
+    enterAmount: 'Enter amount',
+    completedToday: (name) => `${name} completed today!`,
+    logged: (n, unit) => `Logged ${n} ${unit}`,
+    noActiveDeal: 'No active deal.<br>Go to Settings to start one.',
+    noActiveDealShort: 'No active deal',
+    totalUnit: (unit) => `total ${unit}`,
+    caloriesBurned: 'calories burned',
+    kcalToday: 'kcal today',
+    dayStreak: 'day streak',
+    best: (n) => `Best: ${n} days`,
+    progress30: '30-DAY PROGRESS',
+    musclesWorked: 'MUSCLES WORKED',
+    openDebt: (n, unit) => `Open debt of <strong>${n} ${unit}</strong><br>Do extra reps to pay it off`,
+    dailyGoal: 'Daily Goal', penaltyLbl: 'Penalty', started: 'Started', openDebtLbl: 'Open Debt',
+    noneCheck: 'None ✓', remove: 'Remove',
+    notifications: 'Notifications', dailyReminder: 'Daily Reminder', reminderTime: 'Reminder Time',
+    addChallenge: '+ Add Challenge', newDeal: '+ New Deal', resetEverything: 'Reset Everything',
+    language: 'Language', langLabel: 'English',
+    addToHome: 'Add to Home Screen', addToHomeSub: 'Tap Share → "Add to Home Screen" for reminders',
+    targetReached: 'Amazing! Target reached! 💪',
+    cameraUnavail: 'Camera unavailable',
+    reminderUpdated: 'Reminder time updated',
+    enterNumber: 'Enter number:',
+    notifBlocked: 'Notifications blocked — enable in device settings',
+    removeConfirmDebt: (debt, unit, name) => `You have ${debt} ${unit} debt in ${name}. Remove this challenge and lose history?`,
+    removeConfirm: (name) => `Remove ${name} challenge and lose history?`,
+    resetConfirmDebt: (total) => `Total debt: ${total}. Reset all deals and lose history?`,
+    resetConfirm: 'Reset all deals and lose all history?',
+    notifTitle: 'Fitness Deal',
+    dealsLeftToday: (n, names) => `${n} deals left today — ${names}`,
+    dealLeft: (name, due, unit) => `${name}: ${due} ${unit} left today`,
+    double: 'Double ×2',
+    interest: (pct) => `Interest ${pct}%`,
+    interestDaily: (pct) => `${pct}% daily interest`,
+  },
+  he: {
+    appTitle: 'דיל כושר',
+    home: 'בית', calendar: 'יומן', stats: 'סטטיסטיקות', settings: 'הגדרות',
+    letsGo: 'יאללה →', next: 'הבא →', back: 'חזור',
+    obTitle: 'דיל כושר',
+    obBody: 'אתה עושה <strong>דיל</strong> עם עצמך — התחייבות יומית להתאמן.<br><br>יום שהוחמץ לא נעלם. הוא הופך ל<strong>חוב</strong> שגדל.<br><br>כי התחייבות אמיתית לא מתאפסת.',
+    chooseChallenges: 'בחר אתגרים', pickOne: 'אפשר לבחור יותר מאחד',
+    missedDay: 'מה קורה ביום<br>שהוחמץ?',
+    doubleTitle: '×2 כפול', doubleDesc: 'חזרות שהוחמצו חוזרות כפול. החמצת 25 — חייב 50. פשוט.',
+    compoundTitle: 'ריבית דריבית', compoundDesc: 'החוב גדל יומיומית אם לא משולם. ריבית על ריבית.',
+    dailyPct: '% יומי:', yourDeal: 'הדיל שלך',
+    penalty: 'עונש', starts: 'מתחיל', today: 'היום',
+    tapToSign: 'לחץ על הכפתור לחתום על הדיל',
+    logWorkout: 'דיווח', save: 'שמור', cancel: 'ביטול',
+    start: 'התחל', resume: 'המשך', stop: 'עצור',
+    autoCount: 'ספירה אוטומטית',
+    done: 'בוצע', partial: 'חלקי', missed: 'הוחמץ',
+    workoutCalendar: 'יומן אימונים',
+    statistics: 'סטטיסטיקות',
+    remaining: 'נותר', doneToday: 'סיימת היום!',
+    goal: 'יעד', debt: 'חוב', doneLbl: 'בוצע',
+    daysLeft: 'נשאר היום',
+    debtCapReached: 'הגעת לתקרת החוב',
+    debtCapBody: (cap, unit) => `החוב הגיע לתקרה (${cap} ${unit}). אפשר לפרוס על כמה ימים.`,
+    settleDebt: 'הסדר חוב',
+    logTitle: (name) => `דיווח ${name}`,
+    logSubDone: (logged, left, unit) => `בוצעו ${logged} — נשארו ${left} ${unit}`,
+    logSubGoal: (due, unit) => `יעד היום: ${due} ${unit}`,
+    enterAmount: 'הכנס כמות',
+    completedToday: (name) => `${name} הושלם היום!`,
+    logged: (n, unit) => `דווחו ${n} ${unit}`,
+    noActiveDeal: 'אין דיל פעיל.<br>עבור להגדרות כדי להתחיל.',
+    noActiveDealShort: 'אין דיל פעיל',
+    totalUnit: (unit) => `סה״כ ${unit}`,
+    caloriesBurned: 'קלוריות שנשרפו',
+    kcalToday: 'קק״ל היום',
+    dayStreak: 'ימים ברצף',
+    best: (n) => `שיא: ${n} ימים`,
+    progress30: 'התקדמות 30 יום',
+    musclesWorked: 'שרירים מעורבים',
+    openDebt: (n, unit) => `חוב פתוח של <strong>${n} ${unit}</strong><br>בצע חזרות נוספות לסגור אותו`,
+    dailyGoal: 'יעד יומי', penaltyLbl: 'עונש', started: 'התחיל', openDebtLbl: 'חוב פתוח',
+    noneCheck: 'אין ✓', remove: 'הסר',
+    notifications: 'התראות', dailyReminder: 'תזכורת יומית', reminderTime: 'שעת תזכורת',
+    addChallenge: '+ הוסף אתגר', newDeal: '+ דיל חדש', resetEverything: 'איפוס הכל',
+    language: 'שפה', langLabel: 'עברית',
+    addToHome: 'הוסף למסך הבית', addToHomeSub: 'לחץ Share → "Add to Home Screen" לתזכורות',
+    targetReached: 'מדהים! הגעת ליעד! 💪',
+    cameraUnavail: 'מצלמה לא זמינה',
+    reminderUpdated: 'שעת תזכורת עודכנה',
+    enterNumber: 'הכנס מספר:',
+    notifBlocked: 'התראות חסומות — אפשר בהגדרות המכשיר',
+    removeConfirmDebt: (debt, unit, name) => `יש לך חוב של ${debt} ${unit} ב${name}. להסיר את האתגר ולמחוק היסטוריה?`,
+    removeConfirm: (name) => `להסיר את ${name} ולמחוק היסטוריה?`,
+    resetConfirmDebt: (total) => `סה״כ חוב: ${total}. לאפס הכל ולמחוק היסטוריה?`,
+    resetConfirm: 'לאפס את כל הדילים ולמחוק היסטוריה?',
+    notifTitle: 'דיל כושר',
+    dealsLeftToday: (n, names) => `${n} דילים נשארו היום — ${names}`,
+    dealLeft: (name, due, unit) => `${name}: ${due} ${unit} נשארו היום`,
+    double: 'כפול ×2',
+    interest: (pct) => `ריבית ${pct}%`,
+    interestDaily: (pct) => `${pct}% ריבית יומית`,
+  }
+};
+
+function lang() { return (DATA.settings && DATA.settings.lang) || 'en'; }
+function t(key) { return T[lang()][key] || T.en[key] || key; }
+function exName(exercise) { return lang() === 'he' ? EXERCISES[exercise].name : EXERCISES[exercise].nameEn; }
+function applyLang() {
+  const l = lang();
+  document.documentElement.lang = l;
+  document.documentElement.dir = l === 'he' ? 'rtl' : 'ltr';
+}
+
 function load() {
   try { DATA = JSON.parse(localStorage.getItem(STORE_KEY)) || {}; } catch { DATA = {}; }
+  migrateData();
 }
 function save() { localStorage.setItem(STORE_KEY, JSON.stringify(DATA)); }
+
+function migrateData() {
+  if (DATA.deal && !DATA.deals) {
+    const d = DATA.deal;
+    DATA.deals = [{
+      exercise: d.exercise,
+      dailyTarget: d.dailyTarget,
+      penaltyType: d.penaltyType,
+      penaltyPercent: d.penaltyPercent,
+      startDate: d.startDate,
+      active: d.active,
+      createdAt: d.createdAt,
+      logs: DATA.logs || {},
+      debt: DATA.debt || 0,
+      lastProcessed: DATA.lastProcessed,
+      debtOverCap: DATA.debtOverCap || false,
+    }];
+    delete DATA.deal;
+    delete DATA.logs;
+    delete DATA.debt;
+    delete DATA.lastProcessed;
+    delete DATA.debtOverCap;
+  }
+  if (!DATA.deals) DATA.deals = [];
+}
 load();
 
 // ═══════════════ DATE UTILS ═══════════════
@@ -457,35 +811,38 @@ function getMonthLabel(s) {
   const d = new Date(s+'T12:00:00');
   return d.toLocaleDateString('he-IL', {month:'long',year:'numeric'});
 }
-const HE_DAYS_SHORT = ['א','ב','ג','ד','ה','ו','ש'];
+const HE_DAYS_SHORT = ['S','M','T','W','T','F','S'];
 
 // ═══════════════ DEBT ENGINE ═══════════════
+function activeDeals() { return (DATA.deals || []).filter(d => d.active); }
+function getDeal(exercise) { return (DATA.deals || []).find(d => d.exercise === exercise); }
+
 function processDebt() {
-  if (!DATA.deal?.active) return;
-  const { dailyTarget, penaltyType, penaltyPercent, startDate } = DATA.deal;
-  if (!DATA.debt) DATA.debt = 0;
-  if (!DATA.logs) DATA.logs = {};
+  activeDeals().forEach(processDealDebt);
+  save();
+}
+
+function processDealDebt(deal) {
+  const { dailyTarget, penaltyType, penaltyPercent, startDate } = deal;
+  if (!deal.debt) deal.debt = 0;
+  if (!deal.logs) deal.logs = {};
   const tod = todayStr();
 
   // Determine start of processing
-  let cursor = DATA.lastProcessed ? addDays(DATA.lastProcessed, 1) : startDate;
+  let cursor = deal.lastProcessed ? addDays(deal.lastProcessed, 1) : startDate;
 
   while (cursor < tod) {
     if (cursor >= startDate) {
       // Apply compound interest to existing debt first
-      if (penaltyType === 'percent' && DATA.debt > 0) {
+      if (penaltyType === 'percent' && deal.debt > 0) {
         const pct = parseFloat(penaltyPercent) || 20;
-        DATA.debt = Math.ceil(DATA.debt * (1 + pct / 100));
+        deal.debt = Math.ceil(deal.debt * (1 + pct / 100));
       }
       // Add missed reps
-      const logged = DATA.logs[cursor] || 0;
+      const logged = deal.logs[cursor] || 0;
       const missed = Math.max(0, dailyTarget - logged);
       if (missed > 0) {
-        if (penaltyType === 'double') {
-          DATA.debt += missed * 2;
-        } else {
-          DATA.debt += missed;
-        }
+        deal.debt += penaltyType === 'double' ? missed * 2 : missed;
       }
     }
     cursor = addDays(cursor, 1);
@@ -493,38 +850,38 @@ function processDebt() {
 
   // Debt cap: max 5× target — use >= so flag persists after debt is clamped
   const cap = dailyTarget * 5;
-  DATA.debtOverCap = DATA.debt >= cap;
-  DATA.debt = Math.min(DATA.debt, cap);
-  DATA.lastProcessed = addDays(tod, -1);
-  save();
+  deal.debtOverCap = deal.debt >= cap;
+  deal.debt = Math.min(deal.debt, cap);
+  deal.lastProcessed = addDays(tod, -1);
 }
 
-function todayLogged() { return (DATA.logs && DATA.logs[todayStr()]) || 0; }
-function todayRemaining() { return Math.max(0, (DATA.deal?.dailyTarget || 0) - todayLogged()); }
-function totalDue() { return todayRemaining() + (DATA.debt || 0); }
-function isTodayDone() { return todayLogged() >= (DATA.deal?.dailyTarget || 1); }
+function dealLogged(deal) { return (deal.logs && deal.logs[todayStr()]) || 0; }
+function dealRemaining(deal) { return Math.max(0, deal.dailyTarget - dealLogged(deal)); }
+function dealDue(deal) { return dealRemaining(deal) + (deal.debt || 0); }
+function dealDone(deal) { return dealLogged(deal) >= deal.dailyTarget && (deal.debt || 0) === 0; }
 
-function addLog(reps) {
-  if (!DATA.logs) DATA.logs = {};
+function addLogToDeal(exercise, reps) {
+  const deal = getDeal(exercise);
+  if (!deal) return;
+  if (!deal.logs) deal.logs = {};
   const tod = todayStr();
-  const before = DATA.logs[tod] || 0;
-  DATA.logs[tod] = before + reps;
+  const before = deal.logs[tod] || 0;
+  deal.logs[tod] = before + reps;
 
   // Reps beyond today's target reduce debt
-  const target = DATA.deal.dailyTarget;
-  const overTarget = Math.max(0, (before + reps) - target);
-  if (overTarget > 0 && DATA.debt > 0) {
-    DATA.debt = Math.max(0, DATA.debt - overTarget);
+  const overTarget = Math.max(0, (before + reps) - deal.dailyTarget);
+  if (overTarget > 0 && deal.debt > 0) {
+    deal.debt = Math.max(0, deal.debt - overTarget);
   }
   save();
 }
 
-function getDayStatus(d) {
+function getDealDayStatus(deal, d) {
   const tod = todayStr();
-  if (!DATA.deal || d < DATA.deal.startDate) return 'no-deal';
+  if (d < deal.startDate) return 'no-deal';
   if (d > tod) return 'future';
-  const logged = (DATA.logs && DATA.logs[d]) || 0;
-  const target = DATA.deal.dailyTarget;
+  const logged = (deal.logs && deal.logs[d]) || 0;
+  const target = deal.dailyTarget;
   if (d === tod) {
     if (logged >= target) return 'complete';
     if (logged > 0) return 'today-partial';
@@ -535,23 +892,22 @@ function getDayStatus(d) {
   return 'missed';
 }
 
-function getStreak() {
-  if (!DATA.deal?.active) return { current: 0, best: 0 };
+function getDealStreak(deal) {
   const tod = todayStr();
   let cur = 0, best = 0, d = tod;
   // count backwards
   while (true) {
-    const s = getDayStatus(d);
+    const s = getDealDayStatus(deal, d);
     if (s === 'complete' || s === 'today-partial') { cur++; best = Math.max(best, cur); }
     else if (s === 'today' || s === 'future') { /* skip today if not done yet */ }
     else break;
-    if (d <= DATA.deal.startDate) break;
+    if (d <= deal.startDate) break;
     d = addDays(d, -1);
   }
   // Also compute all-time best
-  let brun = 0, cursor2 = DATA.deal.startDate;
+  let brun = 0, cursor2 = deal.startDate;
   while (cursor2 <= tod) {
-    const s = getDayStatus(cursor2);
+    const s = getDealDayStatus(deal, cursor2);
     if (s === 'complete') { brun++; best = Math.max(best, brun); }
     else { brun = 0; }
     cursor2 = addDays(cursor2, 1);
@@ -559,14 +915,9 @@ function getStreak() {
   return { current: cur, best };
 }
 
-function getTotalReps() {
-  if (!DATA.logs) return 0;
-  return Object.values(DATA.logs).reduce((a, b) => a + (b || 0), 0);
-}
-
-function getDebtRepaid() {
-  if (!DATA.debtRepaid) DATA.debtRepaid = 0;
-  return DATA.debtRepaid;
+function getDealTotalReps(deal) {
+  if (!deal.logs) return 0;
+  return Object.values(deal.logs).reduce((a, b) => a + (b || 0), 0);
 }
 
 // ═══════════════ SCREEN SYSTEM ═══════════════
@@ -574,6 +925,7 @@ let currentScreen = 'ob';
 
 function show(name) {
   if (currentScreen === 'log' && name !== 'log') stopCamera();
+  if (name !== 'main' && _countdownTimer) { clearInterval(_countdownTimer); _countdownTimer = null; }
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   const el = document.getElementById('s-' + name);
@@ -582,39 +934,64 @@ function show(name) {
   if (nb) nb.classList.add('active');
   currentScreen = name;
 
-  if (name === 'main') { renderMain(); updateFab(); }
+  if (name === 'main') renderMain();
   if (name === 'cal') renderCalendar();
   if (name === 'stat') renderStats();
   if (name === 'set') renderSettings();
   if (name === 'log') renderLog();
+
+  updateTranslatedUI();
+  updateFab();
 }
 
 // ═══════════════ EXERCISES ═══════════════
 const EXERCISES = {
-  pushups: { name: 'שכיבות סמיכה', unit: 'חזרות', defaultTarget: 25 },
-  situps:  { name: 'כפיפות בטן',   unit: 'חזרות', defaultTarget: 20 },
-  plank:   { name: 'פלאנקים',      unit: 'שניות', defaultTarget: 60 },
+  pushups: { name: 'שכיבות סמיכה', nameEn: 'Push-Ups', unit: 'reps', defaultTarget: 25, calPerUnit: 0.45, muscles: 'Chest, Shoulders, Triceps, Core', icon: '<path d="M18 3a3 3 0 00-3 3v12a3 3 0 003 3 3 3 0 003-3 3 3 0 00-3-3H6a3 3 0 00-3 3 3 3 0 003 3 3 3 0 003-3V6a3 3 0 00-3-3 3 3 0 00-3 3 3 3 0 003 3h12a3 3 0 003-3 3 3 0 00-3-3z"/>' },
+  situps:  { name: 'כפיפות בטן',   nameEn: 'Sit-Ups',  unit: 'reps', defaultTarget: 20, calPerUnit: 0.3, muscles: 'Abs, Hip Flexors, Core', icon: '<path d="M12 2a2 2 0 110 4 2 2 0 010-4zM4 18l4-8 2 4 3-4 5 8"/>' },
+  plank:   { name: 'פלאנקים',      nameEn: 'Plank',     unit: 'sec',  defaultTarget: 60, calPerUnit: 0.05, muscles: 'Core, Shoulders, Back, Glutes', icon: '<path d="M12 2a2 2 0 110 4 2 2 0 010-4zM3 18l18-8"/>' },
 };
-function exName() { return EXERCISES[DATA.deal?.exercise || 'pushups']?.name || 'שכיבות סמיכה'; }
-function exUnit() { return EXERCISES[DATA.deal?.exercise || 'pushups']?.unit || 'חזרות'; }
 
-// ═══════════════ FAB ═══════════════
-function updateFab() {
-  const fab = document.getElementById('fab');
-  if (!fab) return;
-  if (!DATA.deal?.active) {
-    fab.classList.add('show');
-    fab.title = 'דיל חדש';
-  } else if (todayStr() < DATA.deal.startDate) {
-    fab.classList.remove('show');
-  } else {
-    fab.classList.add('show');
-    fab.title = 'רשום אימון';
-  }
+const FITNESS_FACTS = [
+  { he: 'שכיבות סמיכה: 3 סטים של 10-15 חזרות ליום מחזקים חזה, כתפיים וטריצפס. תרגיל יעיל במיוחד למשקל גוף', en: 'Push-ups: 3 sets of 10-15 reps daily strengthen chest, shoulders and triceps. Most effective bodyweight exercise', exercise: 'pushups' },
+  { he: 'כפיפות בטן: 2-3 סטים של 15-20 חזרות. שורפות 5-8 קלוריות לדקה ומחזקות ליבה ויציבה', en: 'Sit-ups: 2-3 sets of 15-20 reps. Burn 5-8 calories per minute and strengthen core and posture', exercise: 'situps' },
+  { he: 'פלאנק: 3 סטים של 30-60 שניות. מפעיל 20+ שרירים בו-זמנית - התרגיל האיזומטרי האפקטיבי ביותר', en: 'Plank: 3 sets of 30-60 sec. Activates 20+ muscles simultaneously - most effective isometric exercise', exercise: 'plank' },
+  { he: 'שכיבות סמיכה מפעילות יותר מ-200 שרירים. 100 שכיבות סמיכה ביום שורפות כ-45 קלוריות', en: 'Push-ups activate 200+ muscles. 100 push-ups a day burn about 45 calories', exercise: 'pushups' },
+  { he: 'פלאנק של 60 שניות שווה ערך ל-20 כפיפות בטן מבחינת חיזוק הליבה', en: 'A 60-second plank equals about 20 sit-ups in terms of core strengthening', exercise: 'plank' },
+  { he: 'המינימום המומלץ: 150 דקות פעילות גופנית בשבוע (כ-20 דקות ביום)', en: 'Recommended minimum: 150 minutes of physical activity per week (~20 min/day)', exercise: null },
+  { he: 'אימון בבוקר מגביר מטבוליזם ב-15% לשאר היום', en: 'Morning workouts boost metabolism by 15% for the rest of the day', exercise: null },
+  { he: 'שילוב של שכיבות סמיכה + פלאנק + כפיפות בטן = אימון גוף מלא ב-15 דקות', en: 'Push-ups + plank + sit-ups = full body workout in 15 minutes', exercise: null },
+];
+
+function updateFab() {}
+
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light-mode');
+  document.querySelector('meta[name="theme-color"]').content = isLight ? '#F2F2F7' : '#05080F';
+  if (!DATA.settings) DATA.settings = {};
+  DATA.settings.theme = isLight ? 'light' : 'dark';
+  save();
+  renderSettings();
 }
-function fabAction() {
-  if (!DATA.deal?.active) { obStep = 0; show('ob'); }
-  else show('log');
+
+function applyTheme() {
+  const theme = DATA.settings?.theme;
+  if (theme === 'light') { document.body.classList.add('light-mode'); }
+  else if (theme === 'dark') { document.body.classList.remove('light-mode'); }
+  else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+    document.body.classList.add('light-mode');
+  }
+  const isLight = document.body.classList.contains('light-mode');
+  document.querySelector('meta[name="theme-color"]').content = isLight ? '#F2F2F7' : '#05080F';
+}
+
+function updateTranslatedUI() {
+  applyLang();
+  const el = (id) => document.getElementById(id);
+  if (el('main-title')) el('main-title').textContent = t('appTitle');
+  if (el('cal-title')) el('cal-title').textContent = t('workoutCalendar');
+  if (el('stat-title')) el('stat-title').textContent = t('statistics');
+  if (el('set-title')) el('set-title').textContent = t('settings');
+  document.querySelectorAll('[data-t]').forEach(s => s.textContent = t(s.dataset.t));
 }
 
 // ═══════════════ CAMERA ═══════════════
@@ -623,6 +1000,7 @@ async function toggleCamera() {
   const vid = document.getElementById('camera-preview');
   const btn = document.getElementById('camera-btn');
   if (cameraStream) {
+    stopMotionDetection();
     cameraStream.getTracks().forEach(t => t.stop());
     cameraStream = null;
     vid.style.display = 'none';
@@ -633,10 +1011,14 @@ async function toggleCamera() {
       vid.srcObject = cameraStream;
       vid.style.display = 'block';
       btn.classList.add('on');
-    } catch { showToast('מצלמה לא זמינה'); }
+      if (currentLogExercise && !isTimerExercise(currentLogExercise)) {
+        vid.onloadeddata = () => startMotionDetection(vid);
+      }
+    } catch { showToast(t('cameraUnavail')); }
   }
 }
 function stopCamera() {
+  stopMotionDetection();
   if (cameraStream) {
     cameraStream.getTracks().forEach(t => t.stop());
     cameraStream = null;
@@ -648,43 +1030,172 @@ function stopCamera() {
 }
 function closeLog() {
   stopCamera();
+  resetTimer();
   show('main');
+}
+
+// ═══════════════ PUSHUP AUTO-COUNT ═══════════════
+let _motionDetector = null;
+
+function startMotionDetection(videoEl) {
+  if (_motionDetector) return;
+  const canvas = document.getElementById('motion-canvas');
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  const W = 120, H = 90;
+  canvas.width = W;
+  canvas.height = H;
+
+  const cx1 = Math.floor(W * 0.2), cx2 = Math.floor(W * 0.8);
+  const cy1 = Math.floor(H * 0.05), cy2 = Math.floor(H * 0.55);
+  let prevGray = null;
+  let sizeHistory = [];
+  let smoothedSize = 0;
+  let prevSmoothed = 0;
+  let state = 'up';
+  let lastRepTime = 0;
+  let calibrating = 10;
+
+  _motionDetector = setInterval(() => {
+    if (videoEl.readyState < 2) return;
+    ctx.drawImage(videoEl, 0, 0, W, H);
+    const frame = ctx.getImageData(0, 0, W, H);
+
+    let brightCount = 0;
+    for (let y = cy1; y < cy2; y++) {
+      for (let x = cx1; x < cx2; x++) {
+        const i = (y * W + x) * 4;
+        const r = frame.data[i], g = frame.data[i+1], b = frame.data[i+2];
+        const lum = (r * 77 + g * 150 + b * 29) >> 8;
+        if (lum > 80 && r > 60 && (r - b) > -20) brightCount++;
+      }
+    }
+
+    sizeHistory.push(brightCount);
+    if (sizeHistory.length > 60) sizeHistory.shift();
+
+    if (calibrating > 0) { calibrating--; smoothedSize = brightCount; prevSmoothed = brightCount; return; }
+
+    smoothedSize = smoothedSize * 0.65 + brightCount * 0.35;
+    const baseline = sizeHistory.reduce((a, b) => a + b) / sizeHistory.length;
+    const deviation = smoothedSize - baseline;
+    const threshold = baseline * 0.06;
+    const now = Date.now();
+
+    if (state === 'up' && deviation > threshold) {
+      state = 'down';
+    } else if (state === 'down' && deviation < -threshold * 0.3 && (now - lastRepTime) > 700) {
+      state = 'up';
+      lastRepTime = now;
+      currentReps++;
+      document.getElementById('reps-display').textContent = currentReps;
+    }
+
+    prevSmoothed = smoothedSize;
+  }, 100);
+
+  document.getElementById('auto-count-badge').classList.add('show');
+}
+
+function stopMotionDetection() {
+  if (_motionDetector) {
+    clearInterval(_motionDetector);
+    _motionDetector = null;
+  }
+  const badge = document.getElementById('auto-count-badge');
+  if (badge) badge.classList.remove('show');
 }
 
 // ═══════════════ ONBOARDING ═══════════════
 let obStep = 0;
-let obTarget = 25;
+let obSelected = new Set();
+let obTargets = {};
 let obPenalty = 'double';
-let obExercise = 'pushups';
+let obAdding = false;
 
-function selectExercise(type) {
-  obExercise = type;
-  document.querySelectorAll('.exercise-card').forEach(c =>
-    c.classList.toggle('selected', c.dataset.ex === type));
-  obTarget = EXERCISES[type].defaultTarget;
-  document.getElementById('target-display').textContent = obTarget;
-  document.getElementById('target-unit').textContent = EXERCISES[type].unit;
+function startObFlow(adding) {
+  obAdding = adding;
+  obSelected = new Set();
+  obTargets = {};
+  obPenalty = 'double';
+  obStep = adding ? 1 : 0;
+  document.querySelectorAll('.ob-step').forEach(s => s.classList.remove('active'));
+  document.getElementById('ob-step-' + obStep).classList.add('active');
+  if (obStep === 1) renderExerciseCards();
+  updateObTranslations();
+  show('ob');
+}
+
+function updateObTranslations() {
+  const el = (id) => document.getElementById(id);
+  if (el('ob-title-0')) el('ob-title-0').textContent = t('obTitle');
+  if (el('ob-body-0')) el('ob-body-0').innerHTML = t('obBody');
+  if (el('ob-btn-0')) el('ob-btn-0').textContent = t('letsGo');
+}
+
+function renderExerciseCards() {
+  const container = document.getElementById('ob-exercise-cards');
+  const activeNames = new Set(activeDeals().map(d => d.exercise));
+  const available = Object.keys(EXERCISES).filter(ex => !activeNames.has(ex));
+  container.innerHTML = available.map(ex => {
+    const e = EXERCISES[ex];
+    const sel = obSelected.has(ex) ? 'selected' : '';
+    return `<div class="exercise-card ${sel}" data-ex="${ex}" onclick="toggleExercise('${ex}')">
+      <div class="ec-ring"><svg viewBox="0 0 24 24">${e.icon}</svg></div>
+      <div class="ec-name">${exName(ex)}</div>
+    </div>`;
+  }).join('');
+  renderObTargets();
+}
+
+function toggleExercise(type) {
+  if (obSelected.has(type)) {
+    obSelected.delete(type);
+    delete obTargets[type];
+  } else {
+    obSelected.add(type);
+    obTargets[type] = EXERCISES[type].defaultTarget;
+  }
+  renderExerciseCards();
+}
+
+function renderObTargets() {
+  const container = document.getElementById('ob-targets-list');
+  container.innerHTML = [...obSelected].map(ex => {
+    const e = EXERCISES[ex];
+    return `<div class="target-row-compact">
+      <div class="target-ex-name">${exName(ex)}</div>
+      <div class="target-stepper">
+        <button class="qty-btn small" onclick="changeObTarget('${ex}',-5)">−</button>
+        <div class="target-val">${obTargets[ex]}</div>
+        <button class="qty-btn small" onclick="changeObTarget('${ex}',5)">+</button>
+      </div>
+      <div class="target-unit-label">${e.unit === 'sec' ? 'MM:SS' : e.unit}</div>
+    </div>`;
+  }).join('');
+}
+
+function changeObTarget(type, delta) {
+  obTargets[type] = Math.max(1, Math.min(200, (obTargets[type] || 0) + delta));
+  renderObTargets();
 }
 
 function obNext() {
+  if (obStep === 1 && obSelected.size === 0) { showToast('Pick at least one exercise'); return; }
   document.getElementById('ob-step-' + obStep).classList.remove('active');
   obStep++;
   const el = document.getElementById('ob-step-' + obStep);
   if (el) {
     el.classList.add('active');
+    if (obStep === 1) renderExerciseCards();
     if (obStep === 3) updateSummary();
   }
 }
 
 function obPrev() {
+  if (obStep === 1 && obAdding) { show('main'); return; }
   document.getElementById('ob-step-' + obStep).classList.remove('active');
   obStep--;
   document.getElementById('ob-step-' + obStep).classList.add('active');
-}
-
-function changeTarget(delta) {
-  obTarget = Math.max(1, Math.min(200, obTarget + delta));
-  document.getElementById('target-display').textContent = obTarget;
 }
 
 function selectPenalty(type) {
@@ -695,155 +1206,324 @@ function selectPenalty(type) {
 }
 
 function updateSummary() {
-  const ex = EXERCISES[obExercise];
-  document.getElementById('sum-exercise').textContent = ex.name;
-  document.getElementById('sum-target').textContent = obTarget + ' ' + ex.unit;
+  const list = document.getElementById('sum-exercises-list');
+  list.innerHTML = [...obSelected].map(ex => {
+    const e = EXERCISES[ex];
+    return `<div class="summary-row"><span class="summary-key">${exName(ex)}</span><span class="summary-val">${e.unit === 'sec' ? formatTimer(obTargets[ex]) : obTargets[ex] + ' ' + e.unit}</span></div>`;
+  }).join('');
   if (obPenalty === 'double') {
-    document.getElementById('sum-penalty').textContent = 'כפול ×2';
+    document.getElementById('sum-penalty').textContent = t('double');
   } else {
     const pct = document.getElementById('pct-input').value || 20;
-    document.getElementById('sum-penalty').textContent = 'ריבית ' + pct + '% יומי';
+    document.getElementById('sum-penalty').textContent = t('interestDaily')(pct);
   }
 }
 
 function signDeal() {
   const btn = document.getElementById('sign-btn');
   btn.style.transform = 'scale(1.15)';
-  btn.style.background = 'var(--green)';
+  btn.style.background = 'var(--accent)';
   setTimeout(() => {
     const pct = parseInt(document.getElementById('pct-input').value) || 20;
-    const tomorrow = addDays(todayStr(), 1);
-    DATA.deal = {
-      exercise: obExercise,
-      dailyTarget: obTarget,
-      penaltyType: obPenalty,
-      penaltyPercent: pct,
-      startDate: tomorrow,
-      active: true,
-      createdAt: todayStr()
-    };
-    DATA.logs = {};
-    DATA.debt = 0;
-    DATA.lastProcessed = todayStr();
+    if (!DATA.deals) DATA.deals = [];
+    [...obSelected].forEach(ex => {
+      DATA.deals.push({
+        exercise: ex,
+        dailyTarget: obTargets[ex],
+        penaltyType: obPenalty,
+        penaltyPercent: pct,
+        startDate: todayStr(),
+        active: true,
+        createdAt: todayStr(),
+        logs: {},
+        debt: 0,
+        lastProcessed: todayStr(),
+        debtOverCap: false
+      });
+    });
     save();
     launchConfetti();
     document.getElementById('nav').classList.add('show');
     show('main');
-    setTimeout(requestNotifications, 500);
+    if (!obAdding) setTimeout(requestNotifications, 500);
   }, 600);
 }
 
 async function requestNotifications() {
-  if (!('Notification' in window)) return;
-  const perm = await Notification.requestPermission();
-  if (DATA.settings) DATA.settings.notificationsEnabled = (perm === 'granted');
-  else DATA.settings = { notificationsEnabled: perm === 'granted', reminderHour: 20 };
-  save();
+  if (!('Notification' in window)) {
+    showToast(t('notifBlocked'));
+    return;
+  }
+  try {
+    const perm = await Notification.requestPermission();
+    if (!DATA.settings) DATA.settings = { notificationsEnabled: false, reminderHour: 20 };
+    DATA.settings.notificationsEnabled = (perm === 'granted');
+    save();
+    if (perm === 'denied') showToast(t('notifBlocked'));
+    if (perm === 'granted') scheduleInAppReminder();
+    if (currentScreen === 'set') renderSettings();
+  } catch {
+    showToast(t('notifBlocked'));
+  }
 }
 
 // ═══════════════ MAIN SCREEN ═══════════════
 function renderMain() {
   processDebt();
   const body = document.getElementById('main-body');
-  const streakBadge = document.getElementById('streak-badge');
+  const deals = activeDeals();
 
-  if (!DATA.deal?.active) {
+  if (deals.length === 0) {
     body.innerHTML = `<div class="no-deal">
       <div class="icon-ring"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
-      <p>אין דיל פעיל.<br>לחץ + כדי להתחיל.</p>
+      <p>${t('noActiveDeal')}</p>
     </div>`;
+    stopAllCountdowns();
     return;
   }
 
-  if (todayStr() < DATA.deal.startDate) {
-    const startFmt = formatDate(DATA.deal.startDate);
-    const ex = EXERCISES[DATA.deal.exercise] || EXERCISES.pushups;
-    body.innerHTML = `
-      <div class="start-card">
-        <div class="start-icon-ring"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
-        <div class="start-title">הדיל נחתם!</div>
-        <div class="start-sub">האימון הראשון מתחיל<br><strong>${startFmt}</strong></div>
-      </div>
-      <div class="start-card" style="gap:6px;align-items:flex-start;">
-        <div style="font-size:12px;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;font-weight:500;margin-bottom:4px">הדיל שלך</div>
-        <div style="display:flex;justify-content:space-between;width:100%;font-size:15px;padding:6px 0;border-bottom:1px solid var(--sep)"><span style="color:var(--label2)">תרגיל</span><span style="font-weight:600">${ex.name}</span></div>
-        <div style="display:flex;justify-content:space-between;width:100%;font-size:15px;padding:6px 0;border-bottom:1px solid var(--sep)"><span style="color:var(--label2)">יעד יומי</span><span style="font-weight:600">${DATA.deal.dailyTarget} ${ex.unit}</span></div>
-        <div style="display:flex;justify-content:space-between;width:100%;font-size:15px;padding:6px 0"><span style="color:var(--label2)">קנס</span><span style="font-weight:600">${DATA.deal.penaltyType==='double'?'כפול ×2':'ריבית '+DATA.deal.penaltyPercent+'%'}</span></div>
-      </div>`;
-    streakBadge.style.display = 'none';
-    return;
-  }
+  const ringsHtml = renderConcentricRings(deals);
+  body.innerHTML = `${ringsHtml}<div class="deals-grid">${deals.map(renderDealCard).join('')}</div>`;
+  startAllCountdowns();
+}
 
-  const target = DATA.deal.dailyTarget;
-  const logged = todayLogged();
-  const debt = DATA.debt || 0;
-  const due = totalDue();
-  const done = isTodayDone() && debt === 0;
-  const { current: streak } = getStreak();
+function buildRingSvg(deals, dataFn) {
+  const ringColors = ['var(--ring1)', 'var(--ring2)', 'var(--ring3)'];
+  const ringGlows = ['rgba(255,107,0,0.5)', 'rgba(255,77,140,0.5)', 'rgba(77,166,255,0.5)'];
+  const ringBgs = ['rgba(255,107,0,0.2)', 'rgba(255,77,140,0.2)', 'rgba(77,166,255,0.2)'];
+  let rings;
+  if (deals.length === 1) rings = [{r: 58, sw: 18}];
+  else if (deals.length === 2) rings = [{r: 62, sw: 16}, {r: 42, sw: 16}];
+  else rings = [{r: 65, sw: 14}, {r: 48, sw: 13}, {r: 32, sw: 12}];
 
-  if (streak > 1) {
-    streakBadge.textContent = `${streak} ימים`;
-    streakBadge.style.display = 'inline';
-  } else {
-    streakBadge.style.display = 'none';
-  }
+  let svg = '<svg viewBox="0 0 160 160">';
+  deals.forEach((deal, i) => {
+    if (i >= 3) return;
+    const {r, sw} = rings[i];
+    const C = 2 * Math.PI * r;
+    const pct = dataFn(deal);
+    const offset = C * (1 - Math.min(pct, 1));
+    svg += `<circle cx="80" cy="80" r="${r}" fill="none" stroke="${ringBgs[i]}" stroke-width="${sw}"/>`;
+    svg += `<circle cx="80" cy="80" r="${r}" fill="none" stroke="${ringColors[i]}" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${offset.toFixed(1)}" style="filter:drop-shadow(0 0 8px ${ringGlows[i]})"/>`;
+    if (pct > 1) {
+      const overOffset = C * (1 - Math.min(pct - 1, 1));
+      svg += `<circle cx="80" cy="80" r="${r}" fill="none" stroke="${ringColors[i]}" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${overOffset.toFixed(1)}" opacity="0.6"/>`;
+    }
+  });
+  svg += '</svg>';
+  return svg;
+}
 
-  const total = target + debt;
-  const pct = total > 0 ? Math.min(1, logged / total) : 1;
-  const C = 502.65;
-  const offset = (C * (1 - pct)).toFixed(1);
-  const ringColor = done ? 'var(--green)' : debt > 0 ? 'var(--orange)' : 'var(--accent)';
-  const numClass = done ? 'r-done' : '';
+function renderConcentricRings(deals) {
+  const colorHexes = ['#FF6B00', '#FF4D8C', '#4DA6FF'];
+  const dailyLabel = lang() === 'he' ? 'יומי' : 'Daily';
+  const overallLabel = lang() === 'he' ? 'כללי' : 'Overall';
 
-  const unit = exUnit();
+  const dailySvg = buildRingSvg(deals, (deal) => {
+    const target = deal.dailyTarget + (deal.debt || 0);
+    return target > 0 ? dealLogged(deal) / target : 1;
+  });
+
+  const overallSvg = buildRingSvg(deals, (deal) => {
+    const tod = todayStr();
+    const totalDays = Math.max(1, daysBetween(deal.startDate, tod));
+    const completedDays = Object.keys(deal.logs || {}).filter(d => d >= deal.startDate && d <= tod && (deal.logs[d] || 0) >= deal.dailyTarget).length;
+    return totalDays > 0 ? completedDays / totalDays : 0;
+  });
+
+  let details = '';
+  deals.forEach((deal, i) => {
+    if (i >= 3) return;
+    const target = deal.dailyTarget + (deal.debt || 0);
+    const logged = dealLogged(deal);
+    const name = exName(deal.exercise);
+    const isPlank = deal.exercise === 'plank';
+    const fLogged = isPlank ? formatTimer(logged) : logged;
+    const fTarget = isPlank ? formatTimer(target) : target;
+    details += `<div class="ring-detail"><div class="ring-detail-name">${name}</div><div class="ring-detail-val" style="color:${colorHexes[i]}">${fLogged}/${fTarget}</div></div>`;
+  });
+
+  return `<div class="rings-hero">
+    <div class="rings-row">
+      <div class="rings-col"><div class="rings-svg-wrap">${dailySvg}</div><div class="rings-col-label">${dailyLabel}</div></div>
+      <div class="rings-col"><div class="rings-svg-wrap">${overallSvg}</div><div class="rings-col-label">${overallLabel}</div></div>
+    </div>
+    <div class="rings-details">${details}</div>
+  </div>`;
+}
+
+function renderDealCard(deal) {
+  const ex = EXERCISES[deal.exercise];
+  const target = deal.dailyTarget;
+  const logged = dealLogged(deal);
+  const debt = deal.debt || 0;
+  const done = dealDone(deal);
+  const { current: streak } = getDealStreak(deal);
+  const eName = exName(deal.exercise);
+
+  const isPlank = ex.unit === 'sec';
+  const fTarget = isPlank ? formatTimer(target) : target;
+  const fDebt = isPlank ? formatTimer(debt) : debt;
+  const fLogged = isPlank ? formatTimer(logged) : logged;
   let chipsHtml = `<div class="chips-row">
-    <div class="chip"><div class="chip-val">${target}</div><div class="chip-key">יעד</div></div>`;
-  if (debt > 0) chipsHtml += `<div class="chip c-debt"><div class="chip-val">${debt}</div><div class="chip-key">חוב</div></div>`;
-  chipsHtml += `<div class="chip c-done"><div class="chip-val">${logged}</div><div class="chip-key">${unit}</div></div></div>`;
+    <div class="chip"><div class="chip-val">${fTarget}</div><div class="chip-key">${t('goal')}</div></div>`;
+  if (debt > 0) chipsHtml += `<div class="chip c-debt"><div class="chip-val">${fDebt}</div><div class="chip-key">${t('debt')}</div></div>`;
+  chipsHtml += `<div class="chip c-done"><div class="chip-val">${fLogged}</div><div class="chip-key">${t('doneLbl')}</div></div></div>`;
 
   let capHtml = '';
-  if (DATA.debtOverCap) {
-    capHtml = `<div class="cap-card">
-      <div class="cap-title">תקרת חוב הגיעה</div>
-      <div class="cap-body">החוב הגיע לגבול (${target*5} ${unit}). ניתן לפרוס אותו על פני כמה ימים.</div>
-      <button class="cap-btn" onclick="showSettle()">הסדר חוב</button>
+  if (deal.debtOverCap) {
+    capHtml = `<div class="cap-card small">
+      <div class="cap-title">${t('debtCapReached')}</div>
+      <div class="cap-body">${t('debtCapBody')(target*5, ex.unit)}</div>
+      <button class="cap-btn" onclick="showSettle('${deal.exercise}')">${t('settleDebt')}</button>
     </div>`;
   }
 
-  body.innerHTML = `
-    <div class="ring-section">
-      <div class="ring-wrap">
-        <svg class="ring-svg" viewBox="0 0 200 200">
-          <circle class="ring-track" cx="100" cy="100" r="80"/>
-          <circle class="ring-fill" id="ring-prog" cx="100" cy="100" r="80"
-            style="stroke-dashoffset:${offset};stroke:${ringColor}"/>
-        </svg>
-        <div class="ring-center">
-          <div class="ring-num ${numClass}">${done ? '✓' : due}</div>
-          <div class="ring-label">${done ? 'הושלם היום!' : 'לביצוע היום'}</div>
-          ${logged > 0 && !done ? `<div class="ring-sub">${logged} / ${total}</div>` : ''}
-        </div>
-      </div>
-      ${chipsHtml}
+  return `<div class="deal-card">
+    <div class="deal-card-header">
+      <div class="deal-card-title">${eName}</div>
+      ${streak > 1 ? `<div class="deal-card-streak">${streak} ${lang() === 'he' ? 'ימים' : 'days'} 🔥</div>` : ''}
     </div>
+    ${!done ? `<div class="ring-countdown small" data-countdown="${deal.exercise}"></div>` : ''}
+    ${chipsHtml}
     ${capHtml}
-    ${!done ? `<button class="main-cta" onclick="show('log')"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>רשום אימון</button>` : ''}
-  `;
+    ${!done ? `<button class="main-cta small" onclick="openLog('${deal.exercise}')"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>${t('logWorkout')} ${eName}</button>` : ''}
+  </div>`;
+}
+
+let _countdownTimer = null;
+function updateAllCountdowns() {
+  const els = document.querySelectorAll('[data-countdown]');
+  if (els.length === 0) return;
+  const now = new Date();
+  const midnight = new Date(now);
+  midnight.setHours(24, 0, 0, 0);
+  const msLeft = midnight - now;
+  const h = Math.floor(msLeft / 3600000);
+  const m = Math.floor((msLeft % 3600000) / 60000);
+  const text = `${h}h ${m}m ${t('daysLeft')}`;
+  els.forEach(el => el.textContent = text);
+}
+function startAllCountdowns() {
+  clearInterval(_countdownTimer);
+  _countdownTimer = null;
+  if (document.querySelectorAll('[data-countdown]').length === 0) return;
+  updateAllCountdowns();
+  _countdownTimer = setInterval(updateAllCountdowns, 30000);
+}
+function stopAllCountdowns() {
+  clearInterval(_countdownTimer);
+  _countdownTimer = null;
+}
+
+// ═══════════════ PLANK TIMER ═══════════════
+let _plankInterval = null;
+let _plankSeconds = 0;
+let _plankRunning = false;
+let _plankTargetReached = false;
+const TIMER_CIRCUMFERENCE = 2 * Math.PI * 80; // 502.65
+
+function formatTimer(sec) {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+function updateTimerUI() {
+  const display = document.getElementById('timer-display');
+  const ringFill = document.getElementById('timer-ring-fill');
+  display.textContent = formatTimer(_plankSeconds);
+
+  const deal = getDeal(currentLogExercise);
+  const target = deal ? deal.dailyTarget : 60;
+  const pct = Math.min(1, _plankSeconds / target);
+  const offset = TIMER_CIRCUMFERENCE * (1 - pct);
+  ringFill.style.strokeDashoffset = offset.toFixed(1);
+
+  if (_plankSeconds >= target && !_plankTargetReached) {
+    _plankTargetReached = true;
+    display.classList.add('done');
+    ringFill.classList.add('done');
+    launchConfetti();
+    showToast(t('targetReached'));
+  }
+}
+
+function toggleTimer() {
+  const btn = document.getElementById('timer-btn');
+  if (_plankRunning) {
+    clearInterval(_plankInterval);
+    _plankRunning = false;
+    btn.textContent = _plankSeconds > 0 ? t('resume') : t('start');
+    btn.classList.remove('running');
+    currentReps = _plankSeconds;
+  } else {
+    _plankRunning = true;
+    btn.textContent = t('stop');
+    btn.classList.add('running');
+    _plankInterval = setInterval(() => {
+      _plankSeconds++;
+      currentReps = _plankSeconds;
+      updateTimerUI();
+    }, 1000);
+  }
+}
+
+function resetTimer() {
+  clearInterval(_plankInterval);
+  _plankInterval = null;
+  _plankRunning = false;
+  _plankSeconds = 0;
+  _plankTargetReached = false;
+  const display = document.getElementById('timer-display');
+  const ringFill = document.getElementById('timer-ring-fill');
+  const btn = document.getElementById('timer-btn');
+  if (display) { display.textContent = '00:00'; display.classList.remove('done'); }
+  if (ringFill) { ringFill.style.strokeDashoffset = TIMER_CIRCUMFERENCE; ringFill.classList.remove('done'); }
+  if (btn) { btn.textContent = t('start'); btn.classList.remove('running'); }
+}
+
+function isTimerExercise(exercise) {
+  return exercise === 'plank';
 }
 
 // ═══════════════ LOG SCREEN ═══════════════
 let currentReps = 0;
+let currentLogExercise = null;
+
+function openLog(exercise) {
+  currentLogExercise = exercise;
+  show('log');
+}
 
 function renderLog() {
   currentReps = 0;
   document.getElementById('reps-display').textContent = '0';
-  const logged = todayLogged();
-  const due = totalDue();
-  const unit = exUnit();
+  resetTimer();
+
+  const deal = getDeal(currentLogExercise);
+  if (!deal) { closeLog(); return; }
+  const ex = EXERCISES[deal.exercise];
+  const eName = exName(deal.exercise);
+  document.getElementById('log-title').textContent = t('logTitle')(eName);
+  const logged = dealLogged(deal);
+  const due = dealDue(deal);
   document.getElementById('log-sub').textContent =
-    logged > 0 ? `כבר רשמת ${logged} — עוד ${Math.max(0, due - logged)} ${unit}` : `יעד היום: ${due} ${unit}`;
-  document.getElementById('log-all-btn').textContent =
-    due > 0 ? `כל היעד (${due})` : 'כל היעד';
+    logged > 0 ? t('logSubDone')(logged, Math.max(0, due - logged), ex.unit) : t('logSubGoal')(due, ex.unit);
+
+  const useTimer = isTimerExercise(deal.exercise);
+  const showCamera = deal.exercise === 'pushups';
+  document.getElementById('timer-section').classList.toggle('show', useTimer);
+  document.getElementById('reps-section').style.display = useTimer ? 'none' : '';
+  document.getElementById('camera-btn').style.display = showCamera ? '' : 'none';
+
+  document.getElementById('log-save-btn').textContent = t('save');
+  document.getElementById('log-cancel-btn').textContent = t('cancel');
+  document.getElementById('auto-count-badge').innerHTML = `<div class="pulse"></div>${t('autoCount')}`;
+
+  if (showCamera && !cameraStream) {
+    setTimeout(() => toggleCamera(), 300);
+  }
 }
 
 function changeReps(delta) {
@@ -851,9 +1531,14 @@ function changeReps(delta) {
   document.getElementById('reps-display').textContent = currentReps;
 }
 
-function logAll() {
-  currentReps = totalDue();
-  document.getElementById('reps-display').textContent = currentReps;
+function editRepsManual() {
+  const val = prompt(t('enterNumber'), currentReps);
+  if (val === null) return;
+  const n = parseInt(val);
+  if (!isNaN(n) && n >= 0 && n <= 500) {
+    currentReps = n;
+    document.getElementById('reps-display').textContent = currentReps;
+  }
 }
 
 function handleLogBg(e) {
@@ -861,27 +1546,59 @@ function handleLogBg(e) {
 }
 
 function saveLog() {
-  if (currentReps <= 0) { showToast('הכנס כמות'); return; }
-  addLog(currentReps);
-  const todayDone = isTodayDone();
+  if (currentReps <= 0) { showToast(t('enterAmount')); return; }
+  const deal = getDeal(currentLogExercise);
+  if (!deal) return;
+  addLogToDeal(currentLogExercise, currentReps);
+  const ex = EXERCISES[deal.exercise];
+  const eName = exName(deal.exercise);
+  const done = dealDone(deal);
   closeLog();
-  if (todayDone) {
-    setTimeout(() => { launchConfetti(); showToast('הדיל הושלם היום!'); }, 200);
+  if (done) {
+    setTimeout(() => { launchConfetti(); showToast(t('completedToday')(eName)); }, 200);
   } else {
-    showToast(`נרשמו ${currentReps} ${exUnit()}`);
+    showToast(t('logged')(currentReps, ex.unit));
   }
 }
 
 // ═══════════════ CALENDAR ═══════════════
+let calSelectedExercise = null;
+
+function selectCalTab(exercise) {
+  calSelectedExercise = exercise;
+  renderCalendar();
+}
+
 function renderCalendar() {
+  const tabsEl = document.getElementById('cal-tabs');
   const container = document.getElementById('cal-container');
-  if (!DATA.deal?.active) {
-    container.innerHTML = '<div class="no-deal"><div class="icon-ring"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><p>אין דיל פעיל</p></div>';
+  const deals = activeDeals();
+
+  const legendEl = document.getElementById('cal-legend');
+  const isHe = lang() === 'he';
+  legendEl.innerHTML = `
+    <div class="legend-item"><div class="legend-dot ld-complete"></div>${isHe ? 'הושלם' : 'Done'}</div>
+    <div class="legend-item"><div class="legend-dot ld-partial"></div>${isHe ? 'חלקי' : 'Partial'}</div>
+    <div class="legend-item"><div class="legend-dot ld-missed"></div>${isHe ? 'לא בוצע' : 'Missed'}</div>
+    <div class="legend-item"><div class="legend-dot ld-today"></div>${isHe ? 'היום' : 'Today'}</div>
+  `;
+
+  if (deals.length === 0) {
+    tabsEl.innerHTML = '';
+    container.innerHTML = `<div class="no-deal"><div class="icon-ring"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><p>${t('noActiveDealShort')}</p></div>`;
     return;
   }
 
+  if (!calSelectedExercise || !deals.find(d => d.exercise === calSelectedExercise)) {
+    calSelectedExercise = deals[0].exercise;
+  }
+
+  tabsEl.innerHTML = deals.length > 1
+    ? `<div class="deal-tabs">${deals.map(d => `<button class="deal-tab ${d.exercise===calSelectedExercise?'active':''}" onclick="selectCalTab('${d.exercise}')">${exName(d.exercise)}</button>`).join('')}</div>`
+    : '';
+
+  const deal = deals.find(d => d.exercise === calSelectedExercise);
   const tod = todayStr();
-  const start = DATA.deal.startDate;
 
   // Build last 90 days
   const days = [];
@@ -897,112 +1614,315 @@ function renderCalendar() {
 
   let html = '';
   Object.entries(months).reverse().forEach(([m, mDays]) => {
-    const label = getMonthLabel(mDays[0]);
-    // find day of week for first day
+    const mLabel = new Date(mDays[0] + 'T12:00:00').toLocaleDateString('en-US', {month:'short'}).toUpperCase();
+    const mYear = mDays[0].substring(0, 4);
     const firstDow = new Date(mDays[0] + 'T12:00:00').getDay();
     const cells = [];
     for (let i = 0; i < firstDow; i++) cells.push(null);
     mDays.forEach(d => cells.push(d));
     while (cells.length % 7 !== 0) cells.push(null);
 
-    const rows = [];
-    for (let i = 0; i < cells.length; i += 7) rows.push(cells.slice(i, i + 7));
-
     html += `<div class="cal-month">
-      <div class="cal-month-label">${label}</div>
+      <div class="cal-month-label">${mLabel} ${mYear}</div>
       <div class="cal-week-labels">${HE_DAYS_SHORT.map(d=>`<span>${d}</span>`).join('')}</div>
       <div class="cal-grid">
         ${cells.map(d => {
           if (!d) return '<div class="cal-cell empty"></div>';
-          const s = getDayStatus(d);
-          const logged = (DATA.logs && DATA.logs[d]) || 0;
+          const s = getDealDayStatus(deal, d);
+          const logged = (deal.logs && deal.logs[d]) || 0;
+          const dayNum = parseInt(d.substring(8));
           const cls = {
             'complete': 'complete', 'partial': 'partial', 'missed': 'missed',
             'today': 'today', 'today-partial': 'today',
             'future': 'future', 'no-deal': 'future'
           }[s] || '';
-          return `<div class="cal-cell ${cls}" title="${d}: ${logged} חזרות"></div>`;
+          const isFuture = s === 'future' || s === 'no-deal';
+          const clickable = !isFuture;
+          const clickAttr = clickable ? ` onclick="showCalDay('${d}')"` : '';
+          let liquid = '';
+          if (!isFuture && s !== 'no-deal') {
+            const pct = deal.dailyTarget > 0 ? Math.min(logged / deal.dailyTarget, 1) : 0;
+            const fillH = s === 'missed' && logged === 0 ? 0 : Math.max(Math.round(pct * 100), logged > 0 ? 12 : 0);
+            if (fillH > 0) {
+              const liqCls = logged >= deal.dailyTarget ? 'liq-complete' : (s === 'today' || s === 'today-partial') ? 'liq-today' : 'liq-partial';
+              liquid = `<div class="cal-liquid ${liqCls}" style="height:${fillH}%"></div>`;
+            }
+          }
+          return `<div class="cal-cell ${cls}" title="${d}: ${logged}"${clickAttr}>${liquid}<span class="cal-date">${dayNum}</span></div>`;
         }).join('')}
       </div>
     </div>`;
   });
+  // Add debt legend at bottom
+  const debtLegendLabel1 = lang() === 'he' ? '● חוב נוצר' : '● Debt created';
+  const debtLegendLabel2 = lang() === 'he' ? '✓ חוב נפרע' : '✓ Debt repaid';
+  html += `<div class="cal-legend-bottom"><span><span style="color:var(--red)">●</span> ${debtLegendLabel1}</span><span><span style="color:var(--accent)">✓</span> ${debtLegendLabel2}</span></div>`;
   container.innerHTML = html;
+}
+
+// ═══════════════ CALENDAR POPUP ═══════════════
+function showCalDay(dateStr) {
+  const deal = activeDeals().find(d => d.exercise === calSelectedExercise);
+  if (!deal) return;
+  const ex = EXERCISES[deal.exercise];
+  const logged = (deal.logs && deal.logs[dateStr]) || 0;
+  const target = deal.dailyTarget;
+  const isPlank = deal.exercise === 'plank';
+  const fLogged = isPlank ? formatTimer(logged) : logged;
+  const fTarget = isPlank ? formatTimer(target) : target;
+  const unitLabel = isPlank ? '' : (lang()==='he' ? ' חזרות' : ' reps');
+
+  let status, statusClass;
+  if (logged >= target) { status = lang()==='he' ? 'הושלם ✓' : 'Completed ✓'; statusClass = 'complete'; }
+  else if (logged > 0) { status = lang()==='he' ? 'חלקי' : 'Partial'; statusClass = 'partial'; }
+  else { status = lang()==='he' ? 'לא בוצע' : 'Missed'; statusClass = 'missed'; }
+
+  const dateObj = new Date(dateStr + 'T12:00:00');
+  const dayName = dateObj.toLocaleDateString(lang()==='he' ? 'he-IL' : 'en-US', {weekday:'long', day:'numeric', month:'long'});
+
+  const extra = logged > target ? logged - target : 0;
+  const deficit = logged < target ? target - logged : 0;
+  const fExtra = isPlank ? formatTimer(extra) : extra;
+  const fDeficit = isPlank ? formatTimer(deficit) : deficit;
+
+  let body = `
+    <div class="cal-popup-row"><span class="popup-label">${lang()==='he' ? 'בוצע' : 'Done'}</span><span class="popup-val">${fLogged}${unitLabel}</span></div>
+    <div class="cal-popup-row"><span class="popup-label">${lang()==='he' ? 'יעד' : 'Target'}</span><span class="popup-val">${fTarget}${unitLabel}</span></div>
+  `;
+  if (extra > 0) body += `<div class="cal-popup-row"><span class="popup-label">${lang()==='he' ? 'עודף (חוב נפרע)' : 'Extra (debt repaid)'}</span><span class="popup-val" style="color:var(--accent)">+${fExtra}</span></div>`;
+  if (deficit > 0 && logged > 0) body += `<div class="cal-popup-row"><span class="popup-label">${lang()==='he' ? 'חסר' : 'Missing'}</span><span class="popup-val" style="color:var(--red)">${fDeficit}</span></div>`;
+  body += `<div class="cal-popup-status ${statusClass}">${status}</div>`;
+
+  let popup = document.getElementById('cal-popup');
+  if (!popup) {
+    popup = document.createElement('div');
+    popup.id = 'cal-popup';
+    popup.className = 'cal-popup';
+    popup.onclick = (e) => { if (e.target === popup) popup.style.display = 'none'; };
+    popup.innerHTML = '<div class="cal-popup-content"><button class="cal-popup-close" onclick="this.parentElement.parentElement.style.display=\'none\'">✕</button><div id="cal-popup-date" class="cal-popup-date"></div><div id="cal-popup-body" class="cal-popup-body"></div></div>';
+    document.body.appendChild(popup);
+  }
+  document.getElementById('cal-popup-date').textContent = dayName;
+  document.getElementById('cal-popup-body').innerHTML = body;
+  popup.style.display = 'flex';
 }
 
 // ═══════════════ STATS ═══════════════
 function renderStats() {
-  const body = document.getElementById('stat-body');
-  if (!DATA.deal?.active) {
-    body.innerHTML = '<div class="no-deal"><div class="icon-ring"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div><p>אין דיל פעיל</p></div>';
+  const tabsEl = document.getElementById('stat-tabs');
+  const content = document.getElementById('stat-content');
+  const deals = activeDeals();
+
+  if (deals.length === 0) {
+    tabsEl.innerHTML = '';
+    content.innerHTML = `<div class="no-deal"><div class="icon-ring"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div><p>${t('noActiveDealShort')}</p></div>`;
     return;
   }
 
-  const target = DATA.deal.dailyTarget;
-  const totalReps = getTotalReps();
-  const { current: streak, best: bestStreak } = getStreak();
-  const debt = DATA.debt || 0;
+  // CHANGE 2: Remove tabs — show combined stats
+  tabsEl.innerHTML = '';
 
-  // Days since start
   const tod = todayStr();
-  const daysSinceStart = Math.max(0, daysBetween(DATA.deal.startDate, tod));
-  const completedDays = daysSinceStart > 0
-    ? Object.keys(DATA.logs || {}).filter(d => d >= DATA.deal.startDate && d <= tod && (DATA.logs[d] || 0) >= target).length
-    : 0;
-  const completionRate = daysSinceStart > 0 ? Math.round(completedDays / daysSinceStart * 100) : 0;
+  const locale = lang() === 'he' ? 'he-IL' : 'en';
 
-  // Last 7 days bar chart
-  const last7 = [];
-  for (let i = 6; i >= 0; i--) {
-    const d = addDays(tod, -i);
-    last7.push({ d, logged: (DATA.logs && DATA.logs[d]) || 0, target });
+  // Aggregate across all deals
+  let totalReps = 0;
+  let totalCal = 0;
+  let todayCal = 0;
+  let totalCompletedDays = 0;
+  let totalActiveDays = 0;
+  let totalDebt = 0;
+  let minStreak = Infinity;
+  let minBestStreak = Infinity;
+  const allStreaks = [];
+
+  deals.forEach(deal => {
+    const exDef = EXERCISES[deal.exercise];
+    const dr = getDealTotalReps(deal);
+    totalReps += dr;
+    totalCal += Math.round(dr * (exDef.calPerUnit || 0));
+    todayCal += Math.round(((deal.logs && deal.logs[tod]) || 0) * (exDef.calPerUnit || 0));
+    totalDebt += (deal.debt || 0);
+
+    const daysSinceStart = Math.max(1, daysBetween(deal.startDate, tod));
+    const completedDays = Object.keys(deal.logs || {}).filter(d => d >= deal.startDate && d <= tod && (deal.logs[d] || 0) >= deal.dailyTarget).length;
+    totalCompletedDays += completedDays;
+    totalActiveDays += daysSinceStart;
+
+    const { current: streak, best: bestStreak } = getDealStreak(deal);
+    allStreaks.push({ exercise: deal.exercise, current: streak, best: bestStreak });
+    if (streak < minStreak) minStreak = streak;
+    if (bestStreak < minBestStreak) minBestStreak = bestStreak;
+  });
+
+  if (minStreak === Infinity) minStreak = 0;
+  if (minBestStreak === Infinity) minBestStreak = 0;
+
+  const completionRate = totalActiveDays > 0 ? Math.round(totalCompletedDays / totalActiveDays * 100) : 0;
+
+  // Hero ring
+  const heroC = 2 * Math.PI * 46;
+  const heroOffset = (heroC * (1 - completionRate / 100)).toFixed(1);
+  const heroColor = completionRate >= 80 ? 'var(--accent)' : completionRate >= 40 ? 'var(--orange)' : 'var(--accent)';
+  const heroGlow = completionRate >= 80 ? 'rgba(255,107,0,0.55)' : completionRate >= 40 ? 'rgba(255,140,0,0.55)' : 'rgba(255,107,0,0.55)';
+
+  const displayUnit = lang() === 'he' ? 'סה״כ' : 'total';
+
+  // Streak — show minimum (weakest link)
+  const fireEmoji = minStreak >= 7 ? '🔥' : minStreak >= 3 ? '🔥' : minStreak >= 1 ? '💪' : '😴';
+  const streakBarW = minBestStreak > 0 ? Math.min(100, Math.round(minStreak / minBestStreak * 100)) : (minStreak > 0 ? 100 : 0);
+
+  // CHANGE 3: Weekday circles — compute completion per weekday across all deals
+  const weekdayCompleted = [0,0,0,0,0,0,0];
+  const weekdayTotal = [0,0,0,0,0,0,0];
+  deals.forEach(deal => {
+    let cursor = deal.startDate;
+    while (cursor <= tod) {
+      if (cursor >= deal.startDate) {
+        const dateObj = new Date(cursor + 'T12:00:00');
+        const dow = dateObj.getDay();
+        weekdayTotal[dow]++;
+        const logged = (deal.logs && deal.logs[cursor]) || 0;
+        if (logged >= deal.dailyTarget) weekdayCompleted[dow]++;
+      }
+      cursor = addDays(cursor, 1);
+    }
+  });
+
+  const heDays = ['א׳','ב׳','ג׳','ד׳','ה׳','ו׳','ש׳'];
+  const enDays = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const dayNames = lang() === 'he' ? heDays : enDays;
+
+  let weekdayHtml = '<div class="weekday-circles">';
+  for (let i = 0; i < 7; i++) {
+    const pct = weekdayTotal[i] > 0 ? Math.round(weekdayCompleted[i] / weekdayTotal[i] * 100) : 0;
+    let ringClass = 'weekday-ring';
+    if (pct > 80) ringClass += ' strong';
+    else if (pct > 40) ringClass += ' active';
+    weekdayHtml += `<div class="weekday-circle"><div class="${ringClass}">${pct}%</div><div class="weekday-label">${dayNames[i]}</div></div>`;
   }
-  const max7 = Math.max(...last7.map(x => x.logged), target);
-  const bars = last7.map(x => {
-    const h = max7 > 0 ? Math.round((x.logged / max7) * 100) : 0;
-    const done = x.logged >= target;
-    const dow = new Date(x.d + 'T12:00:00').getDay();
-    return `<div class="week-bar-wrap">
-      <div class="week-bar ${done?'done':''}" style="height:${h}%"></div>
-      <div class="week-bar-label">${HE_DAYS_SHORT[dow]}</div>
-    </div>`;
+  weekdayHtml += '</div>';
+
+  // CHANGE 4: 30-day chart with grid lines and today highlight
+  const last30 = [];
+  for (let i = 29; i >= 0; i--) last30.push(addDays(tod, -i));
+
+  // Sum across all deals for each day
+  let max30 = 0;
+  const day30Vals = last30.map(d => {
+    let dayTotal = 0;
+    let dayTarget = 0;
+    deals.forEach(deal => {
+      dayTotal += (deal.logs && deal.logs[d]) || 0;
+      dayTarget += deal.dailyTarget;
+    });
+    if (dayTotal > max30) max30 = dayTotal;
+    if (dayTarget > max30) max30 = dayTarget;
+    return { date: d, total: dayTotal, target: dayTarget };
+  });
+
+  const gridLines = `<div style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;pointer-events:none;z-index:0;">
+    <div style="border-bottom:1px solid var(--sep);width:100%;height:0"></div>
+    <div style="border-bottom:1px solid var(--sep);width:100%;height:0"></div>
+    <div style="border-bottom:1px solid var(--sep);width:100%;height:0"></div>
+    <div style="border-bottom:1px solid var(--sep);width:100%;height:0"></div>
+    <div style="height:0"></div>
+  </div>`;
+
+  const progressBars = day30Vals.map((dv) => {
+    const h = max30 > 0 ? Math.round((dv.total / max30) * 100) : 0;
+    const metTarget = dv.total >= dv.target;
+    const color = metTarget ? 'var(--accent)' : dv.total > 0 ? 'var(--orange)' : 'var(--bg4)';
+    const isToday = dv.date === tod;
+    const todayStyle = isToday ? 'box-shadow:0 0 8px var(--accent);' : '';
+    return `<div class="progress-bar-wrap" style="z-index:1"><div class="progress-bar" style="height:${Math.max(h, 4)}%;background:${color};${todayStyle}"></div></div>`;
   }).join('');
 
-  body.innerHTML = `
-    <div class="stat-row">
-      <div class="stat-card">
-        <div class="stat-label">סה"כ חזרות</div>
-        <div class="stat-value">${totalReps.toLocaleString('he')}<span class="stat-unit"> 💪</span></div>
+  const d30Start = new Date(last30[0] + 'T12:00:00').toLocaleDateString('en-US', {month:'short',day:'numeric'});
+  const d30End = new Date(last30[29] + 'T12:00:00').toLocaleDateString('en-US', {month:'short',day:'numeric'});
+
+  // Debt HTML
+  const debtHtml = totalDebt > 0
+    ? `<div class="debt-banner"><div class="debt-num">${totalDebt}</div><div class="debt-info">${lang()==='he' ? `חוב פתוח של <strong>${totalDebt}</strong><br>בצע חזרות נוספות לסגור אותו` : `Open debt of <strong>${totalDebt}</strong><br>Do extra reps to pay it off`}</div></div>`
+    : '';
+
+  // Per-exercise streak compact display (for multi-deal)
+  let streakDetailHtml = '';
+  if (deals.length > 1) {
+    streakDetailHtml = '<div style="margin-top:12px;display:flex;flex-direction:column;gap:6px">' +
+      allStreaks.map(s => {
+        const nm = exName(s.exercise);
+        return `<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--label2)"><span>${nm}</span><span style="font-weight:600;color:var(--label)">${s.current} / ${s.best}</span></div>`;
+      }).join('') + '</div>';
+  }
+
+  // CHANGE 5: Streak and calories side by side in half-width
+  content.innerHTML = `
+    <div class="stat-card wide stat-hero">
+      <div class="stat-hero-ring">
+        <svg viewBox="0 0 120 120">
+          <circle class="h-track" cx="60" cy="60" r="46"/>
+          <circle class="h-fill" cx="60" cy="60" r="46" style="stroke:${heroColor};stroke-dasharray:${heroC.toFixed(1)};stroke-dashoffset:${heroOffset};filter:drop-shadow(0 0 12px ${heroGlow}) drop-shadow(0 0 25px ${heroGlow})"/>
+        </svg>
+        <div class="stat-hero-pct">${completionRate}%</div>
       </div>
-      <div class="stat-card">
-        <div class="stat-label">רצף נוכחי</div>
-        <div class="stat-value">${streak}<span class="stat-unit"> ימים</span></div>
+      <div class="stat-hero-info">
+        <div class="stat-hero-row"><div class="stat-hero-num">${totalCompletedDays}</div><div class="stat-hero-unit">${lang()==='he'?'ימים הושלמו':'days completed'}</div></div>
+        <div class="stat-hero-row"><div class="stat-hero-num">${totalReps.toLocaleString(locale)}</div><div class="stat-hero-unit">${displayUnit}</div></div>
       </div>
     </div>
-    <div class="stat-row">
-      <div class="stat-card">
-        <div class="stat-label">רצף שיא</div>
-        <div class="stat-value">${bestStreak}<span class="stat-unit"> ימים</span></div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">אחוז השלמה</div>
-        <div class="stat-value">${completionRate}<span class="stat-unit">%</span></div>
-      </div>
-    </div>
+
     <div class="stat-card wide">
-      <div class="stat-label">7 ימים אחרונים</div>
-      <div class="week-bars">${bars}</div>
+      <div class="stat-label">${lang()==='he' ? 'השלמה לפי יום בשבוע' : 'COMPLETION BY WEEKDAY'}</div>
+      ${weekdayHtml}
     </div>
-    <div class="stat-row">
+
+    <div class="stat-card wide">
+      <div class="stat-label">${t('progress30')}</div>
+      <div class="stat-big-num" style="color:${heroColor}">${completionRate}%</div>
+      <div style="font-size:13px;color:var(--label2);margin-bottom:16px">${totalCompletedDays} ${lang()==='he'?'ימים הושלמו מתוך':'days completed out of'} ${totalActiveDays}</div>
+      <div class="progress-chart">${gridLines}${progressBars}</div>
+      <div class="progress-labels"><span>${d30Start}</span><span>${d30End}</span></div>
+    </div>
+
+    <div class="stat-row-half">
       <div class="stat-card">
-        <div class="stat-label">ימים מושלמים</div>
-        <div class="stat-value">${completedDays}<span class="stat-unit"> / ${daysSinceStart}</span></div>
+        <div class="stat-label">${t('dayStreak')} ${fireEmoji}</div>
+        <div class="stat-vs-row" style="gap:12px">
+          <div class="stat-vs-item">
+            <div class="stat-vs-val" style="color:var(--accent);font-size:28px">${minStreak}</div>
+            <div class="stat-vs-lbl">${lang()==='he'?'נוכחי':'Current'}</div>
+          </div>
+          <div class="stat-vs-item">
+            <div class="stat-vs-val" style="color:var(--label2);font-size:28px">${minBestStreak}</div>
+            <div class="stat-vs-lbl">${lang()==='he'?'שיא':'Best'}</div>
+          </div>
+        </div>
+        <div class="stat-vs-bar" style="margin-top:10px">
+          <div class="stat-vs-bar-fill" style="width:${streakBarW}%"></div>
+        </div>
+        ${streakDetailHtml}
       </div>
       <div class="stat-card">
-        <div class="stat-label">חוב פתוח</div>
-        <div class="stat-value" style="color:${debt>0?'var(--orange)':'var(--green)'}">
-          ${debt > 0 ? debt : '✓'}<span class="stat-unit">${debt > 0 ? ' חז\'':''}</span>
+        <div class="stat-label">${lang()==='he' ? 'קלוריות' : 'CALORIES'}</div>
+        <div style="display:flex;flex-direction:column;gap:12px;margin-top:4px">
+          <div><div style="font-size:28px;font-weight:700;color:var(--orange);letter-spacing:-1px">${totalCal.toLocaleString(locale)}</div><div style="font-size:11px;color:var(--label2)">${t('caloriesBurned')}</div></div>
+          <div><div style="font-size:22px;font-weight:700;color:var(--accent)">${todayCal}</div><div style="font-size:11px;color:var(--label2)">${t('kcalToday')}</div></div>
         </div>
       </div>
+    </div>
+
+    ${debtHtml}
+
+    <div class="stat-card wide fact-card">
+      <div class="fact-icon">💡</div>
+      ${(() => {
+        const fact = FITNESS_FACTS[Math.floor(Math.random() * FITNESS_FACTS.length)];
+        const factExName = fact.exercise && EXERCISES[fact.exercise] ? exName(fact.exercise) : '';
+        const subtitle = factExName ? ` - ${factExName}` : '';
+        return `<div class="fact-label">${lang()==='he' ? 'הידעת? 💡' : 'Did You Know? 💡'}${subtitle}</div>
+      <div class="fact-text">${lang()==='he' ? fact.he : fact.en}</div>`;
+      })()}
     </div>
   `;
 }
@@ -1012,44 +1932,139 @@ function renderSettings() {
   const body = document.getElementById('set-body');
   if (!DATA.settings) DATA.settings = { notificationsEnabled: false, reminderHour: 20 };
   const s = DATA.settings;
-  const deal = DATA.deal;
+  const deals = activeDeals();
+  const locale = lang() === 'he' ? 'he-IL' : 'en-US';
 
-  let dealSection = '';
-  if (deal?.active) {
-    const penStr = deal.penaltyType === 'double' ? 'כפול ×2' : `ריבית ${deal.penaltyPercent}%`;
-    dealSection = `
-      <div class="set-section-hdr">הדיל הפעיל</div>
+  let dealsSection = '';
+  deals.forEach(deal => {
+    const ex = EXERCISES[deal.exercise];
+    const eName = exName(deal.exercise);
+    const penStr = deal.penaltyType === 'double' ? t('double') : t('interest')(deal.penaltyPercent);
+    const startStr = new Date(deal.startDate + 'T12:00:00').toLocaleDateString(locale, {month:'short',day:'numeric',year:'numeric'});
+    const setUnit = ex.unit === 'sec' ? 'MM:SS' : ex.unit;
+    dealsSection += `
+      <div class="set-section-hdr">${eName}</div>
       <div class="set-group">
-        <div class="set-row"><span class="set-label">תרגיל</span><span class="set-value">שכיבות סמיכה 💪</span></div>
-        <div class="set-row"><span class="set-label">יעד יומי</span><span class="set-value">${deal.dailyTarget} חזרות</span></div>
-        <div class="set-row"><span class="set-label">קנס</span><span class="set-value">${penStr}</span></div>
-        <div class="set-row"><span class="set-label">התחיל</span><span class="set-value">${formatDate(deal.startDate)}</span></div>
-        <div class="set-row"><span class="set-label">חוב פתוח</span><span class="set-value" style="color:${DATA.debt>0?'var(--orange)':'var(--green)'}">${DATA.debt > 0 ? DATA.debt + ' חזרות' : 'אין ✓'}</span></div>
+        <div class="set-row"><span class="set-label">${t('dailyGoal')}</span><span class="set-value">${deal.dailyTarget} ${setUnit}</span></div>
+        <div class="set-row"><span class="set-label">${t('penaltyLbl')}</span><span class="set-value">${penStr}</span></div>
+        <div class="set-row"><span class="set-label">${t('started')}</span><span class="set-value">${startStr}</span></div>
+        <div class="set-row"><span class="set-label">${t('openDebtLbl')}</span><span class="set-value" style="color:${deal.debt>0?'var(--orange)':'var(--accent)'}">${deal.debt > 0 ? deal.debt + ' ' + setUnit : t('noneCheck')}</span></div>
+        <div class="set-row"><button class="danger-btn" style="padding:10px" onclick="removeDeal('${deal.exercise}')">${t('remove')}</button></div>
       </div>`;
-  }
+  });
 
   const notifToggle = s.notificationsEnabled ? 'on' : '';
   const reminderTime = `${String(s.reminderHour||20).padStart(2,'0')}:00`;
+  const canAddMore = deals.length < Object.keys(EXERCISES).length;
+  const curLang = lang();
+  const langBtnLabel = curLang === 'en' ? 'English → עברית' : 'עברית → English';
+
+  // BMI Calculator
+  const savedHeight = localStorage.getItem('bmi_height') || '';
+  const savedWeight = localStorage.getItem('bmi_weight') || '';
+  let bmiResultHtml = '';
+  if (savedHeight && savedWeight) {
+    const h = parseFloat(savedHeight);
+    const w = parseFloat(savedWeight);
+    if (h > 0 && w > 0) {
+      const bmiVal = (w / Math.pow(h / 100, 2)).toFixed(1);
+      let category, color;
+      if (bmiVal < 18.5) { category = lang() === 'he' ? 'תת-משקל' : 'Underweight'; color = 'var(--ring3)'; }
+      else if (bmiVal < 25) { category = lang() === 'he' ? 'תקין' : 'Normal'; color = 'var(--accent)'; }
+      else if (bmiVal < 30) { category = lang() === 'he' ? 'עודף משקל' : 'Overweight'; color = 'var(--orange)'; }
+      else { category = lang() === 'he' ? 'השמנה' : 'Obese'; color = 'var(--red)'; }
+      bmiResultHtml = `<div class="bmi-result"><div class="bmi-value" style="color:${color}">${bmiVal}</div><div class="bmi-category">${category}</div></div>`;
+    }
+  }
+
+  const bmiSection = `
+    <div class="set-section-hdr">${lang() === 'he' ? 'מחשבון BMI' : 'BMI Calculator'}</div>
+    <div class="bmi-card" id="bmi-section">
+      <div class="bmi-title">${lang() === 'he' ? 'מחשבון BMI' : 'BMI Calculator'}</div>
+      <div class="bmi-inputs">
+        <div class="bmi-input">
+          <label>${lang() === 'he' ? 'גובה (ס״מ)' : 'Height (cm)'}</label>
+          <input type="number" id="bmi-height" placeholder="170" value="${savedHeight}" min="50" max="250">
+        </div>
+        <div class="bmi-input">
+          <label>${lang() === 'he' ? 'משקל (ק״ג)' : 'Weight (kg)'}</label>
+          <input type="number" id="bmi-weight" placeholder="70" value="${savedWeight}" min="20" max="300">
+        </div>
+      </div>
+      <div id="bmi-result-container">${bmiResultHtml}</div>
+    </div>`;
 
   body.innerHTML = `
-    ${dealSection}
-    <div class="set-section-hdr">התראות</div>
+    ${bmiSection}
+    ${dealsSection}
+    <div class="set-section-hdr">Appearance</div>
     <div class="set-group">
       <div class="set-row">
-        <span class="set-label">תזכורת יומית</span>
+        <span class="set-label theme-toggle-row"><span class="theme-icon">${document.body.classList.contains('light-mode') ? '☀️' : '🌙'}</span> ${document.body.classList.contains('light-mode') ? 'Light Mode' : 'Dark Mode'}</span>
+        <button class="toggle ${document.body.classList.contains('light-mode') ? 'on' : ''}" onclick="toggleTheme()"></button>
+      </div>
+    </div>
+    <div class="set-section-hdr">${t('language')}</div>
+    <div class="set-group">
+      <div class="set-row">
+        <span class="set-label">${t('langLabel')}</span>
+        <button class="btn-outline" onclick="toggleLang()" style="flex:none;padding:8px 16px">${langBtnLabel}</button>
+      </div>
+    </div>
+    <div class="set-section-hdr">${t('notifications')}</div>
+    <div class="set-group">
+      <div class="set-row">
+        <span class="set-label">${t('dailyReminder')}</span>
         <button class="toggle ${notifToggle}" id="notif-toggle" onclick="toggleNotif()"></button>
       </div>
       <div class="set-row">
-        <span class="set-label">שעת תזכורת</span>
+        <span class="set-label">${t('reminderTime')}</span>
         <input class="set-input" type="time" value="${reminderTime}" onchange="setReminderTime(this.value)">
       </div>
     </div>
     <div class="set-danger">
-      ${deal?.active
-        ? `<button class="danger-btn" onclick="confirmReset()">אתחל דיל מחדש</button>`
-        : `<button class="btn-primary" onclick="startNewDeal()">+ צור דיל חדש</button>`}
+      ${deals.length > 0 && canAddMore ? `<button class="btn-primary" onclick="addNewChallenge()" style="margin-bottom:10px">${t('addChallenge')}</button>` : ''}
+      ${deals.length > 0
+        ? `<button class="danger-btn" onclick="confirmReset()">${t('resetEverything')}</button>`
+        : `<button class="btn-primary" onclick="addNewChallenge()">${t('newDeal')}</button>`}
     </div>
   `;
+
+  // BMI event listeners
+  const bmiHeightInput = document.getElementById('bmi-height');
+  const bmiWeightInput = document.getElementById('bmi-weight');
+  if (bmiHeightInput && bmiWeightInput) {
+    const updateBMI = () => {
+      const h = parseFloat(bmiHeightInput.value);
+      const w = parseFloat(bmiWeightInput.value);
+      if (h) localStorage.setItem('bmi_height', h);
+      if (w) localStorage.setItem('bmi_weight', w);
+      const container = document.getElementById('bmi-result-container');
+      if (!container) return;
+      if (h > 0 && w > 0) {
+        const bmiVal = (w / Math.pow(h / 100, 2)).toFixed(1);
+        let category, color;
+        if (bmiVal < 18.5) { category = lang() === 'he' ? 'תת-משקל' : 'Underweight'; color = 'var(--ring3)'; }
+        else if (bmiVal < 25) { category = lang() === 'he' ? 'תקין' : 'Normal'; color = 'var(--accent)'; }
+        else if (bmiVal < 30) { category = lang() === 'he' ? 'עודף משקל' : 'Overweight'; color = 'var(--orange)'; }
+        else { category = lang() === 'he' ? 'השמנה' : 'Obese'; color = 'var(--red)'; }
+        container.innerHTML = `<div class="bmi-result"><div class="bmi-value" style="color:${color}">${bmiVal}</div><div class="bmi-category">${category}</div></div>`;
+      } else {
+        container.innerHTML = '';
+      }
+    };
+    bmiHeightInput.addEventListener('input', updateBMI);
+    bmiWeightInput.addEventListener('input', updateBMI);
+  }
+}
+
+function toggleLang() {
+  if (!DATA.settings) DATA.settings = {};
+  DATA.settings.lang = lang() === 'en' ? 'he' : 'en';
+  save();
+  applyLang();
+  updateTranslatedUI();
+  renderSettings();
 }
 
 function toggleNotif() {
@@ -1068,36 +2083,53 @@ function setReminderTime(val) {
   if (!DATA.settings) DATA.settings = {};
   DATA.settings.reminderHour = parseInt(h);
   save();
-  showToast('שעת התזכורת עודכנה');
+  showToast(t('reminderUpdated'));
+}
+
+function addNewChallenge() {
+  startObFlow(activeDeals().length > 0);
+}
+
+function removeDeal(exercise) {
+  const deal = getDeal(exercise);
+  if (!deal) return;
+  const eName = exName(exercise);
+  const ex = EXERCISES[exercise];
+  const debt = deal.debt || 0;
+  const msg = debt > 0
+    ? t('removeConfirmDebt')(debt, ex.unit, eName)
+    : t('removeConfirm')(eName);
+  if (!confirm(msg)) return;
+  DATA.deals = DATA.deals.filter(d => d.exercise !== exercise);
+  save();
+  if (activeDeals().length === 0) {
+    document.getElementById('nav').classList.remove('show');
+    startObFlow(false);
+  } else {
+    renderSettings();
+    updateFab();
+  }
 }
 
 function confirmReset() {
-  const debt = DATA.debt || 0;
-  const msg = debt > 0
-    ? `יש לך חוב פתוח של ${debt} חזרות. לאתחל את הדיל ולאבד את ההיסטוריה?`
-    : 'לאתחל את הדיל ולאבד את כל ההיסטוריה?';
+  const totalDebt = activeDeals().reduce((a, d) => a + (d.debt || 0), 0);
+  const msg = totalDebt > 0
+    ? t('resetConfirmDebt')(totalDebt)
+    : t('resetConfirm');
   if (!confirm(msg)) return;
   DATA = {};
   save();
   document.getElementById('nav').classList.remove('show');
-  obStep = 0;
-  document.querySelectorAll('.ob-step').forEach(s => s.classList.remove('active'));
-  document.getElementById('ob-step-0').classList.add('active');
-  show('ob');
+  startObFlow(false);
 }
 
-function startNewDeal() {
-  obStep = 0;
-  document.querySelectorAll('.ob-step').forEach(s => s.classList.remove('active'));
-  document.getElementById('ob-step-0').classList.add('active');
-  document.getElementById('nav').classList.remove('show');
-  show('ob');
-}
-
-function showSettle() {
-  const target = DATA.deal?.dailyTarget || 25;
-  const days = Math.ceil((DATA.debt || 0) / target);
-  alert(`הסדר חוב:\nהחוב שלך (${DATA.debt} חזרות) יפרס ל-${days} ימים —\n${target} חזרות ביום בנוסף ליעד הרגיל.\n\n(הגדרה זו תיכנס לתוקף בגרסה הבאה)`);
+function showSettle(exercise) {
+  const deal = getDeal(exercise);
+  if (!deal) return;
+  const ex = EXERCISES[exercise];
+  const target = deal.dailyTarget;
+  const days = Math.ceil((deal.debt || 0) / target);
+  alert(`Settle ${ex.nameEn} debt:\nהחוב שלך (${deal.debt} ${ex.unit}) יפרס ל-${days} ימים —\n${target} ${ex.unit} ביום בנוסף ליעד הרגיל.\n\n(הגדרה זו תיכנס לתוקף בגרסה הבאה)`);
 }
 
 // ═══════════════ TOAST ═══════════════
@@ -1118,7 +2150,7 @@ function launchConfetti() {
   canvas.height = window.innerHeight;
   document.body.appendChild(canvas);
   const ctx = canvas.getContext('2d');
-  const colors = ['#6366f1','#30d158','#ff9f0a','#ff453a','#fff','#a78bfa','#34d399'];
+  const colors = ['#6366f1','#FF8C00','#ff9f0a','#ff453a','#fff','#a78bfa','#FFB800'];
   const pts = Array.from({length:70}, () => ({
     x: Math.random() * canvas.width,
     y: -10 - Math.random() * 40,
@@ -1144,10 +2176,51 @@ function launchConfetti() {
 }
 
 // ═══════════════ NOTIFICATIONS ═══════════════
+let _reminderTimer = null;
+
+function undoneDealsMessage() {
+  const undone = activeDeals().filter(d => !dealDone(d));
+  if (undone.length === 0) return null;
+  if (undone.length === 1) {
+    const d = undone[0];
+    return t('dealLeft')(exName(d.exercise), dealDue(d), EXERCISES[d.exercise].unit);
+  }
+  return t('dealsLeftToday')(undone.length, undone.map(d => exName(d.exercise)).join(', '));
+}
+
+function scheduleInAppReminder() {
+  clearTimeout(_reminderTimer);
+  if (!DATA.settings?.notificationsEnabled) return;
+  if (Notification.permission !== 'granted') return;
+  if (activeDeals().length === 0) return;
+
+  const now = new Date();
+  const reminderH = DATA.settings.reminderHour || 20;
+  const target = new Date();
+  target.setHours(reminderH, 0, 0, 0);
+
+  // If reminder time already passed today, schedule for tomorrow
+  if (now >= target) target.setDate(target.getDate() + 1);
+
+  const msUntil = target - now;
+  _reminderTimer = setTimeout(() => {
+    const msg = undoneDealsMessage();
+    if (msg) {
+      new Notification(t('notifTitle'), {
+        body: msg,
+        icon: './fitness-icon-192.png',
+      });
+      DATA.lastNotif = todayStr() + '-reminder';
+      save();
+    }
+    scheduleInAppReminder(); // reschedule for tomorrow
+  }, msUntil);
+}
+
 function checkNotifications() {
   if (!DATA.settings?.notificationsEnabled) return;
   if (Notification.permission !== 'granted') return;
-  if (!DATA.deal?.active) return;
+  if (activeDeals().length === 0) return;
 
   const now = new Date();
   const h = now.getHours();
@@ -1155,35 +2228,57 @@ function checkNotifications() {
   const reminderH = DATA.settings.reminderHour || 20;
   const lastNotif = DATA.lastNotif || '';
 
-  // End-of-day: if past reminder hour and deal not done
   if (h >= reminderH && lastNotif !== todayKey + '-reminder') {
-    const logged = todayLogged();
-    const target = DATA.deal.dailyTarget;
-    if (logged < target) {
-      new Notification('דיל כושר', {
-        body: `יש לך דיל פתוח — עוד ${totalDue()} חזרות להיום`,
-        icon: '/deal-icon.png'
+    const msg = undoneDealsMessage();
+    if (msg) {
+      new Notification(t('notifTitle'), {
+        body: msg,
+        icon: './fitness-icon-192.png',
       });
       DATA.lastNotif = todayKey + '-reminder';
       save();
     }
   }
+
+  scheduleInAppReminder();
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    checkNotifications();
+    if (currentScreen === 'main') renderMain();
+  }
+});
+
+// ═══════════════ INSTALL BANNER ═══════════════
+function checkInstallBanner() {
+  // Show only on iOS Safari (not in standalone mode)
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone = window.navigator.standalone === true;
+  const dismissed = localStorage.getItem('install_banner_dismissed');
+  if (isIOS && !isStandalone && !dismissed) {
+    document.getElementById('install-banner').classList.add('show');
+  }
+}
+function dismissInstallBanner() {
+  document.getElementById('install-banner').classList.remove('show');
+  localStorage.setItem('install_banner_dismissed', '1');
 }
 
 // ═══════════════ INIT ═══════════════
 function init() {
   load();
-  if (DATA.deal?.active) {
+  applyLang();
+  applyTheme();
+  if (activeDeals().length > 0) {
     processDebt();
     document.getElementById('nav').classList.add('show');
     show('main');
-    updateFab();
     checkNotifications();
   } else {
-    obStep = 0;
-    show('ob');
-    document.getElementById('fab').classList.add('show');
+    startObFlow(false);
   }
+  checkInstallBanner();
 }
 
 init();
