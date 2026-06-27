@@ -116,7 +116,7 @@ function saveData(data) {
 function initWordState() {
   const map = {};
   ALL_WORDS.forEach(w => {
-    map[w.id] = { score: 0, attempts: 0, correct: 0, lastSeen: null, pinned: false };
+    map[w.id] = { score: 0, attempts: 0, correct: 0, streak: 0, lastSeen: null, pinned: false };
   });
   return map;
 }
@@ -236,7 +236,7 @@ function StarRating({ score }) {
 
 function HomeScreen({ wordState, onStart, onRoadmap }) {
   const total = ALL_WORDS.length;
-  const learned = ALL_WORDS.filter(w => wordState[w.id]?.attempts > 0).length;
+  const learned = ALL_WORDS.filter(w => (wordState[w.id]?.streak || 0) >= 3).length;
   const mastered = ALL_WORDS.filter(w => wordState[w.id]?.score >= 8).length;
   const weak = ALL_WORDS.filter(w =>
     wordState[w.id]?.attempts > 0 && wordState[w.id]?.score < 3
@@ -350,7 +350,7 @@ function RoadmapScreen({ wordState, onBack }) {
 
       {levels.map(lvl => {
         const words = ALL_WORDS.filter(w => w.level === lvl);
-        const attempted = words.filter(w => wordState[w.id]?.attempts > 0).length;
+        const attempted = words.filter(w => (wordState[w.id]?.streak || 0) >= 3).length;
         const mastered = words.filter(w => wordState[w.id]?.score >= 8).length;
         const pct = Math.round((mastered / 50) * 100);
         const isActive = attempted > 0;
@@ -430,11 +430,13 @@ function PracticeScreen({ wordState, mode, onEnd, onUpdateWord }) {
     const newScore = correct
       ? Math.min(10, prev.score + 1)
       : Math.max(0, prev.score - 1);
+    const newStreak = correct ? (prev.streak || 0) + 1 : 0;
 
     onUpdateWord(currentWord.id, {
       score: newScore,
       attempts: prev.attempts + 1,
       correct: prev.correct + (correct ? 1 : 0),
+      streak: newStreak,
       lastSeen: new Date().toISOString()
     });
 
@@ -453,6 +455,7 @@ function PracticeScreen({ wordState, mode, onEnd, onUpdateWord }) {
       score: Math.max(0, prev.score - 1),
       attempts: prev.attempts + 1,
       correct: prev.correct,
+      streak: 0,
       lastSeen: new Date().toISOString()
     });
     setSessionStats(s => ({ ...s, wrong: s.wrong + 1, total: s.total + 1 }));
