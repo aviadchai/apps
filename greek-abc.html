@@ -225,7 +225,11 @@ function shuffle(arr) {
 
 function daysSince(dateStr) {
   if (!dateStr) return 0;
-  return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
+  const start = new Date(dateStr);
+  const today = new Date();
+  const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+  const todayDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  return Math.floor((todayDay - startDay) / 86400000);
 }
 
 function BingoCell({ letter, state, onClick, highlight }) {
@@ -874,7 +878,7 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
           αβγ
         </h1>
         <p style={{ margin: "4px 0 0", color: "#6b7280", fontSize: 14 }}>
-          האלפבית היווני ב-10 ימים <span style={{ color: "#9ca3af", fontSize: 11 }}>(v18)</span>
+          האלפבית היווני ב-10 ימים <span style={{ color: "#9ca3af", fontSize: 11 }}>(v19)</span>
         </p>
       </div>
 
@@ -1155,7 +1159,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
 <script>
 (function(){
-  var APP_VER = 'abc_v18';
+  var APP_VER = 'abc_v19';
   if ('caches' in window && localStorage.getItem('abc_ver') !== APP_VER) {
     caches.keys().then(function(names) {
       return Promise.all(names.map(function(n){ return caches.delete(n); }));
