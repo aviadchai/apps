@@ -1,8 +1,8 @@
 {
-  "name": "יווניCal — 500 מילים יווניות",
-  "short_name": "יווניCal",
-  "description": "500 מילים יווניות לתייר",
-  "start_url": "./greek.html",
+  "name": "ABC יוונית — לימוד אלפבית",
+  "short_name": "ABC יוונית",
+  "description": "למד את האלפבית היווני עם בינגו, חידונים ואתגר 10 ימים",
+  "start_url": "./greek-abc.html",
   "scope": ".",
   "display": "standalone",
   "orientation": "portrait",

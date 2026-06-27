@@ -1,5 +1,5 @@
-const CACHE = 'shopping-v10';
-const SHELL = ['./index.html', './manifest.json', './icon.svg', './greek.html', './greek-manifest.json'];
+const CACHE = 'apps-v5';
+const SHELL = ['./index.html', './shopping-list.html', './greek.html', './greek-abc.html', './deal.html', './manifest.json', './greek-manifest.json', './greek-abc-manifest.json', './deal-manifest.json', './icon.svg', './icon-shopping.svg', './icon-greek.svg', './icon-fitness.svg', './icon-shopping-180.png', './icon-greek-180.png', './icon-fitness-180.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)));
