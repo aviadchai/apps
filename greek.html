@@ -146,7 +146,15 @@ function speak(text) {
   const utt = new SpeechSynthesisUtterance(text);
   utt.lang = "el-GR";
   utt.rate = 0.85;
+  const voices = window.speechSynthesis.getVoices();
+  const greek = voices.find(v => v.lang === "el-GR") ||
+                voices.find(v => v.lang.startsWith("el"));
+  if (greek) utt.voice = greek;
   window.speechSynthesis.speak(utt);
+}
+if (window.speechSynthesis) {
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
 }
 
 function normalize(s) {
