@@ -392,7 +392,14 @@ function QuizScreen({ letterStates, focusLevel, onEnd, onUpdate }) {
 
     picked.forEach((letter, i) => {
       const type = types[i % 3];
-      const others = shuffle(LETTERS.filter(l => l.id !== letter.id)).slice(0, 3);
+      let others;
+      if (type === "sound") {
+        others = shuffle(LETTERS.filter(l => l.id !== letter.id && l.sound !== letter.sound)).slice(0, 3);
+      } else if (type === "identify") {
+        others = shuffle(LETTERS.filter(l => l.id !== letter.id && l.nameHe !== letter.nameHe)).slice(0, 3);
+      } else {
+        others = shuffle(LETTERS.filter(l => l.id !== letter.id)).slice(0, 3);
+      }
       const options = shuffle([letter, ...others]);
 
       if (type === "identify") {
@@ -766,7 +773,7 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
           αβγ
         </h1>
         <p style={{ margin: "4px 0 0", color: "#6b7280", fontSize: 14 }}>
-          האלפבית היווני ב-10 ימים <span style={{ color: "#9ca3af", fontSize: 11 }}>(v11)</span>
+          האלפבית היווני ב-10 ימים <span style={{ color: "#9ca3af", fontSize: 11 }}>(v12)</span>
         </p>
       </div>
 
@@ -1047,7 +1054,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
 <script>
 (function(){
-  var APP_VER = 'abc_v11';
+  var APP_VER = 'abc_v12';
   if ('caches' in window && localStorage.getItem('abc_ver') !== APP_VER) {
     caches.keys().then(function(names) {
       return Promise.all(names.map(function(n){ return caches.delete(n); }));
