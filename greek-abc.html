@@ -172,22 +172,9 @@ function daysSince(dateStr) {
   return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
 }
 
-function BingoCell({ letter, state, onClick, highlight, locked }) {
+function BingoCell({ letter, state, onClick, highlight }) {
   const learned = state?.learned;
   const diff = letter.difficulty;
-  if (locked) return (
-    <div style={{
-      position: "relative",
-      background: "#f1f5f9",
-      borderRadius: 10, padding: "6px 2px",
-      textAlign: "center", minHeight: 48,
-      border: "2px solid #e2e8f0",
-      opacity: 0.5
-    }}>
-      <div style={{ fontSize: 18, fontWeight: 700, color: "#cbd5e1", lineHeight: 1.1 }}>?</div>
-      <div style={{ fontSize: 9, color: "#cbd5e1", marginTop: 1 }}>{'🔒'}</div>
-    </div>
-  );
   return (
     <div onClick={onClick} style={{
       position: "relative",
@@ -775,7 +762,7 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
           αβγ
         </h1>
         <p style={{ margin: "4px 0 0", color: "#6b7280", fontSize: 14 }}>
-          האלפבית היווני ב-10 ימים <span style={{ color: "#cbd5e1", fontSize: 10 }}>v8</span>
+          האלפבית היווני ב-10 ימים <span style={{ color: "#cbd5e1", fontSize: 10 }}>v9</span>
         </p>
       </div>
 
@@ -887,25 +874,30 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
         display: "flex", gap: 8, marginBottom: 16, justifyContent: "center"
       }}>
         {[1,2,3].map(d => {
-          const locked = d > unlockedLevel;
+          const active = d <= unlockedLevel;
           const count = d === 1 ? learnedEasy : d === 2 ? learnedMed : learnedHard;
+          const isFocus = d === unlockedLevel && count < 8;
           return (
             <div key={d} style={{
               flex: 1, textAlign: "center", padding: "8px 4px",
               borderRadius: 10,
-              background: locked ? "#f1f5f9" : DIFF_BG[d],
-              border: "1px solid " + (locked ? "#e2e8f0" : DIFF_COLORS[d] + "40"),
-              opacity: locked ? 0.6 : 1
+              background: DIFF_BG[d],
+              border: isFocus ? `2px solid ${DIFF_COLORS[d]}` : "1px solid " + DIFF_COLORS[d] + "40"
             }}>
-              <div style={{ fontSize: 10, color: locked ? "#94a3b8" : DIFF_COLORS[d], fontWeight: 600 }}>
-                {locked ? `🔒 ${DIFF_NAMES[d]}` : DIFF_NAMES[d]}
+              <div style={{ fontSize: 10, color: DIFF_COLORS[d], fontWeight: 600 }}>
+                {isFocus ? `▸ ${DIFF_NAMES[d]}` : DIFF_NAMES[d]}
               </div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: locked ? "#94a3b8" : DIFF_COLORS[d] }}>
-                {locked ? `${UNLOCK_THRESHOLD}/8` : `${count}/8`}
+              <div style={{ fontSize: 18, fontWeight: 800, color: DIFF_COLORS[d] }}>
+                {count}/8
               </div>
-              {!locked && d < 3 && count < UNLOCK_THRESHOLD && (
+              {isFocus && d < 3 && count < UNLOCK_THRESHOLD && (
                 <div style={{ fontSize: 9, color: "#6b7280", marginTop: 2 }}>
-                  עוד {UNLOCK_THRESHOLD - count} לפתוח הבא
+                  עוד {UNLOCK_THRESHOLD - count} לשלב הבא
+                </div>
+              )}
+              {!active && (
+                <div style={{ fontSize: 9, color: "#9ca3af", marginTop: 2 }}>
+                  עוד לא במבחן
                 </div>
               )}
             </div>
@@ -922,9 +914,8 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
             key={letter.id}
             letter={letter}
             state={letterStates[letter.id]}
-            highlight={!letterStates[letter.id]?.learned && challengeDay > 0 && letter.difficulty <= unlockedLevel}
-            locked={letter.difficulty > unlockedLevel}
-            onClick={() => letter.difficulty <= unlockedLevel && onSelectLetter(letter)}
+            highlight={!letterStates[letter.id]?.learned && letter.difficulty <= unlockedLevel}
+            onClick={() => onSelectLetter(letter)}
           />
         ))}
       </div>
@@ -1069,7 +1060,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
 <script>
 (function(){
-  var APP_VER = 'abc_v8';
+  var APP_VER = 'abc_v9';
   if ('caches' in window && localStorage.getItem('abc_ver') !== APP_VER) {
     caches.keys().then(function(names) {
       return Promise.all(names.map(function(n){ return caches.delete(n); }));
