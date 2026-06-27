@@ -775,7 +775,7 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
           αβγ
         </h1>
         <p style={{ margin: "4px 0 0", color: "#6b7280", fontSize: 14 }}>
-          האלפבית היווני ב-10 ימים
+          האלפבית היווני ב-10 ימים <span style={{ color: "#cbd5e1", fontSize: 10 }}>v8</span>
         </p>
       </div>
 
@@ -1069,7 +1069,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
 <script>
 (function(){
-  var APP_VER = 'abc_v7';
+  var APP_VER = 'abc_v8';
   if ('caches' in window && localStorage.getItem('abc_ver') !== APP_VER) {
     caches.keys().then(function(names) {
       return Promise.all(names.map(function(n){ return caches.delete(n); }));
