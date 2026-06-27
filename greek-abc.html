@@ -766,7 +766,7 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
           αβγ
         </h1>
         <p style={{ margin: "4px 0 0", color: "#6b7280", fontSize: 14 }}>
-          האלפבית היווני ב-10 ימים <span style={{ color: "#9ca3af", fontSize: 11 }}>(v10)</span>
+          האלפבית היווני ב-10 ימים <span style={{ color: "#9ca3af", fontSize: 11 }}>(v11)</span>
         </p>
       </div>
 
@@ -901,7 +901,7 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
             key={letter.id}
             letter={letter}
             state={letterStates[letter.id]}
-            highlight={!letterStates[letter.id]?.learned && letter.difficulty <= unlockedLevel}
+            highlight={false}
             onClick={() => onSelectLetter(letter)}
           />
         ))}
@@ -1047,7 +1047,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
 <script>
 (function(){
-  var APP_VER = 'abc_v10';
+  var APP_VER = 'abc_v11';
   if ('caches' in window && localStorage.getItem('abc_ver') !== APP_VER) {
     caches.keys().then(function(names) {
       return Promise.all(names.map(function(n){ return caches.delete(n); }));
