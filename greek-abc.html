@@ -199,17 +199,28 @@ function BingoCell({ letter, state, onClick, highlight }) {
       }}>
         {letter.lower}
       </div>
-      {learned && (
+      {learned ? (
         <div style={{
-          position: "absolute", top: 4, left: 4,
-          fontSize: 12, lineHeight: 1
+          position: "absolute", top: 3, left: 3,
+          fontSize: 10, lineHeight: 1
         }}>✓</div>
+      ) : (state?.quizCorrect > 0) && (
+        <div style={{
+          position: "absolute", bottom: 3, left: 3, right: 3,
+          height: 3, borderRadius: 2, background: "rgba(0,0,0,0.1)", overflow: "hidden"
+        }}>
+          <div style={{
+            width: (state.quizCorrect / 5 * 100) + "%",
+            height: "100%", borderRadius: 2,
+            background: DIFF_COLORS[diff]
+          }} />
+        </div>
       )}
     </div>
   );
 }
 
-function LetterModal({ letter, state, onClose, onToggle }) {
+function LetterModal({ letter, state, onClose }) {
   const diff = letter.difficulty;
   return (
     <div style={{
@@ -300,25 +311,34 @@ function LetterModal({ letter, state, onClose, onToggle }) {
           <span style={{fontSize:15,color:"#6b7280",marginRight:8}}> = {letter.exampleHe}</span>
         </div>
 
-        {state?.quizTotal > 0 && (
-          <div style={{
-            textAlign: "center", fontSize: 13, color: "#6b7280", marginBottom: 14
-          }}>
-            מבחנים: {state.quizCorrect}/{state.quizTotal} ({Math.round(state.quizCorrect/state.quizTotal*100)}%)
-          </div>
-        )}
-
-        <button onClick={onToggle} style={{
-          width: "100%", padding: "14px 0", fontSize: 16, fontWeight: 700,
-          background: state?.learned
-            ? "#fff"
-            : `linear-gradient(135deg, ${DIFF_COLORS[diff]}, ${DIFF_COLORS[diff]}dd)`,
-          color: state?.learned ? "#6b7280" : "#fff",
-          border: state?.learned ? "2px solid #e5e7eb" : "none",
-          borderRadius: 14
+        <div style={{
+          padding: "14px 16px", borderRadius: 14, marginBottom: 0,
+          background: state?.learned ? "#f0fdf4" : "#f8fafc",
+          border: "1px solid " + (state?.learned ? "#86efac" : "#e5e7eb"),
+          textAlign: "center"
         }}>
-          {state?.learned ? "ביטול סימון ✕" : "למדתי! ✓"}
-        </button>
+          {state?.learned ? (
+            <div style={{ fontSize: 15, fontWeight: 700, color: "#166534" }}>
+              {'✅'} נלמדה! ({state.quizCorrect} תשובות נכונות)
+            </div>
+          ) : (
+            <div>
+              <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 6 }}>
+                התקדמות: {state?.quizCorrect || 0} / 5 תשובות נכונות
+              </div>
+              <div style={{ background: "#e5e7eb", borderRadius: 99, height: 8, overflow: "hidden" }}>
+                <div style={{
+                  width: Math.min(100, ((state?.quizCorrect || 0) / 5) * 100) + "%",
+                  height: "100%", background: DIFF_COLORS[diff], borderRadius: 99,
+                  transition: "width 0.4s"
+                }} />
+              </div>
+              <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 4 }}>
+                ענה נכון 5 פעמים במבחנים כדי לסמן כנלמדה
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -873,25 +893,23 @@ function App() {
     return () => clearTimeout(saveTimer.current);
   }, [letterStates, challengeStart]);
 
-  function handleToggleLearn(id) {
-    setLetterStates(prev => ({
-      ...prev,
-      [id]: { ...prev[id], learned: !prev[id].learned }
-    }));
+  function handleQuizUpdate(id, correct) {
+    setLetterStates(prev => {
+      const cur = prev[id];
+      const newCorrect = cur.quizCorrect + (correct ? 1 : 0);
+      return {
+        ...prev,
+        [id]: {
+          ...cur,
+          quizCorrect: newCorrect,
+          quizTotal: cur.quizTotal + 1,
+          learned: newCorrect >= 5 ? true : cur.learned
+        }
+      };
+    });
     if (!challengeStart) {
       setChallengeStart(new Date().toISOString());
     }
-  }
-
-  function handleQuizUpdate(id, correct) {
-    setLetterStates(prev => ({
-      ...prev,
-      [id]: {
-        ...prev[id],
-        quizCorrect: prev[id].quizCorrect + (correct ? 1 : 0),
-        quizTotal: prev[id].quizTotal + 1
-      }
-    }));
   }
 
   if (screen === "loading" || !letterStates) {
@@ -937,7 +955,6 @@ function App() {
           letter={selectedLetter}
           state={letterStates[selectedLetter.id]}
           onClose={() => setSelectedLetter(null)}
-          onToggle={() => handleToggleLearn(selectedLetter.id)}
         />
       )}
     </div>
