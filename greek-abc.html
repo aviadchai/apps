@@ -57,47 +57,54 @@ const LETTERS = [
 ];
 
 const READING_WORDS = [
-  {gr:"ευχαριστώ",en:"efharisto",he:"תודה"},
-  {gr:"παρακαλώ",en:"parakalo",he:"בבקשה"},
-  {gr:"καλημέρα",en:"kalimera",he:"בוקר טוב"},
-  {gr:"καληνύχτα",en:"kalinihta",he:"לילה טוב"},
-  {gr:"καλησπέρα",en:"kalispera",he:"ערב טוב"},
-  {gr:"νερό",en:"nero",he:"מים"},
-  {gr:"μπίρα",en:"bira",he:"בירה"},
-  {gr:"κρασί",en:"krasi",he:"יין"},
-  {gr:"καφές",en:"kafes",he:"קפה"},
-  {gr:"σπίτι",en:"spiti",he:"בית"},
-  {gr:"θάλασσα",en:"thalassa",he:"ים"},
-  {gr:"ήλιος",en:"ilios",he:"שמש"},
-  {gr:"φίλος",en:"filos",he:"חבר"},
-  {gr:"δρόμος",en:"dromos",he:"דרך"},
-  {gr:"βιβλίο",en:"vivlio",he:"ספר"},
-  {gr:"γάτα",en:"gata",he:"חתול"},
-  {gr:"σκύλος",en:"skilos",he:"כלב"},
-  {gr:"ψάρι",en:"psari",he:"דג"},
-  {gr:"ψωμί",en:"psomi",he:"לחם"},
-  {gr:"τυρί",en:"tiri",he:"גבינה"},
-  {gr:"λεμόνι",en:"lemoni",he:"לימון"},
-  {gr:"πόλη",en:"poli",he:"עיר"},
-  {gr:"αγάπη",en:"agapi",he:"אהבה"},
-  {gr:"χρόνος",en:"hronos",he:"זמן"},
-  {gr:"λόγος",en:"logos",he:"מילה"},
-  {gr:"κόσμος",en:"kosmos",he:"עולם"},
-  {gr:"άνθρωπος",en:"anthropos",he:"אדם"},
-  {gr:"γυναίκα",en:"gineka",he:"אישה"},
-  {gr:"παιδί",en:"pedi",he:"ילד"},
-  {gr:"ελλάδα",en:"elada",he:"יוון"},
-  {gr:"μουσική",en:"musiki",he:"מוזיקה"},
-  {gr:"ταβέρνα",en:"taverna",he:"מסעדה"},
-  {gr:"ξένος",en:"ksenos",he:"זר"},
-  {gr:"φαγητό",en:"fagito",he:"אוכל"},
-  {gr:"σχολείο",en:"sholio",he:"בית ספר"},
-  {gr:"δουλειά",en:"dulia",he:"עבודה"},
-  {gr:"αεροπλάνο",en:"aeroplano",he:"מטוס"},
-  {gr:"σταθμός",en:"stathmos",he:"תחנה"},
-  {gr:"φαρμακείο",en:"farmakio",he:"בית מרקחת"},
-  {gr:"νοσοκομείο",en:"nosokomio",he:"בית חולים"}
+  {gr:"ευχαριστώ",en:"efharisto",he:"תודה",scene:"greeting",emoji:"🙏"},
+  {gr:"παρακαλώ",en:"parakalo",he:"בבקשה",scene:"greeting",emoji:"😊"},
+  {gr:"καλημέρα",en:"kalimera",he:"בוקר טוב",scene:"greeting",emoji:"🌅"},
+  {gr:"καληνύχτα",en:"kalinihta",he:"לילה טוב",scene:"greeting",emoji:"🌙"},
+  {gr:"καλησπέρα",en:"kalispera",he:"ערב טוב",scene:"greeting",emoji:"🌇"},
+  {gr:"νερό",en:"nero",he:"מים",scene:"menu",emoji:"💧"},
+  {gr:"μπίρα",en:"bira",he:"בירה",scene:"menu",emoji:"🍺"},
+  {gr:"κρασί",en:"krasi",he:"יין",scene:"menu",emoji:"🍷"},
+  {gr:"καφές",en:"kafes",he:"קפה",scene:"menu",emoji:"☕"},
+  {gr:"σπίτι",en:"spiti",he:"בית",scene:"sign",emoji:"🏠"},
+  {gr:"θάλασσα",en:"thalassa",he:"ים",scene:"sign",emoji:"🌊"},
+  {gr:"ήλιος",en:"ilios",he:"שמש",scene:"nature",emoji:"☀️"},
+  {gr:"φίλος",en:"filos",he:"חבר",scene:"greeting",emoji:"🤝"},
+  {gr:"δρόμος",en:"dromos",he:"דרך",scene:"sign",emoji:"🛣️"},
+  {gr:"βιβλίο",en:"vivlio",he:"ספר",scene:"sign",emoji:"📖"},
+  {gr:"γάτα",en:"gata",he:"חתול",scene:"nature",emoji:"🐱"},
+  {gr:"σκύλος",en:"skilos",he:"כלב",scene:"nature",emoji:"🐶"},
+  {gr:"ψάρι",en:"psari",he:"דג",scene:"menu",emoji:"🐟"},
+  {gr:"ψωμί",en:"psomi",he:"לחם",scene:"menu",emoji:"🍞"},
+  {gr:"τυρί",en:"tiri",he:"גבינה",scene:"menu",emoji:"🧀"},
+  {gr:"λεμόνι",en:"lemoni",he:"לימון",scene:"menu",emoji:"🍋"},
+  {gr:"πόλη",en:"poli",he:"עיר",scene:"sign",emoji:"🏙️"},
+  {gr:"αγάπη",en:"agapi",he:"אהבה",scene:"greeting",emoji:"❤️"},
+  {gr:"χρόνος",en:"hronos",he:"זמן",scene:"sign",emoji:"⏰"},
+  {gr:"λόγος",en:"logos",he:"מילה",scene:"sign",emoji:"💬"},
+  {gr:"κόσμος",en:"kosmos",he:"עולם",scene:"nature",emoji:"🌍"},
+  {gr:"άνθρωπος",en:"anthropos",he:"אדם",scene:"sign",emoji:"🧑"},
+  {gr:"γυναίκα",en:"gineka",he:"אישה",scene:"sign",emoji:"👩"},
+  {gr:"παιδί",en:"pedi",he:"ילד",scene:"sign",emoji:"👦"},
+  {gr:"ελλάδα",en:"elada",he:"יוון",scene:"sign",emoji:"🇬🇷"},
+  {gr:"μουσική",en:"musiki",he:"מוזיקה",scene:"sign",emoji:"🎵"},
+  {gr:"ταβέρνα",en:"taverna",he:"מסעדה",scene:"menu",emoji:"🍽️"},
+  {gr:"ξένος",en:"ksenos",he:"זר",scene:"sign",emoji:"🧳"},
+  {gr:"φαγητό",en:"fagito",he:"אוכל",scene:"menu",emoji:"🍴"},
+  {gr:"σχολείο",en:"sholio",he:"בית ספר",scene:"sign",emoji:"🏫"},
+  {gr:"δουλειά",en:"dulia",he:"עבודה",scene:"sign",emoji:"💼"},
+  {gr:"αεροπλάνο",en:"aeroplano",he:"מטוס",scene:"sign",emoji:"✈️"},
+  {gr:"σταθμός",en:"stathmos",he:"תחנה",scene:"sign",emoji:"🚉"},
+  {gr:"φαρμακείο",en:"farmakio",he:"בית מרקחת",scene:"sign",emoji:"💊"},
+  {gr:"νοσοκομείο",en:"nosokomio",he:"בית חולים",scene:"sign",emoji:"🏥"}
 ];
+
+const SCENE_STYLES = {
+  menu: { bg: "linear-gradient(135deg, #fef3c7, #fde68a)", border: "#f59e0b", label: "📋 תפריט יווני", cardBg: "#fffbeb", textColor: "#92400e" },
+  sign: { bg: "linear-gradient(135deg, #dbeafe, #93c5fd)", border: "#3b82f6", label: "🪧 שלט ברחוב", cardBg: "#eff6ff", textColor: "#1e40af" },
+  greeting: { bg: "linear-gradient(135deg, #fce7f3, #f9a8d4)", border: "#ec4899", label: "💌 ברכה יוונית", cardBg: "#fdf2f8", textColor: "#9d174d" },
+  nature: { bg: "linear-gradient(135deg, #d1fae5, #6ee7b7)", border: "#10b981", label: "🏝️ נוף יווני", cardBg: "#ecfdf5", textColor: "#065f46" }
+};
 
 const DIFF_NAMES = {1:"קלה",2:"בינונית",3:"קשה"};
 const DIFF_COLORS = {1:"#10b981",2:"#f59e0b",3:"#ef4444"};
@@ -698,27 +705,47 @@ function ReadingQuizScreen({ onEnd }) {
         }} />
       </div>
 
-      <div style={{
-        fontSize: 14, color: "#6b7280", textAlign: "center", marginBottom: 8
-      }}>
-        איך קוראים את המילה הזו?
-      </div>
+      {(() => {
+        const scene = SCENE_STYLES[q.word.scene] || SCENE_STYLES.sign;
+        return (
+          <div style={{
+            background: scene.bg, borderRadius: 20, padding: "14px 14px 16px",
+            marginBottom: 20, border: `1.5px solid ${scene.border}`,
+            boxShadow: "0 4px 15px rgba(0,0,0,0.08)"
+          }}>
+            <div style={{
+              fontSize: 11, fontWeight: 600, color: scene.textColor,
+              textAlign: "center", marginBottom: 8, opacity: 0.8
+            }}>{scene.label}</div>
+            <div style={{
+              background: scene.cardBg, borderRadius: 14, padding: "18px 16px",
+              textAlign: "center", border: `1px solid ${scene.border}33`
+            }}>
+              <div style={{ fontSize: 28, marginBottom: 6 }}>{q.word.emoji}</div>
+              <div style={{
+                fontSize: 42, fontWeight: 800, color: scene.textColor,
+                lineHeight: 1.2, cursor: "pointer", direction: "ltr",
+                letterSpacing: 1
+              }} onClick={() => speak(q.word.gr)}>
+                {q.word.gr}
+              </div>
+            </div>
+            <div style={{ textAlign: "center", marginTop: 10 }}>
+              <button onClick={() => speak(q.word.gr)} style={{
+                padding: "6px 16px", borderRadius: 99,
+                background: "rgba(255,255,255,0.7)", border: `1px solid ${scene.border}66`,
+                color: scene.textColor, fontSize: 13, cursor: "pointer",
+                backdropFilter: "blur(4px)"
+              }}>{'🔊'} שמע</button>
+            </div>
+          </div>
+        );
+      })()}
 
       <div style={{
-        textAlign: "center", marginBottom: 24
+        fontSize: 14, color: "#6b7280", textAlign: "center", marginBottom: 12
       }}>
-        <div style={{
-          fontSize: 48, fontWeight: 800, color: "#1e3a5f",
-          lineHeight: 1.2, marginBottom: 6, cursor: "pointer",
-          direction: "ltr"
-        }} onClick={() => speak(q.word.gr)}>
-          {q.word.gr}
-        </div>
-        <button onClick={() => speak(q.word.gr)} style={{
-          padding: "6px 16px", borderRadius: 99,
-          background: "#f5f3ff", border: "1px solid #c4b5fd",
-          color: "#7c3aed", fontSize: 13, cursor: "pointer"
-        }}>{'🔊'} שמע</button>
+        איך קוראים את המילה הזו?
       </div>
 
       <div style={{
@@ -805,7 +832,7 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
           αβγ
         </h1>
         <p style={{ margin: "4px 0 0", color: "#6b7280", fontSize: 14 }}>
-          האלפבית היווני ב-10 ימים <span style={{ color: "#9ca3af", fontSize: 11 }}>(v15)</span>
+          האלפבית היווני ב-10 ימים <span style={{ color: "#9ca3af", fontSize: 11 }}>(v16)</span>
         </p>
       </div>
 
@@ -1086,7 +1113,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
 <script>
 (function(){
-  var APP_VER = 'abc_v15';
+  var APP_VER = 'abc_v16';
   if ('caches' in window && localStorage.getItem('abc_ver') !== APP_VER) {
     caches.keys().then(function(names) {
       return Promise.all(names.map(function(n){ return caches.delete(n); }));
