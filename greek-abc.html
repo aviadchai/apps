@@ -99,12 +99,44 @@ const READING_WORDS = [
   {gr:"νοσοκομείο",en:"nosokomio",he:"בית חולים",scene:"sign",emoji:"🏥"}
 ];
 
-const SCENE_STYLES = {
-  menu: { border: "#f59e0b", label: "📋 תפריט בטאברנה", img: "https://images.unsplash.com/photo-1602591546738-ceab3d349681?w=420&h=220&fit=crop&q=80" },
-  sign: { border: "#3b82f6", label: "🪧 שלט ברחוב יווני", img: "https://images.unsplash.com/photo-1782178394562-98661f4eba37?w=420&h=220&fit=crop&q=80" },
-  greeting: { border: "#ec4899", label: "💌 ברכה מסנטוריני", img: "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=420&h=220&fit=crop&q=80" },
-  nature: { border: "#10b981", label: "🏝️ נוף יווני", img: "https://images.unsplash.com/photo-1533105079780-92b9be482077?w=420&h=220&fit=crop&q=80" }
+const SCENE_IMGS = {
+  menu: [
+    "https://images.unsplash.com/photo-1602591546738-ceab3d349681?w=420&h=220&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1606735584785-1848fdcaea57?w=420&h=220&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1638612833646-34eecc16f3f1?w=420&h=220&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1602348143971-0c5c97d23367?w=420&h=220&fit=crop&q=80"
+  ],
+  sign: [
+    "https://images.unsplash.com/photo-1782178394562-98661f4eba37?w=420&h=220&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1768187564203-ac9b26d76ca5?w=420&h=220&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1763917436424-0aa86b4d2c03?w=420&h=220&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1759605628064-631f3d335bf6?w=420&h=220&fit=crop&q=80"
+  ],
+  greeting: [
+    "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=420&h=220&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e?w=420&h=220&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1596933144889-c15043a9ddde?w=420&h=220&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1601581875309-fafbf2d3ed3a?w=420&h=220&fit=crop&q=80"
+  ],
+  nature: [
+    "https://images.unsplash.com/photo-1533105079780-92b9be482077?w=420&h=220&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1580502304784-8985b7eb7260?w=420&h=220&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1523568129082-a8d6c095638e?w=420&h=220&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1597744733354-0499ea376fe9?w=420&h=220&fit=crop&q=80"
+  ]
 };
+const SCENE_LABELS = {
+  menu: "📋 תפריט בטאברנה",
+  sign: "🪧 שלט ברחוב יווני",
+  greeting: "💌 ברכה מסנטוריני",
+  nature: "🏝️ נוף יווני"
+};
+function pickSceneImg(scene, word) {
+  const imgs = SCENE_IMGS[scene] || SCENE_IMGS.sign;
+  let h = 0;
+  for (let i = 0; i < word.length; i++) h = ((h << 5) - h + word.charCodeAt(i)) | 0;
+  return imgs[Math.abs(h) % imgs.length];
+}
 
 const DIFF_NAMES = {1:"קלה",2:"בינונית",3:"קשה"};
 const DIFF_COLORS = {1:"#10b981",2:"#f59e0b",3:"#ef4444"};
@@ -706,34 +738,35 @@ function ReadingQuizScreen({ onEnd }) {
       </div>
 
       {(() => {
-        const scene = SCENE_STYLES[q.word.scene] || SCENE_STYLES.sign;
+        const sceneType = q.word.scene || "sign";
+        const img = pickSceneImg(sceneType, q.word.gr);
+        const label = SCENE_LABELS[sceneType] || SCENE_LABELS.sign;
         return (
           <div style={{
             borderRadius: 20, overflow: "hidden",
-            marginBottom: 20, border: `1.5px solid ${scene.border}`,
+            marginBottom: 20, border: "1.5px solid #cbd5e1",
             boxShadow: "0 4px 15px rgba(0,0,0,0.12)",
             position: "relative"
           }}>
             <div style={{
-              backgroundImage: `url(${scene.img})`,
+              backgroundImage: `url(${img})`,
               backgroundSize: "cover", backgroundPosition: "center",
               height: 120
             }}>
               <div style={{
                 position: "absolute", top: 0, left: 0, right: 0, height: 120,
-                background: "linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.4))"
+                background: "linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.45))"
               }}/>
               <div style={{
                 position: "absolute", top: 8, left: 0, right: 0,
                 fontSize: 11, fontWeight: 600, color: "#fff",
                 textAlign: "center", textShadow: "0 1px 4px rgba(0,0,0,0.5)"
-              }}>{scene.label}</div>
+              }}>{label}</div>
             </div>
             <div style={{
               background: "#fff", padding: "18px 16px 14px",
               textAlign: "center"
             }}>
-              <div style={{ fontSize: 24, marginBottom: 4 }}>{q.word.emoji}</div>
               <div style={{
                 fontSize: 42, fontWeight: 800, color: "#1e3a5f",
                 lineHeight: 1.2, cursor: "pointer", direction: "ltr",
@@ -841,7 +874,7 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
           αβγ
         </h1>
         <p style={{ margin: "4px 0 0", color: "#6b7280", fontSize: 14 }}>
-          האלפבית היווני ב-10 ימים <span style={{ color: "#9ca3af", fontSize: 11 }}>(v17)</span>
+          האלפבית היווני ב-10 ימים <span style={{ color: "#9ca3af", fontSize: 11 }}>(v18)</span>
         </p>
       </div>
 
@@ -1122,7 +1155,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
 <script>
 (function(){
-  var APP_VER = 'abc_v17';
+  var APP_VER = 'abc_v18';
   if ('caches' in window && localStorage.getItem('abc_ver') !== APP_VER) {
     caches.keys().then(function(names) {
       return Promise.all(names.map(function(n){ return caches.delete(n); }));
