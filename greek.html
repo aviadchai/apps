@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>יווניCal — 500 מילים יווניות</title>
+<link rel="manifest" href="manifest-greek.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<meta name="theme-color" content="#f8fafc">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="יווניCal">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f8fafc;color:#1e293b;overflow-x:hidden;}
+body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);}
+#root{min-height:100vh;min-height:100dvh;}
+input{font-family:inherit;}
+button{font-family:inherit;-webkit-appearance:none;}
+</style>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useCallback, useRef } = React;
+
+const ALL_WORDS = [
+  {id:1,greek:"ναι",hebrew:"כן",level:1},{id:2,greek:"όχι",hebrew:"לא",level:1},{id:3,greek:"παρακαλώ",hebrew:"בבקשה / אין בעד מה",level:1},{id:4,greek:"ευχαριστώ",hebrew:"תודה",level:1},{id:5,greek:"συγγνώμη",hebrew:"סליחה",level:1},{id:6,greek:"γεια σου",hebrew:"שלום / ביי",level:1},{id:7,greek:"καλημέρα",hebrew:"בוקר טוב",level:1},{id:8,greek:"καλησπέρα",hebrew:"ערב טוב",level:1},{id:9,greek:"καληνύχτα",hebrew:"לילה טוב",level:1},{id:10,greek:"αντίο",hebrew:"להתראות",level:1},
+  {id:11,greek:"βοήθεια",hebrew:"עזרה",level:1},{id:12,greek:"νερό",hebrew:"מים",level:1},{id:13,greek:"φαγητό",hebrew:"אוכל",level:1},{id:14,greek:"τουαλέτα",hebrew:"שירותים",level:1},{id:15,greek:"νοσοκομείο",hebrew:"בית חולים",level:1},{id:16,greek:"αστυνομία",hebrew:"משטרה",level:1},{id:17,greek:"πού",hebrew:"איפה",level:1},{id:18,greek:"πότε",hebrew:"מתי",level:1},{id:19,greek:"πώς",hebrew:"איך",level:1},{id:20,greek:"πόσο",hebrew:"כמה",level:1},
+  {id:21,greek:"τι",hebrew:"מה",level:1},{id:22,greek:"γιατί",hebrew:"למה",level:1},{id:23,greek:"ποιος",hebrew:"מי",level:1},{id:24,greek:"εδώ",hebrew:"כאן",level:1},{id:25,greek:"εκεί",hebrew:"שם",level:1},{id:26,greek:"ανοιχτό",hebrew:"פתוח",level:1},{id:27,greek:"κλειστό",hebrew:"סגור",level:1},{id:28,greek:"είσοδος",hebrew:"כניסה",level:1},{id:29,greek:"έξοδος",hebrew:"יציאה",level:1},{id:30,greek:"δεξιά",hebrew:"ימינה",level:1},
+  {id:31,greek:"αριστερά",hebrew:"שמאלה",level:1},{id:32,greek:"ευθεία",hebrew:"ישר",level:1},{id:33,greek:"κοντά",hebrew:"קרוב",level:1},{id:34,greek:"μακριά",hebrew:"רחוק",level:1},{id:35,greek:"μεγάλο",hebrew:"גדול",level:1},{id:36,greek:"μικρό",hebrew:"קטן",level:1},{id:37,greek:"καλό",hebrew:"טוב",level:1},{id:38,greek:"κακό",hebrew:"רע",level:1},{id:39,greek:"ζεστό",hebrew:"חם",level:1},{id:40,greek:"κρύο",hebrew:"קר",level:1},
+  {id:41,greek:"ένα",hebrew:"אחד",level:1},{id:42,greek:"δύο",hebrew:"שתיים",level:1},{id:43,greek:"τρία",hebrew:"שלוש",level:1},{id:44,greek:"τέσσερα",hebrew:"ארבע",level:1},{id:45,greek:"πέντε",hebrew:"חמש",level:1},{id:46,greek:"δέκα",hebrew:"עשר",level:1},{id:47,greek:"εκατό",hebrew:"מאה",level:1},{id:48,greek:"χίλια",hebrew:"אלף",level:1},{id:49,greek:"ευρώ",hebrew:"יורו",level:1},{id:50,greek:"λεπτό",hebrew:"דקה / סנט",level:1},
+
+  {id:51,greek:"εστιατόριο",hebrew:"מסעדה",level:2},{id:52,greek:"καφέ",hebrew:"קפה (מקום)",level:2},{id:53,greek:"μενού",hebrew:"תפריט",level:2},{id:54,greek:"λογαριασμός",hebrew:"חשבון",level:2},{id:55,greek:"σερβιτόρος",hebrew:"מלצר",level:2},{id:56,greek:"τραπέζι",hebrew:"שולחן",level:2},{id:57,greek:"καρέκλα",hebrew:"כיסא",level:2},{id:58,greek:"ποτήρι",hebrew:"כוס",level:2},{id:59,greek:"πιάτο",hebrew:"צלחת",level:2},{id:60,greek:"μαχαιροπήρουνα",hebrew:"סכו\"ם",level:2},
+  {id:61,greek:"καφές",hebrew:"קפה (שתייה)",level:2},{id:62,greek:"τσάι",hebrew:"תה",level:2},{id:63,greek:"χυμός",hebrew:"מיץ",level:2},{id:64,greek:"κρασί",hebrew:"יין",level:2},{id:65,greek:"μπύρα",hebrew:"בירה",level:2},{id:66,greek:"ούζο",hebrew:"אוזו",level:2},{id:67,greek:"ψωμί",hebrew:"לחם",level:2},{id:68,greek:"τυρί",hebrew:"גבינה",level:2},{id:69,greek:"ελιές",hebrew:"זיתים",level:2},{id:70,greek:"σαλάτα",hebrew:"סלט",level:2},
+  {id:71,greek:"χόρτα",hebrew:"ירקות עלים",level:2},{id:72,greek:"ντομάτα",hebrew:"עגבנייה",level:2},{id:73,greek:"αγγούρι",hebrew:"מלפפון",level:2},{id:74,greek:"κρεμμύδι",hebrew:"בצל",level:2},{id:75,greek:"σκόρδο",hebrew:"שום",level:2},{id:76,greek:"λάδι",hebrew:"שמן (זית)",level:2},{id:77,greek:"ξύδι",hebrew:"חומץ",level:2},{id:78,greek:"αλάτι",hebrew:"מלח",level:2},{id:79,greek:"πιπέρι",hebrew:"פלפל",level:2},{id:80,greek:"κοτόπουλο",hebrew:"עוף",level:2},
+  {id:81,greek:"κρέας",hebrew:"בשר",level:2},{id:82,greek:"ψάρι",hebrew:"דג",level:2},{id:83,greek:"χταπόδι",hebrew:"תמנון",level:2},{id:84,greek:"γαρίδες",hebrew:"שרימפס",level:2},{id:85,greek:"σουβλάκι",hebrew:"שיפוד",level:2},{id:86,greek:"γύρος",hebrew:"גירוס",level:2},{id:87,greek:"μουσακάς",hebrew:"מוסקה",level:2},{id:88,greek:"φέτα",hebrew:"פטה (גבינה)",level:2},{id:89,greek:"γιαούρτι",hebrew:"יוגורט",level:2},{id:90,greek:"μέλι",hebrew:"דבש",level:2},
+  {id:91,greek:"φρούτα",hebrew:"פירות",level:2},{id:92,greek:"επιδόρπιο",hebrew:"קינוח",level:2},{id:93,greek:"παγωτό",hebrew:"גלידה",level:2},{id:94,greek:"πρωινό",hebrew:"ארוחת בוקר",level:2},{id:95,greek:"μεσημεριανό",hebrew:"ארוחת צהריים",level:2},{id:96,greek:"βραδινό",hebrew:"ארוחת ערב",level:2},{id:97,greek:"πεινάω",hebrew:"אני רעב",level:2},{id:98,greek:"διψάω",hebrew:"אני צמא",level:2},{id:99,greek:"νόστιμο",hebrew:"טעים",level:2},{id:100,greek:"ακριβό",hebrew:"יקר",level:2},
+
+  {id:101,greek:"ξενοδοχείο",hebrew:"מלון",level:3},{id:102,greek:"δωμάτιο",hebrew:"חדר",level:3},{id:103,greek:"κλειδί",hebrew:"מפתח",level:3},{id:104,greek:"κράτηση",hebrew:"הזמנה",level:3},{id:105,greek:"ρεσεψιόν",hebrew:"קבלה",level:3},{id:106,greek:"ασανσέρ",hebrew:"מעלית",level:3},{id:107,greek:"σκάλες",hebrew:"מדרגות",level:3},{id:108,greek:"μπάνιο",hebrew:"אמבטיה / שירותים",level:3},{id:109,greek:"ντους",hebrew:"מקלחת",level:3},{id:110,greek:"πετσέτα",hebrew:"מגבת",level:3},
+  {id:111,greek:"σεντόνι",hebrew:"סדין",level:3},{id:112,greek:"μαξιλάρι",hebrew:"כרית",level:3},{id:113,greek:"κλιματισμός",hebrew:"מיזוג אוויר",level:3},{id:114,greek:"θέρμανση",hebrew:"חימום",level:3},{id:115,greek:"wi-fi",hebrew:"וויפיי",level:3},{id:116,greek:"κωδικός",hebrew:"סיסמה / קוד",level:3},{id:117,greek:"πισίνα",hebrew:"בריכה",level:3},{id:118,greek:"παραλία",hebrew:"חוף ים",level:3},{id:119,greek:"θάλασσα",hebrew:"ים",level:3},{id:120,greek:"ήλιος",hebrew:"שמש",level:3},
+  {id:121,greek:"σκιά",hebrew:"צל",level:3},{id:122,greek:"ομπρέλα",hebrew:"מטרייה / שמשייה",level:3},{id:123,greek:"ξαπλώστρα",hebrew:"כיסא נוח לחוף",level:3},{id:124,greek:"άμμος",hebrew:"חול",level:3},{id:125,greek:"κύμα",hebrew:"גל",level:3},{id:126,greek:"βράχος",hebrew:"סלע / צוק",level:3},{id:127,greek:"λιμάνι",hebrew:"נמל",level:3},{id:128,greek:"πλοίο",hebrew:"ספינה",level:3},{id:129,greek:"φέρυ",hebrew:"מעבורת",level:3},{id:130,greek:"νησί",hebrew:"אי",level:3},
+  {id:131,greek:"check-in",hebrew:"צ'ק אין",level:3},{id:132,greek:"check-out",hebrew:"צ'ק אאוט",level:3},{id:133,greek:"βαλίτσα",hebrew:"מזוודה",level:3},{id:134,greek:"διαβατήριο",hebrew:"דרכון",level:3},{id:135,greek:"ασφάλεια",hebrew:"ביטוח / אבטחה",level:3},{id:136,greek:"τιμή",hebrew:"מחיר",level:3},{id:137,greek:"έκπτωση",hebrew:"הנחה",level:3},{id:138,greek:"δωρεάν",hebrew:"חינם",level:3},{id:139,greek:"πληρωμή",hebrew:"תשלום",level:3},{id:140,greek:"κάρτα",hebrew:"כרטיס אשראי",level:3},
+  {id:141,greek:"μετρητά",hebrew:"מזומן",level:3},{id:142,greek:"ΑΤΜ",hebrew:"כספומט",level:3},{id:143,greek:"τράπεζα",hebrew:"בנק",level:3},{id:144,greek:"απόδειξη",hebrew:"קבלה",level:3},{id:145,greek:"πρόβλημα",hebrew:"בעיה",level:3},{id:146,greek:"βλάβη",hebrew:"תקלה",level:3},{id:147,greek:"επισκευή",hebrew:"תיקון",level:3},{id:148,greek:"καθαρό",hebrew:"נקי",level:3},{id:149,greek:"βρόμικο",hebrew:"מלוכלך",level:3},{id:150,greek:"άνετο",hebrew:"נוח",level:3},
+
+  {id:151,greek:"αεροδρόμιο",hebrew:"שדה תעופה",level:4},{id:152,greek:"αεροπλάνο",hebrew:"מטוס",level:4},{id:153,greek:"πτήση",hebrew:"טיסה",level:4},{id:154,greek:"εισιτήριο",hebrew:"כרטיס",level:4},{id:155,greek:"σταθμός",hebrew:"תחנה",level:4},{id:156,greek:"λεωφορείο",hebrew:"אוטובוס",level:4},{id:157,greek:"τρένο",hebrew:"רכבת",level:4},{id:158,greek:"μετρό",hebrew:"מטרו",level:4},{id:159,greek:"ταξί",hebrew:"מונית",level:4},{id:160,greek:"αυτοκίνητο",hebrew:"מכונית",level:4},
+  {id:161,greek:"μηχανάκι",hebrew:"קטנוע",level:4},{id:162,greek:"ποδήλατο",hebrew:"אופניים",level:4},{id:163,greek:"ενοικίαση",hebrew:"השכרה",level:4},{id:164,greek:"βενζίνη",hebrew:"בנזין",level:4},{id:165,greek:"παρκάρισμα",hebrew:"חניה",level:4},{id:166,greek:"δρόμος",hebrew:"כביש / רחוב",level:4},{id:167,greek:"πλατεία",hebrew:"כיכר",level:4},{id:168,greek:"γέφυρα",hebrew:"גשר",level:4},{id:169,greek:"χάρτης",hebrew:"מפה",level:4},{id:170,greek:"διεύθυνση",hebrew:"כתובת",level:4},
+  {id:171,greek:"βόρεια",hebrew:"צפון",level:4},{id:172,greek:"νότια",hebrew:"דרום",level:4},{id:173,greek:"ανατολικά",hebrew:"מזרח",level:4},{id:174,greek:"δυτικά",hebrew:"מערב",level:4},{id:175,greek:"στρίψτε",hebrew:"פנה (פקודה)",level:4},{id:176,greek:"συνεχίστε",hebrew:"המשך ישר",level:4},{id:177,greek:"σταματήστε",hebrew:"עצור",level:4},{id:178,greek:"αργά",hebrew:"לאט",level:4},{id:179,greek:"γρήγορα",hebrew:"מהר",level:4},{id:180,greek:"τώρα",hebrew:"עכשיו",level:4},
+  {id:181,greek:"αύριο",hebrew:"מחר",level:4},{id:182,greek:"χθες",hebrew:"אתמול",level:4},{id:183,greek:"σήμερα",hebrew:"היום",level:4},{id:184,greek:"πρωί",hebrew:"בוקר",level:4},{id:185,greek:"απόγευμα",hebrew:"אחר הצהריים",level:4},{id:186,greek:"βράδυ",hebrew:"ערב",level:4},{id:187,greek:"νύχτα",hebrew:"לילה",level:4},{id:188,greek:"ώρα",hebrew:"שעה",level:4},{id:189,greek:"λεπτό",hebrew:"דקה",level:4},{id:190,greek:"δευτερόλεπτο",hebrew:"שנייה",level:4},
+  {id:191,greek:"Δευτέρα",hebrew:"יום שני",level:4},{id:192,greek:"Τρίτη",hebrew:"יום שלישי",level:4},{id:193,greek:"Τετάρτη",hebrew:"יום רביעי",level:4},{id:194,greek:"Πέμπτη",hebrew:"יום חמישי",level:4},{id:195,greek:"Παρασκευή",hebrew:"יום שישי",level:4},{id:196,greek:"Σάββατο",hebrew:"שבת",level:4},{id:197,greek:"Κυριακή",hebrew:"יום ראשון",level:4},{id:198,greek:"εβδομάδα",hebrew:"שבוע",level:4},{id:199,greek:"μήνας",hebrew:"חודש",level:4},{id:200,greek:"χρόνος",hebrew:"שנה / זמן",level:4},
+
+  {id:201,greek:"αγορά",hebrew:"שוק / קנייה",level:5},{id:202,greek:"κατάστημα",hebrew:"חנות",level:5},{id:203,greek:"σούπερ μάρκετ",hebrew:"סופרמרקט",level:5},{id:204,greek:"φαρμακείο",hebrew:"בית מרקחת",level:5},{id:205,greek:"βιβλιοπωλείο",hebrew:"חנות ספרים",level:5},{id:206,greek:"ρούχα",hebrew:"בגדים",level:5},{id:207,greek:"παπούτσια",hebrew:"נעליים",level:5},{id:208,greek:"μέγεθος",hebrew:"מידה",level:5},{id:209,greek:"χρώμα",hebrew:"צבע",level:5},{id:210,greek:"άσπρο",hebrew:"לבן",level:5},
+  {id:211,greek:"μαύρο",hebrew:"שחור",level:5},{id:212,greek:"κόκκινο",hebrew:"אדום",level:5},{id:213,greek:"μπλε",hebrew:"כחול",level:5},{id:214,greek:"πράσινο",hebrew:"ירוק",level:5},{id:215,greek:"κίτρινο",hebrew:"צהוב",level:5},{id:216,greek:"δώρο",hebrew:"מתנה",level:5},{id:217,greek:"σουβενίρ",hebrew:"מזכרת",level:5},{id:218,greek:"τσάντα",hebrew:"תיק",level:5},{id:219,greek:"πορτοφόλι",hebrew:"ארנק",level:5},{id:220,greek:"κλοπή",hebrew:"גנבה",level:5},
+  {id:221,greek:"χάνω",hebrew:"אני מאבד",level:5},{id:222,greek:"βρίσκω",hebrew:"אני מוצא",level:5},{id:223,greek:"αγοράζω",hebrew:"אני קונה",level:5},{id:224,greek:"πουλάω",hebrew:"אני מוכר",level:5},{id:225,greek:"φθηνό",hebrew:"זול",level:5},{id:226,greek:"ακριβό",hebrew:"יקר",level:5},{id:227,greek:"διαπραγμάτευση",hebrew:"מיקוח",level:5},{id:228,greek:"ανταλλαγή",hebrew:"החלפה",level:5},{id:229,greek:"επιστροφή",hebrew:"החזר / חזרה",level:5},{id:230,greek:"αρτοποιείο",hebrew:"מאפייה",level:5},
+  {id:231,greek:"κρεοπωλείο",hebrew:"קצביה",level:5},{id:232,greek:"ψαράδικο",hebrew:"דוכן דגים",level:5},{id:233,greek:"περίπτερο",hebrew:"קיוסק",level:5},{id:234,greek:"εφημερίδα",hebrew:"עיתון",level:5},{id:235,greek:"γραμματόσημο",hebrew:"בול דואר",level:5},{id:236,greek:"ταχυδρομείο",hebrew:"דואר",level:5},{id:237,greek:"πακέτο",hebrew:"חבילה",level:5},{id:238,greek:"τηλέφωνο",hebrew:"טלפון",level:5},{id:239,greek:"φορτιστής",hebrew:"מטען",level:5},{id:240,greek:"μπαταρία",hebrew:"סוללה",level:5},
+  {id:241,greek:"λαμπτήρας",hebrew:"נורה",level:5},{id:242,greek:"αδιάβροχο",hebrew:"עמיד למים / מעיל גשם",level:5},{id:243,greek:"αντηλιακό",hebrew:"קרם הגנה",level:5},{id:244,greek:"έντομα",hebrew:"חרקים",level:5},{id:245,greek:"εντομοαπωθητικό",hebrew:"דוחה חרקים",level:5},{id:246,greek:"φάρμακο",hebrew:"תרופה",level:5},{id:247,greek:"πόνος",hebrew:"כאב",level:5},{id:248,greek:"πυρετός",hebrew:"חום (מחלה)",level:5},{id:249,greek:"αλλεργία",hebrew:"אלרגיה",level:5},{id:250,greek:"γιατρός",hebrew:"רופא",level:5},
+
+  {id:251,greek:"μουσείο",hebrew:"מוזיאון",level:6},{id:252,greek:"εκκλησία",hebrew:"כנסייה",level:6},{id:253,greek:"ναός",hebrew:"מקדש",level:6},{id:254,greek:"ακρόπολη",hebrew:"אקרופוליס",level:6},{id:255,greek:"αρχαιολογικός χώρος",hebrew:"אתר ארכאולוגי",level:6},{id:256,greek:"κάστρο",hebrew:"טירה / מצודה",level:6},{id:257,greek:"μοναστήρι",hebrew:"מנזר",level:6},{id:258,greek:"πλατεία",hebrew:"כיכר ציבורית",level:6},{id:259,greek:"πάρκο",hebrew:"פארק",level:6},{id:260,greek:"κήπος",hebrew:"גן",level:6},
+  {id:261,greek:"βουνό",hebrew:"הר",level:6},{id:262,greek:"ποτάμι",hebrew:"נהר",level:6},{id:263,greek:"λίμνη",hebrew:"אגם",level:6},{id:264,greek:"καταρράκτης",hebrew:"מפל",level:6},{id:265,greek:"σπήλαιο",hebrew:"מערה",level:6},{id:266,greek:"φάρος",hebrew:"מגדלור",level:6},{id:267,greek:"εικόνα",hebrew:"אייקון / תמונה",level:6},{id:268,greek:"φωτογραφία",hebrew:"צילום / תמונה",level:6},{id:269,greek:"φωτογραφίζω",hebrew:"אני מצלם",level:6},{id:270,greek:"θέα",hebrew:"נוף",level:6},
+  {id:271,greek:"είσοδος",hebrew:"כניסה (לאתר)",level:6},{id:272,greek:"ξεναγός",hebrew:"מדריך תיירים",level:6},{id:273,greek:"ξενάγηση",hebrew:"סיור מודרך",level:6},{id:274,greek:"γραφείο τουρισμού",hebrew:"משרד תיירות",level:6},{id:275,greek:"πληροφορίες",hebrew:"מידע",level:6},{id:276,greek:"ιστορία",hebrew:"היסטוריה",level:6},{id:277,greek:"αρχαίος",hebrew:"עתיק",level:6},{id:278,greek:"βυζαντινός",hebrew:"ביזנטי",level:6},{id:279,greek:"ελληνικός",hebrew:"יווני",level:6},{id:280,greek:"παραδοσιακός",hebrew:"מסורתי",level:6},
+  {id:281,greek:"σύγχρονος",hebrew:"מודרני",level:6},{id:282,greek:"όμορφος",hebrew:"יפה",level:6},{id:283,greek:"εντυπωσιακός",hebrew:"מרשים",level:6},{id:284,greek:"ενδιαφέρον",hebrew:"מעניין",level:6},{id:285,greek:"βαρετό",hebrew:"משעמם",level:6},{id:286,greek:"πολυσύχναστο",hebrew:"עמוס / צפוף",level:6},{id:287,greek:"ήσυχο",hebrew:"שקט",level:6},{id:288,greek:"φεστιβάλ",hebrew:"פסטיבל",level:6},{id:289,greek:"παράσταση",hebrew:"הצגה",level:6},{id:290,greek:"μουσική",hebrew:"מוזיקה",level:6},
+  {id:291,greek:"χορός",hebrew:"ריקוד",level:6},{id:292,greek:"νύχτα",hebrew:"לילה (חיי לילה)",level:6},{id:293,greek:"μπαρ",hebrew:"בר",level:6},{id:294,greek:"κλαμπ",hebrew:"מועדון",level:6},{id:295,greek:"είσοδος ελεύθερη",hebrew:"כניסה חופשית",level:6},{id:296,greek:"κλειστός χώρος",hebrew:"מקום מקורה",level:6},{id:297,greek:"ανοιχτός χώρος",hebrew:"מקום פתוח",level:6},{id:298,greek:"γλυπτό",hebrew:"פסל",level:6},{id:299,greek:"πίνακας",hebrew:"ציור / שלט",level:6},{id:300,greek:"έκθεση",hebrew:"תערוכה",level:6},
+
+  {id:301,greek:"άντρας",hebrew:"גבר",level:7},{id:302,greek:"γυναίκα",hebrew:"אישה",level:7},{id:303,greek:"παιδί",hebrew:"ילד",level:7},{id:304,greek:"μωρό",hebrew:"תינוק",level:7},{id:305,greek:"οικογένεια",hebrew:"משפחה",level:7},{id:306,greek:"φίλος",hebrew:"חבר",level:7},{id:307,greek:"γείτονας",hebrew:"שכן",level:7},{id:308,greek:"ξένος",hebrew:"זר / לא מכיר",level:7},{id:309,greek:"τουρίστας",hebrew:"תייר",level:7},{id:310,greek:"ντόπιος",hebrew:"מקומי",level:7},
+  {id:311,greek:"μιλάω",hebrew:"אני מדבר",level:7},{id:312,greek:"καταλαβαίνω",hebrew:"אני מבין",level:7},{id:313,greek:"μαθαίνω",hebrew:"אני לומד",level:7},{id:314,greek:"μιλάτε αγγλικά;",hebrew:"אתה מדבר אנגלית?",level:7},{id:315,greek:"δεν καταλαβαίνω",hebrew:"אני לא מבין",level:7},{id:316,greek:"μπορείτε να επαναλάβετε;",hebrew:"תוכל לחזור על זה?",level:7},{id:317,greek:"πιο αργά παρακαλώ",hebrew:"לאט יותר בבקשה",level:7},{id:318,greek:"πώς λέγεται αυτό;",hebrew:"איך קוראים לזה?",level:7},{id:319,greek:"με λένε",hebrew:"שמי הוא...",level:7},{id:320,greek:"πώς σε λένε;",hebrew:"מה שמך?",level:7},
+  {id:321,greek:"χαίρομαι",hebrew:"אני שמח / נעים להכיר",level:7},{id:322,greek:"εντάξει",hebrew:"בסדר",level:7},{id:323,greek:"ωραία",hebrew:"יופי / נהדר",level:7},{id:324,greek:"μπράβο",hebrew:"כל הכבוד",level:7},{id:325,greek:"σιγά σιγά",hebrew:"לאט לאט / בסבלנות",level:7},{id:326,greek:"δυστυχώς",hebrew:"לצערי",level:7},{id:327,greek:"ευτυχώς",hebrew:"למרבה המזל",level:7},{id:328,greek:"ίσως",hebrew:"אולי",level:7},{id:329,greek:"σίγουρα",hebrew:"בוודאות",level:7},{id:330,greek:"ποτέ",hebrew:"אף פעם",level:7},
+  {id:331,greek:"πάντα",hebrew:"תמיד",level:7},{id:332,greek:"μερικές φορές",hebrew:"לפעמים",level:7},{id:333,greek:"συχνά",hebrew:"לעתים קרובות",level:7},{id:334,greek:"σπάνια",hebrew:"לעתים נדירות",level:7},{id:335,greek:"όλοι",hebrew:"כולם",level:7},{id:336,greek:"κανείς",hebrew:"אף אחד",level:7},{id:337,greek:"κάποιος",hebrew:"מישהו",level:7},{id:338,greek:"μαζί",hebrew:"ביחד",level:7},{id:339,greek:"μόνος",hebrew:"לבד",level:7},{id:340,greek:"ευχή",hebrew:"ברכה / משאלה",level:7},
+  {id:341,greek:"χρόνια πολλά",hebrew:"ברכות / יחיה לאורך ימים",level:7},{id:342,greek:"καλή χρονιά",hebrew:"שנה טובה",level:7},{id:343,greek:"καλές διακοπές",hebrew:"חופשה טובה",level:7},{id:344,greek:"καλό ταξίδι",hebrew:"נסיעה טובה",level:7},{id:345,greek:"στην υγειά μας",hebrew:"לחיים",level:7},{id:346,greek:"αγάπη",hebrew:"אהבה",level:7},{id:347,greek:"φιλί",hebrew:"נשיקה",level:7},{id:348,greek:"αγκαλιά",hebrew:"חיבוק",level:7},{id:349,greek:"χαρά",hebrew:"שמחה",level:7},{id:350,greek:"λύπη",hebrew:"עצב",level:7},
+
+  {id:351,greek:"καιρός",hebrew:"מזג אוויר",level:8},{id:352,greek:"θερμοκρασία",hebrew:"טמפרטורה",level:8},{id:353,greek:"βαθμοί",hebrew:"מעלות",level:8},{id:354,greek:"βροχή",hebrew:"גשם",level:8},{id:355,greek:"χιόνι",hebrew:"שלג",level:8},{id:356,greek:"άνεμος",hebrew:"רוח",level:8},{id:357,greek:"καταιγίδα",hebrew:"סערה",level:8},{id:358,greek:"ομίχλη",hebrew:"ערפל",level:8},{id:359,greek:"συννεφιά",hebrew:"מעונן",level:8},{id:360,greek:"αίθριος",hebrew:"בהיר / שמיים פתוחים",level:8},
+  {id:361,greek:"υγρασία",hebrew:"לחות",level:8},{id:362,greek:"ξηρασία",hebrew:"יובש",level:8},{id:363,greek:"καλοκαίρι",hebrew:"קיץ",level:8},{id:364,greek:"χειμώνας",hebrew:"חורף",level:8},{id:365,greek:"άνοιξη",hebrew:"אביב",level:8},{id:366,greek:"φθινόπωρο",hebrew:"סתיו",level:8},{id:367,greek:"δάσος",hebrew:"יער",level:8},{id:368,greek:"λιβάδι",hebrew:"מרעה / שדה",level:8},{id:369,greek:"λουλούδι",hebrew:"פרח",level:8},{id:370,greek:"δέντρο",hebrew:"עץ",level:8},
+  {id:371,greek:"ελιά",hebrew:"עץ זית",level:8},{id:372,greek:"πεύκο",hebrew:"אורן",level:8},{id:373,greek:"ζώο",hebrew:"חיה",level:8},{id:374,greek:"σκύλος",hebrew:"כלב",level:8},{id:375,greek:"γάτα",hebrew:"חתול",level:8},{id:376,greek:"άλογο",hebrew:"סוס",level:8},{id:377,greek:"γαϊδούρι",hebrew:"חמור",level:8},{id:378,greek:"πουλί",hebrew:"ציפור",level:8},{id:379,greek:"ψάρι",hebrew:"דג",level:8},{id:380,greek:"χελώνα",hebrew:"צב",level:8},
+  {id:381,greek:"μέλισσα",hebrew:"דבורה",level:8},{id:382,greek:"αστέρια",hebrew:"כוכבים",level:8},{id:383,greek:"φεγγάρι",hebrew:"ירח",level:8},{id:384,greek:"ουρανός",hebrew:"שמיים",level:8},{id:385,greek:"σύννεφο",hebrew:"ענן",level:8},{id:386,greek:"ηλιοβασίλεμα",hebrew:"שקיעה",level:8},{id:387,greek:"ανατολή",hebrew:"זריחה",level:8},{id:388,greek:"ορίζοντας",hebrew:"אופק",level:8},{id:389,greek:"κόλπος",hebrew:"מפרץ",level:8},{id:390,greek:"ακτή",hebrew:"חוף / קו חוף",level:8},
+  {id:391,greek:"βαθύ",hebrew:"עמוק",level:8},{id:392,greek:"ρηχό",hebrew:"רדוד",level:8},{id:393,greek:"καθαρά νερά",hebrew:"מים צלולים",level:8},{id:394,greek:"κοράλλια",hebrew:"אלמוגים",level:8},{id:395,greek:"μέδουσα",hebrew:"מדוזה",level:8},{id:396,greek:"αχινός",hebrew:"קיפוד ים",level:8},{id:397,greek:"καταδύσεις",hebrew:"צלילה",level:8},{id:398,greek:"σνόρκελ",hebrew:"שנורקל",level:8},{id:399,greek:"κολύμπι",hebrew:"שחייה",level:8},{id:400,greek:"ηλιοθεραπεία",hebrew:"שיזוף",level:8},
+
+  {id:401,greek:"πονάω",hebrew:"אני כואב",level:9},{id:402,greek:"κεφάλι",hebrew:"ראש",level:9},{id:403,greek:"στομάχι",hebrew:"קיבה",level:9},{id:404,greek:"πλάτη",hebrew:"גב",level:9},{id:405,greek:"πόδι",hebrew:"רגל",level:9},{id:406,greek:"χέρι",hebrew:"יד",level:9},{id:407,greek:"μάτι",hebrew:"עין",level:9},{id:408,greek:"αυτί",hebrew:"אוזן",level:9},{id:409,greek:"μύτη",hebrew:"אף",level:9},{id:410,greek:"στόμα",hebrew:"פה",level:9},
+  {id:411,greek:"δόντι",hebrew:"שן",level:9},{id:412,greek:"δέρμα",hebrew:"עור",level:9},{id:413,greek:"καρδιά",hebrew:"לב",level:9},{id:414,greek:"αίμα",hebrew:"דם",level:9},{id:415,greek:"τραύμα",hebrew:"פציעה",level:9},{id:416,greek:"έγκαυμα",hebrew:"כוויה",level:9},{id:417,greek:"κοψίματα",hebrew:"חתכים",level:9},{id:418,greek:"τσίμπημα",hebrew:"עקיצה",level:9},{id:419,greek:"εξάντληση",hebrew:"תשישות",level:9},{id:420,greek:"ζαλάδα",hebrew:"סחרחורת",level:9},
+  {id:421,greek:"ναυτία",hebrew:"בחילה",level:9},{id:422,greek:"εμετός",hebrew:"הקאה",level:9},{id:423,greek:"διάρροια",hebrew:"שלשול",level:9},{id:424,greek:"δυσκοιλιότητα",hebrew:"עצירות",level:9},{id:425,greek:"ίλιγγος",hebrew:"עילפון",level:9},{id:426,greek:"λιποθυμία",hebrew:"התעלפות",level:9},{id:427,greek:"έκτακτη ανάγκη",hebrew:"מצב חירום",level:9},{id:428,greek:"ασθενοφόρο",hebrew:"אמבולנס",level:9},{id:429,greek:"πυροσβεστική",hebrew:"כיבוי אש",level:9},{id:430,greek:"φωτιά",hebrew:"אש",level:9},
+  {id:431,greek:"σεισμός",hebrew:"רעידת אדמה",level:9},{id:432,greek:"πλημμύρα",hebrew:"שיטפון",level:9},{id:433,greek:"δηλητηρίαση",hebrew:"הרעלה",level:9},{id:434,greek:"τσούχτρα",hebrew:"מדוזה (עקיצה)",level:9},{id:435,greek:"φίδι",hebrew:"נחש",level:9},{id:436,greek:"σκορπιός",hebrew:"עקרב",level:9},{id:437,greek:"πρώτες βοήθειες",hebrew:"עזרה ראשונה",level:9},{id:438,greek:"επίδεσμος",hebrew:"תחבושת",level:9},{id:439,greek:"ασπιρίνη",hebrew:"אספירין",level:9},{id:440,greek:"αντιβιοτικό",hebrew:"אנטיביוטיקה",level:9},
+  {id:441,greek:"συνταγή",hebrew:"מרשם רופא",level:9},{id:442,greek:"αντικνωδαλικό",hebrew:"נגד קשיחות",level:9},{id:443,greek:"αντισηπτικό",hebrew:"חומר חיטוי",level:9},{id:444,greek:"ιατρική ασφάλεια",hebrew:"ביטוח רפואי",level:9},{id:445,greek:"ιατρικό ιστορικό",hebrew:"היסטוריה רפואית",level:9},{id:446,greek:"αλκοόλ",hebrew:"אלכוהול",level:9},{id:447,greek:"τυφλός",hebrew:"עיוור",level:9},{id:448,greek:"κωφός",hebrew:"חרש",level:9},{id:449,greek:"αναπηρία",hebrew:"נכות",level:9},{id:450,greek:"ανελκυστήρας αναπηρικής",hebrew:"מעלית לנכים",level:9},
+
+  {id:451,greek:"Ελλάδα",hebrew:"יוון",level:10},{id:452,greek:"Αθήνα",hebrew:"אתונה",level:10},{id:453,greek:"Θεσσαλονίκη",hebrew:"תסלוניקי",level:10},{id:454,greek:"Κρήτη",hebrew:"כרתים",level:10},{id:455,greek:"Σαντορίνη",hebrew:"סנטוריני",level:10},{id:456,greek:"Μύκονος",hebrew:"מיקונוס",level:10},{id:457,greek:"Ρόδος",hebrew:"רודוס",level:10},{id:458,greek:"Κέρκυρα",hebrew:"קורפו",level:10},{id:459,greek:"Ελληνική",hebrew:"יוונית (שפה)",level:10},{id:460,greek:"αλφάβητο",hebrew:"אלפבית",level:10},
+  {id:461,greek:"γλώσσα",hebrew:"שפה",level:10},{id:462,greek:"λέξη",hebrew:"מילה",level:10},{id:463,greek:"πρόταση",hebrew:"משפט",level:10},{id:464,greek:"μετάφραση",hebrew:"תרגום",level:10},{id:465,greek:"λεξικό",hebrew:"מילון",level:10},{id:466,greek:"γραμματική",hebrew:"דקדוק",level:10},{id:467,greek:"προφορά",hebrew:"הגייה",level:10},{id:468,greek:"τόνος",hebrew:"טעם / הטעמה",level:10},{id:469,greek:"ρήμα",hebrew:"פועל",level:10},{id:470,greek:"ουσιαστικό",hebrew:"שם עצם",level:10},
+  {id:471,greek:"επίθετο",hebrew:"שם תואר",level:10},{id:472,greek:"αριθμός",hebrew:"מספר",level:10},{id:473,greek:"πολιτισμός",hebrew:"תרבות",level:10},{id:474,greek:"παράδοση",hebrew:"מסורת",level:10},{id:475,greek:"θρησκεία",hebrew:"דת",level:10},{id:476,greek:"Πάσχα",hebrew:"פסחא יוונית",level:10},{id:477,greek:"Χριστούγεννα",hebrew:"חג המולד",level:10},{id:478,greek:"γιορτή",hebrew:"חג / חגיגה",level:10},{id:479,greek:"πανηγύρι",hebrew:"פסטיבל עממי",level:10},{id:480,greek:"λαϊκή μουσική",hebrew:"מוזיקה עממית",level:10},
+  {id:481,greek:"ρεμπέτικο",hebrew:"רמבטיקו (ז'אנר)",level:10},{id:482,greek:"συρτάκι",hebrew:"סירטאקי (ריקוד)",level:10},{id:483,greek:"μεζές",hebrew:"מזה (מנות קטנות)",level:10},{id:484,greek:"ταβέρνα",hebrew:"טברנה",level:10},{id:485,greek:"φιλοξενία",hebrew:"אירוח (ערך יווני)",level:10},{id:486,greek:"κέφι",hebrew:"מצב רוח / חיוניות",level:10},{id:487,greek:"μεράκι",hebrew:"מראקי (תשוקה)",level:10},{id:488,greek:"καημός",hebrew:"כמיהה / געגוע",level:10},{id:489,greek:"παρέα",hebrew:"חברה / כנופייה",level:10},{id:490,greek:"σιέστα",hebrew:"סיאסטה",level:10},
+  {id:491,greek:"μεσημέρι",hebrew:"צהריים",level:10},{id:492,greek:"Ακρόπολη",hebrew:"האקרופוליס",level:10},{id:493,greek:"Παρθενώνας",hebrew:"הפרתנון",level:10},{id:494,greek:"Ολυμπία",hebrew:"אולימפיה",level:10},{id:495,greek:"Δελφοί",hebrew:"דלפי",level:10},{id:496,greek:"Μετέωρα",hebrew:"מטאורה",level:10},{id:497,greek:"Δωδεκάνησα",hebrew:"האיים הדודקנסיים",level:10},{id:498,greek:"Κυκλάδες",hebrew:"האיים הקיקלדיים",level:10},{id:499,greek:"Ιόνιο",hebrew:"הים האיוני",level:10},{id:500,greek:"Αιγαίο",hebrew:"הים האגאי",level:10}
+];
+
+const LEVEL_NAMES = {
+  1:"הישרדות בסיסית",2:"מסעדה וקפה",3:"מלון וחוף",
+  4:"תחבורה וזמן",5:"קניות ובריאות",6:"תיירות ואתרים",
+  7:"אנשים ושיחה",8:"טבע ומזג אוויר",9:"חירום ורפואה",
+  10:"שפה ותרבות"
+};
+
+const STORAGE_KEY = "greek_vocab_v4";
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return null;
+}
+
+function saveData(data) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch (e) {}
+}
+
+function initWordState() {
+  const map = {};
+  ALL_WORDS.forEach(w => {
+    map[w.id] = { score: 0, attempts: 0, correct: 0, lastSeen: null };
+  });
+  return map;
+}
+
+function pickWord(wordState, unlockedLevel) {
+  const pool = ALL_WORDS.filter(w => w.level <= unlockedLevel);
+  const weighted = pool.map(w => {
+    const s = wordState[w.id];
+    const daysSince = s.lastSeen
+      ? (Date.now() - new Date(s.lastSeen)) / 86400000
+      : 999;
+    const weight = Math.max(1, (10 - s.score) * 3 + Math.min(daysSince * 2, 20));
+    return { word: w, weight };
+  });
+  const total = weighted.reduce((a, b) => a + b.weight, 0);
+  let r = Math.random() * total;
+  for (const item of weighted) {
+    r -= item.weight;
+    if (r <= 0) return item.word;
+  }
+  return weighted[weighted.length - 1].word;
+}
+
+function speak(text) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang = "el-GR";
+  utt.rate = 0.85;
+  window.speechSynthesis.speak(utt);
+}
+
+function normalize(s) {
+  return s.trim().replace(/[.,!?;:"'()\/\-]/g, "").replace(/\s+/g, " ").toLowerCase();
+}
+
+function checkAnswer(greek, correctHebrew, userAnswer) {
+  if (!userAnswer.trim()) return { correct: false, feedback: "לא הקלדת כלום" };
+
+  const normalUser = normalize(userAnswer);
+  const normalCorrect = normalize(correctHebrew);
+
+  if (normalUser === normalCorrect) {
+    return { correct: true, feedback: "מצוין!" };
+  }
+
+  const variants = correctHebrew.split("/").map(v => normalize(v.trim())).filter(Boolean);
+
+  for (const v of variants) {
+    if (normalUser === v || v === normalUser) {
+      return { correct: true, feedback: "נכון!" };
+    }
+  }
+
+  for (const v of variants) {
+    if (normalUser.includes(v) || v.includes(normalUser)) {
+      if (normalUser.length >= 2 && v.length >= 2) {
+        return { correct: true, feedback: "קרוב מספיק!" };
+      }
+    }
+  }
+
+  const parenthetical = correctHebrew.match(/^([^(]+)\s*\(/);
+  if (parenthetical) {
+    const mainPart = normalize(parenthetical[1]);
+    if (normalUser === mainPart || normalUser.includes(mainPart) || mainPart.includes(normalUser)) {
+      if (normalUser.length >= 2) {
+        return { correct: true, feedback: "נכון!" };
+      }
+    }
+  }
+
+  return { correct: false, feedback: "התשובה הנכונה: " + correctHebrew };
+}
+
+function ProgressBar({ value, max, color = "#3b82f6" }) {
+  const pct = max ? Math.round((value / max) * 100) : 0;
+  return (
+    <div style={{ background: "#e5e7eb", borderRadius: 99, height: 8, overflow: "hidden" }}>
+      <div style={{
+        width: pct + "%", height: "100%",
+        background: color, borderRadius: 99,
+        transition: "width 0.6s ease"
+      }} />
+    </div>
+  );
+}
+
+function StarRating({ score }) {
+  const stars = Math.min(5, Math.max(0, Math.round(score / 2)));
+  return (
+    <span style={{ fontSize: 14, letterSpacing: 1 }}>
+      {"★".repeat(stars)}{"☆".repeat(5 - stars)}
+    </span>
+  );
+}
+
+function HomeScreen({ wordState, onStart, onRoadmap }) {
+  const total = ALL_WORDS.length;
+  const learned = ALL_WORDS.filter(w => wordState[w.id]?.attempts > 0).length;
+  const mastered = ALL_WORDS.filter(w => wordState[w.id]?.score >= 8).length;
+  const weak = ALL_WORDS.filter(w =>
+    wordState[w.id]?.attempts > 0 && wordState[w.id]?.score < 3
+  ).length;
+
+  return (
+    <div style={{ padding: "24px 20px", maxWidth: 480, margin: "0 auto" }}>
+      <div style={{ textAlign: "center", marginBottom: 28 }}>
+        <div style={{ fontSize: 48, marginBottom: 8 }}>🇬🇷</div>
+        <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, color: "#1e3a5f", fontFamily: "sans-serif" }}>
+          יווניCal
+        </h1>
+        <p style={{ margin: "4px 0 0", color: "#6b7280", fontSize: 14 }}>
+          500 מילים לתייר שנחת הרגע
+        </p>
+      </div>
+
+      <div style={{
+        display: "grid", gridTemplateColumns: "1fr 1fr 1fr",
+        gap: 12, marginBottom: 24
+      }}>
+        {[
+          { label: "נלמדו", value: learned, color: "#3b82f6", icon: "📚" },
+          { label: "שולטים", value: mastered, color: "#10b981", icon: "⭐" },
+          { label: "חלשות", value: weak, color: "#ef4444", icon: "🔄" },
+        ].map(s => (
+          <div key={s.label} style={{
+            background: "#f8fafc", borderRadius: 14, padding: "14px 10px",
+            textAlign: "center", border: "1px solid #e2e8f0"
+          }}>
+            <div style={{ fontSize: 22 }}>{s.icon}</div>
+            <div style={{ fontSize: 24, fontWeight: 800, color: s.color }}>{s.value}</div>
+            <div style={{ fontSize: 12, color: "#6b7280" }}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{
+        background: "#f0f9ff", borderRadius: 14, padding: 16,
+        marginBottom: 20, border: "1px solid #bae6fd"
+      }}>
+        <div style={{
+          display: "flex", justifyContent: "space-between",
+          marginBottom: 8, fontSize: 14, fontWeight: 600, color: "#0369a1"
+        }}>
+          <span>התקדמות כללית</span>
+          <span>{learned} / {total}</span>
+        </div>
+        <ProgressBar value={learned} max={total} color="#0ea5e9" />
+        <div style={{ marginTop: 8, fontSize: 12, color: "#6b7280", textAlign: "center" }}>
+          רמה נוכחית: {Math.min(10, Math.floor(mastered / 50) + 1)} — {LEVEL_NAMES[Math.min(10, Math.floor(mastered / 50) + 1)]}
+        </div>
+      </div>
+
+      <button onClick={() => onStart("all")} style={{
+        width: "100%", padding: "16px 0", fontSize: 18, fontWeight: 700,
+        background: "linear-gradient(135deg, #1e3a5f, #2563eb)",
+        color: "#fff", border: "none", borderRadius: 14, cursor: "pointer",
+        marginBottom: 12, letterSpacing: 0.5, boxShadow: "0 4px 14px rgba(37,99,235,0.35)"
+      }}>
+        תרגול חכם 🚀
+      </button>
+
+      {weak > 0 && (
+        <button onClick={() => onStart("weak")} style={{
+          width: "100%", padding: "13px 0", fontSize: 16, fontWeight: 600,
+          background: "#fef2f2", color: "#dc2626",
+          border: "2px solid #fca5a5", borderRadius: 14, cursor: "pointer",
+          marginBottom: 12
+        }}>
+          חזרה על מילים קשות ({weak}) 🔄
+        </button>
+      )}
+
+      <button onClick={onRoadmap} style={{
+        width: "100%", padding: "13px 0", fontSize: 16, fontWeight: 600,
+        background: "#f0fdf4", color: "#16a34a",
+        border: "2px solid #86efac", borderRadius: 14, cursor: "pointer"
+      }}>
+        מפת הדרכים 🗺️
+      </button>
+    </div>
+  );
+}
+
+function RoadmapScreen({ wordState, onBack }) {
+  const levels = Array.from({ length: 10 }, (_, i) => i + 1);
+
+  return (
+    <div style={{ padding: "20px 16px", maxWidth: 480, margin: "0 auto" }}>
+      <div style={{ display: "flex", alignItems: "center", marginBottom: 20, gap: 12 }}>
+        <button onClick={onBack} style={{
+          background: "none", border: "none", fontSize: 22, cursor: "pointer"
+        }}>←</button>
+        <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: "#1e3a5f" }}>
+          מפת הדרכים
+        </h2>
+      </div>
+
+      {levels.map(lvl => {
+        const words = ALL_WORDS.filter(w => w.level === lvl);
+        const attempted = words.filter(w => wordState[w.id]?.attempts > 0).length;
+        const mastered = words.filter(w => wordState[w.id]?.score >= 8).length;
+        const pct = Math.round((mastered / 50) * 100);
+        const isActive = attempted > 0;
+
+        return (
+          <div key={lvl} style={{
+            display: "flex", gap: 14, alignItems: "flex-start",
+            marginBottom: 16, opacity: isActive ? 1 : 0.5
+          }}>
+            <div style={{
+              minWidth: 44, height: 44, borderRadius: "50%",
+              background: mastered === 50 ? "#10b981" : isActive ? "#2563eb" : "#e5e7eb",
+              color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
+              fontWeight: 800, fontSize: 16, flexShrink: 0
+            }}>
+              {mastered === 50 ? "✓" : lvl}
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{
+                display: "flex", justifyContent: "space-between",
+                fontSize: 14, fontWeight: 700, color: "#1e3a5f", marginBottom: 4
+              }}>
+                <span>{LEVEL_NAMES[lvl]}</span>
+                <span style={{ color: "#6b7280" }}>{mastered}/50</span>
+              </div>
+              <ProgressBar value={mastered} max={50}
+                color={mastered === 50 ? "#10b981" : "#2563eb"} />
+              <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 3 }}>
+                {pct}% שולטים · {attempted} נלמדו
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function PracticeScreen({ wordState, mode, onEnd, onUpdateWord }) {
+  const [currentWord, setCurrentWord] = useState(null);
+  const [input, setInput] = useState("");
+  const [result, setResult] = useState(null);
+  const [revealed, setRevealed] = useState(false);
+  const [sessionStats, setSessionStats] = useState({ correct: 0, wrong: 0, total: 0 });
+  const inputRef = useRef(null);
+
+  const unlockedLevel = Math.min(10,
+    Math.floor(ALL_WORDS.filter(w => wordState[w.id]?.score >= 8).length / 50) + 1
+  );
+
+  const loadNext = useCallback(() => {
+    const word = pickWord(wordState, unlockedLevel);
+    setCurrentWord(word);
+    setInput("");
+    setResult(null);
+    setRevealed(false);
+    setTimeout(() => inputRef.current?.focus(), 100);
+  }, [wordState, unlockedLevel]);
+
+  useEffect(() => { loadNext(); }, []);
+
+  useEffect(() => {
+    if (currentWord) speak(currentWord.greek);
+  }, [currentWord]);
+
+  const handleSubmit = () => {
+    if (!input.trim() || result) return;
+    const { correct, feedback } = checkAnswer(currentWord.greek, currentWord.hebrew, input);
+    setResult({ correct, feedback });
+
+    const prev = wordState[currentWord.id];
+    const newScore = correct
+      ? Math.min(10, prev.score + 1)
+      : Math.max(0, prev.score - 1);
+
+    onUpdateWord(currentWord.id, {
+      score: newScore,
+      attempts: prev.attempts + 1,
+      correct: prev.correct + (correct ? 1 : 0),
+      lastSeen: new Date().toISOString()
+    });
+
+    setSessionStats(s => ({
+      correct: s.correct + (correct ? 1 : 0),
+      wrong: s.wrong + (correct ? 0 : 1),
+      total: s.total + 1
+    }));
+  };
+
+  const handleReveal = () => {
+    if (revealed || result) return;
+    setRevealed(true);
+    const prev = wordState[currentWord.id];
+    onUpdateWord(currentWord.id, {
+      score: Math.max(0, prev.score - 1),
+      attempts: prev.attempts + 1,
+      correct: prev.correct,
+      lastSeen: new Date().toISOString()
+    });
+    setSessionStats(s => ({ ...s, wrong: s.wrong + 1, total: s.total + 1 }));
+  };
+
+  if (!currentWord) return <div style={{ padding: 40, textAlign: "center" }}>טוען...</div>;
+
+  const accuracy = sessionStats.total
+    ? Math.round((sessionStats.correct / sessionStats.total) * 100) : 0;
+
+  return (
+    <div style={{ padding: "20px 16px", maxWidth: 480, margin: "0 auto" }}>
+      <div style={{
+        display: "flex", justifyContent: "space-between", alignItems: "center",
+        marginBottom: 20
+      }}>
+        <button onClick={onEnd} style={{
+          background: "none", border: "none", fontSize: 22, cursor: "pointer"
+        }}>←</button>
+        <div style={{ fontSize: 13, color: "#6b7280", display: "flex", gap: 16 }}>
+          <span>✅ {sessionStats.correct}</span>
+          <span>❌ {sessionStats.wrong}</span>
+          {sessionStats.total > 0 && <span>🎯 {accuracy}%</span>}
+        </div>
+      </div>
+
+      <div style={{
+        background: "linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%)",
+        borderRadius: 20, padding: "32px 24px", textAlign: "center",
+        marginBottom: 20, boxShadow: "0 8px 28px rgba(37,99,235,0.28)"
+      }}>
+        <div style={{ fontSize: 11, color: "#93c5fd", marginBottom: 8, letterSpacing: 1 }}>
+          רמה {currentWord.level} · {LEVEL_NAMES[currentWord.level]}
+        </div>
+        <div style={{
+          fontSize: 48, fontWeight: 800, color: "#fff",
+          letterSpacing: 2, marginBottom: 8, wordBreak: "break-word"
+        }}>
+          {currentWord.greek}
+        </div>
+        <StarRating score={wordState[currentWord.id]?.score || 0} />
+        <div style={{ marginTop: 4, fontSize: 11, color: "#93c5fd" }}>
+          {wordState[currentWord.id]?.attempts || 0} ניסיונות
+        </div>
+
+        <button
+          onClick={() => speak(currentWord.greek)}
+          style={{
+            marginTop: 16, padding: "8px 20px", borderRadius: 99,
+            background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.4)",
+            color: "#fff", fontSize: 15, cursor: "pointer", display: "inline-flex",
+            alignItems: "center", gap: 6
+          }}>
+          🔊 שמע
+        </button>
+      </div>
+
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 8, textAlign: "center" }}>
+          מה הפירוש בעברית?
+        </div>
+        <input
+          ref={inputRef}
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && handleSubmit()}
+          disabled={!!result}
+          placeholder="הקלד את התרגום..."
+          dir="rtl"
+          style={{
+            width: "100%", padding: "14px 16px", fontSize: 18,
+            border: result
+              ? ("2px solid " + (result.correct ? "#10b981" : "#ef4444"))
+              : "2px solid #e5e7eb",
+            borderRadius: 12, outline: "none", boxSizing: "border-box",
+            background: result
+              ? (result.correct ? "#f0fdf4" : "#fef2f2")
+              : "#fff",
+            textAlign: "right"
+          }}
+        />
+      </div>
+
+      {result && (
+        <div style={{
+          padding: "12px 16px", borderRadius: 12, marginBottom: 16,
+          background: result.correct ? "#f0fdf4" : "#fef2f2",
+          border: "1px solid " + (result.correct ? "#86efac" : "#fca5a5"),
+          color: result.correct ? "#166534" : "#991b1b",
+          fontSize: 15, fontWeight: 600, textAlign: "center", direction: "rtl"
+        }}>
+          {result.feedback}
+          {!result.correct && (
+            <div style={{ fontSize: 13, fontWeight: 400, marginTop: 4, color: "#6b7280" }}>
+              התשובה: {currentWord.hebrew}
+            </div>
+          )}
+        </div>
+      )}
+
+      {revealed && !result && (
+        <div style={{
+          padding: "12px 16px", borderRadius: 12, marginBottom: 16,
+          background: "#fffbeb", border: "1px solid #fcd34d",
+          color: "#92400e", fontSize: 16, fontWeight: 700,
+          textAlign: "center", direction: "rtl"
+        }}>
+          📖 התשובה: {currentWord.hebrew}
+          <div style={{ fontSize: 12, fontWeight: 400, color: "#78716c", marginTop: 4 }}>
+            נספר כטעות — לחץ המשך
+          </div>
+        </div>
+      )}
+
+      {!result && !revealed ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <button
+            onClick={handleSubmit}
+            disabled={!input.trim()}
+            style={{
+              width: "100%", padding: "15px 0", fontSize: 17, fontWeight: 700,
+              background: "#2563eb",
+              color: "#fff", border: "none", borderRadius: 14, cursor: "pointer",
+              opacity: !input.trim() ? 0.5 : 1
+            }}>
+            בדוק ✓
+          </button>
+          <button
+            onClick={handleReveal}
+            style={{
+              width: "100%", padding: "12px 0", fontSize: 15, fontWeight: 600,
+              background: "#fff", color: "#6b7280",
+              border: "2px solid #e5e7eb", borderRadius: 14, cursor: "pointer"
+            }}>
+            לא יודע — הצג תשובה 👁️
+          </button>
+        </div>
+      ) : (
+        <button onClick={loadNext} style={{
+          width: "100%", padding: "15px 0", fontSize: 17, fontWeight: 700,
+          background: "linear-gradient(135deg, #1e3a5f, #2563eb)",
+          color: "#fff", border: "none", borderRadius: 14, cursor: "pointer"
+        }}>
+          המשך ←
+        </button>
+      )}
+    </div>
+  );
+}
+
+function App() {
+  const [screen, setScreen] = useState("loading");
+  const [wordState, setWordState] = useState(null);
+  const [practiceMode, setPracticeMode] = useState("all");
+
+  useEffect(() => {
+    const saved = loadData();
+    if (saved?.wordState) {
+      const merged = initWordState();
+      Object.keys(saved.wordState).forEach(id => {
+        if (merged[id] !== undefined) merged[id] = saved.wordState[id];
+      });
+      setWordState(merged);
+    } else {
+      setWordState(initWordState());
+    }
+    setScreen("home");
+  }, []);
+
+  const saveTimer = useRef(null);
+  useEffect(() => {
+    if (!wordState) return;
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      saveData({ wordState, savedAt: new Date().toISOString() });
+    }, 500);
+    return () => clearTimeout(saveTimer.current);
+  }, [wordState]);
+
+  const handleUpdateWord = useCallback((id, updates) => {
+    setWordState(prev => ({
+      ...prev,
+      [id]: { ...prev[id], ...updates }
+    }));
+  }, []);
+
+  if (screen === "loading" || !wordState) {
+    return (
+      <div style={{
+        minHeight: "100vh", display: "flex", alignItems: "center",
+        justifyContent: "center", flexDirection: "column", gap: 12,
+        background: "#f8fafc", fontFamily: "sans-serif"
+      }}>
+        <div style={{ fontSize: 48 }}>🇬🇷</div>
+        <div style={{ color: "#6b7280", fontSize: 16 }}>טוען...</div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{
+      minHeight: "100vh", minHeight: "100dvh", background: "#f8fafc",
+      fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+      direction: "rtl"
+    }}>
+      {screen === "home" && (
+        <HomeScreen
+          wordState={wordState}
+          onStart={(mode) => { setPracticeMode(mode); setScreen("practice"); }}
+          onRoadmap={() => setScreen("roadmap")}
+        />
+      )}
+      {screen === "practice" && (
+        <PracticeScreen
+          wordState={wordState}
+          mode={practiceMode}
+          onEnd={() => setScreen("home")}
+          onUpdateWord={handleUpdateWord}
+        />
+      )}
+      {screen === "roadmap" && (
+        <RoadmapScreen
+          wordState={wordState}
+          onBack={() => setScreen("home")}
+        />
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
