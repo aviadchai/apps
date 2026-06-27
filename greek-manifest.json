@@ -1,0 +1,17 @@
+{
+  "name": "יווניCal — 500 מילים יווניות",
+  "short_name": "יווניCal",
+  "description": "500 מילים יווניות לתייר",
+  "start_url": "./greek.html",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f8fafc",
+  "theme_color": "#1e3a5f",
+  "lang": "he",
+  "dir": "rtl",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}
