@@ -878,7 +878,7 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
           αβγ
         </h1>
         <p style={{ margin: "4px 0 0", color: "#6b7280", fontSize: 14 }}>
-          האלפבית היווני ב-10 ימים <span style={{ color: "#9ca3af", fontSize: 11 }}>(v21)</span>
+          האלפבית היווני ב-10 ימים <span style={{ color: "#9ca3af", fontSize: 11 }}>(v22)</span>
         </p>
       </div>
 
@@ -1086,6 +1086,22 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
           ))}
         </div>
       </div>
+
+      {learnedCount >= 20 && learnedCount < 24 && (
+        <div style={{
+          marginTop: 16, padding: 14, borderRadius: 14,
+          background: "linear-gradient(135deg, #fef3c7, #fde68a)",
+          textAlign: "center", border: "1px solid #f59e0b"
+        }}>
+          <div style={{ fontSize: 28 }}>{'🔥'}</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: "#92400e" }}>
+            כמעט שם! נשארו {24 - learnedCount} אותיות
+          </div>
+          <div style={{ fontSize: 13, color: "#a16207", marginTop: 4 }}>
+            {'🎓'} מבחן סופי מחכה לך בסיום — תוכיח שאתה שולט באלפבית!
+          </div>
+        </div>
+      )}
 
       {learnedCount === 24 && (
         <div style={{
@@ -1379,7 +1395,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
 <script>
 (function(){
-  var APP_VER = 'abc_v21';
+  var APP_VER = 'abc_v22';
   if ('caches' in window && localStorage.getItem('abc_ver') !== APP_VER) {
     caches.keys().then(function(names) {
       return Promise.all(names.map(function(n){ return caches.delete(n); }));
