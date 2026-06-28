@@ -325,7 +325,7 @@ function HomeScreen({ wordState, onStart, onRoadmap, startedAt }) {
           יווני<span style={{ color: "#2563eb" }}>Cal</span>
         </h1>
         <p style={{ margin: "6px 0 0", color: "#6b7280", fontSize: 14 }}>
-          500 מילים לתייר שנחת הרגע <span style={{ color: "#9ca3af", fontSize: 11 }}>(v6)</span>
+          500 מילים לתייר שנחת הרגע <span style={{ color: "#9ca3af", fontSize: 11 }}>(v7)</span>
         </p>
       </div>
 
@@ -555,13 +555,12 @@ function pickVariation(word, wordState) {
   const attempts = s?.attempts || 0;
   const types = ["greekToHebrew"];
   if (attempts >= 2) types.push("hebrewToGreek");
-  if (attempts >= 1) types.push("multipleChoice");
   if (streak >= 2) types.push("audioOnly");
   if (streak >= 3) types.push("hebrewToGreek");
   return types[Math.floor(Math.random() * types.length)];
 }
 
-function generateChoices(correctWord, wordState, unlockedLevel) {
+function generateChoices(correctWord, wordState, unlockedLevel, field) {
   const pool = ALL_WORDS.filter(w => w.level <= unlockedLevel && w.id !== correctWord.id);
   const shuffled = pool.sort(() => Math.random() - 0.5);
   const wrongs = shuffled.slice(0, 3);
@@ -571,15 +570,13 @@ function generateChoices(correctWord, wordState, unlockedLevel) {
 
 const VAR_LABELS = {
   greekToHebrew: "תרגם לעברית",
-  hebrewToGreek: "תרגם ליוונית",
-  multipleChoice: "בחר תשובה",
+  hebrewToGreek: "בחר את המילה ביוונית",
   audioOnly: "מה שמעת?"
 };
 
 const VAR_ICONS = {
   greekToHebrew: "🇬🇷→🇮🇱",
   hebrewToGreek: "🇮🇱→🇬🇷",
-  multipleChoice: "🔢",
   audioOnly: "🎧"
 };
 
@@ -607,13 +604,13 @@ function PracticeScreen({ wordState, mode, onEnd, onUpdateWord }) {
     const v = pickVariation(word, wordState);
     setCurrentWord(word);
     setVariation(v);
-    if (v === "multipleChoice") {
+    if (v === "hebrewToGreek") {
       setChoices(generateChoices(word, wordState, unlockedLevel));
     }
     setInput("");
     setResult(null);
     setRevealed(false);
-    if (v !== "multipleChoice") setTimeout(() => inputRef.current?.focus(), 100);
+    if (v !== "hebrewToGreek") setTimeout(() => inputRef.current?.focus(), 100);
   }, [wordState, unlockedLevel, mode, recentCap]);
 
   useEffect(() => { loadNext(); }, []);
@@ -644,19 +641,9 @@ function PracticeScreen({ wordState, mode, onEnd, onUpdateWord }) {
 
   const handleSubmit = () => {
     if (!input.trim() || result) return;
-    let correct, feedback;
-    if (variation === "hebrewToGreek") {
-      const normalUser = normalize(input);
-      const normalCorrect = normalize(currentWord.greek);
-      correct = normalUser === normalCorrect;
-      feedback = correct ? "מצוין!" : "התשובה הנכונה: " + currentWord.greek;
-    } else {
-      const res = checkAnswer(currentWord.greek, currentWord.hebrew, input);
-      correct = res.correct;
-      feedback = res.feedback;
-    }
-    setResult({ correct, feedback });
-    recordResult(correct);
+    const res = checkAnswer(currentWord.greek, currentWord.hebrew, input);
+    setResult({ correct: res.correct, feedback: res.feedback });
+    recordResult(res.correct);
   };
 
   const handleChoice = (word) => {
@@ -664,7 +651,7 @@ function PracticeScreen({ wordState, mode, onEnd, onUpdateWord }) {
     const correct = word.id === currentWord.id;
     setResult({
       correct,
-      feedback: correct ? "מצוין!" : "התשובה הנכונה: " + currentWord.hebrew
+      feedback: correct ? "מצוין!" : "התשובה הנכונה: " + currentWord.greek
     });
     recordResult(correct);
   };
@@ -688,8 +675,8 @@ function PracticeScreen({ wordState, mode, onEnd, onUpdateWord }) {
   const accuracy = sessionStats.total
     ? Math.round((sessionStats.correct / sessionStats.total) * 100) : 0;
 
-  const isTyping = variation !== "multipleChoice";
-  const showGreek = variation === "greekToHebrew" || variation === "multipleChoice";
+  const isTyping = variation !== "hebrewToGreek";
+  const showGreek = variation === "greekToHebrew";
   const showHebrew = variation === "hebrewToGreek";
   const showAudioOnly = variation === "audioOnly";
 
@@ -770,10 +757,10 @@ function PracticeScreen({ wordState, mode, onEnd, onUpdateWord }) {
         </div>
       </div>
 
-      {variation === "multipleChoice" ? (
+      {variation === "hebrewToGreek" ? (
         <div style={{ marginBottom: 16 }}>
           <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 10, textAlign: "center" }}>
-            מה הפירוש בעברית?
+            בחר את המילה הנכונה ביוונית:
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {choices.map(w => {
@@ -786,12 +773,13 @@ function PracticeScreen({ wordState, mode, onEnd, onUpdateWord }) {
                 <button key={w.id} onClick={() => handleChoice(w)}
                   disabled={!!result}
                   style={{
-                    padding: "14px 16px", fontSize: 16, fontWeight: 600,
+                    padding: "14px 16px", fontSize: 18, fontWeight: 600,
                     background: bg, border: `2px solid ${border}`, color,
                     borderRadius: 12, cursor: result ? "default" : "pointer",
-                    textAlign: "right", direction: "rtl", width: "100%"
+                    textAlign: "left", direction: "ltr", width: "100%",
+                    letterSpacing: 1
                   }}>
-                  {w.hebrew}
+                  {w.greek}
                 </button>
               );
             })}
@@ -800,7 +788,7 @@ function PracticeScreen({ wordState, mode, onEnd, onUpdateWord }) {
       ) : (
         <div style={{ marginBottom: 16 }}>
           <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 8, textAlign: "center" }}>
-            {variation === "hebrewToGreek" ? "כתוב ביוונית:" : "מה הפירוש בעברית?"}
+            מה הפירוש בעברית?
           </div>
           <input
             ref={inputRef}
@@ -808,8 +796,8 @@ function PracticeScreen({ wordState, mode, onEnd, onUpdateWord }) {
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === "Enter" && handleSubmit()}
             disabled={!!result}
-            placeholder={variation === "hebrewToGreek" ? "הקלד ביוונית..." : "הקלד את התרגום..."}
-            dir={variation === "hebrewToGreek" ? "ltr" : "rtl"}
+            placeholder="הקלד את התרגום..."
+            dir="rtl"
             style={{
               width: "100%", padding: "14px 16px", fontSize: 18,
               border: result
@@ -819,7 +807,7 @@ function PracticeScreen({ wordState, mode, onEnd, onUpdateWord }) {
               background: result
                 ? (result.correct ? "#f0fdf4" : "#fef2f2")
                 : "#fff",
-              textAlign: variation === "hebrewToGreek" ? "left" : "right"
+              textAlign: "right"
             }}
           />
         </div>
@@ -834,16 +822,6 @@ function PracticeScreen({ wordState, mode, onEnd, onUpdateWord }) {
           fontSize: 15, fontWeight: 600, textAlign: "center", direction: "rtl"
         }}>
           {result.feedback}
-          {!result.correct && variation === "hebrewToGreek" && (
-            <div style={{ fontSize: 13, fontWeight: 400, marginTop: 4, color: "#6b7280" }}>
-              התשובה: {currentWord.greek}
-            </div>
-          )}
-          {!result.correct && variation !== "hebrewToGreek" && variation !== "multipleChoice" && (
-            <div style={{ fontSize: 13, fontWeight: 400, marginTop: 4, color: "#6b7280" }}>
-              התשובה: {currentWord.hebrew}
-            </div>
-          )}
         </div>
       )}
 
@@ -854,7 +832,7 @@ function PracticeScreen({ wordState, mode, onEnd, onUpdateWord }) {
           color: "#92400e", fontSize: 16, fontWeight: 700,
           textAlign: "center", direction: "rtl"
         }}>
-          {'📖'} התשובה: {variation === "hebrewToGreek" ? currentWord.greek : currentWord.hebrew}
+          {'📖'} התשובה: {currentWord.hebrew}
           <div style={{ fontSize: 12, fontWeight: 400, color: "#78716c", marginTop: 4 }}>
             נספר כטעות — לחץ המשך
           </div>
@@ -862,7 +840,7 @@ function PracticeScreen({ wordState, mode, onEnd, onUpdateWord }) {
       )}
 
       {!result && !revealed ? (
-        variation === "multipleChoice" ? null : (
+        variation === "hebrewToGreek" ? null : (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             <button
               onClick={handleSubmit}
