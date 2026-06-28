@@ -295,17 +295,26 @@ function HomeScreen({ wordState, onStart, onRoadmap, startedAt }) {
   const daysActive = startedAt
     ? Math.max(1, Math.ceil((Date.now() - new Date(startedAt).getTime()) / 86400000))
     : 1;
-  const dailyRate = learned > 0 ? learned / daysActive : DAILY_GOAL;
+  const dailyRate = learned > 0 ? learned / daysActive : 0;
   const remaining = total - learned;
-  const daysToGo = remaining > 0 ? Math.ceil(remaining / Math.max(dailyRate, DAILY_GOAL)) : 0;
+  const daysToGo = dailyRate > 0 ? Math.ceil(remaining / dailyRate) : 0;
+
+  const rateStr = dailyRate >= 1
+    ? `${Math.round(dailyRate * 10) / 10} מילים ביום`
+    : dailyRate > 0
+      ? `${Math.round(dailyRate * 7 * 10) / 10} מילים בשבוע`
+      : "";
 
   let prediction = "";
-  if (learned === 0) prediction = "בקצב של 2 מילים ביום — בעוד 250 ימים תדבר יוונית!";
-  else if (remaining === 0) prediction = "את/ה יודע/ת 500 מילים — מדבר/ת יוונית!";
-  else if (daysToGo <= 30) prediction = `בקצב הנוכחי — בעוד ${daysToGo} ימים תדבר יוונית!`;
-  else {
-    const months = Math.ceil(daysToGo / 30);
-    prediction = `בקצב הנוכחי — בעוד ${months > 1 ? months + " חודשים" : "חודש"} תדבר יוונית!`;
+  if (learned === 0) prediction = "התחל ללמוד — הקצב שלך יחושב אוטומטית!";
+  else if (remaining === 0) prediction = "את/ה יודע/ת 500 מילים — מדבר/ת יוונית! 🎉";
+  else if (daysToGo <= 30) prediction = `בקצב של ${rateStr} — בעוד ${daysToGo} ימים תדבר יוונית!`;
+  else if (daysToGo <= 365) {
+    const months = Math.round(daysToGo / 30);
+    prediction = `בקצב של ${rateStr} — בעוד ${months > 1 ? months + " חודשים" : "חודש"} תדבר יוונית!`;
+  } else {
+    const months = Math.round(daysToGo / 30);
+    prediction = `בקצב של ${rateStr} — בעוד ${months} חודשים תדבר יוונית. תגביר קצב! 💪`;
   }
 
   return (
@@ -316,7 +325,7 @@ function HomeScreen({ wordState, onStart, onRoadmap, startedAt }) {
           יווני<span style={{ color: "#2563eb" }}>Cal</span>
         </h1>
         <p style={{ margin: "6px 0 0", color: "#6b7280", fontSize: 14 }}>
-          500 מילים לתייר שנחת הרגע <span style={{ color: "#9ca3af", fontSize: 11 }}>(v3)</span>
+          500 מילים לתייר שנחת הרגע <span style={{ color: "#9ca3af", fontSize: 11 }}>(v4)</span>
         </p>
       </div>
 
