@@ -234,7 +234,7 @@ function daysSince(dateStr) {
   return Math.floor((todayDay - startDay) / 86400000);
 }
 
-const DIFF_LINE = {1:"#34c75940",2:"#ff9f0a40",3:"#ff453a40"};
+const DIFF_LINE = {1:"#34c759",2:"#ff9f0a",3:"#ff453a"};
 function BingoCell({ letter, state, onClick, highlight }) {
   const learned = state?.learned;
   const diff = letter.difficulty;
@@ -251,7 +251,7 @@ function BingoCell({ letter, state, onClick, highlight }) {
       transition: "all 0.15s ease",
       minHeight: 50,
       boxShadow: learned ? "0 2px 8px rgba(0,122,255,0.25)" : "0 1px 4px rgba(0,0,0,0.06)",
-      borderBottom: learned ? "none" : `2.5px solid ${DIFF_LINE[diff]}`
+      overflow: "hidden"
     }}>
       <div style={{
         fontSize: 18, fontWeight: 600,
@@ -267,6 +267,13 @@ function BingoCell({ letter, state, onClick, highlight }) {
       }}>
         {letter.lower}
       </div>
+      {!learned && (
+        <div style={{
+          position: "absolute", bottom: 0, left: 0, right: 0,
+          height: 3, background: DIFF_LINE[diff],
+          borderRadius: "0 0 12px 12px"
+        }} />
+      )}
       {learned ? (
         <div style={{
           position: "absolute", top: 3, left: 3,
@@ -280,7 +287,7 @@ function BingoCell({ letter, state, onClick, highlight }) {
         }}>{state.quizCorrect}/10</div>
       ) : (state?.quizCorrect > 0) && (
         <div style={{
-          position: "absolute", bottom: 3, left: 4, right: 4,
+          position: "absolute", bottom: 5, left: 4, right: 4,
           height: 2.5, borderRadius: 2, background: "#e5e5ea", overflow: "hidden"
         }}>
           <div style={{
