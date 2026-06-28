@@ -234,6 +234,7 @@ function daysSince(dateStr) {
   return Math.floor((todayDay - startDay) / 86400000);
 }
 
+const DIFF_LINE = {1:"#34c75940",2:"#ff9f0a40",3:"#ff453a40"};
 function BingoCell({ letter, state, onClick, highlight }) {
   const learned = state?.learned;
   const diff = letter.difficulty;
@@ -249,7 +250,8 @@ function BingoCell({ letter, state, onClick, highlight }) {
       border: almostDone ? "1.5px solid #ff9f0a" : "none",
       transition: "all 0.15s ease",
       minHeight: 50,
-      boxShadow: learned ? "0 2px 8px rgba(0,122,255,0.25)" : "0 1px 4px rgba(0,0,0,0.06)"
+      boxShadow: learned ? "0 2px 8px rgba(0,122,255,0.25)" : "0 1px 4px rgba(0,0,0,0.06)",
+      borderBottom: learned ? "none" : `2.5px solid ${DIFF_LINE[diff]}`
     }}>
       <div style={{
         fontSize: 18, fontWeight: 600,
@@ -931,11 +933,12 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
               const current = dayNum === challengeDay;
               const isFuture = dayNum > challengeDay;
               const met = learnedCount >= dp.target;
-              const pct = Math.min(1, learnedCount / dp.target);
+              const prevT = i > 0 ? DAY_PLAN[i - 1].target : 0;
+              const dayNew = current ? Math.max(0, learnedCount - prevT) : met ? dp.daily : 0;
               if (isFuture) return (
                 <div key={i} style={{
                   display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
-                  width: 28
+                  width: 30
                 }}>
                   <div style={{
                     width: 24, height: 24, borderRadius: "50%",
@@ -943,12 +946,13 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
                     display: "flex", alignItems: "center", justifyContent: "center",
                     fontSize: 10, fontWeight: 600
                   }}>{dayNum}</div>
+                  <div style={{ fontSize: 8, color: "#c7c7cc", fontWeight: 500 }}>{dp.daily}</div>
                 </div>
               );
               return (
                 <div key={i} style={{
                   display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
-                  width: 28
+                  width: 30
                 }}>
                   <div style={{
                     width: 24, height: 24, borderRadius: "50%",
@@ -958,6 +962,12 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
                     fontSize: 10, fontWeight: 600
                   }}>
                     {met ? "✓" : dayNum}
+                  </div>
+                  <div style={{
+                    fontSize: 8, fontWeight: 600,
+                    color: met ? "#007aff" : current ? "#ff9f0a" : "#8e8e93"
+                  }}>
+                    {Math.min(dayNew, dp.daily)}/{dp.daily}
                   </div>
                 </div>
               );
