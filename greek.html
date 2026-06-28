@@ -275,7 +275,7 @@ function StarRating({ score }) {
   );
 }
 
-function HomeScreen({ wordState, onStart, onRoadmap }) {
+function HomeScreen({ wordState, onStart, onRoadmap, startedAt }) {
   const total = ALL_WORDS.length;
   const learned = ALL_WORDS.filter(w => (wordState[w.id]?.streak || 0) >= 5).length;
   const mastered = ALL_WORDS.filter(w => wordState[w.id]?.score >= 8).length;
@@ -283,6 +283,30 @@ function HomeScreen({ wordState, onStart, onRoadmap }) {
     wordState[w.id]?.attempts > 0 && wordState[w.id]?.score < 3
   ).length;
   const pinned = ALL_WORDS.filter(w => wordState[w.id]?.pinned).length;
+
+  const DAILY_GOAL = 2;
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayLearned = ALL_WORDS.filter(w => {
+    const ls = wordState[w.id]?.lastSeen;
+    return ls && ls.slice(0, 10) === todayStr && (wordState[w.id]?.streak || 0) >= 5;
+  }).length;
+  const todayDone = todayLearned >= DAILY_GOAL;
+
+  const daysActive = startedAt
+    ? Math.max(1, Math.ceil((Date.now() - new Date(startedAt).getTime()) / 86400000))
+    : 1;
+  const dailyRate = learned > 0 ? learned / daysActive : DAILY_GOAL;
+  const remaining = total - learned;
+  const daysToGo = remaining > 0 ? Math.ceil(remaining / Math.max(dailyRate, DAILY_GOAL)) : 0;
+
+  let prediction = "";
+  if (learned === 0) prediction = "בקצב של 2 מילים ביום — בעוד 250 ימים תדבר יוונית!";
+  else if (remaining === 0) prediction = "את/ה יודע/ת 500 מילים — מדבר/ת יוונית!";
+  else if (daysToGo <= 30) prediction = `בקצב הנוכחי — בעוד ${daysToGo} ימים תדבר יוונית!`;
+  else {
+    const months = Math.ceil(daysToGo / 30);
+    prediction = `בקצב הנוכחי — בעוד ${months > 1 ? months + " חודשים" : "חודש"} תדבר יוונית!`;
+  }
 
   return (
     <div style={{ padding: "24px 20px", maxWidth: 480, margin: "0 auto" }}>
@@ -292,7 +316,7 @@ function HomeScreen({ wordState, onStart, onRoadmap }) {
           יווני<span style={{ color: "#2563eb" }}>Cal</span>
         </h1>
         <p style={{ margin: "6px 0 0", color: "#6b7280", fontSize: 14 }}>
-          500 מילים לתייר שנחת הרגע <span style={{ color: "#9ca3af", fontSize: 11 }}>(v2)</span>
+          500 מילים לתייר שנחת הרגע <span style={{ color: "#9ca3af", fontSize: 11 }}>(v3)</span>
         </p>
       </div>
 
@@ -331,6 +355,46 @@ function HomeScreen({ wordState, onStart, onRoadmap }) {
         <div style={{ marginTop: 8, fontSize: 12, color: "#6b7280", textAlign: "center" }}>
           רמה נוכחית: {Math.min(10, Math.floor(mastered / 50) + 1)} — {LEVEL_NAMES[Math.min(10, Math.floor(mastered / 50) + 1)]}
         </div>
+      </div>
+
+      <div style={{
+        background: todayDone ? "#f0fdf4" : "#fffbeb",
+        borderRadius: 14, padding: 14, marginBottom: 16,
+        border: `1.5px solid ${todayDone ? "#86efac" : "#fcd34d"}`
+      }}>
+        <div style={{
+          display: "flex", justifyContent: "space-between", alignItems: "center",
+          marginBottom: 8
+        }}>
+          <span style={{ fontSize: 14, fontWeight: 700, color: todayDone ? "#166534" : "#92400e" }}>
+            {todayDone ? "✅ אתגר יומי הושלם!" : "🎯 אתגר יומי"}
+          </span>
+          <span style={{ fontSize: 13, fontWeight: 600, color: todayDone ? "#166534" : "#92400e" }}>
+            {todayLearned}/{DAILY_GOAL}
+          </span>
+        </div>
+        <ProgressBar value={Math.min(todayLearned, DAILY_GOAL)} max={DAILY_GOAL}
+          color={todayDone ? "#10b981" : "#f59e0b"} />
+        {!todayDone && (
+          <div style={{ fontSize: 12, color: "#b45309", marginTop: 6, textAlign: "center" }}>
+            {DAILY_GOAL - todayLearned === 1 ? "עוד מילה אחת להיום!" : `עוד ${DAILY_GOAL - todayLearned} מילים להיום`}
+          </div>
+        )}
+      </div>
+
+      <div style={{
+        background: "linear-gradient(135deg, #eff6ff, #dbeafe)",
+        borderRadius: 14, padding: "12px 16px", marginBottom: 16,
+        border: "1px solid #93c5fd", textAlign: "center"
+      }}>
+        <div style={{ fontSize: 13, color: "#1e40af", fontWeight: 600 }}>
+          {'🗓️'} {prediction}
+        </div>
+        {learned > 0 && daysActive > 1 && (
+          <div style={{ fontSize: 11, color: "#6b7280", marginTop: 4 }}>
+            קצב ממוצע: {(learned / daysActive).toFixed(1)} מילים ליום · {daysActive} ימים פעילים
+          </div>
+        )}
       </div>
 
       <button onClick={() => onStart("all")} style={{
@@ -664,6 +728,7 @@ function App() {
   const [screen, setScreen] = useState("loading");
   const [wordState, setWordState] = useState(null);
   const [practiceMode, setPracticeMode] = useState("all");
+  const [startedAt, setStartedAt] = useState(null);
 
   const [recovered, setRecovered] = useState(false);
 
@@ -674,25 +739,29 @@ function App() {
         Object.keys(saved.wordState).forEach(id => {
           if (merged[id] !== undefined) merged[id] = { ...merged[id], ...saved.wordState[id] };
         });
-        return merged;
+        return { state: merged, startedAt: saved.startedAt || null };
       }
       return null;
     }
 
     const lsData = loadData();
-    const lsState = applyData(lsData);
-    if (lsState) {
-      setWordState(lsState);
+    const lsResult = applyData(lsData);
+    if (lsResult) {
+      setWordState(lsResult.state);
+      setStartedAt(lsResult.startedAt);
       setScreen("home");
     } else {
       idbLoad().then(idbData => {
-        const idbState = applyData(idbData ? migrateStreak(idbData) : null);
-        if (idbState) {
-          setWordState(idbState);
+        const idbResult = applyData(idbData ? migrateStreak(idbData) : null);
+        if (idbResult) {
+          setWordState(idbResult.state);
+          setStartedAt(idbResult.startedAt);
           setRecovered(true);
-          saveData({ wordState: idbState, savedAt: new Date().toISOString() });
+          saveData({ wordState: idbResult.state, startedAt: idbResult.startedAt, savedAt: new Date().toISOString() });
         } else {
+          const now = new Date().toISOString();
           setWordState(initWordState());
+          setStartedAt(now);
         }
         setScreen("home");
       });
@@ -700,16 +769,18 @@ function App() {
   }, []);
 
   const wordStateRef = useRef(wordState);
+  const startedAtRef = useRef(startedAt);
+  useEffect(() => { startedAtRef.current = startedAt; }, [startedAt]);
   useEffect(() => {
     wordStateRef.current = wordState;
     if (!wordState) return;
-    saveData({ wordState, savedAt: new Date().toISOString() });
+    saveData({ wordState, startedAt: startedAtRef.current, savedAt: new Date().toISOString() });
   }, [wordState]);
 
   useEffect(() => {
     function emergencySave() {
       if (wordStateRef.current) {
-        saveData({ wordState: wordStateRef.current, savedAt: new Date().toISOString() });
+        saveData({ wordState: wordStateRef.current, startedAt: startedAtRef.current, savedAt: new Date().toISOString() });
       }
     }
     document.addEventListener("visibilitychange", () => {
@@ -728,7 +799,7 @@ function App() {
     setWordState(prev => {
       const next = { ...prev, [id]: { ...prev[id], ...updates } };
       wordStateRef.current = next;
-      try { saveData({ wordState: next, savedAt: new Date().toISOString() }); } catch(e) {}
+      try { saveData({ wordState: next, startedAt: startedAtRef.current, savedAt: new Date().toISOString() }); } catch(e) {}
       return next;
     });
   }, []);
@@ -767,6 +838,7 @@ function App() {
       {screen === "home" && (
         <HomeScreen
           wordState={wordState}
+          startedAt={startedAt}
           onStart={(mode) => { setPracticeMode(mode); setScreen("practice"); }}
           onRoadmap={() => setScreen("roadmap")}
         />
