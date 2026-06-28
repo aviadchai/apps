@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>יווניCal — 500 מילים יווניות</title>
+<title>Greek Vocabulary — Ελληνικό Λεξιλόγιο</title>
 <link rel="manifest" href="greek-manifest.json">
 <link rel="icon" href="icon-greek.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" sizes="180x180" href="icon-greek-180.png">
@@ -326,11 +326,14 @@ function HomeScreen({ wordState, onStart, onRoadmap, startedAt }) {
   return (
     <div style={{ padding: "24px 20px", maxWidth: 480, margin: "0 auto" }}>
       <div style={{ textAlign: "center", marginBottom: 24 }}>
-        <h1 style={{ margin: 0, fontSize: 32, fontWeight: 700, color: "#1c1c1e", letterSpacing: -1 }}>
-          יווני<span style={{ color: "#007aff" }}>Cal</span>
+        <h1 style={{ margin: 0, fontSize: 28, fontWeight: 700, color: "#1c1c1e", letterSpacing: -0.5 }}>
+          Greek Vocabulary
         </h1>
-        <p style={{ margin: "4px 0 0", color: "#8e8e93", fontSize: 14, fontWeight: 400 }}>
-          500 מילים לתייר שנחת הרגע <span style={{ fontSize: 11 }}>(v10)</span>
+        <p style={{ margin: "4px 0 0", color: "#8e8e93", fontSize: 15, fontWeight: 400, direction: "ltr" }}>
+          Ελληνικό Λεξιλόγιο
+        </p>
+        <p style={{ margin: "4px 0 0", color: "#aeaeb2", fontSize: 12 }}>
+          500 מילים <span style={{ fontSize: 10 }}>(v11)</span>
         </p>
       </div>
 
@@ -989,7 +992,7 @@ function App() {
         justifyContent: "center", flexDirection: "column", gap: 12,
         background: "#f2f2f7"
       }}>
-        <div style={{ fontSize: 20, fontWeight: 600, color: "#007aff" }}>יווניCal</div>
+        <div style={{ fontSize: 20, fontWeight: 600, color: "#007aff" }}>Greek Vocabulary</div>
         <div style={{ color: "#8e8e93", fontSize: 14 }}>טוען...</div>
       </div>
     );
