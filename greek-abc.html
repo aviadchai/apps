@@ -9,16 +9,18 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-greek-180.png">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
-<meta name="theme-color" content="#f8fafc">
+<meta name="theme-color" content="#f2f2f7">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="αβγ">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f8fafc;color:#1e293b;overflow-x:hidden;}
+html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text','Segoe UI',sans-serif;background:#f2f2f7;color:#1c1c1e;overflow-x:hidden;}
 body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);}
 #root{min-height:100vh;min-height:100dvh;}
-button{font-family:inherit;-webkit-appearance:none;cursor:pointer;}
+button{font-family:inherit;-webkit-appearance:none;cursor:pointer;transition:transform 0.12s ease,opacity 0.12s ease;}
+button:active{transform:scale(0.97);opacity:0.85;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 </style>
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -139,8 +141,8 @@ function pickSceneImg(scene, word) {
 }
 
 const DIFF_NAMES = {1:"קלה",2:"בינונית",3:"קשה"};
-const DIFF_COLORS = {1:"#10b981",2:"#f59e0b",3:"#ef4444"};
-const DIFF_BG = {1:"#ecfdf5",2:"#fffbeb",3:"#fef2f2"};
+const DIFF_COLORS = {1:"#007aff",2:"#ff9f0a",3:"#ff9f0a"};
+const DIFF_BG = {1:"#e8f4fd",2:"#fff3e0",3:"#fff3e0"};
 
 const DAY_PLAN = [
   {day:1,daily:3,target:3},
@@ -239,26 +241,26 @@ function BingoCell({ letter, state, onClick, highlight }) {
   return (
     <div onClick={onClick} style={{
       position: "relative",
-      background: learned ? DIFF_COLORS[diff] : almostDone ? "#fef3c7" : DIFF_BG[diff],
-      borderRadius: 10,
-      padding: "6px 2px",
+      background: learned ? "#007aff" : "#fff",
+      borderRadius: 12,
+      padding: "7px 2px",
       textAlign: "center",
       cursor: "pointer",
-      border: highlight ? `3px solid ${DIFF_COLORS[diff]}` : almostDone ? "2px solid #f59e0b" : "2px solid " + (learned ? "transparent" : DIFF_COLORS[diff] + "40"),
-      transition: "all 0.2s",
-      minHeight: 48,
-      boxShadow: almostDone ? "0 0 8px rgba(245,158,11,0.4)" : "none"
+      border: almostDone ? "1.5px solid #ff9f0a" : "none",
+      transition: "all 0.15s ease",
+      minHeight: 50,
+      boxShadow: learned ? "0 2px 8px rgba(0,122,255,0.25)" : "0 1px 4px rgba(0,0,0,0.06)"
     }}>
       <div style={{
-        fontSize: 18, fontWeight: 700,
-        color: learned ? "#fff" : "#1e293b",
+        fontSize: 18, fontWeight: 600,
+        color: learned ? "#fff" : "#1c1c1e",
         lineHeight: 1.1
       }}>
         {letter.upper}
       </div>
       <div style={{
         fontSize: 11,
-        color: learned ? "rgba(255,255,255,0.8)" : "#6b7280",
+        color: learned ? "rgba(255,255,255,0.85)" : "#8e8e93",
         marginTop: 1
       }}>
         {letter.lower}
@@ -266,23 +268,23 @@ function BingoCell({ letter, state, onClick, highlight }) {
       {learned ? (
         <div style={{
           position: "absolute", top: 3, left: 3,
-          fontSize: 10, lineHeight: 1
+          fontSize: 9, lineHeight: 1, color: "#fff", fontWeight: 600
         }}>✓</div>
       ) : almostDone ? (
         <div style={{
           position: "absolute", top: 2, left: 2,
-          fontSize: 8, fontWeight: 700, color: "#b45309",
+          fontSize: 8, fontWeight: 700, color: "#ff9f0a",
           lineHeight: 1
         }}>{state.quizCorrect}/10</div>
       ) : (state?.quizCorrect > 0) && (
         <div style={{
-          position: "absolute", bottom: 3, left: 3, right: 3,
-          height: 3, borderRadius: 2, background: "rgba(0,0,0,0.1)", overflow: "hidden"
+          position: "absolute", bottom: 3, left: 4, right: 4,
+          height: 2.5, borderRadius: 2, background: "#e5e5ea", overflow: "hidden"
         }}>
           <div style={{
             width: (state.quizCorrect / 10 * 100) + "%",
             height: "100%", borderRadius: 2,
-            background: DIFF_COLORS[diff]
+            background: "#007aff"
           }} />
         </div>
       )}
@@ -294,132 +296,119 @@ function LetterModal({ letter, state, onClose }) {
   const diff = letter.difficulty;
   return (
     <div style={{
-      position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)",
+      position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)",
       display: "flex", alignItems: "center", justifyContent: "center",
-      zIndex: 100, padding: 20
+      zIndex: 100, padding: 20, backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)"
     }} onClick={onClose}>
       <div onClick={e => e.stopPropagation()} style={{
-        background: "#fff", borderRadius: 24, padding: "28px 24px",
-        maxWidth: 360, width: "100%", position: "relative"
+        background: "#fff", borderRadius: 20, padding: "24px 20px",
+        maxWidth: 360, width: "100%", position: "relative",
+        boxShadow: "0 20px 60px rgba(0,0,0,0.15)", animation: "fadeIn 0.25s ease"
       }}>
         <button onClick={onClose} style={{
           position: "absolute", top: 12, left: 12,
-          background: "none", border: "none", fontSize: 22, color: "#6b7280"
+          background: "#f2f2f7", border: "none", fontSize: 14, color: "#8e8e93",
+          width: 28, height: 28, borderRadius: "50%",
+          display: "flex", alignItems: "center", justifyContent: "center"
         }}>✕</button>
 
-        <div style={{
-          textAlign: "center", marginBottom: 20
-        }}>
+        <div style={{ textAlign: "center", marginBottom: 20 }}>
           <div style={{
-            display: "inline-flex", alignItems: "center", gap: 8,
-            padding: "4px 14px", borderRadius: 99,
+            display: "inline-flex", alignItems: "center", gap: 6,
+            padding: "3px 12px", borderRadius: 99,
             background: DIFF_BG[diff], color: DIFF_COLORS[diff],
-            fontSize: 12, fontWeight: 600, marginBottom: 16
+            fontSize: 12, fontWeight: 600, marginBottom: 14
           }}>
-            <span style={{width:8,height:8,borderRadius:"50%",background:DIFF_COLORS[diff]}}/>
+            <span style={{width:6,height:6,borderRadius:"50%",background:DIFF_COLORS[diff]}}/>
             {DIFF_NAMES[diff]}
           </div>
 
           <div style={{
-            display: "flex", alignItems: "stretch", justifyContent: "center",
-            gap: 14
+            display: "flex", alignItems: "stretch", justifyContent: "center", gap: 12
           }}>
             <div style={{
-              textAlign: "center", background: "#f1f5f9", borderRadius: 16,
-              padding: "10px 22px 14px", minWidth: 100,
-              border: "1px solid #e2e8f0"
+              textAlign: "center", background: "#f2f2f7", borderRadius: 16,
+              padding: "10px 22px 14px", minWidth: 100
             }}>
-              <div style={{ fontSize: 11, color: "#9ca3af", marginBottom: 4 }}>גדולה</div>
-              <div style={{ fontSize: 64, fontWeight: 800, color: "#1e3a5f", lineHeight: 1 }}>{letter.upper}</div>
+              <div style={{ fontSize: 11, color: "#8e8e93", marginBottom: 4, fontWeight: 500 }}>גדולה</div>
+              <div style={{ fontSize: 56, fontWeight: 300, color: "#1c1c1e", lineHeight: 1 }}>{letter.upper}</div>
             </div>
             <div style={{
-              textAlign: "center", background: "#f1f5f9", borderRadius: 16,
-              padding: "10px 22px 14px", minWidth: 100,
-              border: "1px solid #e2e8f0"
+              textAlign: "center", background: "#f2f2f7", borderRadius: 16,
+              padding: "10px 22px 14px", minWidth: 100
             }}>
-              <div style={{ fontSize: 11, color: "#9ca3af", marginBottom: 4 }}>קטנה</div>
-              <div style={{ fontSize: 64, fontWeight: 800, color: "#1e3a5f", lineHeight: 1 }}>{letter.lower}</div>
+              <div style={{ fontSize: 11, color: "#8e8e93", marginBottom: 4, fontWeight: 500 }}>קטנה</div>
+              <div style={{ fontSize: 56, fontWeight: 300, color: "#1c1c1e", lineHeight: 1 }}>{letter.lower}</div>
             </div>
           </div>
 
-          <div style={{
-            fontSize: 20, fontWeight: 600, color: "#374151",
-            marginTop: 8
-          }}>
+          <div style={{ fontSize: 18, fontWeight: 600, color: "#1c1c1e", marginTop: 10 }}>
             {letter.name} — {letter.nameHe}
           </div>
 
           <button onClick={() => speak(letter.name)} style={{
-            marginTop: 12, padding: "8px 20px", borderRadius: 99,
-            background: "#eff6ff", border: "1px solid #bfdbfe",
-            color: "#2563eb", fontSize: 14, cursor: "pointer",
-            display: "inline-flex", alignItems: "center", gap: 6
+            marginTop: 10, padding: "7px 18px", borderRadius: 99,
+            background: "#007aff", border: "none",
+            color: "#fff", fontSize: 14, fontWeight: 500
           }}>
-            🔊 שמע
+            השמע
           </button>
         </div>
 
         <div style={{
-          background: "#f8fafc", borderRadius: 14, padding: 16,
-          marginBottom: 16
+          background: "#f2f2f7", borderRadius: 12, padding: 14, marginBottom: 14
         }}>
-          <div style={{
-            display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12
-          }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <div>
-              <div style={{fontSize:11,color:"#6b7280",marginBottom:2}}>צליל</div>
-              <div style={{fontSize:18,fontWeight:700,color:"#1e293b"}}>{letter.soundHe}</div>
+              <div style={{fontSize:11,color:"#8e8e93",marginBottom:2,fontWeight:500}}>צליל</div>
+              <div style={{fontSize:17,fontWeight:600,color:"#1c1c1e"}}>{letter.soundHe}</div>
             </div>
             <div>
-              <div style={{fontSize:11,color:"#6b7280",marginBottom:2}}>באנגלית</div>
-              <div style={{fontSize:18,fontWeight:700,color:"#1e293b"}}>{letter.sound}</div>
+              <div style={{fontSize:11,color:"#8e8e93",marginBottom:2,fontWeight:500}}>באנגלית</div>
+              <div style={{fontSize:17,fontWeight:600,color:"#1c1c1e"}}>{letter.sound}</div>
             </div>
           </div>
           <div style={{
-            marginTop: 12, padding: "10px 14px",
-            background: "#fffbeb", borderRadius: 10,
-            fontSize: 13, color: "#92400e", lineHeight: 1.5
+            marginTop: 10, padding: "8px 12px",
+            background: "#fff", borderRadius: 8,
+            fontSize: 13, color: "#636366", lineHeight: 1.5
           }}>
-            💡 {letter.hint}
+            {letter.hint}
           </div>
         </div>
 
         <div style={{
-          background: "#f0f9ff", borderRadius: 14, padding: 14,
-          marginBottom: 20, textAlign: "center"
+          background: "#f2f2f7", borderRadius: 12, padding: 12,
+          marginBottom: 14, textAlign: "center"
         }}>
-          <div style={{fontSize:11,color:"#6b7280",marginBottom:4}}>דוגמה</div>
-          <span style={{fontSize:22,fontWeight:700,color:"#1e3a5f",cursor:"pointer"}}
+          <div style={{fontSize:11,color:"#8e8e93",marginBottom:4,fontWeight:500}}>דוגמה</div>
+          <span style={{fontSize:20,fontWeight:600,color:"#1c1c1e",cursor:"pointer"}}
                 onClick={() => speak(letter.example)}>
             {letter.example}
           </span>
-          <span style={{fontSize:15,color:"#6b7280",marginRight:8}}> = {letter.exampleHe}</span>
+          <span style={{fontSize:14,color:"#8e8e93",marginRight:8}}> = {letter.exampleHe}</span>
         </div>
 
         <div style={{
-          padding: "14px 16px", borderRadius: 14, marginBottom: 0,
-          background: state?.learned ? "#f0fdf4" : "#f8fafc",
-          border: "1px solid " + (state?.learned ? "#86efac" : "#e5e7eb"),
+          padding: "12px 14px", borderRadius: 12,
+          background: state?.learned ? "#e8f4fd" : "#f2f2f7",
           textAlign: "center"
         }}>
           {state?.learned ? (
-            <div style={{ fontSize: 15, fontWeight: 700, color: "#166534" }}>
-              {'✅'} נלמדה! ({state.quizCorrect} תשובות נכונות)
+            <div style={{ fontSize: 14, fontWeight: 600, color: "#007aff" }}>
+              נלמדה · {state.quizCorrect} תשובות נכונות
             </div>
           ) : (
             <div>
-              <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 6 }}>
-                התקדמות: {state?.quizCorrect || 0} / 10 תשובות נכונות
+              <div style={{ fontSize: 13, color: "#8e8e93", marginBottom: 6, fontWeight: 500 }}>
+                {state?.quizCorrect || 0} / 10 תשובות נכונות
               </div>
-              <div style={{ background: "#e5e7eb", borderRadius: 99, height: 8, overflow: "hidden" }}>
+              <div style={{ background: "#e5e5ea", borderRadius: 99, height: 6, overflow: "hidden" }}>
                 <div style={{
                   width: Math.min(100, ((state?.quizCorrect || 0) / 10) * 100) + "%",
                   height: "100%", background: DIFF_COLORS[diff], borderRadius: 99,
                   transition: "width 0.4s"
                 }} />
-              </div>
-              <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 4 }}>
-                ענה נכון 10 פעמים במבחנים כדי לסמן כנלמדה
               </div>
             </div>
           )}
@@ -519,21 +508,18 @@ function QuizScreen({ letterStates, focusLevel, onEnd, onUpdate }) {
     const pct = Math.round((stats.correct / stats.total) * 100);
     return (
       <div style={{ padding: "40px 20px", maxWidth: 480, margin: "0 auto", textAlign: "center" }}>
-        <div style={{ fontSize: 64, marginBottom: 16 }}>
-          {pct >= 80 ? "🏆" : pct >= 50 ? "💪" : "📚"}
-        </div>
-        <h2 style={{ fontSize: 24, fontWeight: 800, color: "#1e3a5f", marginBottom: 8 }}>
+        <h2 style={{ fontSize: 24, fontWeight: 700, color: "#1c1c1e", marginBottom: 8, marginTop: 32 }}>
           {pct >= 80 ? "מצוין!" : pct >= 50 ? "לא רע!" : "צריך תרגול"}
         </h2>
-        <div style={{ fontSize: 48, fontWeight: 800, color: pct >= 80 ? "#10b981" : pct >= 50 ? "#f59e0b" : "#ef4444", marginBottom: 8 }}>
+        <div style={{ fontSize: 48, fontWeight: 700, color: pct >= 80 ? "#007aff" : "#ff9f0a", marginBottom: 8 }}>
           {pct}%
         </div>
-        <div style={{ fontSize: 16, color: "#6b7280", marginBottom: 32 }}>
+        <div style={{ fontSize: 16, color: "#8e8e93", marginBottom: 32 }}>
           {stats.correct} מתוך {stats.total} תשובות נכונות
         </div>
         <button onClick={onEnd} style={{
           padding: "14px 40px", fontSize: 16, fontWeight: 700,
-          background: "linear-gradient(135deg, #1e3a5f, #2563eb)",
+          background: "#007aff",
           color: "#fff", border: "none", borderRadius: 14
         }}>
           חזרה הביתה
@@ -566,22 +552,25 @@ function QuizScreen({ letterStates, focusLevel, onEnd, onUpdate }) {
         marginBottom: 20
       }}>
         <button onClick={onEnd} style={{
-          background: "none", border: "none", fontSize: 22
+          background: "#fff", border: "none", fontSize: 18,
+          width: 36, height: 36, borderRadius: 10, color: "#007aff",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          boxShadow: "0 1px 4px rgba(0,0,0,0.06)"
         }}>←</button>
-        <div style={{ fontSize: 14, color: "#6b7280", fontWeight: 600 }}>
+        <div style={{ fontSize: 14, color: "#8e8e93", fontWeight: 600 }}>
           {qi + 1} / {questions.length}
         </div>
-        <div style={{ fontSize: 13, color: "#6b7280" }}>
-          ✅ {stats.correct}
+        <div style={{ fontSize: 13, color: "#007aff", fontWeight: 600 }}>
+          {stats.correct} נכון
         </div>
       </div>
 
       <div style={{
-        background: "#e5e7eb", borderRadius: 99, height: 6, marginBottom: 24, overflow: "hidden"
+        background: "#e5e5ea", borderRadius: 99, height: 6, marginBottom: 24, overflow: "hidden"
       }}>
         <div style={{
           width: ((qi + 1) / questions.length * 100) + "%",
-          height: "100%", background: "#2563eb", borderRadius: 99,
+          height: "100%", background: "#007aff", borderRadius: 99,
           transition: "width 0.4s"
         }} />
       </div>
@@ -591,21 +580,21 @@ function QuizScreen({ letterStates, focusLevel, onEnd, onUpdate }) {
           textAlign: "center", marginBottom: 24
         }}>
           <div style={{
-            fontSize: 80, fontWeight: 800, color: "#1e3a5f",
+            fontSize: 80, fontWeight: 700, color: "#1c1c1e",
             lineHeight: 1, marginBottom: 8, cursor: "pointer"
           }} onClick={() => speak(q.letter.name)}>
             {q.letter.upper}{q.letter.lower}
           </div>
           <button onClick={() => speak(q.letter.name)} style={{
             padding: "6px 16px", borderRadius: 99,
-            background: "#eff6ff", border: "1px solid #bfdbfe",
-            color: "#2563eb", fontSize: 13, cursor: "pointer"
-          }}>🔊</button>
+            background: "#e8f4fd", border: "none",
+            color: "#007aff", fontSize: 13, cursor: "pointer", fontWeight: 500
+          }}>שמע</button>
         </div>
       )}
 
       <div style={{
-        fontSize: 18, fontWeight: 600, color: "#374151",
+        fontSize: 18, fontWeight: 600, color: "#1c1c1e",
         textAlign: "center", marginBottom: 20
       }}>
         {q.question}
@@ -619,22 +608,23 @@ function QuizScreen({ letterStates, focusLevel, onEnd, onUpdate }) {
         {q.options.map(opt => {
           const isThis = selected === opt.id;
           const isRight = opt.id === q.correctId;
-          let bg = "#fff", border = "#e5e7eb", color = "#1e293b";
+          let bg = "#fff", border = "#e5e5ea", color = "#1c1c1e";
           if (selected !== null) {
-            if (isRight) { bg = "#f0fdf4"; border = "#10b981"; color = "#166534"; }
-            else if (isThis && !isRight) { bg = "#fef2f2"; border = "#ef4444"; color = "#991b1b"; }
+            if (isRight) { bg = "#e8f4fd"; border = "#007aff"; color = "#007aff"; }
+            else if (isThis && !isRight) { bg = "#fff3e0"; border = "#ff9f0a"; color = "#cc7a00"; }
           }
           return (
             <button key={opt.id} onClick={() => handleSelect(opt.id)} style={{
               padding: q.bigOptions ? "18px 10px" : "14px 18px",
               fontSize: q.bigOptions ? 32 : 16,
-              fontWeight: q.bigOptions ? 800 : 600,
+              fontWeight: q.bigOptions ? 700 : 600,
               background: bg,
               color,
-              border: `2px solid ${border}`,
+              border: `1.5px solid ${border}`,
               borderRadius: 14,
               textAlign: "center",
-              transition: "all 0.15s"
+              transition: "all 0.15s",
+              boxShadow: selected === null ? "0 1px 4px rgba(0,0,0,0.06)" : "none"
             }}>
               {q.getLabel(opt)}
               {selected !== null && isRight && " ✓"}
@@ -647,18 +637,19 @@ function QuizScreen({ letterStates, focusLevel, onEnd, onUpdate }) {
         <div>
           <div style={{
             padding: "12px 16px", borderRadius: 12, marginBottom: 14,
-            background: isCorrect ? "#f0fdf4" : "#fef2f2",
-            border: "1px solid " + (isCorrect ? "#86efac" : "#fca5a5"),
-            textAlign: "center", fontSize: 14, color: isCorrect ? "#166534" : "#991b1b"
+            background: isCorrect ? "#e8f4fd" : "#fff3e0",
+            border: "none",
+            textAlign: "center", fontSize: 14, fontWeight: 600,
+            color: isCorrect ? "#007aff" : "#cc7a00"
           }}>
-            {isCorrect ? "נכון! 🎉" : `לא — התשובה: ${q.letter.nameHe} (${q.letter.upper}${q.letter.lower}) = ${q.letter.soundHe}`}
+            {isCorrect ? "נכון!" : `לא — התשובה: ${q.letter.nameHe} (${q.letter.upper}${q.letter.lower}) = ${q.letter.soundHe}`}
           </div>
           <button onClick={handleNext} style={{
             width: "100%", padding: "14px 0", fontSize: 16, fontWeight: 700,
-            background: "linear-gradient(135deg, #1e3a5f, #2563eb)",
+            background: "#007aff",
             color: "#fff", border: "none", borderRadius: 14
           }}>
-            {qi + 1 < questions.length ? "הבא →" : "סיכום"}
+            {qi + 1 < questions.length ? "הבא" : "סיכום"}
           </button>
         </div>
       )}
@@ -688,21 +679,18 @@ function ReadingQuizScreen({ onEnd }) {
     const pct = Math.round((stats.correct / stats.total) * 100);
     return (
       <div style={{ padding: "40px 20px", maxWidth: 480, margin: "0 auto", textAlign: "center" }}>
-        <div style={{ fontSize: 64, marginBottom: 16 }}>
-          {pct >= 80 ? "🏆" : pct >= 50 ? "💪" : "📚"}
-        </div>
-        <h2 style={{ fontSize: 24, fontWeight: 800, color: "#1e3a5f", marginBottom: 8 }}>
+        <h2 style={{ fontSize: 24, fontWeight: 700, color: "#1c1c1e", marginBottom: 8, marginTop: 32 }}>
           {pct >= 80 ? "קורא יוונית!" : pct >= 50 ? "לא רע!" : "צריך תרגול"}
         </h2>
-        <div style={{ fontSize: 48, fontWeight: 800, color: pct >= 80 ? "#10b981" : pct >= 50 ? "#f59e0b" : "#ef4444", marginBottom: 8 }}>
+        <div style={{ fontSize: 48, fontWeight: 700, color: pct >= 80 ? "#007aff" : "#ff9f0a", marginBottom: 8 }}>
           {pct}%
         </div>
-        <div style={{ fontSize: 16, color: "#6b7280", marginBottom: 32 }}>
+        <div style={{ fontSize: 16, color: "#8e8e93", marginBottom: 32 }}>
           {stats.correct} מתוך {stats.total} תשובות נכונות
         </div>
         <button onClick={onEnd} style={{
           padding: "14px 40px", fontSize: 16, fontWeight: 700,
-          background: "linear-gradient(135deg, #1e3a5f, #2563eb)",
+          background: "#007aff",
           color: "#fff", border: "none", borderRadius: 14
         }}>
           חזרה הביתה
@@ -729,22 +717,25 @@ function ReadingQuizScreen({ onEnd }) {
         marginBottom: 20
       }}>
         <button onClick={onEnd} style={{
-          background: "none", border: "none", fontSize: 22
+          background: "#fff", border: "none", fontSize: 18,
+          width: 36, height: 36, borderRadius: 10, color: "#007aff",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          boxShadow: "0 1px 4px rgba(0,0,0,0.06)"
         }}>←</button>
-        <div style={{ fontSize: 14, color: "#6b7280", fontWeight: 600 }}>
+        <div style={{ fontSize: 14, color: "#8e8e93", fontWeight: 600 }}>
           {qi + 1} / {questions.length}
         </div>
-        <div style={{ fontSize: 13, color: "#6b7280" }}>
-          {'✅'} {stats.correct}
+        <div style={{ fontSize: 13, color: "#007aff", fontWeight: 600 }}>
+          {stats.correct} נכון
         </div>
       </div>
 
       <div style={{
-        background: "#e5e7eb", borderRadius: 99, height: 6, marginBottom: 24, overflow: "hidden"
+        background: "#e5e5ea", borderRadius: 99, height: 6, marginBottom: 24, overflow: "hidden"
       }}>
         <div style={{
           width: ((qi + 1) / questions.length * 100) + "%",
-          height: "100%", background: "#8b5cf6", borderRadius: 99,
+          height: "100%", background: "#ff9f0a", borderRadius: 99,
           transition: "width 0.4s"
         }} />
       </div>
@@ -756,8 +747,8 @@ function ReadingQuizScreen({ onEnd }) {
         return (
           <div style={{
             borderRadius: 20, overflow: "hidden",
-            marginBottom: 20, border: "1.5px solid #cbd5e1",
-            boxShadow: "0 4px 15px rgba(0,0,0,0.12)",
+            marginBottom: 20, border: "none",
+            boxShadow: "0 2px 12px rgba(0,0,0,0.1)",
             position: "relative"
           }}>
             <div style={{
@@ -780,7 +771,7 @@ function ReadingQuizScreen({ onEnd }) {
               textAlign: "center"
             }}>
               <div style={{
-                fontSize: 42, fontWeight: 800, color: "#1e3a5f",
+                fontSize: 42, fontWeight: 700, color: "#1c1c1e",
                 lineHeight: 1.2, cursor: "pointer", direction: "ltr",
                 letterSpacing: 1
               }} onClick={() => speak(q.word.gr)}>
@@ -788,16 +779,16 @@ function ReadingQuizScreen({ onEnd }) {
               </div>
               <button onClick={() => speak(q.word.gr)} style={{
                 marginTop: 8, padding: "6px 16px", borderRadius: 99,
-                background: "#f1f5f9", border: "1px solid #e2e8f0",
-                color: "#475569", fontSize: 13, cursor: "pointer"
-              }}>{'🔊'} שמע</button>
+                background: "#e8f4fd", border: "none",
+                color: "#007aff", fontSize: 13, cursor: "pointer", fontWeight: 500
+              }}>שמע</button>
             </div>
           </div>
         );
       })()}
 
       <div style={{
-        fontSize: 14, color: "#6b7280", textAlign: "center", marginBottom: 12
+        fontSize: 14, color: "#8e8e93", textAlign: "center", marginBottom: 12
       }}>
         מה המילה הזו אומרת?
       </div>
@@ -809,18 +800,19 @@ function ReadingQuizScreen({ onEnd }) {
         {q.options.map(opt => {
           const isThis = selected === opt.gr;
           const isRight = opt.gr === q.correctId;
-          let bg = "#fff", border = "#e5e7eb", color = "#1e293b";
+          let bg = "#fff", border = "#e5e5ea", color = "#1c1c1e";
           if (selected !== null) {
-            if (isRight) { bg = "#f0fdf4"; border = "#10b981"; color = "#166534"; }
-            else if (isThis && !isRight) { bg = "#fef2f2"; border = "#ef4444"; color = "#991b1b"; }
+            if (isRight) { bg = "#e8f4fd"; border = "#007aff"; color = "#007aff"; }
+            else if (isThis && !isRight) { bg = "#fff3e0"; border = "#ff9f0a"; color = "#cc7a00"; }
           }
           return (
             <button key={opt.gr} onClick={() => handleSelect(opt.gr)} style={{
               padding: "14px 18px",
               fontSize: 18, fontWeight: 600,
-              background: bg, color, border: `2px solid ${border}`,
+              background: bg, color, border: `1.5px solid ${border}`,
               borderRadius: 14, textAlign: "center",
-              transition: "all 0.15s"
+              transition: "all 0.15s",
+              boxShadow: selected === null ? "0 1px 4px rgba(0,0,0,0.06)" : "none"
             }}>
               {opt.he}
               {selected !== null && isRight && " ✓"}
@@ -833,9 +825,10 @@ function ReadingQuizScreen({ onEnd }) {
         <div>
           <div style={{
             padding: "12px 16px", borderRadius: 12, marginBottom: 14,
-            background: isCorrect ? "#f0fdf4" : "#fef2f2",
-            border: "1px solid " + (isCorrect ? "#86efac" : "#fca5a5"),
-            textAlign: "center", fontSize: 14, color: isCorrect ? "#166534" : "#991b1b"
+            background: isCorrect ? "#e8f4fd" : "#fff3e0",
+            border: "none",
+            textAlign: "center", fontSize: 14, fontWeight: 600,
+            color: isCorrect ? "#007aff" : "#cc7a00"
           }}>
             {isCorrect
               ? `נכון! ${q.word.gr} = ${q.word.he}`
@@ -843,10 +836,10 @@ function ReadingQuizScreen({ onEnd }) {
           </div>
           <button onClick={() => { setSelected(null); setQi(qi + 1); }} style={{
             width: "100%", padding: "14px 0", fontSize: 16, fontWeight: 700,
-            background: "linear-gradient(135deg, #6d28d9, #8b5cf6)",
+            background: "#ff9f0a",
             color: "#fff", border: "none", borderRadius: 14
           }}>
-            {qi + 1 < questions.length ? "הבא →" : "סיכום"}
+            {qi + 1 < questions.length ? "הבא" : "סיכום"}
           </button>
         </div>
       )}
@@ -882,52 +875,51 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
   const todayRemaining = Math.max(0, todayTarget - learnedCount);
 
   return (
-    <div style={{ padding: "20px 16px", maxWidth: 480, margin: "0 auto" }}>
-      <div style={{ textAlign: "center", marginBottom: 20 }}>
-        <div style={{ fontSize: 40, marginBottom: 4 }}>🇬🇷</div>
-        <h1 style={{ margin: 0, fontSize: 28, fontWeight: 800, color: "#1e3a5f" }}>
+    <div style={{ padding: "20px 16px", maxWidth: 480, margin: "0 auto", animation: "fadeIn 0.35s ease" }}>
+      <div style={{ textAlign: "center", marginBottom: 24 }}>
+        <h1 style={{ margin: 0, fontSize: 32, fontWeight: 700, color: "#1c1c1e", letterSpacing: -1 }}>
           αβγ
         </h1>
-        <p style={{ margin: "4px 0 0", color: "#6b7280", fontSize: 14 }}>
-          האלפבית היווני ב-10 ימים <span style={{ color: "#9ca3af", fontSize: 11 }}>(v24)</span>
+        <p style={{ margin: "4px 0 0", color: "#8e8e93", fontSize: 14, fontWeight: 400 }}>
+          האלפבית היווני ב-10 ימים <span style={{ fontSize: 11 }}>(v26)</span>
         </p>
       </div>
 
       {challengeDay > 0 && (
         <div style={{
-          background: "#f0f9ff", borderRadius: 14, padding: 14,
-          marginBottom: 16, border: "1px solid #bae6fd"
+          background: "#fff", borderRadius: 14, padding: 14,
+          marginBottom: 14, boxShadow: "0 1px 4px rgba(0,0,0,0.06)"
         }}>
           <div style={{
             display: "flex", justifyContent: "space-between",
-            fontSize: 14, fontWeight: 600, color: "#0369a1", marginBottom: 8
+            fontSize: 14, fontWeight: 600, color: "#1c1c1e", marginBottom: 8
           }}>
-            <span>יום {challengeDay}/10 — למד {todayDaily} אותיות חדשות</span>
-            <span>{learnedCount}/24</span>
+            <span>יום {challengeDay} מתוך 10</span>
+            <span style={{ color: "#8e8e93" }}>{learnedCount}/24</span>
           </div>
           {todayRemaining > 0 ? (
             <div style={{
-              fontSize: 13, color: "#b45309", fontWeight: 600,
+              fontSize: 13, color: "#636366", fontWeight: 500,
               marginBottom: 8, textAlign: "center",
               padding: "6px 10px", borderRadius: 8,
-              background: "#fef3c7"
+              background: "#f2f2f7"
             }}>
-              {'📋'} למדת {todayNew}/{todayDaily} חדשות היום · נשאר סה"כ: {todayRemaining}
+              {todayNew}/{todayDaily} אותיות חדשות היום · נשאר: {todayRemaining}
             </div>
           ) : todayPlan && (
             <div style={{
-              fontSize: 13, color: "#166534", fontWeight: 600,
+              fontSize: 13, color: "#007aff", fontWeight: 600,
               marginBottom: 8, textAlign: "center",
               padding: "6px 10px", borderRadius: 8,
-              background: "#dcfce7"
+              background: "#e8f4fd"
             }}>
-              {'✅'} סיימת את המשימה של היום!
+              סיימת את המשימה של היום
             </div>
           )}
-          <div style={{ background: "#e0f2fe", borderRadius: 99, height: 8, overflow: "hidden" }}>
+          <div style={{ background: "#e5e5ea", borderRadius: 99, height: 6, overflow: "hidden" }}>
             <div style={{
               width: (learnedCount / 24 * 100) + "%",
-              height: "100%", background: "#0ea5e9", borderRadius: 99,
+              height: "100%", background: "#007aff", borderRadius: 99,
               transition: "width 0.6s"
             }} />
           </div>
@@ -943,52 +935,29 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
               if (isFuture) return (
                 <div key={i} style={{
                   display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
-                  width: 30
+                  width: 28
                 }}>
                   <div style={{
-                    width: 28, height: 28, borderRadius: "50%",
-                    background: "#e5e7eb", color: "#9ca3af",
+                    width: 24, height: 24, borderRadius: "50%",
+                    background: "#e5e5ea", color: "#aeaeb2",
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 10, fontWeight: 700
+                    fontSize: 10, fontWeight: 600
                   }}>{dayNum}</div>
-                  <div style={{ fontSize: 8, color: "#d1d5db", fontWeight: 600 }}>
-                    {dp.target}
-                  </div>
                 </div>
               );
               return (
                 <div key={i} style={{
                   display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
-                  width: 30
+                  width: 28
                 }}>
-                  <div style={{ position: "relative", width: 28, height: 28 }}>
-                    <svg width="28" height="28" viewBox="0 0 28 28">
-                      <circle cx="14" cy="14" r="12" fill="none"
-                        stroke={met ? "#10b981" : current ? "#93c5fd" : "#e5e7eb"}
-                        strokeWidth="3" />
-                      {pct > 0 && !met && (
-                        <circle cx="14" cy="14" r="12" fill="none"
-                          stroke={current ? "#2563eb" : "#10b981"}
-                          strokeWidth="3"
-                          strokeDasharray={`${pct * 75.4} 75.4`}
-                          strokeLinecap="round"
-                          transform="rotate(-90 14 14)" />
-                      )}
-                    </svg>
-                    <div style={{
-                      position: "absolute", inset: 0,
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: 10, fontWeight: 700,
-                      color: met ? "#10b981" : current ? "#2563eb" : "#9ca3af"
-                    }}>
-                      {met ? "✓" : dayNum}
-                    </div>
-                  </div>
                   <div style={{
-                    fontSize: 8, fontWeight: 600,
-                    color: met ? "#10b981" : "#9ca3af"
+                    width: 24, height: 24, borderRadius: "50%",
+                    background: met ? "#007aff" : current ? "#ff9f0a" : "#e5e5ea",
+                    color: met || current ? "#fff" : "#8e8e93",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 10, fontWeight: 600
                   }}>
-                    {Math.min(learnedCount, dp.target)}/{dp.target}
+                    {met ? "✓" : dayNum}
                   </div>
                 </div>
               );
@@ -998,18 +967,18 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
       )}
 
       <div style={{
-        display: "flex", gap: 8, marginBottom: 16, justifyContent: "center"
+        display: "flex", gap: 8, marginBottom: 14
       }}>
         {[1,2,3].map(d => {
           const count = d === 1 ? learnedEasy : d === 2 ? learnedMed : learnedHard;
           return (
             <div key={d} style={{
-              flex: 1, textAlign: "center", padding: "8px 4px",
-              borderRadius: 10, background: DIFF_BG[d],
-              border: "1px solid " + DIFF_COLORS[d] + "40"
+              flex: 1, textAlign: "center", padding: "10px 4px",
+              borderRadius: 12, background: "#fff",
+              boxShadow: "0 1px 4px rgba(0,0,0,0.06)"
             }}>
-              <div style={{ fontSize: 10, color: DIFF_COLORS[d], fontWeight: 600 }}>{DIFF_NAMES[d]}</div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: DIFF_COLORS[d] }}>{count}/8</div>
+              <div style={{ fontSize: 11, color: "#8e8e93", fontWeight: 500 }}>{DIFF_NAMES[d]}</div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: DIFF_COLORS[d], marginTop: 2 }}>{count}<span style={{ fontSize: 13, color: "#aeaeb2" }}>/8</span></div>
             </div>
           );
         })}
@@ -1017,7 +986,7 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
 
       <div style={{
         display: "grid", gridTemplateColumns: "repeat(6, 1fr)",
-        gap: 6, marginBottom: 20
+        gap: 6, marginBottom: 16
       }}>
         {LETTERS.map(letter => (
           <BingoCell
@@ -1038,11 +1007,11 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
         if (almost.length === 0) return null;
         return (
           <div style={{
-            background: "#fffbeb", borderRadius: 14, padding: 14,
-            marginBottom: 16, border: "1.5px solid #fcd34d"
+            background: "#fff", borderRadius: 14, padding: 14,
+            marginBottom: 14, boxShadow: "0 1px 4px rgba(0,0,0,0.06)"
           }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "#92400e", marginBottom: 10 }}>
-              {'🔥'} עוד קצת ותצלח! ({almost.length} {almost.length === 1 ? "אות" : "אותיות"})
+            <div style={{ fontSize: 14, fontWeight: 600, color: "#1c1c1e", marginBottom: 10 }}>
+              כמעט שם — {almost.length} {almost.length === 1 ? "אות" : "אותיות"}
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {almost.map(l => {
@@ -1050,18 +1019,18 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
                 return (
                   <div key={l.id} onClick={() => onSelectLetter(l)} style={{
                     display: "flex", justifyContent: "space-between", alignItems: "center",
-                    background: "#fff", borderRadius: 10, padding: "8px 12px",
-                    border: "1px solid #fde68a", cursor: "pointer"
+                    background: "#f2f2f7", borderRadius: 10, padding: "8px 12px",
+                    cursor: "pointer"
                   }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <span style={{ fontSize: 20, fontWeight: 700, color: "#1e3a5f" }}>{l.upper}{l.lower}</span>
-                      <span style={{ fontSize: 14, color: "#6b7280" }}>{l.nameHe}</span>
+                      <span style={{ fontSize: 20, fontWeight: 700, color: "#1c1c1e" }}>{l.upper}{l.lower}</span>
+                      <span style={{ fontSize: 14, color: "#8e8e93" }}>{l.nameHe}</span>
                     </div>
                     <div style={{
-                      fontSize: 13, fontWeight: 700, color: "#b45309",
-                      background: "#fef3c7", padding: "2px 8px", borderRadius: 8
+                      fontSize: 13, fontWeight: 700, color: "#cc7a00",
+                      background: "#fff3e0", padding: "2px 8px", borderRadius: 8
                     }}>
-                      {correct}/10 ✓
+                      {correct}/10
                     </div>
                   </div>
                 );
@@ -1071,28 +1040,28 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
         );
       })()}
 
-      <div style={{ display: "flex", gap: 10, marginBottom: 0 }}>
+      <div style={{ display: "flex", gap: 8, marginBottom: 0 }}>
         <button onClick={onStartQuiz} style={{
-          flex: 1, padding: "15px 0", fontSize: 16, fontWeight: 700,
-          background: "linear-gradient(135deg, #1e3a5f, #2563eb)",
-          color: "#fff", border: "none", borderRadius: 14,
-          boxShadow: "0 4px 14px rgba(37,99,235,0.35)"
+          flex: 1, padding: "14px 0", fontSize: 16, fontWeight: 600,
+          background: "#007aff",
+          color: "#fff", border: "none", borderRadius: 12,
+          boxShadow: "0 2px 8px rgba(0,122,255,0.2)"
         }}>
-          {'📝'} מבחן אותיות
+          מבחן אותיות
         </button>
         <button onClick={onStartReading} style={{
-          flex: 1, padding: "15px 0", fontSize: 16, fontWeight: 700,
-          background: "linear-gradient(135deg, #6d28d9, #8b5cf6)",
-          color: "#fff", border: "none", borderRadius: 14,
-          boxShadow: "0 4px 14px rgba(139,92,246,0.35)"
+          flex: 1, padding: "14px 0", fontSize: 16, fontWeight: 600,
+          background: "#ff9f0a",
+          color: "#fff", border: "none", borderRadius: 12,
+          boxShadow: "0 2px 8px rgba(255,159,10,0.2)"
         }}>
-          {'📖'} מבחן קריאה
+          מבחן קריאה
         </button>
       </div>
 
       <div style={{ marginTop: 20, marginBottom: 16 }}>
-        <div style={{ fontSize: 15, fontWeight: 700, color: "#1e3a5f", marginBottom: 10 }}>
-          {'💡'} טיפים ולימוד מתקדם
+        <div style={{ fontSize: 15, fontWeight: 600, color: "#1c1c1e", marginBottom: 10 }}>
+          טיפים ולימוד מתקדם
         </div>
         <div style={{
           display: "flex", gap: 12, overflowX: "auto", paddingBottom: 8,
@@ -1100,35 +1069,35 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
           msOverflowStyle: "none", scrollbarWidth: "none"
         }}>
           {[
-            { title: "טונוס — הסימן מעל האות", color: "#8b5cf6", bg: "#f5f3ff", border: "#c4b5fd",
+            { title: "טונוס — הסימן מעל האות", color: "#007aff",
               content: "הסימן ´ (τόνος) מראה איפה ההדגשה במילה.\n\nπαρακαλώ → ההדגשה על ω האחרונה\nκαλημέρα → ההדגשה על έ\n\nביוונית ההדגשה משנה משמעות!\nγέρος = זקן\nγερός = חזק" },
-            { title: "אות גדולה וקטנה", color: "#2563eb", bg: "#eff6ff", border: "#93c5fd",
+            { title: "אות גדולה וקטנה", color: "#ff9f0a",
               content: "גדולה (κεφαλαίο) משמשת ל:\n• תחילת משפט\n• שמות פרטיים: Μαρία, Γιώργος\n• שמות מקומות: Αθήνα, Κρήτη\n• ראשי תיבות: ΟΤΕ, ΔΕΗ\n\nקטנה (πεζό) לכל השאר — רוב הטקסט ביוונית." },
-            { title: "צירופי אותיות חשובים", color: "#059669", bg: "#ecfdf5", border: "#6ee7b7",
+            { title: "צירופי אותיות חשובים", color: "#007aff",
               content: "μπ = B (מפּ → ב)\nντ = D (נט → ד)\nγκ = G (גק → ג)\nτσ = TS (טס)\nτζ = DZ (טז)\nγγ = NG (נג)\n\nלמשל:\nμπίρα = bira (בירה)\nντομάτα = domata (עגבנייה)" },
-            { title: "תנועות כפולות", color: "#dc2626", bg: "#fef2f2", border: "#fca5a5",
+            { title: "תנועות כפולות", color: "#ff9f0a",
               content: "αι = e (אֶ)\nει = i (אִי)\nοι = i (אִי)\nου = u (אוּ)\nαυ = av/af\nευ = ev/ef\n\nαυ ו-ευ משתנות:\nלפני תנועה/β,γ,δ,μ,ν → v\nלפני עיצור חזק → f\nαυτός = aftos\nαύριο = avrio" },
-            { title: "שאלון ותחביר", color: "#ea580c", bg: "#fff7ed", border: "#fed7aa",
+            { title: "שאלון ותחביר", color: "#007aff",
               content: "סימן שאלה ביוונית = ;\n(נקודה-פסיק, לא סימן שאלה!)\n\nΠού είναι; = ?איפה זה\nΠόσο κάνει; = ?כמה עולה\n\nנקודה עליונה · = נקודתיים\nκύριε· = :אדוני" },
-            { title: "מילים שימושיות בשלט", color: "#0891b2", bg: "#ecfeff", border: "#67e8f9",
+            { title: "מילים שימושיות בשלט", color: "#ff9f0a",
               content: "ΕΙΣΟΔΟΣ = כניסה\nΕΞΟΔΟΣ = יציאה\nΑΝΟΙΧΤΟ = פתוח\nΚΛΕΙΣΤΟ = סגור\nΤΟΥΑΛΕΤΕΣ = שירותים\nΦΑΡΜΑΚΕΙΟ = בית מרקחת\nΑΣΤΥΝΟΜΙΑ = משטרה\nΝΟΣΟΚΟΜΕΙΟ = בית חולים\nΣΤΑΘΜΟΣ = תחנה" },
-            { title: "מספרים 1-10", color: "#7c3aed", bg: "#f5f3ff", border: "#c4b5fd",
+            { title: "מספרים 1-10", color: "#007aff",
               content: "1 = ένα (אנה)\n2 = δύο (דיו)\n3 = τρία (טריה)\n4 = τέσσερα (טסרה)\n5 = πέντε (פנדה)\n6 = έξι (אקסי)\n7 = επτά (אפטה)\n8 = οκτώ (אוקטו)\n9 = εννέα (אנאה)\n10 = δέκα (דקה)" },
-            { title: "ביטויים לתייר", color: "#b45309", bg: "#fffbeb", border: "#fde68a",
+            { title: "ביטויים לתייר", color: "#ff9f0a",
               content: "Γεια σας = שלום (ג׳ה סאס)\nΕυχαριστώ = תודה (אפחריסטו)\nΠαρακαλώ = בבקשה (פרקלו)\nΣυγγνώμη = סליחה (סיגנומי)\nΠόσο κάνει; = כמה עולה?\nΤον λογαριασμό = את החשבון\nΝερό = מים (נרו)\nΜπύρα = בירה (בירה)" },
-            { title: "טיפים לקריאה מהירה", color: "#475569", bg: "#f8fafc", border: "#cbd5e1",
+            { title: "טיפים לקריאה מהירה", color: "#007aff",
               content: "1. התחל משלטים — הם באותיות גדולות וקלים לקרוא\n\n2. תרגל בתפריטים — המילים חוזרות\n\n3. אל תתרגם — נסה לקרוא את הצליל\n\n4. שים לב לטונוס — הוא עוזר להגייה\n\n5. צירופי אותיות קודם — μπ,ντ,γκ הכי נפוצים" }
           ].map((tip, i) => (
             <div key={i} style={{
               minWidth: 260, maxWidth: 260, flexShrink: 0,
-              background: tip.bg, borderRadius: 16,
-              border: `1.5px solid ${tip.border}`,
+              background: "#fff", borderRadius: 14,
+              boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
               padding: "14px 16px",
               scrollSnapAlign: "start"
             }}>
               <div style={{
-                fontSize: 14, fontWeight: 700, color: tip.color,
-                marginBottom: 10
+                fontSize: 14, fontWeight: 600, color: "#1c1c1e",
+                marginBottom: 10, borderRight: `3px solid ${tip.color}`, paddingRight: 10
               }}>{tip.title}</div>
               <div style={{
                 fontSize: 13, color: "#374151", lineHeight: 1.6,
@@ -1141,35 +1110,32 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
 
       {learnedCount >= 20 && learnedCount < 24 && (
         <div style={{
-          marginTop: 16, padding: 14, borderRadius: 14,
-          background: "linear-gradient(135deg, #fef3c7, #fde68a)",
-          textAlign: "center", border: "1px solid #f59e0b"
+          marginTop: 14, padding: 14, borderRadius: 14,
+          background: "#fff", textAlign: "center",
+          boxShadow: "0 1px 4px rgba(0,0,0,0.06)"
         }}>
-          <div style={{ fontSize: 28 }}>{'🔥'}</div>
-          <div style={{ fontSize: 16, fontWeight: 700, color: "#92400e" }}>
-            כמעט שם! נשארו {24 - learnedCount} אותיות
+          <div style={{ fontSize: 16, fontWeight: 600, color: "#1c1c1e" }}>
+            נשארו {24 - learnedCount} אותיות
           </div>
-          <div style={{ fontSize: 13, color: "#a16207", marginTop: 4 }}>
-            {'🎓'} מבחן סופי מחכה לך בסיום — תוכיח שאתה שולט באלפבית!
+          <div style={{ fontSize: 13, color: "#8e8e93", marginTop: 4 }}>
+            מבחן סופי מחכה לך בסיום
           </div>
         </div>
       )}
 
       {learnedCount === 24 && (
         <div style={{
-          marginTop: 16, padding: 16, borderRadius: 14,
-          background: "linear-gradient(135deg, #10b981, #059669)",
-          textAlign: "center", color: "#fff"
+          marginTop: 14, padding: 16, borderRadius: 14,
+          background: "#007aff", textAlign: "center", color: "#fff"
         }}>
-          <div style={{ fontSize: 32 }}>🏆</div>
-          <div style={{ fontSize: 18, fontWeight: 700 }}>כל האותיות נלמדו!</div>
-          <div style={{ fontSize: 13, opacity: 0.9, marginBottom: 12 }}>הוכח את עצמך במבחן הסופי</div>
+          <div style={{ fontSize: 17, fontWeight: 600 }}>כל האותיות נלמדו</div>
+          <div style={{ fontSize: 13, opacity: 0.85, marginBottom: 12 }}>הוכח את עצמך במבחן הסופי</div>
           <button onClick={onStartFinal} style={{
-            padding: "10px 28px", fontSize: 15, fontWeight: 700,
-            background: "#fff", color: "#059669", border: "none",
-            borderRadius: 12, cursor: "pointer"
+            padding: "10px 28px", fontSize: 15, fontWeight: 600,
+            background: "#fff", color: "#007aff", border: "none",
+            borderRadius: 10
           }}>
-            {'🎓'} מבחן סופי
+            מבחן סופי
           </button>
         </div>
       )}
@@ -1215,17 +1181,19 @@ function FinalExamScreen({ onEnd, onFail }) {
     const passed = stats.wrong === 0;
     return (
       <div style={{ padding: "40px 20px", maxWidth: 480, margin: "0 auto", textAlign: "center" }}>
-        <div style={{ fontSize: 64, marginBottom: 16 }}>{passed ? "🎓" : "📝"}</div>
-        <h2 style={{ fontSize: 24, fontWeight: 800, color: "#1e3a5f", marginBottom: 8 }}>
+        <h2 style={{ fontSize: 24, fontWeight: 700, color: "#1c1c1e", marginBottom: 8, marginTop: 32 }}>
           {passed ? "עברת את המבחן הסופי!" : "צריך עוד תרגול"}
         </h2>
-        <div style={{ fontSize: 16, color: "#6b7280", marginBottom: 8 }}>
-          {stats.correct}/10 תשובות נכונות
+        <div style={{ fontSize: 48, fontWeight: 700, color: passed ? "#007aff" : "#ff9f0a", marginBottom: 8 }}>
+          {stats.correct}/10
+        </div>
+        <div style={{ fontSize: 16, color: "#8e8e93", marginBottom: 16 }}>
+          תשובות נכונות
         </div>
         {!passed && (
           <div style={{
-            padding: 14, borderRadius: 14, background: "#fef2f2",
-            border: "1px solid #fca5a5", color: "#991b1b",
+            padding: 14, borderRadius: 14, background: "#fff3e0",
+            border: "none", color: "#cc7a00",
             fontSize: 14, marginBottom: 16
           }}>
             כל האותיות חזרו ל-8 תשובות נכונות — תרגל שוב כדי להגיע ל-10
@@ -1233,7 +1201,7 @@ function FinalExamScreen({ onEnd, onFail }) {
         )}
         <button onClick={() => { if (!passed) onFail(); onEnd(); }} style={{
           padding: "14px 40px", fontSize: 16, fontWeight: 700,
-          background: "linear-gradient(135deg, #1e3a5f, #2563eb)",
+          background: "#007aff",
           color: "#fff", border: "none", borderRadius: 14
         }}>
           חזרה הביתה
@@ -1263,46 +1231,52 @@ function FinalExamScreen({ onEnd, onFail }) {
       <div style={{
         display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16
       }}>
-        <button onClick={onEnd} style={{ background: "none", border: "none", fontSize: 22 }}>←</button>
+        <button onClick={onEnd} style={{
+          background: "#fff", border: "none", fontSize: 18,
+          width: 36, height: 36, borderRadius: 10, color: "#007aff",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          boxShadow: "0 1px 4px rgba(0,0,0,0.06)"
+        }}>←</button>
         <div style={{
-          fontSize: 14, fontWeight: 700, color: "#059669",
-          background: "#ecfdf5", padding: "4px 14px", borderRadius: 99
+          fontSize: 14, fontWeight: 700, color: "#007aff",
+          background: "#e8f4fd", padding: "4px 14px", borderRadius: 99
         }}>
-          {'🎓'} מבחן סופי
+          מבחן סופי
         </div>
-        <div style={{ fontSize: 14, color: "#6b7280", fontWeight: 600 }}>{qi + 1}/10</div>
+        <div style={{ fontSize: 14, color: "#8e8e93", fontWeight: 600 }}>{qi + 1}/10</div>
       </div>
 
-      <div style={{ background: "#e5e7eb", borderRadius: 99, height: 6, marginBottom: 20, overflow: "hidden" }}>
+      <div style={{ background: "#e5e5ea", borderRadius: 99, height: 6, marginBottom: 20, overflow: "hidden" }}>
         <div style={{
           width: ((qi + 1) / 10 * 100) + "%",
-          height: "100%", background: failed ? "#ef4444" : "#10b981",
+          height: "100%", background: failed ? "#ff9f0a" : "#007aff",
           borderRadius: 99, transition: "width 0.4s"
         }} />
       </div>
 
       <div style={{ textAlign: "center", marginBottom: 16 }}>
-        <div style={{ fontSize: 56, fontWeight: 800, color: "#1e3a5f", lineHeight: 1, marginBottom: 8 }}>
+        <div style={{ fontSize: 56, fontWeight: 700, color: "#1c1c1e", lineHeight: 1, marginBottom: 8 }}>
           {q.letter.upper}{q.letter.lower}
         </div>
-        <div style={{ fontSize: 15, color: "#6b7280" }}>{q.question}</div>
+        <div style={{ fontSize: 15, color: "#8e8e93" }}>{q.question}</div>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: q.bigOptions ? "1fr 1fr" : "1fr", gap: 10, marginBottom: 16 }}>
         {q.options.map(opt => {
           const isThis = selected === opt.id;
           const isRight = opt.id === q.correctId;
-          let bg = "#fff", border = "#e5e7eb", color = "#1e293b";
+          let bg = "#fff", border = "#e5e5ea", color = "#1c1c1e";
           if (selected !== null) {
-            if (isRight) { bg = "#f0fdf4"; border = "#10b981"; color = "#166534"; }
-            else if (isThis && !isRight) { bg = "#fef2f2"; border = "#ef4444"; color = "#991b1b"; }
+            if (isRight) { bg = "#e8f4fd"; border = "#007aff"; color = "#007aff"; }
+            else if (isThis && !isRight) { bg = "#fff3e0"; border = "#ff9f0a"; color = "#cc7a00"; }
           }
           return (
             <button key={opt.id} onClick={() => handleSelect(opt.id)} style={{
               padding: q.bigOptions ? "16px 10px" : "14px 18px",
               fontSize: q.bigOptions ? 28 : 17, fontWeight: 600,
-              background: bg, color, border: `2px solid ${border}`,
-              borderRadius: 14, textAlign: "center", transition: "all 0.15s"
+              background: bg, color, border: `1.5px solid ${border}`,
+              borderRadius: 14, textAlign: "center", transition: "all 0.15s",
+              boxShadow: selected === null ? "0 1px 4px rgba(0,0,0,0.06)" : "none"
             }}>
               {q.getLabel(opt)}
               {selected !== null && isRight && " ✓"}
@@ -1314,10 +1288,10 @@ function FinalExamScreen({ onEnd, onFail }) {
       {selected !== null && (
         <button onClick={() => { setSelected(null); setQi(qi + 1); }} style={{
           width: "100%", padding: "14px 0", fontSize: 16, fontWeight: 700,
-          background: "linear-gradient(135deg, #059669, #10b981)",
+          background: "#007aff",
           color: "#fff", border: "none", borderRadius: 14
         }}>
-          הבא →
+          הבא
         </button>
       )}
     </div>
@@ -1447,7 +1421,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
 <script>
 (function(){
-  var APP_VER = 'abc_v24';
+  var APP_VER = 'abc_v25';
   if ('caches' in window && localStorage.getItem('abc_ver') !== APP_VER) {
     caches.keys().then(function(names) {
       return Promise.all(names.map(function(n){ return caches.delete(n); }));
