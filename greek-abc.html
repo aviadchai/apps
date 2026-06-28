@@ -143,16 +143,16 @@ const DIFF_COLORS = {1:"#10b981",2:"#f59e0b",3:"#ef4444"};
 const DIFF_BG = {1:"#ecfdf5",2:"#fffbeb",3:"#fef2f2"};
 
 const DAY_PLAN = [
-  {day:1,target:3},
-  {day:2,target:5},
-  {day:3,target:8},
-  {day:4,target:11},
-  {day:5,target:14},
-  {day:6,target:16},
-  {day:7,target:19},
-  {day:8,target:21},
-  {day:9,target:23},
-  {day:10,target:24}
+  {day:1,daily:3,target:3},
+  {day:2,daily:2,target:5},
+  {day:3,daily:3,target:8},
+  {day:4,daily:3,target:11},
+  {day:5,daily:3,target:14},
+  {day:6,daily:2,target:16},
+  {day:7,daily:3,target:19},
+  {day:8,daily:2,target:21},
+  {day:9,daily:2,target:23},
+  {day:10,daily:1,target:24}
 ];
 
 const STORAGE_KEY = "greek_abc_v2";
@@ -876,6 +876,9 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
     : 0;
   const todayPlan = challengeDay > 0 ? DAY_PLAN[challengeDay - 1] : null;
   const todayTarget = todayPlan ? todayPlan.target : 0;
+  const todayDaily = todayPlan ? todayPlan.daily : 0;
+  const prevTarget = challengeDay > 1 ? DAY_PLAN[challengeDay - 2].target : 0;
+  const todayNew = Math.max(0, learnedCount - prevTarget);
   const todayRemaining = Math.max(0, todayTarget - learnedCount);
 
   return (
@@ -886,7 +889,7 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
           αβγ
         </h1>
         <p style={{ margin: "4px 0 0", color: "#6b7280", fontSize: 14 }}>
-          האלפבית היווני ב-10 ימים <span style={{ color: "#9ca3af", fontSize: 11 }}>(v23)</span>
+          האלפבית היווני ב-10 ימים <span style={{ color: "#9ca3af", fontSize: 11 }}>(v24)</span>
         </p>
       </div>
 
@@ -899,7 +902,7 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
             display: "flex", justifyContent: "space-between",
             fontSize: 14, fontWeight: 600, color: "#0369a1", marginBottom: 8
           }}>
-            <span>יום {challengeDay}/10 — יעד: {todayTarget} אותיות</span>
+            <span>יום {challengeDay}/10 — למד {todayDaily} אותיות חדשות</span>
             <span>{learnedCount}/24</span>
           </div>
           {todayRemaining > 0 ? (
@@ -909,7 +912,7 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
               padding: "6px 10px", borderRadius: 8,
               background: "#fef3c7"
             }}>
-              {'📋'} נשאר להיום: {todayRemaining} {todayRemaining === 1 ? "אות" : "אותיות"}
+              {'📋'} למדת {todayNew}/{todayDaily} חדשות היום · נשאר סה"כ: {todayRemaining}
             </div>
           ) : todayPlan && (
             <div style={{
@@ -1444,7 +1447,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
 <script>
 (function(){
-  var APP_VER = 'abc_v23';
+  var APP_VER = 'abc_v24';
   if ('caches' in window && localStorage.getItem('abc_ver') !== APP_VER) {
     caches.keys().then(function(names) {
       return Promise.all(names.map(function(n){ return caches.delete(n); }));
