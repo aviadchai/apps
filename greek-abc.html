@@ -856,7 +856,7 @@ function getUnlockedLevel(letterStates) {
   return 1;
 }
 
-function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading, challengeStart }) {
+function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading, onStartFinal, challengeStart }) {
   const learnedCount = LETTERS.filter(l => letterStates[l.id]?.learned).length;
   const learnedEasy = LETTERS.filter(l => l.difficulty === 1 && letterStates[l.id]?.learned).length;
   const learnedMed = LETTERS.filter(l => l.difficulty === 2 && letterStates[l.id]?.learned).length;
@@ -878,7 +878,7 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
           αβγ
         </h1>
         <p style={{ margin: "4px 0 0", color: "#6b7280", fontSize: 14 }}>
-          האלפבית היווני ב-10 ימים <span style={{ color: "#9ca3af", fontSize: 11 }}>(v20)</span>
+          האלפבית היווני ב-10 ימים <span style={{ color: "#9ca3af", fontSize: 11 }}>(v21)</span>
         </p>
       </div>
 
@@ -1095,8 +1095,162 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
         }}>
           <div style={{ fontSize: 32 }}>🏆</div>
           <div style={{ fontSize: 18, fontWeight: 700 }}>כל האותיות נלמדו!</div>
-          <div style={{ fontSize: 13, opacity: 0.9 }}>את/ה שולט/ת באלפבית היווני</div>
+          <div style={{ fontSize: 13, opacity: 0.9, marginBottom: 12 }}>הוכח את עצמך במבחן הסופי</div>
+          <button onClick={onStartFinal} style={{
+            padding: "10px 28px", fontSize: 15, fontWeight: 700,
+            background: "#fff", color: "#059669", border: "none",
+            borderRadius: 12, cursor: "pointer"
+          }}>
+            {'🎓'} מבחן סופי
+          </button>
         </div>
+      )}
+    </div>
+  );
+}
+
+function FinalExamScreen({ onEnd, onFail }) {
+  const [questions, setQuestions] = useState([]);
+  const [qi, setQi] = useState(0);
+  const [selected, setSelected] = useState(null);
+  const [stats, setStats] = useState({ correct: 0, wrong: 0 });
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    const picked = shuffle(LETTERS).slice(0, 10);
+    const types = ["identify", "sound", "reverse"];
+    const qs = picked.map((letter, i) => {
+      const type = types[i % 3];
+      let others;
+      if (type === "sound") {
+        others = shuffle(LETTERS.filter(l => l.id !== letter.id && l.sound !== letter.sound)).slice(0, 3);
+      } else if (type === "identify") {
+        others = shuffle(LETTERS.filter(l => l.id !== letter.id && !nameTooSimilar(l.nameHe, letter.nameHe))).slice(0, 3);
+      } else {
+        others = shuffle(LETTERS.filter(l => l.id !== letter.id && !nameTooSimilar(l.nameHe, letter.nameHe))).slice(0, 3);
+      }
+      const options = shuffle([letter, ...others]);
+      const question = type === "identify" ? `מה שם האות ${letter.upper} ?`
+        : type === "sound" ? `איך נשמעת ${letter.upper}${letter.lower} ?`
+        : `איפה האות ${letter.nameHe} ?`;
+      const getLabel = type === "identify" ? l => l.nameHe
+        : type === "sound" ? l => `${l.soundHe}  (${l.sound})`
+        : l => `${l.upper}${l.lower}`;
+      return { letter, options, question, getLabel, correctId: letter.id, type, bigOptions: type === "reverse" };
+    });
+    setQuestions(qs);
+  }, []);
+
+  if (questions.length === 0) return null;
+
+  if (qi >= questions.length) {
+    const passed = stats.wrong === 0;
+    return (
+      <div style={{ padding: "40px 20px", maxWidth: 480, margin: "0 auto", textAlign: "center" }}>
+        <div style={{ fontSize: 64, marginBottom: 16 }}>{passed ? "🎓" : "📝"}</div>
+        <h2 style={{ fontSize: 24, fontWeight: 800, color: "#1e3a5f", marginBottom: 8 }}>
+          {passed ? "עברת את המבחן הסופי!" : "צריך עוד תרגול"}
+        </h2>
+        <div style={{ fontSize: 16, color: "#6b7280", marginBottom: 8 }}>
+          {stats.correct}/10 תשובות נכונות
+        </div>
+        {!passed && (
+          <div style={{
+            padding: 14, borderRadius: 14, background: "#fef2f2",
+            border: "1px solid #fca5a5", color: "#991b1b",
+            fontSize: 14, marginBottom: 16
+          }}>
+            כל האותיות חזרו ל-8 תשובות נכונות — תרגל שוב כדי להגיע ל-10
+          </div>
+        )}
+        <button onClick={() => { if (!passed) onFail(); onEnd(); }} style={{
+          padding: "14px 40px", fontSize: 16, fontWeight: 700,
+          background: "linear-gradient(135deg, #1e3a5f, #2563eb)",
+          color: "#fff", border: "none", borderRadius: 14
+        }}>
+          חזרה הביתה
+        </button>
+      </div>
+    );
+  }
+
+  const q = questions[qi];
+  const isCorrect = selected !== null ? selected === q.correctId : null;
+
+  function handleSelect(id) {
+    if (selected !== null) return;
+    setSelected(id);
+    const correct = id === q.correctId;
+    if (correct) {
+      setStats(s => ({ ...s, correct: s.correct + 1 }));
+      speak(q.letter.name);
+    } else {
+      setStats(s => ({ ...s, wrong: s.wrong + 1 }));
+      setFailed(true);
+    }
+  }
+
+  return (
+    <div style={{ padding: "20px 16px", maxWidth: 480, margin: "0 auto" }}>
+      <div style={{
+        display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16
+      }}>
+        <button onClick={onEnd} style={{ background: "none", border: "none", fontSize: 22 }}>←</button>
+        <div style={{
+          fontSize: 14, fontWeight: 700, color: "#059669",
+          background: "#ecfdf5", padding: "4px 14px", borderRadius: 99
+        }}>
+          {'🎓'} מבחן סופי
+        </div>
+        <div style={{ fontSize: 14, color: "#6b7280", fontWeight: 600 }}>{qi + 1}/10</div>
+      </div>
+
+      <div style={{ background: "#e5e7eb", borderRadius: 99, height: 6, marginBottom: 20, overflow: "hidden" }}>
+        <div style={{
+          width: ((qi + 1) / 10 * 100) + "%",
+          height: "100%", background: failed ? "#ef4444" : "#10b981",
+          borderRadius: 99, transition: "width 0.4s"
+        }} />
+      </div>
+
+      <div style={{ textAlign: "center", marginBottom: 16 }}>
+        <div style={{ fontSize: 56, fontWeight: 800, color: "#1e3a5f", lineHeight: 1, marginBottom: 8 }}>
+          {q.letter.upper}{q.letter.lower}
+        </div>
+        <div style={{ fontSize: 15, color: "#6b7280" }}>{q.question}</div>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: q.bigOptions ? "1fr 1fr" : "1fr", gap: 10, marginBottom: 16 }}>
+        {q.options.map(opt => {
+          const isThis = selected === opt.id;
+          const isRight = opt.id === q.correctId;
+          let bg = "#fff", border = "#e5e7eb", color = "#1e293b";
+          if (selected !== null) {
+            if (isRight) { bg = "#f0fdf4"; border = "#10b981"; color = "#166534"; }
+            else if (isThis && !isRight) { bg = "#fef2f2"; border = "#ef4444"; color = "#991b1b"; }
+          }
+          return (
+            <button key={opt.id} onClick={() => handleSelect(opt.id)} style={{
+              padding: q.bigOptions ? "16px 10px" : "14px 18px",
+              fontSize: q.bigOptions ? 28 : 17, fontWeight: 600,
+              background: bg, color, border: `2px solid ${border}`,
+              borderRadius: 14, textAlign: "center", transition: "all 0.15s"
+            }}>
+              {q.getLabel(opt)}
+              {selected !== null && isRight && " ✓"}
+            </button>
+          );
+        })}
+      </div>
+
+      {selected !== null && (
+        <button onClick={() => { setSelected(null); setQi(qi + 1); }} style={{
+          width: "100%", padding: "14px 0", fontSize: 16, fontWeight: 700,
+          background: "linear-gradient(135deg, #059669, #10b981)",
+          color: "#fff", border: "none", borderRadius: 14
+        }}>
+          הבא →
+        </button>
       )}
     </div>
   );
@@ -1180,6 +1334,7 @@ function App() {
           onSelectLetter={l => setSelectedLetter(l)}
           onStartQuiz={() => setScreen("quiz")}
           onStartReading={() => setScreen("reading")}
+          onStartFinal={() => setScreen("final")}
         />
       )}
       {screen === "quiz" && (
@@ -1192,6 +1347,22 @@ function App() {
       )}
       {screen === "reading" && (
         <ReadingQuizScreen onEnd={() => setScreen("home")} />
+      )}
+      {screen === "final" && (
+        <FinalExamScreen
+          onEnd={() => setScreen("home")}
+          onFail={() => {
+            setLetterStates(prev => {
+              const next = { ...prev };
+              LETTERS.forEach(l => {
+                if (next[l.id]?.learned) {
+                  next[l.id] = { ...next[l.id], quizCorrect: 8, learned: false };
+                }
+              });
+              return next;
+            });
+          }}
+        />
       )}
       {selectedLetter && (
         <LetterModal
@@ -1208,7 +1379,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
 <script>
 (function(){
-  var APP_VER = 'abc_v20';
+  var APP_VER = 'abc_v21';
   if ('caches' in window && localStorage.getItem('abc_ver') !== APP_VER) {
     caches.keys().then(function(names) {
       return Promise.all(names.map(function(n){ return caches.delete(n); }));
