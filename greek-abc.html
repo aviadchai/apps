@@ -58,6 +58,24 @@ const LETTERS = [
   {id:24,upper:"Ω",lower:"ω",name:"Ωμέγα",nameHe:"אומגה",sound:"o",soundHe:"אוֹ",hint:"כמו O, האות האחרונה!",example:"ώρα",exampleHe:"שעה",difficulty:3}
 ];
 
+const NUMBERS = [
+  {id:"n1",val:"1",gr:"ένα",pron:"ena",pronHe:"אנה",he:"אחד",difficulty:1},
+  {id:"n2",val:"2",gr:"δύο",pron:"dio",pronHe:"דיו",he:"שניים",difficulty:1},
+  {id:"n3",val:"3",gr:"τρία",pron:"tria",pronHe:"טריה",he:"שלוש",difficulty:1},
+  {id:"n4",val:"4",gr:"τέσσερα",pron:"tesera",pronHe:"טסרה",he:"ארבע",difficulty:2},
+  {id:"n5",val:"5",gr:"πέντε",pron:"pende",pronHe:"פנדה",he:"חמש",difficulty:1},
+  {id:"n6",val:"6",gr:"έξι",pron:"eksi",pronHe:"אקסי",he:"שש",difficulty:2},
+  {id:"n7",val:"7",gr:"επτά",pron:"epta",pronHe:"אפטה",he:"שבע",difficulty:2},
+  {id:"n8",val:"8",gr:"οκτώ",pron:"okto",pronHe:"אוקטו",he:"שמונה",difficulty:2},
+  {id:"n9",val:"9",gr:"εννέα",pron:"enea",pronHe:"אנאה",he:"תשע",difficulty:2},
+  {id:"n10",val:"10",gr:"δέκα",pron:"deka",pronHe:"דקה",he:"עשר",difficulty:1},
+  {id:"n20",val:"20",gr:"είκοσι",pron:"ikosi",pronHe:"איקוסי",he:"עשרים",difficulty:2},
+  {id:"n30",val:"30",gr:"τριάντα",pron:"trianda",pronHe:"טריאנדה",he:"שלושים",difficulty:2},
+  {id:"n50",val:"50",gr:"πενήντα",pron:"peninda",pronHe:"פנינדה",he:"חמישים",difficulty:3},
+  {id:"n100",val:"100",gr:"εκατό",pron:"ekato",pronHe:"אקטו",he:"מאה",difficulty:2},
+  {id:"n1000",val:"1000",gr:"χίλια",pron:"hilia",pronHe:"חיליה",he:"אלף",difficulty:3},
+];
+
 const READING_WORDS = [
   {gr:"ευχαριστώ",en:"efharisto",he:"תודה",scene:"greeting",emoji:"🙏"},
   {gr:"παρακαλώ",en:"parakalo",he:"בבקשה",scene:"greeting",emoji:"😊"},
@@ -173,6 +191,12 @@ function initState() {
   return m;
 }
 
+function initNumberState() {
+  const m = {};
+  NUMBERS.forEach(n => { m[n.id] = { learned: false, quizCorrect: 0, quizTotal: 0 }; });
+  return m;
+}
+
 const LETTER_PRONUNCIATIONS = {
   "Άλφα":"άλφα","Βήτα":"βήτα","Γάμα":"γάμμα","Δέλτα":"δέλτα",
   "Έψιλον":"έψιλον","Ζήτα":"ζήτα","Ήτα":"ήτα","Θήτα":"θήτα",
@@ -247,7 +271,7 @@ function BingoCell({ letter, state, onClick, highlight }) {
       padding: "7px 2px",
       textAlign: "center",
       cursor: "pointer",
-      border: almostDone ? "1.5px solid #ff9f0a" : "none",
+      border: almostDone ? "1.5px solid #ff9f0a" : !learned ? `1px solid ${DIFF_LINE[diff]}40` : "none",
       transition: "all 0.15s ease",
       minHeight: 50,
       boxShadow: learned ? "0 2px 8px rgba(0,122,255,0.25)" : "0 1px 4px rgba(0,0,0,0.06)",
@@ -267,13 +291,6 @@ function BingoCell({ letter, state, onClick, highlight }) {
       }}>
         {letter.lower}
       </div>
-      {!learned && (
-        <div style={{
-          position: "absolute", bottom: 0, left: 0, right: 0,
-          height: 3, background: DIFF_LINE[diff],
-          borderRadius: "0 0 12px 12px"
-        }} />
-      )}
       {learned ? (
         <div style={{
           position: "absolute", top: 3, left: 3,
@@ -301,15 +318,25 @@ function BingoCell({ letter, state, onClick, highlight }) {
   );
 }
 
-function LetterModal({ letter, state, onClose }) {
+function LetterModal({ letter, state, onClose, onNext, onPrev }) {
   const diff = letter.difficulty;
+  const touchRef = useRef(null);
+  function handleTouchStart(e) { touchRef.current = e.touches[0].clientX; }
+  function handleTouchEnd(e) {
+    if (touchRef.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchRef.current;
+    touchRef.current = null;
+    if (Math.abs(dx) > 50) { dx < 0 ? onNext && onNext() : onPrev && onPrev(); }
+  }
   return (
     <div style={{
       position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)",
       display: "flex", alignItems: "center", justifyContent: "center",
       zIndex: 100, padding: 20, backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)"
     }} onClick={onClose}>
-      <div onClick={e => e.stopPropagation()} style={{
+      <div onClick={e => e.stopPropagation()}
+        onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}
+        style={{
         background: "#fff", borderRadius: 20, padding: "24px 20px",
         maxWidth: 360, width: "100%", position: "relative",
         boxShadow: "0 20px 60px rgba(0,0,0,0.15)", animation: "fadeIn 0.25s ease"
@@ -866,7 +893,210 @@ function getUnlockedLevel(letterStates) {
   return 1;
 }
 
-function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading, onStartFinal, challengeStart }) {
+function NumberCell({ num, state, onClick }) {
+  const learned = state?.learned;
+  const diff = num.difficulty;
+  return (
+    <div onClick={onClick} style={{
+      position: "relative",
+      background: learned ? "#007aff" : "#fff",
+      borderRadius: 12, padding: "8px 4px",
+      textAlign: "center", cursor: "pointer",
+      minHeight: 50, overflow: "hidden",
+      border: !learned ? `1px solid ${DIFF_LINE[diff]}40` : "none",
+      boxShadow: learned ? "0 2px 8px rgba(0,122,255,0.25)" : "0 1px 4px rgba(0,0,0,0.06)"
+    }}>
+      <div style={{ fontSize: 16, fontWeight: 700, color: learned ? "#fff" : "#1c1c1e" }}>{num.val}</div>
+      <div style={{ fontSize: 10, color: learned ? "rgba(255,255,255,0.85)" : "#8e8e93", marginTop: 1, direction: "ltr" }}>{num.gr}</div>
+      {learned && <div style={{ position: "absolute", top: 3, left: 3, fontSize: 9, color: "#fff", fontWeight: 600 }}>✓</div>}
+      {!learned && (state?.quizCorrect > 0) && (
+        <div style={{ position: "absolute", bottom: 5, left: 4, right: 4, height: 2.5, borderRadius: 2, background: "#e5e5ea", overflow: "hidden" }}>
+          <div style={{ width: (state.quizCorrect / 10 * 100) + "%", height: "100%", borderRadius: 2, background: "#007aff" }} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function NumberModal({ num, state, onClose, onNext, onPrev }) {
+  const touchRef = useRef(null);
+  function handleTouchStart(e) { touchRef.current = e.touches[0].clientX; }
+  function handleTouchEnd(e) {
+    if (touchRef.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchRef.current;
+    touchRef.current = null;
+    if (Math.abs(dx) > 50) { dx < 0 ? onNext && onNext() : onPrev && onPrev(); }
+  }
+  return (
+    <div style={{
+      position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      zIndex: 100, padding: 20, backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)"
+    }} onClick={onClose}>
+      <div onClick={e => e.stopPropagation()}
+        onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}
+        style={{
+          background: "#fff", borderRadius: 20, padding: "24px 20px",
+          maxWidth: 360, width: "100%", position: "relative",
+          boxShadow: "0 20px 60px rgba(0,0,0,0.15)", animation: "fadeIn 0.25s ease"
+        }}>
+        <button onClick={onClose} style={{
+          position: "absolute", top: 12, left: 12,
+          background: "#f2f2f7", border: "none", fontSize: 14, color: "#8e8e93",
+          width: 28, height: 28, borderRadius: "50%",
+          display: "flex", alignItems: "center", justifyContent: "center"
+        }}>✕</button>
+        <div style={{ textAlign: "center", marginBottom: 20 }}>
+          <div style={{ fontSize: 64, fontWeight: 300, color: "#1c1c1e", lineHeight: 1, marginBottom: 8 }}>{num.val}</div>
+          <div style={{ fontSize: 28, fontWeight: 600, color: "#1c1c1e", direction: "ltr" }}>{num.gr}</div>
+          <div style={{ fontSize: 16, color: "#8e8e93", marginTop: 4 }}>{num.he}</div>
+          <button onClick={() => speak(num.gr)} style={{
+            marginTop: 10, padding: "7px 18px", borderRadius: 99,
+            background: "#007aff", border: "none", color: "#fff", fontSize: 14, fontWeight: 500
+          }}>השמע</button>
+        </div>
+        <div style={{ background: "#f2f2f7", borderRadius: 12, padding: 14, marginBottom: 14 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div>
+              <div style={{fontSize:11,color:"#8e8e93",marginBottom:2,fontWeight:500}}>הגייה</div>
+              <div style={{fontSize:17,fontWeight:600,color:"#1c1c1e"}}>{num.pronHe}</div>
+            </div>
+            <div>
+              <div style={{fontSize:11,color:"#8e8e93",marginBottom:2,fontWeight:500}}>תעתיק</div>
+              <div style={{fontSize:17,fontWeight:600,color:"#1c1c1e"}}>{num.pron}</div>
+            </div>
+          </div>
+        </div>
+        <div style={{
+          padding: "12px 14px", borderRadius: 12,
+          background: state?.learned ? "#e8f4fd" : "#f2f2f7", textAlign: "center"
+        }}>
+          {state?.learned ? (
+            <div style={{ fontSize: 14, fontWeight: 600, color: "#007aff" }}>נלמד · {state.quizCorrect} תשובות נכונות</div>
+          ) : (
+            <div>
+              <div style={{ fontSize: 13, color: "#8e8e93", marginBottom: 6, fontWeight: 500 }}>{state?.quizCorrect || 0} / 10 תשובות נכונות</div>
+              <div style={{ background: "#e5e5ea", borderRadius: 99, height: 6, overflow: "hidden" }}>
+                <div style={{ width: Math.min(100, ((state?.quizCorrect || 0) / 10) * 100) + "%", height: "100%", background: "#007aff", borderRadius: 99, transition: "width 0.4s" }} />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function NumberQuizScreen({ numberStates, onEnd, onUpdate }) {
+  const [questions, setQuestions] = useState([]);
+  const [qi, setQi] = useState(0);
+  const [selected, setSelected] = useState(null);
+  const [stats, setStats] = useState({ correct: 0, total: 0 });
+
+  useEffect(() => {
+    const picked = shuffle(NUMBERS).slice(0, 10);
+    const qs = picked.map((num, i) => {
+      const others = shuffle(NUMBERS.filter(n => n.id !== num.id)).slice(0, 3);
+      const options = shuffle([num, ...others]);
+      if (i % 2 === 0) {
+        return { num, options, question: `מה המספר ${num.gr} ?`, getLabel: n => n.he, correctId: num.id };
+      } else {
+        return { num, options, question: `איך אומרים ${num.he} ביוונית?`, getLabel: n => n.gr, correctId: num.id, ltr: true };
+      }
+    });
+    setQuestions(qs);
+  }, []);
+
+  if (questions.length === 0) return null;
+
+  if (qi >= questions.length) {
+    const pct = Math.round((stats.correct / stats.total) * 100);
+    return (
+      <div style={{ padding: "40px 20px", maxWidth: 480, margin: "0 auto", textAlign: "center" }}>
+        <h2 style={{ fontSize: 24, fontWeight: 700, color: "#1c1c1e", marginBottom: 8, marginTop: 32 }}>
+          {pct >= 80 ? "מצוין!" : pct >= 50 ? "לא רע!" : "צריך תרגול"}
+        </h2>
+        <div style={{ fontSize: 48, fontWeight: 700, color: pct >= 80 ? "#007aff" : "#ff9f0a", marginBottom: 8 }}>{pct}%</div>
+        <div style={{ fontSize: 16, color: "#8e8e93", marginBottom: 32 }}>{stats.correct} מתוך {stats.total} תשובות נכונות</div>
+        <button onClick={onEnd} style={{
+          padding: "14px 40px", fontSize: 16, fontWeight: 700,
+          background: "#007aff", color: "#fff", border: "none", borderRadius: 14
+        }}>חזרה הביתה</button>
+      </div>
+    );
+  }
+
+  const q = questions[qi];
+  const isCorrect = selected !== null ? selected === q.correctId : null;
+
+  function handleSelect(id) {
+    if (selected !== null) return;
+    setSelected(id);
+    const correct = id === q.correctId;
+    setStats(s => ({ correct: s.correct + (correct ? 1 : 0), total: s.total + 1 }));
+    onUpdate(q.num.id, correct);
+    if (correct) speak(q.num.gr);
+  }
+
+  return (
+    <div style={{ padding: "20px 16px", maxWidth: 480, margin: "0 auto" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+        <button onClick={onEnd} style={{
+          background: "#fff", border: "none", fontSize: 18,
+          width: 36, height: 36, borderRadius: 10, color: "#007aff",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          boxShadow: "0 1px 4px rgba(0,0,0,0.06)"
+        }}>←</button>
+        <div style={{ fontSize: 14, color: "#8e8e93", fontWeight: 600 }}>{qi + 1} / {questions.length}</div>
+        <div style={{ fontSize: 13, color: "#007aff", fontWeight: 600 }}>{stats.correct} נכון</div>
+      </div>
+      <div style={{ background: "#e5e5ea", borderRadius: 99, height: 6, marginBottom: 24, overflow: "hidden" }}>
+        <div style={{ width: ((qi + 1) / questions.length * 100) + "%", height: "100%", background: "#007aff", borderRadius: 99, transition: "width 0.4s" }} />
+      </div>
+      <div style={{ fontSize: 18, fontWeight: 600, color: "#1c1c1e", textAlign: "center", marginBottom: 20 }}>{q.question}</div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
+        {q.options.map(opt => {
+          const isThis = selected === opt.id;
+          const isRight = opt.id === q.correctId;
+          let bg = "#fff", border = "#e5e5ea", color = "#1c1c1e";
+          if (selected !== null) {
+            if (isRight) { bg = "#e8f4fd"; border = "#007aff"; color = "#007aff"; }
+            else if (isThis && !isRight) { bg = "#fff3e0"; border = "#ff9f0a"; color = "#cc7a00"; }
+          }
+          return (
+            <button key={opt.id} onClick={() => handleSelect(opt.id)} style={{
+              padding: "14px 10px", fontSize: 18, fontWeight: 600,
+              background: bg, color, border: `1.5px solid ${border}`,
+              borderRadius: 14, textAlign: "center", transition: "all 0.15s",
+              direction: q.ltr ? "ltr" : "rtl",
+              boxShadow: selected === null ? "0 1px 4px rgba(0,0,0,0.06)" : "none"
+            }}>
+              {q.getLabel(opt)}{selected !== null && isRight && " ✓"}
+            </button>
+          );
+        })}
+      </div>
+      {selected !== null && (
+        <div>
+          <div style={{
+            padding: "12px 16px", borderRadius: 12, marginBottom: 14,
+            background: isCorrect ? "#e8f4fd" : "#fff3e0",
+            textAlign: "center", fontSize: 14, fontWeight: 600,
+            color: isCorrect ? "#007aff" : "#cc7a00"
+          }}>
+            {isCorrect ? `נכון! ${q.num.gr} = ${q.num.he}` : `לא — ${q.num.gr} = ${q.num.he} (${q.num.pron})`}
+          </div>
+          <button onClick={() => { setSelected(null); setQi(qi + 1); }} style={{
+            width: "100%", padding: "14px 0", fontSize: 16, fontWeight: 700,
+            background: "#007aff", color: "#fff", border: "none", borderRadius: 14
+          }}>{qi + 1 < questions.length ? "הבא" : "סיכום"}</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading, onStartFinal, challengeStart, numberStates, onSelectNumber, onStartNumberQuiz }) {
   const learnedCount = LETTERS.filter(l => letterStates[l.id]?.learned).length;
   const learnedEasy = LETTERS.filter(l => l.difficulty === 1 && letterStates[l.id]?.learned).length;
   const learnedMed = LETTERS.filter(l => l.difficulty === 2 && letterStates[l.id]?.learned).length;
@@ -890,7 +1120,7 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
           αβγ
         </h1>
         <p style={{ margin: "4px 0 0", color: "#8e8e93", fontSize: 14, fontWeight: 400 }}>
-          האלפבית היווני ב-10 ימים <span style={{ fontSize: 11 }}>(v26)</span>
+          האלפבית היווני ב-10 ימים <span style={{ fontSize: 11 }}>(v27)</span>
         </p>
       </div>
 
@@ -973,7 +1203,8 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
                     background: bg, color, border,
                     display: "flex", alignItems: "center", justifyContent: "center",
                     fontSize: 10, fontWeight: 600,
-                    boxSizing: "border-box"
+                    boxSizing: "border-box",
+                    boxShadow: current ? `0 0 8px ${met ? "rgba(0,122,255,0.5)" : "rgba(255,159,10,0.5)"}` : "none"
                   }}>
                     {(!isFuture && met && !current) ? "✓" : aheadMet ? "✓" : dayNum}
                   </div>
@@ -1082,6 +1313,33 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
           מבחן קריאה
         </button>
       </div>
+
+      {(() => {
+        const numLearned = NUMBERS.filter(n => numberStates[n.id]?.learned).length;
+        return (
+          <div style={{ marginTop: 20, marginBottom: 14 }}>
+            <div style={{
+              display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10
+            }}>
+              <div style={{ fontSize: 15, fontWeight: 600, color: "#1c1c1e" }}>מספרים ביוונית</div>
+              <div style={{ fontSize: 12, color: "#8e8e93" }}>{numLearned}/{NUMBERS.length}</div>
+            </div>
+            <div style={{
+              display: "grid", gridTemplateColumns: "repeat(5, 1fr)",
+              gap: 6, marginBottom: 10
+            }}>
+              {NUMBERS.map(num => (
+                <NumberCell key={num.id} num={num} state={numberStates[num.id]} onClick={() => onSelectNumber(num)} />
+              ))}
+            </div>
+            <button onClick={onStartNumberQuiz} style={{
+              width: "100%", padding: "12px 0", fontSize: 15, fontWeight: 600,
+              background: "#ff9f0a", color: "#fff", border: "none", borderRadius: 12,
+              boxShadow: "0 2px 8px rgba(255,159,10,0.2)"
+            }}>מבחן מספרים</button>
+          </div>
+        );
+      })()}
 
       <div style={{ marginTop: 20, marginBottom: 16 }}>
         <div style={{ fontSize: 15, fontWeight: 600, color: "#1c1c1e", marginBottom: 10 }}>
@@ -1325,7 +1583,9 @@ function FinalExamScreen({ onEnd, onFail }) {
 function App() {
   const [screen, setScreen] = useState("loading");
   const [letterStates, setLetterStates] = useState(null);
+  const [numberStates, setNumberStates] = useState(null);
   const [selectedLetter, setSelectedLetter] = useState(null);
+  const [selectedNumber, setSelectedNumber] = useState(null);
   const [challengeStart, setChallengeStart] = useState(null);
 
   useEffect(() => {
@@ -1340,18 +1600,27 @@ function App() {
     } else {
       setLetterStates(initState());
     }
+    if (saved?.numberStates) {
+      const mergedN = initNumberState();
+      Object.keys(saved.numberStates).forEach(id => {
+        if (mergedN[id]) mergedN[id] = { ...mergedN[id], ...saved.numberStates[id] };
+      });
+      setNumberStates(mergedN);
+    } else {
+      setNumberStates(initNumberState());
+    }
     setScreen("home");
   }, []);
 
   const saveTimer = useRef(null);
   useEffect(() => {
-    if (!letterStates) return;
+    if (!letterStates || !numberStates) return;
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
-      saveData({ letterStates, challengeStart, savedAt: new Date().toISOString() });
+      saveData({ letterStates, numberStates, challengeStart, savedAt: new Date().toISOString() });
     }, 300);
     return () => clearTimeout(saveTimer.current);
-  }, [letterStates, challengeStart]);
+  }, [letterStates, numberStates, challengeStart]);
 
   function handleQuizUpdate(id, correct) {
     setLetterStates(prev => {
@@ -1374,7 +1643,39 @@ function App() {
     }
   }
 
-  if (screen === "loading" || !letterStates) {
+  function handleNumberQuizUpdate(id, correct) {
+    setNumberStates(prev => {
+      const cur = prev[id];
+      const newCorrect = correct
+        ? cur.quizCorrect + 1
+        : Math.max(0, cur.quizCorrect - 3);
+      return {
+        ...prev,
+        [id]: {
+          ...cur,
+          quizCorrect: newCorrect,
+          quizTotal: cur.quizTotal + 1,
+          learned: newCorrect >= 10
+        }
+      };
+    });
+  }
+
+  function navigateLetter(dir) {
+    if (!selectedLetter) return;
+    const idx = LETTERS.findIndex(l => l.id === selectedLetter.id);
+    const next = idx + dir;
+    if (next >= 0 && next < LETTERS.length) setSelectedLetter(LETTERS[next]);
+  }
+
+  function navigateNumber(dir) {
+    if (!selectedNumber) return;
+    const idx = NUMBERS.findIndex(n => n.id === selectedNumber.id);
+    const next = idx + dir;
+    if (next >= 0 && next < NUMBERS.length) setSelectedNumber(NUMBERS[next]);
+  }
+
+  if (screen === "loading" || !letterStates || !numberStates) {
     return (
       <div style={{
         minHeight: "100vh", display: "flex", alignItems: "center",
@@ -1396,11 +1697,14 @@ function App() {
       {screen === "home" && (
         <HomeScreen
           letterStates={letterStates}
+          numberStates={numberStates}
           challengeStart={challengeStart}
           onSelectLetter={l => setSelectedLetter(l)}
+          onSelectNumber={n => setSelectedNumber(n)}
           onStartQuiz={() => setScreen("quiz")}
           onStartReading={() => setScreen("reading")}
           onStartFinal={() => setScreen("final")}
+          onStartNumberQuiz={() => setScreen("numquiz")}
         />
       )}
       {screen === "quiz" && (
@@ -1413,6 +1717,13 @@ function App() {
       )}
       {screen === "reading" && (
         <ReadingQuizScreen onEnd={() => setScreen("home")} />
+      )}
+      {screen === "numquiz" && (
+        <NumberQuizScreen
+          numberStates={numberStates}
+          onEnd={() => setScreen("home")}
+          onUpdate={handleNumberQuizUpdate}
+        />
       )}
       {screen === "final" && (
         <FinalExamScreen
@@ -1435,6 +1746,17 @@ function App() {
           letter={selectedLetter}
           state={letterStates[selectedLetter.id]}
           onClose={() => setSelectedLetter(null)}
+          onNext={() => navigateLetter(1)}
+          onPrev={() => navigateLetter(-1)}
+        />
+      )}
+      {selectedNumber && (
+        <NumberModal
+          num={selectedNumber}
+          state={numberStates[selectedNumber.id]}
+          onClose={() => setSelectedNumber(null)}
+          onNext={() => navigateNumber(1)}
+          onPrev={() => navigateNumber(-1)}
         />
       )}
     </div>
@@ -1445,7 +1767,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
 <script>
 (function(){
-  var APP_VER = 'abc_v25';
+  var APP_VER = 'abc_v27';
   if ('caches' in window && localStorage.getItem('abc_ver') !== APP_VER) {
     caches.keys().then(function(names) {
       return Promise.all(names.map(function(n){ return caches.delete(n); }));
