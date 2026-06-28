@@ -1156,7 +1156,7 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
           αβγ
         </h1>
         <p style={{ margin: "4px 0 0", color: "#8e8e93", fontSize: 14, fontWeight: 400 }}>
-          האלפבית היווני ב-10 ימים <span style={{ fontSize: 11 }}>(v28)</span>
+          האלפבית היווני ב-10 ימים <span style={{ fontSize: 11 }}>(v29)</span>
         </p>
       </div>
 
@@ -1230,9 +1230,9 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
 
               let bg, color, border;
               if (current) {
-                bg = met ? "#007aff" : "#ff9f0a";
-                color = "#fff";
-                border = "2.5px solid " + (met ? "#007aff" : "#ff9f0a");
+                bg = met ? "#007aff" : "#e5e5ea";
+                color = met ? "#fff" : "#1c1c1e";
+                border = "2.5px solid #ff9f0a";
               } else if (aheadMet) {
                 bg = "transparent";
                 color = "#007aff";
@@ -1258,7 +1258,7 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
                     display: "flex", alignItems: "center", justifyContent: "center",
                     fontSize: 10, fontWeight: 600,
                     boxSizing: "border-box",
-                    boxShadow: current ? `0 0 8px ${met ? "rgba(0,122,255,0.5)" : "rgba(255,159,10,0.5)"}` : "none"
+                    boxShadow: current ? "0 0 8px rgba(255,159,10,0.45)" : "none"
                   }}>
                     {(!isFuture && met && !current) ? "✓" : aheadMet ? "✓" : dayNum}
                   </div>
@@ -1851,7 +1851,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
 <script>
 (function(){
-  var APP_VER = 'abc_v28';
+  var APP_VER = 'abc_v29';
   if ('caches' in window && localStorage.getItem('abc_ver') !== APP_VER) {
     caches.keys().then(function(names) {
       return Promise.all(names.map(function(n){ return caches.delete(n); }));
