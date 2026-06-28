@@ -940,22 +940,29 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
               const current = dayNum === challengeDay;
               const isFuture = dayNum > challengeDay;
               const met = learnedCount >= dp.target;
+              const aheadMet = isFuture && met;
               const prevT = i > 0 ? DAY_PLAN[i - 1].target : 0;
               const dayNew = current ? Math.max(0, learnedCount - prevT) : met ? dp.daily : 0;
-              if (isFuture) return (
-                <div key={i} style={{
-                  display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
-                  width: 30
-                }}>
-                  <div style={{
-                    width: 24, height: 24, borderRadius: "50%",
-                    background: "#e5e5ea", color: "#aeaeb2",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 10, fontWeight: 600
-                  }}>{dayNum}</div>
-                  <div style={{ fontSize: 8, color: "#c7c7cc", fontWeight: 500 }}>{dp.daily}</div>
-                </div>
-              );
+
+              let bg, color, border;
+              if (current) {
+                bg = met ? "#007aff" : "#ff9f0a";
+                color = "#fff";
+                border = "2.5px solid " + (met ? "#007aff" : "#ff9f0a");
+              } else if (aheadMet) {
+                bg = "transparent";
+                color = "#007aff";
+                border = "2px dashed #007aff";
+              } else if (!isFuture && met) {
+                bg = "#007aff";
+                color = "#fff";
+                border = "none";
+              } else {
+                bg = "#e5e5ea";
+                color = "#aeaeb2";
+                border = "none";
+              }
+
               return (
                 <div key={i} style={{
                   display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
@@ -963,18 +970,18 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
                 }}>
                   <div style={{
                     width: 24, height: 24, borderRadius: "50%",
-                    background: met ? "#007aff" : current ? "#ff9f0a" : "#e5e5ea",
-                    color: met || current ? "#fff" : "#8e8e93",
+                    background: bg, color, border,
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 10, fontWeight: 600
+                    fontSize: 10, fontWeight: 600,
+                    boxSizing: "border-box"
                   }}>
-                    {met ? "✓" : dayNum}
+                    {(!isFuture && met && !current) ? "✓" : aheadMet ? "✓" : dayNum}
                   </div>
                   <div style={{
                     fontSize: 8, fontWeight: 600,
-                    color: met ? "#007aff" : current ? "#ff9f0a" : "#8e8e93"
+                    color: current ? (met ? "#007aff" : "#ff9f0a") : met ? "#007aff" : isFuture ? "#c7c7cc" : "#8e8e93"
                   }}>
-                    {Math.min(dayNew, dp.daily)}/{dp.daily}
+                    {isFuture && !aheadMet ? dp.daily : `${Math.min(dayNew, dp.daily)}/${dp.daily}`}
                   </div>
                 </div>
               );
