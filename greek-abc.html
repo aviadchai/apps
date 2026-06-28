@@ -177,6 +177,14 @@ const DAY_PLAN = [
   {day:10,daily:1,target:24}
 ];
 
+const NUM_DAY_PLAN = [
+  {day:1,daily:3,target:3},
+  {day:2,daily:3,target:6},
+  {day:3,daily:4,target:10},
+  {day:4,daily:3,target:13},
+  {day:5,daily:2,target:15},
+];
+
 const STORAGE_KEY = "greek_abc_v2";
 
 function loadData() {
@@ -916,6 +924,7 @@ function NumberCell({ num, state, onClick }) {
     }}>
       <div style={{ fontSize: 16, fontWeight: 700, color: learned ? "#fff" : "#1c1c1e" }}>{num.val}</div>
       <div style={{ fontSize: 10, color: learned ? "rgba(255,255,255,0.85)" : "#8e8e93", marginTop: 1, direction: "ltr" }}>{num.gr}</div>
+      <div style={{ fontSize: 8, color: learned ? "rgba(255,255,255,0.6)" : "#aeaeb2", direction: "ltr" }}>{num.pron}</div>
       {learned && <div style={{ position: "absolute", top: 3, left: 3, fontSize: 9, color: "#fff", fontWeight: 600 }}>✓</div>}
       {!learned && (state?.quizCorrect > 0) && (
         <div style={{ position: "absolute", bottom: 5, left: 4, right: 4, height: 2.5, borderRadius: 2, background: "#e5e5ea", overflow: "hidden" }}>
@@ -1018,18 +1027,20 @@ function NumberQuizScreen({ numberStates, onEnd, onUpdate }) {
       if (!used.has(n.id)) { picked.push(n); used.add(n.id); }
       if (picked.length >= 10) break;
     }
+    const types = ["identify", "sound", "reverse"];
     const qs = picked.map((num, i) => {
+      const type = types[i % 3];
       const others = shuffle(NUMBERS.filter(n => n.id !== num.id)).slice(0, 3);
       const options = shuffle([num, ...others]);
-      if (i % 3 === 0) {
-        return { num, options, question: `מה המספר ${num.gr} ?`, getLabel: n => n.he, correctId: num.id, showSpeak: true };
-      } else if (i % 3 === 1) {
-        return { num, options, question: `איך אומרים ${num.he} ביוונית?`, getLabel: n => n.gr, correctId: num.id, ltr: true };
+      if (type === "identify") {
+        return { num, options, type, question: `מה המספר הזה?`, getLabel: n => `${n.he} (${n.val})`, correctId: num.id, showBig: true };
+      } else if (type === "sound") {
+        return { num, options, type, question: `איך אומרים ${num.he} ביוונית?`, getLabel: n => `${n.gr} (${n.pron})`, correctId: num.id, ltr: true };
       } else {
-        return { num, options, question: `מה המספר ${num.val} ביוונית?`, getLabel: n => n.gr, correctId: num.id, ltr: true };
+        return { num, options, type, question: `איפה המספר ${num.he} ?`, getLabel: n => `${n.val}`, correctId: num.id, bigOptions: true };
       }
     });
-    setQuestions(qs);
+    setQuestions(shuffle(qs));
   }, []);
 
   if (questions.length === 0) return null;
@@ -1078,17 +1089,24 @@ function NumberQuizScreen({ numberStates, onEnd, onUpdate }) {
       <div style={{ background: "#e5e5ea", borderRadius: 99, height: 6, marginBottom: 24, overflow: "hidden" }}>
         <div style={{ width: ((qi + 1) / questions.length * 100) + "%", height: "100%", background: "#007aff", borderRadius: 99, transition: "width 0.4s" }} />
       </div>
-      <div style={{ textAlign: "center", marginBottom: 20 }}>
-        <div style={{ fontSize: 18, fontWeight: 600, color: "#1c1c1e", marginBottom: 8 }}>{q.question}</div>
-        {q.showSpeak && (
+      {q.showBig && (
+        <div style={{ textAlign: "center", marginBottom: 16 }}>
+          <div style={{ fontSize: 48, fontWeight: 700, color: "#1c1c1e", lineHeight: 1, marginBottom: 4, direction: "ltr", cursor: "pointer" }}
+            onClick={() => speak(q.num.gr)}>
+            {q.num.gr}
+          </div>
+          <div style={{ fontSize: 16, color: "#8e8e93", direction: "ltr" }}>{q.num.pron}</div>
           <button onClick={() => speak(q.num.gr)} style={{
-            padding: "6px 16px", borderRadius: 99,
+            marginTop: 8, padding: "6px 16px", borderRadius: 99,
             background: "#e8f4fd", border: "none",
             color: "#007aff", fontSize: 13, fontWeight: 500, cursor: "pointer"
           }}>שמע</button>
-        )}
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
+        </div>
+      )}
+
+      <div style={{ fontSize: 18, fontWeight: 600, color: "#1c1c1e", textAlign: "center", marginBottom: 20 }}>{q.question}</div>
+
+      <div style={{ display: "grid", gridTemplateColumns: q.bigOptions ? "1fr 1fr" : "1fr", gap: 10, marginBottom: 20 }}>
         {q.options.map(opt => {
           const isThis = selected === opt.id;
           const isRight = opt.id === q.correctId;
@@ -1099,7 +1117,8 @@ function NumberQuizScreen({ numberStates, onEnd, onUpdate }) {
           }
           return (
             <button key={opt.id} onClick={() => handleSelect(opt.id)} style={{
-              padding: "14px 10px", fontSize: 18, fontWeight: 600,
+              padding: q.bigOptions ? "18px 10px" : "14px 18px",
+              fontSize: q.bigOptions ? 32 : 16, fontWeight: 600,
               background: bg, color, border: `1.5px solid ${border}`,
               borderRadius: 14, textAlign: "center", transition: "all 0.15s",
               direction: q.ltr ? "ltr" : "rtl",
@@ -1118,7 +1137,7 @@ function NumberQuizScreen({ numberStates, onEnd, onUpdate }) {
             textAlign: "center", fontSize: 14, fontWeight: 600,
             color: isCorrect ? "#007aff" : "#cc7a00"
           }}>
-            {isCorrect ? `נכון! ${q.num.gr} = ${q.num.he}` : `לא — ${q.num.gr} = ${q.num.he} (${q.num.pron})`}
+            {isCorrect ? `נכון! ${q.num.gr} (${q.num.pron}) = ${q.num.he}` : `לא — ${q.num.gr} (${q.num.pron}) = ${q.num.he}`}
           </div>
           <button onClick={() => { setSelected(null); setQi(qi + 1); }} style={{
             width: "100%", padding: "14px 0", fontSize: 16, fontWeight: 700,
@@ -1130,7 +1149,7 @@ function NumberQuizScreen({ numberStates, onEnd, onUpdate }) {
   );
 }
 
-function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading, onStartFinal, challengeStart, numberStates, onSelectNumber, onStartNumberQuiz }) {
+function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading, onStartFinal, challengeStart, numberStates, onSelectNumber, onStartNumberQuiz, numChallengeStart }) {
   const [tab, setTab] = useState("letters");
   const learnedCount = LETTERS.filter(l => letterStates[l.id]?.learned).length;
   const learnedEasy = LETTERS.filter(l => l.difficulty === 1 && letterStates[l.id]?.learned).length;
@@ -1156,7 +1175,7 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
           αβγ
         </h1>
         <p style={{ margin: "4px 0 0", color: "#8e8e93", fontSize: 14, fontWeight: 400 }}>
-          האלפבית היווני ב-10 ימים <span style={{ fontSize: 11 }}>(v29)</span>
+          האלפבית היווני ב-10 ימים <span style={{ fontSize: 11 }}>(v30)</span>
         </p>
       </div>
 
@@ -1402,6 +1421,108 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
       </>)}
 
       {tab === "numbers" && (<>
+      {(() => {
+        const numDay = numChallengeStart ? Math.min(5, daysSince(numChallengeStart) + 1) : 0;
+        const numTodayPlan = numDay > 0 ? NUM_DAY_PLAN[numDay - 1] : null;
+        const numTodayTarget = numTodayPlan ? numTodayPlan.target : 0;
+        const numPrevTarget = numDay > 1 ? NUM_DAY_PLAN[numDay - 2].target : 0;
+        const numTodayNew = Math.max(0, numLearned - numPrevTarget);
+        const numTodayRemaining = Math.max(0, numTodayTarget - numLearned);
+        if (numDay === 0) return null;
+        return (
+          <div style={{
+            background: "#fff", borderRadius: 14, padding: 14,
+            marginBottom: 14, boxShadow: "0 1px 4px rgba(0,0,0,0.06)"
+          }}>
+            <div style={{
+              display: "flex", justifyContent: "space-between",
+              fontSize: 14, fontWeight: 600, color: "#1c1c1e", marginBottom: 8
+            }}>
+              <span>יום {numDay} מתוך 5</span>
+              <span style={{ color: "#8e8e93" }}>{numLearned}/{NUMBERS.length}</span>
+            </div>
+            {numTodayRemaining > 0 ? (
+              <div style={{
+                fontSize: 13, color: "#636366", fontWeight: 500,
+                marginBottom: 8, textAlign: "center",
+                padding: "6px 10px", borderRadius: 8, background: "#f2f2f7"
+              }}>
+                {numTodayNew}/{numTodayPlan.daily} מספרים חדשים היום · נשאר: {numTodayRemaining}
+              </div>
+            ) : numTodayPlan && (
+              <div style={{
+                fontSize: 13, color: "#007aff", fontWeight: 600,
+                marginBottom: 8, textAlign: "center",
+                padding: "6px 10px", borderRadius: 8, background: "#e8f4fd"
+              }}>
+                סיימת את המשימה של היום
+              </div>
+            )}
+            <div style={{ background: "#e5e5ea", borderRadius: 99, height: 6, overflow: "hidden" }}>
+              <div style={{
+                width: (numLearned / NUMBERS.length * 100) + "%",
+                height: "100%", background: "#ff9f0a", borderRadius: 99,
+                transition: "width 0.6s"
+              }} />
+            </div>
+            <div style={{
+              display: "flex", gap: 6, marginTop: 10, justifyContent: "center"
+            }}>
+              {NUM_DAY_PLAN.map((dp, i) => {
+                const dayNum = i + 1;
+                const current = dayNum === numDay;
+                const isFuture = dayNum > numDay;
+                const met = numLearned >= dp.target;
+                const aheadMet = isFuture && met;
+                const prevT = i > 0 ? NUM_DAY_PLAN[i - 1].target : 0;
+                const dayNew = current ? Math.max(0, numLearned - prevT) : met ? dp.daily : 0;
+
+                let bg, color, border;
+                if (current) {
+                  bg = met ? "#ff9f0a" : "#e5e5ea";
+                  color = met ? "#fff" : "#1c1c1e";
+                  border = "2.5px solid #ff9f0a";
+                } else if (aheadMet) {
+                  bg = "transparent";
+                  color = "#ff9f0a";
+                  border = "2px dashed #ff9f0a";
+                } else if (!isFuture && met) {
+                  bg = "#ff9f0a";
+                  color = "#fff";
+                  border = "none";
+                } else {
+                  bg = "#e5e5ea";
+                  color = "#aeaeb2";
+                  border = "none";
+                }
+
+                return (
+                  <div key={i} style={{
+                    display: "flex", flexDirection: "column", alignItems: "center", gap: 2, width: 40
+                  }}>
+                    <div style={{
+                      width: 28, height: 28, borderRadius: "50%",
+                      background: bg, color, border,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: 11, fontWeight: 600, boxSizing: "border-box",
+                      boxShadow: current ? "0 0 8px rgba(255,159,10,0.45)" : "none"
+                    }}>
+                      {(!isFuture && met && !current) ? "✓" : aheadMet ? "✓" : dayNum}
+                    </div>
+                    <div style={{
+                      fontSize: 8, fontWeight: 600,
+                      color: current ? "#ff9f0a" : met ? "#ff9f0a" : isFuture ? "#c7c7cc" : "#8e8e93"
+                    }}>
+                      {isFuture && !aheadMet ? dp.daily : `${Math.min(dayNew, dp.daily)}/${dp.daily}`}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
+
       <div style={{
         display: "grid", gridTemplateColumns: "repeat(5, 1fr)",
         gap: 6, marginBottom: 14
@@ -1671,6 +1792,7 @@ function App() {
   const [selectedLetter, setSelectedLetter] = useState(null);
   const [selectedNumber, setSelectedNumber] = useState(null);
   const [challengeStart, setChallengeStart] = useState(null);
+  const [numChallengeStart, setNumChallengeStart] = useState(null);
 
   useEffect(() => {
     const saved = loadData();
@@ -1693,6 +1815,7 @@ function App() {
     } else {
       setNumberStates(initNumberState());
     }
+    setNumChallengeStart(saved?.numChallengeStart || null);
     setScreen("home");
   }, []);
 
@@ -1701,10 +1824,10 @@ function App() {
     if (!letterStates || !numberStates) return;
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
-      saveData({ letterStates, numberStates, challengeStart, savedAt: new Date().toISOString() });
+      saveData({ letterStates, numberStates, challengeStart, numChallengeStart, savedAt: new Date().toISOString() });
     }, 300);
     return () => clearTimeout(saveTimer.current);
-  }, [letterStates, numberStates, challengeStart]);
+  }, [letterStates, numberStates, challengeStart, numChallengeStart]);
 
   function handleQuizUpdate(id, correct) {
     setLetterStates(prev => {
@@ -1743,6 +1866,9 @@ function App() {
         }
       };
     });
+    if (!numChallengeStart) {
+      setNumChallengeStart(new Date().toISOString());
+    }
   }
 
   function navigateLetter(dir) {
@@ -1789,6 +1915,7 @@ function App() {
           onStartReading={() => setScreen("reading")}
           onStartFinal={() => setScreen("final")}
           onStartNumberQuiz={() => setScreen("numquiz")}
+          numChallengeStart={numChallengeStart}
         />
       )}
       {screen === "quiz" && (
@@ -1851,7 +1978,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
 <script>
 (function(){
-  var APP_VER = 'abc_v29';
+  var APP_VER = 'abc_v30';
   if ('caches' in window && localStorage.getItem('abc_ver') !== APP_VER) {
     caches.keys().then(function(names) {
       return Promise.all(names.map(function(n){ return caches.delete(n); }));
