@@ -784,6 +784,15 @@ function PracticeScreen({ wordState, mode, onEnd, onUpdateWord }) {
               );
             })}
           </div>
+          {!result && (
+            <button onClick={handleReveal} style={{
+              width: "100%", padding: "10px 0", fontSize: 14, fontWeight: 600,
+              background: "#fff", color: "#6b7280", marginTop: 10,
+              border: "2px solid #e5e7eb", borderRadius: 12, cursor: "pointer"
+            }}>
+              לא יודע — הצג תשובה 👁️
+            </button>
+          )}
         </div>
       ) : (
         <div style={{ marginBottom: 16 }}>
