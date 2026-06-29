@@ -376,7 +376,7 @@ function StarRating({ score }) {
   );
 }
 
-function HomeScreen({ wordState, onStart, onRoadmap, startedAt }) {
+function HomeScreen({ wordState, onStart, onRoadmap, onShowLearned, startedAt }) {
   const [showParagraph, setShowParagraph] = useState(false);
   const total = ALL_WORDS.length;
   const learned = ALL_WORDS.filter(w => (wordState[w.id]?.streak || 0) >= 5).length;
@@ -442,18 +442,21 @@ function HomeScreen({ wordState, onStart, onRoadmap, startedAt }) {
 
       <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
         {[
-          { label: "נלמדו", value: learned, color: "#007aff" },
+          { label: "נלמדו", value: learned, color: "#007aff", action: learned > 0 ? onShowLearned : null },
           { label: "שולטים", value: mastered, color: "#007aff" },
           { label: "קצב יומי", value: dailyRate > 0 ? (Math.round(dailyRate * 10) / 10) : "—", color: "#007aff" },
           { label: "חלשות", value: weak, color: "#ff9f0a" },
         ].map(s => (
-          <div key={s.label} style={{
+          <div key={s.label} onClick={s.action || undefined} style={{
             flex: 1, textAlign: "center", padding: "12px 4px",
             borderRadius: 14, background: "#fff",
-            boxShadow: "0 1px 4px rgba(0,0,0,0.06)"
+            boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+            cursor: s.action ? "pointer" : "default"
           }}>
             <div style={{ fontSize: 24, fontWeight: 700, color: s.color }}>{s.value}</div>
-            <div style={{ fontSize: 11, color: "#8e8e93", fontWeight: 500 }}>{s.label}</div>
+            <div style={{ fontSize: 11, color: "#8e8e93", fontWeight: 500 }}>
+              {s.label}{s.action ? " ▸" : ""}
+            </div>
           </div>
         ))}
       </div>
@@ -660,6 +663,7 @@ function HomeScreen({ wordState, onStart, onRoadmap, startedAt }) {
 }
 
 function RoadmapScreen({ wordState, onBack }) {
+  const [expandedLevel, setExpandedLevel] = useState(null);
   const levels = Array.from({ length: 10 }, (_, i) => i + 1);
 
   return (
@@ -678,42 +682,84 @@ function RoadmapScreen({ wordState, onBack }) {
 
       {levels.map(lvl => {
         const words = ALL_WORDS.filter(w => w.level === lvl);
-        const attempted = words.filter(w => (wordState[w.id]?.streak || 0) >= 5).length;
+        const learnedWords = words.filter(w => (wordState[w.id]?.streak || 0) >= 5);
+        const attempted = learnedWords.length;
         const mastered = words.filter(w => wordState[w.id]?.score >= 8).length;
         const pct = Math.round((mastered / 50) * 100);
         const isActive = attempted > 0;
         const done = mastered === 50;
+        const isExpanded = expandedLevel === lvl;
 
         return (
           <div key={lvl} style={{
-            display: "flex", gap: 14, alignItems: "flex-start",
             marginBottom: 10, opacity: isActive ? 1 : 0.5,
-            background: "#fff", borderRadius: 14, padding: "12px 14px",
+            background: "#fff", borderRadius: 14,
             border: "none",
-            boxShadow: "0 1px 4px rgba(0,0,0,0.06)"
+            boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+            overflow: "hidden"
           }}>
-            <div style={{
-              minWidth: 36, height: 36, borderRadius: "50%",
-              background: done ? "#007aff" : isActive ? "#ff9f0a" : "#e5e5ea",
-              color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
-              fontWeight: 700, fontSize: 14, flexShrink: 0
+            <div onClick={() => attempted > 0 && setExpandedLevel(isExpanded ? null : lvl)} style={{
+              display: "flex", gap: 14, alignItems: "flex-start",
+              padding: "12px 14px",
+              cursor: attempted > 0 ? "pointer" : "default"
             }}>
-              {done ? "✓" : lvl}
-            </div>
-            <div style={{ flex: 1 }}>
               <div style={{
-                display: "flex", justifyContent: "space-between",
-                fontSize: 14, fontWeight: 600, color: "#1c1c1e", marginBottom: 4
+                minWidth: 36, height: 36, borderRadius: "50%",
+                background: done ? "#007aff" : isActive ? "#ff9f0a" : "#e5e5ea",
+                color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
+                fontWeight: 700, fontSize: 14, flexShrink: 0
               }}>
-                <span>{LEVEL_NAMES[lvl]}</span>
-                <span style={{ color: "#8e8e93", fontSize: 12 }}>{mastered}/50</span>
+                {done ? "✓" : lvl}
               </div>
-              <ProgressBar value={mastered} max={50}
-                color={done ? "#007aff" : "#ff9f0a"} />
-              <div style={{ fontSize: 11, color: "#8e8e93", marginTop: 3 }}>
-                {pct}% שולטים · {attempted} נלמדו
+              <div style={{ flex: 1 }}>
+                <div style={{
+                  display: "flex", justifyContent: "space-between",
+                  fontSize: 14, fontWeight: 600, color: "#1c1c1e", marginBottom: 4
+                }}>
+                  <span>{LEVEL_NAMES[lvl]}</span>
+                  <span style={{ color: "#8e8e93", fontSize: 12 }}>
+                    {mastered}/50
+                    {attempted > 0 && <span style={{ marginRight: 6 }}>{isExpanded ? "▲" : "▼"}</span>}
+                  </span>
+                </div>
+                <ProgressBar value={mastered} max={50}
+                  color={done ? "#007aff" : "#ff9f0a"} />
+                <div style={{ fontSize: 11, color: "#8e8e93", marginTop: 3 }}>
+                  {pct}% שולטים · {attempted} נלמדו
+                </div>
               </div>
             </div>
+            {isExpanded && (
+              <div style={{
+                padding: "0 14px 14px",
+                borderTop: "1px solid #f2f2f7",
+                animation: "fadeIn 0.2s ease"
+              }}>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, paddingTop: 10 }}>
+                  {words.map(w => {
+                    const streak = wordState[w.id]?.streak || 0;
+                    const isLearned = streak >= 5;
+                    const isMastered = wordState[w.id]?.score >= 8;
+                    return (
+                      <div key={w.id} style={{
+                        padding: "6px 10px", borderRadius: 8,
+                        background: isMastered ? "#e8f4fd" : isLearned ? "#f0f9e8" : "#f2f2f7",
+                        border: isMastered ? "1px solid #007aff30" : isLearned ? "1px solid #34c75930" : "1px solid #e5e5ea",
+                        fontSize: 13, direction: "ltr", textAlign: "left"
+                      }}>
+                        <span style={{ fontWeight: 600, color: isLearned ? "#1c1c1e" : "#aeaeb2" }}>{w.greek}</span>
+                        <span style={{ color: "#8e8e93", fontSize: 11, marginLeft: 4 }}>{w.hebrew}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div style={{ display: "flex", gap: 12, marginTop: 10, justifyContent: "center", fontSize: 11, color: "#8e8e93" }}>
+                  <span><span style={{ display: "inline-block", width: 8, height: 8, borderRadius: 2, background: "#e8f4fd", border: "1px solid #007aff30", marginLeft: 4 }} />שולט</span>
+                  <span><span style={{ display: "inline-block", width: 8, height: 8, borderRadius: 2, background: "#f0f9e8", border: "1px solid #34c75930", marginLeft: 4 }} />נלמד</span>
+                  <span><span style={{ display: "inline-block", width: 8, height: 8, borderRadius: 2, background: "#f2f2f7", border: "1px solid #e5e5ea", marginLeft: 4 }} />טרם נלמד</span>
+                </div>
+              </div>
+            )}
           </div>
         );
       })}
@@ -1064,6 +1110,68 @@ function PracticeScreen({ wordState, mode, onEnd, onUpdateWord }) {
   );
 }
 
+function LearnedScreen({ wordState, onBack, onResetWord }) {
+  const learnedWords = ALL_WORDS.filter(w => (wordState[w.id]?.streak || 0) >= 5);
+  const grouped = {};
+  learnedWords.forEach(w => {
+    if (!grouped[w.level]) grouped[w.level] = [];
+    grouped[w.level].push(w);
+  });
+
+  return (
+    <div style={{ padding: "24px 20px", maxWidth: 480, margin: "0 auto", animation: "fadeIn 0.4s ease" }}>
+      <div style={{ display: "flex", alignItems: "center", marginBottom: 20, gap: 12 }}>
+        <button onClick={onBack} style={{
+          background: "#fff", border: "none", borderRadius: 10,
+          fontSize: 18, cursor: "pointer", width: 36, height: 36,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          boxShadow: "0 1px 4px rgba(0,0,0,0.06)", color: "#007aff"
+        }}>←</button>
+        <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: "#1c1c1e" }}>
+          מילים שנלמדו ({learnedWords.length})
+        </h2>
+      </div>
+
+      {learnedWords.length === 0 ? (
+        <div style={{ textAlign: "center", padding: 40, color: "#8e8e93", fontSize: 15 }}>
+          עוד לא למדת מילים — התחל לתרגל!
+        </div>
+      ) : Object.keys(grouped).sort((a, b) => a - b).map(lvl => (
+        <div key={lvl} style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: "#8e8e93", marginBottom: 8 }}>
+            {LEVEL_NAMES[lvl]} ({grouped[lvl].length})
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {grouped[lvl].map(w => {
+              const isMastered = wordState[w.id]?.score >= 8;
+              return (
+                <div key={w.id} style={{
+                  display: "flex", justifyContent: "space-between", alignItems: "center",
+                  background: "#fff", borderRadius: 12, padding: "10px 14px",
+                  boxShadow: "0 1px 4px rgba(0,0,0,0.06)"
+                }}>
+                  <div style={{ direction: "ltr", textAlign: "left" }}>
+                    <span style={{ fontSize: 16, fontWeight: 600, color: "#1c1c1e" }}>{w.greek}</span>
+                    <span style={{ fontSize: 13, color: "#8e8e93", marginLeft: 8 }}>{w.hebrew}</span>
+                    {isMastered && <span style={{ fontSize: 10, color: "#007aff", marginRight: 6 }}> שולט</span>}
+                  </div>
+                  <button onClick={() => onResetWord(w.id)} style={{
+                    background: "#f2f2f7", border: "none", borderRadius: 8,
+                    padding: "6px 10px", fontSize: 11, fontWeight: 600,
+                    color: "#ff9f0a", cursor: "pointer"
+                  }}>
+                    החזר לתרגול
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function App() {
   const [screen, setScreen] = useState("loading");
   const [wordState, setWordState] = useState(null);
@@ -1185,6 +1293,7 @@ function App() {
           startedAt={startedAt}
           onStart={(mode) => { setPracticeMode(mode); setScreen("practice"); }}
           onRoadmap={() => setScreen("roadmap")}
+          onShowLearned={() => setScreen("learned")}
         />
       )}
       {screen === "practice" && (
@@ -1199,6 +1308,13 @@ function App() {
         <RoadmapScreen
           wordState={wordState}
           onBack={() => setScreen("home")}
+        />
+      )}
+      {screen === "learned" && (
+        <LearnedScreen
+          wordState={wordState}
+          onBack={() => setScreen("home")}
+          onResetWord={(id) => handleUpdateWord(id, { streak: 0, score: 0 })}
         />
       )}
     </div>
