@@ -1158,9 +1158,23 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
   const unlockedLevel = getUnlockedLevel(letterStates);
   const numLearned = NUMBERS.filter(n => numberStates[n.id]?.learned).length;
 
+  const challengeDays = challengeStart ? daysSince(challengeStart) + 1 : 0;
   const challengeDay = challengeStart
-    ? Math.min(10, daysSince(challengeStart) + 1)
+    ? Math.min(10, challengeDays)
     : 0;
+  const letterRate = challengeDays > 0 ? Math.round(learnedCount / challengeDays * 10) / 10 : 0;
+  let letterPrediction = "";
+  if (learnedCount === 0 && challengeDay > 0) {
+    letterPrediction = "התחל ללמוד — הקצב שלך יחושב אוטומטית";
+  } else if (learnedCount >= 24) {
+    letterPrediction = letterRate >= 3
+      ? `קצב מרשים! ${letterRate} אותיות ליום — את/ה קורא/ת יוונית!`
+      : "את/ה מכיר/ה את כל האותיות — את/ה קורא/ת יוונית!";
+  } else if (letterRate > 0) {
+    const daysLeft = Math.ceil((24 - learnedCount) / letterRate);
+    const rateNote = letterRate >= 4 ? "קצב מהיר! " : letterRate >= 2.5 ? "קצב יפה! " : "";
+    letterPrediction = `${rateNote}${letterRate} ליום — בעוד ${daysLeft} ימים תקרא יוונית`;
+  }
   const todayPlan = challengeDay > 0 ? DAY_PLAN[challengeDay - 1] : null;
   const todayTarget = todayPlan ? todayPlan.target : 0;
   const todayDaily = todayPlan ? todayPlan.daily : 0;
@@ -1290,6 +1304,17 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {letterPrediction && (
+        <div style={{
+          background: "#fff", borderRadius: 14, padding: "12px 16px", marginBottom: 14,
+          boxShadow: "0 1px 4px rgba(0,0,0,0.06)", textAlign: "center"
+        }}>
+          <div style={{ fontSize: 13, color: "#1c1c1e", fontWeight: 500 }}>
+            {letterPrediction}
           </div>
         </div>
       )}
