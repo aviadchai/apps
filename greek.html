@@ -298,9 +298,14 @@ function HomeScreen({ wordState, onStart, onRoadmap, startedAt }) {
   }).length;
   const todayDone = todayLearned >= DAILY_GOAL;
 
-  const daysActive = startedAt
-    ? Math.max(1, Math.ceil((Date.now() - new Date(startedAt).getTime()) / 86400000))
-    : 1;
+  const daysActive = (() => {
+    if (!startedAt) return 1;
+    const s = new Date(startedAt);
+    const t = new Date();
+    const sd = new Date(s.getFullYear(), s.getMonth(), s.getDate());
+    const td = new Date(t.getFullYear(), t.getMonth(), t.getDate());
+    return Math.max(1, Math.floor((td - sd) / 86400000) + 1);
+  })();
   const dailyRate = learned > 0 ? learned / daysActive : 0;
   const remaining = total - learned;
   const daysToGo = dailyRate > 0 ? Math.ceil(remaining / dailyRate) : 0;
