@@ -1068,7 +1068,13 @@ function NumberQuizScreen({ numberStates, onEnd, onUpdate }) {
     const types = ["identify", "sound", "reverse"];
     const qs = picked.map((num, i) => {
       const type = types[i % 3];
-      const others = shuffle(NUMBERS.filter(n => n.id !== num.id)).slice(0, 3);
+      const numVal = parseInt(num.val);
+      const similar = NUMBERS.filter(n => n.id !== num.id && (
+        numVal <= 10 ? parseInt(n.val) <= 10 : parseInt(n.val) > 10
+      ));
+      const fallback = NUMBERS.filter(n => n.id !== num.id);
+      const pool3 = similar.length >= 3 ? similar : fallback;
+      const others = shuffle(pool3).slice(0, 3);
       const options = shuffle([num, ...others]);
       if (type === "identify") {
         return { num, options, type, question: `מה המספר הזה?`, getLabel: n => `${n.he} (${n.val})`, correctId: num.id, showBig: true };
