@@ -307,25 +307,26 @@ function HomeScreen({ wordState, onStart, onRoadmap, startedAt }) {
     return Math.max(1, Math.floor((td - sd) / 86400000) + 1);
   })();
   const dailyRate = learned > 0 ? learned / daysActive : 0;
-  const remaining = total - learned;
-  const daysToGo = dailyRate > 0 ? Math.ceil(remaining / dailyRate) : 0;
 
-  const rateStr = dailyRate >= 1
-    ? `${Math.round(dailyRate * 10) / 10} מילים ביום`
-    : dailyRate > 0
-      ? `${Math.round(dailyRate * 7 * 10) / 10} מילים בשבוע`
-      : "";
+  const rateNum = Math.round(dailyRate * 10) / 10;
+  const milestones = [
+    { target: 50, label: "תדע לדבר קצת" },
+    { target: 200, label: "תדבר המון" },
+    { target: 500, label: "תדבר שוטף" },
+  ];
+  const nextMilestone = milestones.find(m => learned < m.target);
 
   let prediction = "";
-  if (learned === 0) prediction = "התחל ללמוד — הקצב שלך יחושב אוטומטית";
-  else if (remaining === 0) prediction = "את/ה יודע/ת 500 מילים — מדבר/ת יוונית!";
-  else if (daysToGo <= 30) prediction = `בקצב של ${rateStr} — בעוד ${daysToGo} ימים תדבר יוונית`;
-  else if (daysToGo <= 365) {
-    const months = Math.round(daysToGo / 30);
-    prediction = `בקצב של ${rateStr} — בעוד ${months > 1 ? months + " חודשים" : "חודש"} תדבר יוונית`;
-  } else {
-    const months = Math.round(daysToGo / 30);
-    prediction = `בקצב של ${rateStr} — בעוד ${months} חודשים תדבר יוונית`;
+  if (learned === 0) {
+    prediction = "התחל ללמוד — הקצב שלך יחושב אוטומטית";
+  } else if (!nextMilestone) {
+    prediction = "את/ה יודע/ת 500 מילים — מדבר/ת יוונית שוטף!";
+  } else if (dailyRate > 0) {
+    const daysLeft = Math.ceil((nextMilestone.target - learned) / dailyRate);
+    const timeStr = daysLeft <= 30
+      ? `${daysLeft} ימים`
+      : `${Math.round(daysLeft / 30)} חודשים`;
+    prediction = `בקצב של ${rateNum} ליום — בעוד ${timeStr} ${nextMilestone.label}`;
   }
 
   return (
@@ -408,11 +409,6 @@ function HomeScreen({ wordState, onStart, onRoadmap, startedAt }) {
         <div style={{ fontSize: 13, color: "#1c1c1e", fontWeight: 500 }}>
           {prediction}
         </div>
-        {learned > 0 && (
-          <div style={{ fontSize: 11, color: "#8e8e93", marginTop: 4 }}>
-            יום {daysActive} · {(learned / daysActive).toFixed(1)} מילים ליום בממוצע
-          </div>
-        )}
       </div>
 
       {(() => {
@@ -926,7 +922,12 @@ function App() {
         Object.keys(saved.wordState).forEach(id => {
           if (merged[id] !== undefined) merged[id] = { ...merged[id], ...saved.wordState[id] };
         });
-        return { state: merged, startedAt: saved.startedAt || null };
+        let sa = saved.startedAt || null;
+        if (!sa) {
+          const dates = Object.values(merged).map(s => s.lastSeen).filter(Boolean);
+          if (dates.length > 0) sa = dates.sort()[0];
+        }
+        return { state: merged, startedAt: sa };
       }
       return null;
     }
