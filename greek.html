@@ -310,9 +310,10 @@ function HomeScreen({ wordState, onStart, onRoadmap, startedAt }) {
 
   const rateNum = Math.round(dailyRate * 10) / 10;
   const milestones = [
-    { target: 50, label: "תדע לדבר קצת" },
-    { target: 200, label: "תדבר המון" },
-    { target: 500, label: "תדבר שוטף" },
+    { target: 50, label: "תבין שלטים ותפריטים" },
+    { target: 150, label: "תסתדר בשיחה בסיסית" },
+    { target: 300, label: "תנהל שיחות יומיומיות" },
+    { target: 500, label: "תבין ותדבר ברמה טובה" },
   ];
   const nextMilestone = milestones.find(m => learned < m.target);
 
@@ -320,7 +321,7 @@ function HomeScreen({ wordState, onStart, onRoadmap, startedAt }) {
   if (learned === 0) {
     prediction = "התחל ללמוד — הקצב שלך יחושב אוטומטית";
   } else if (!nextMilestone) {
-    prediction = "את/ה יודע/ת 500 מילים — מדבר/ת יוונית שוטף!";
+    prediction = `${learned} מילים — את/ה מבין/ה ומדבר/ת יוונית ברמה טובה!`;
   } else if (dailyRate > 0) {
     const daysLeft = Math.ceil((nextMilestone.target - learned) / dailyRate);
     const timeStr = daysLeft <= 30
