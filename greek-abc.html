@@ -21,6 +21,7 @@ body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bot
 button{font-family:inherit;-webkit-appearance:none;cursor:pointer;transition:transform 0.12s ease,opacity 0.12s ease;}
 button:active{transform:scale(0.97);opacity:0.85;}
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 @keyframes slideInRight{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
 @keyframes slideInLeft{from{opacity:0;transform:translateX(-40px)}to{opacity:1;transform:translateX(0)}}
 </style>
@@ -215,6 +216,43 @@ const LETTER_PRONUNCIATIONS = {
   "Ρο":"ρο","Σίγμα":"σίγμα","Ταυ":"ταυ","Ύψιλον":"ύψιλον",
   "Φι":"φι","Χι":"χι","Ψι":"ψι","Ωμέγα":"ωμέγα"
 };
+function buildAbcParagraph(learnedLetters) {
+  if (learnedLetters.length < 3) return null;
+  const ids = new Set(learnedLetters.map(l => l.id));
+  const allExamples = LETTERS.filter(l => ids.has(l.id)).map(l => ({
+    word: l.example, he: l.exampleHe, letter: l.lower, name: l.nameHe
+  }));
+  if (allExamples.length < 2) return null;
+
+  const templates = [
+    { minLetters: 3,
+      build: (ex) => ({
+        gr: ex.slice(0, 3).map(e => e.word).join(", "),
+        he: `${ex.slice(0, 3).map(e => `${e.word} (${e.he})`).join(" · ")}`,
+        note: `מילים שמתחילות באותיות שלמדת: ${ex.slice(0, 3).map(e => e.letter).join(", ")}`
+      })},
+    { minLetters: 5,
+      build: (ex) => ({
+        gr: ex.slice(0, 5).map(e => e.word).join(", "),
+        he: `${ex.slice(0, 5).map(e => `${e.word} (${e.he})`).join(" · ")}`,
+        note: `כבר מכיר/ה ${ex.length} אותיות — כל מילה מתחילה באות שלמדת`
+      })},
+    { minLetters: 8,
+      build: (ex) => ({
+        gr: ex.slice(0, 6).map(e => e.word).join(" · "),
+        he: ex.slice(0, 6).map(e => `${e.word} = ${e.he}`).join(" · "),
+        note: `${ex.length} אותיות — את/ה יכול/ה לקרוא את האות הראשונה של כל מילה!`
+      })},
+  ];
+
+  const dayHash = new Date().toISOString().slice(0, 10).split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+  const shuffled = [...allExamples].sort((a, b) => (a.word + dayHash).localeCompare(b.word + dayHash));
+  const best = templates.filter(t => shuffled.length >= t.minLetters);
+  if (best.length === 0) return null;
+  const tmpl = best[dayHash % best.length];
+  return tmpl.build(shuffled);
+}
+
 function speak(text) {
   if (!window.speechSynthesis) return;
   window.speechSynthesis.cancel();
@@ -1151,6 +1189,7 @@ function NumberQuizScreen({ numberStates, onEnd, onUpdate }) {
 
 function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading, onStartFinal, challengeStart, numberStates, onSelectNumber, onStartNumberQuiz, numChallengeStart }) {
   const [tab, setTab] = useState("letters");
+  const [showAbcParagraph, setShowAbcParagraph] = useState(false);
   const learnedCount = LETTERS.filter(l => letterStates[l.id]?.learned).length;
   const learnedEasy = LETTERS.filter(l => l.difficulty === 1 && letterStates[l.id]?.learned).length;
   const learnedMed = LETTERS.filter(l => l.difficulty === 2 && letterStates[l.id]?.learned).length;
@@ -1318,6 +1357,69 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
           </div>
         </div>
       )}
+
+      {(() => {
+        const learnedLetters = LETTERS.filter(l => letterStates[l.id]?.learned);
+        const para = buildAbcParagraph(learnedLetters);
+        if (!para) return null;
+        return (<>
+          <button onClick={() => setShowAbcParagraph(true)} style={{
+            width: "100%", padding: "14px 16px", fontSize: 14, fontWeight: 600,
+            background: "#fff", color: "#007aff", border: "none", borderRadius: 14,
+            cursor: "pointer", marginBottom: 14, boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+            textAlign: "center"
+          }}>
+            פסקה יומית מהאותיות שלמדת
+          </button>
+          {showAbcParagraph && (
+            <div onClick={() => setShowAbcParagraph(false)} style={{
+              position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+              background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center",
+              justifyContent: "center", zIndex: 1000, padding: 20,
+              animation: "fadeIn 0.35s ease"
+            }}>
+              <div onClick={e => e.stopPropagation()} style={{
+                background: "#fff", borderRadius: 20, padding: "28px 24px",
+                maxWidth: 400, width: "100%", boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
+                animation: "slideUp 0.25s ease"
+              }}>
+                <div style={{ fontSize: 16, fontWeight: 700, color: "#1c1c1e", marginBottom: 16, textAlign: "center" }}>
+                  פסקה יומית
+                </div>
+                <div style={{
+                  fontSize: 22, lineHeight: 1.7, color: "#1c1c1e", textAlign: "center",
+                  direction: "ltr", marginBottom: 12, fontWeight: 500
+                }}>
+                  {para.gr}
+                </div>
+                <button onClick={() => speak(para.gr)} style={{
+                  display: "block", margin: "0 auto 12px", background: "#f2f2f7",
+                  border: "none", borderRadius: 10, padding: "8px 20px",
+                  fontSize: 14, color: "#007aff", fontWeight: 600, cursor: "pointer"
+                }}>
+                  השמע
+                </button>
+                <div style={{
+                  fontSize: 13, lineHeight: 1.6, color: "#8e8e93", textAlign: "center",
+                  borderTop: "1px solid #e5e5ea", paddingTop: 12, marginBottom: 8
+                }}>
+                  {para.he}
+                </div>
+                <div style={{ fontSize: 11, color: "#aeaeb2", textAlign: "center", marginBottom: 12 }}>
+                  {para.note}
+                </div>
+                <button onClick={() => setShowAbcParagraph(false)} style={{
+                  width: "100%", padding: "12px 0", fontSize: 15, fontWeight: 600,
+                  background: "#007aff", color: "#fff", border: "none", borderRadius: 12,
+                  cursor: "pointer"
+                }}>
+                  סגור
+                </button>
+              </div>
+            </div>
+          )}
+        </>);
+      })()}
 
       <div style={{
         display: "flex", gap: 8, marginBottom: 14
