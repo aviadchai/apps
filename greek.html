@@ -166,11 +166,36 @@ function initWordState() {
   return map;
 }
 
-function pickWord(wordState, unlockedLevel, mode, recentIds) {
+function getFocusGroup(wordState, unlockedLevel, mode) {
   let pool = ALL_WORDS.filter(w => w.level <= unlockedLevel);
-  if (mode === "weak") pool = pool.filter(w => wordState[w.id]?.attempts > 0 && wordState[w.id]?.score < 3);
-  if (mode === "pinned") pool = pool.filter(w => wordState[w.id]?.pinned);
-  if (pool.length === 0) pool = ALL_WORDS.filter(w => w.level <= unlockedLevel);
+  if (mode === "weak") return pool.filter(w => wordState[w.id]?.attempts > 0 && wordState[w.id]?.score < 3).slice(0, 8);
+  if (mode === "pinned") return pool.filter(w => wordState[w.id]?.pinned).slice(0, 8);
+
+  const inProgress = pool.filter(w => {
+    const s = wordState[w.id];
+    return s.attempts > 0 && s.streak < 5;
+  });
+  const notStarted = pool.filter(w => wordState[w.id].attempts === 0);
+
+  const group = [...inProgress];
+  for (const w of notStarted) {
+    if (group.length >= 7) break;
+    group.push(w);
+  }
+  if (group.length < 4 && notStarted.length > 0) {
+    for (const w of notStarted) {
+      if (group.length >= 7) break;
+      if (!group.includes(w)) group.push(w);
+    }
+  }
+  return group.length > 0 ? group : pool.filter(w => wordState[w.id].streak < 5).slice(0, 7);
+}
+
+function pickWord(wordState, unlockedLevel, mode, recentIds) {
+  const focus = getFocusGroup(wordState, unlockedLevel, mode);
+  const allPool = ALL_WORDS.filter(w => w.level <= unlockedLevel && (wordState[w.id]?.streak || 0) < 5);
+  const useFocus = focus.length > 0 && Math.random() < 0.75;
+  const pool = useFocus ? focus : (allPool.length > 0 ? allPool : ALL_WORDS.filter(w => w.level <= unlockedLevel));
 
   const recentSet = new Set(recentIds || []);
   const nonRecent = pool.filter(w => !recentSet.has(w.id));
@@ -807,8 +832,7 @@ function PracticeScreen({ wordState, mode, onEnd, onUpdateWord }) {
     Math.floor(ALL_WORDS.filter(w => wordState[w.id]?.score >= 8).length / 50) + 1
   );
 
-  const poolSize = ALL_WORDS.filter(w => w.level <= unlockedLevel).length;
-  const recentCap = Math.min(Math.floor(poolSize * 0.6), 30);
+  const recentCap = 5;
 
   const loadNext = useCallback(() => {
     const word = pickWord(wordState, unlockedLevel, mode, recentRef.current);
@@ -914,6 +938,32 @@ function PracticeScreen({ wordState, mode, onEnd, onUpdateWord }) {
           {sessionStats.total > 0 && <span style={{ fontSize: 13, color: "#8e8e93", fontWeight: 600 }}>{accuracy}%</span>}
         </div>
       </div>
+
+      {mode === "all" && (() => {
+        const focus = getFocusGroup(wordState, unlockedLevel, mode);
+        if (focus.length === 0) return null;
+        const done = focus.filter(w => (wordState[w.id]?.streak || 0) >= 5).length;
+        return (
+          <div style={{
+            display: "flex", alignItems: "center", gap: 6, marginBottom: 12,
+            justifyContent: "center", flexWrap: "wrap"
+          }}>
+            <span style={{ fontSize: 11, color: "#8e8e93", fontWeight: 500 }}>התמקדות:</span>
+            {focus.map(w => {
+              const streak = wordState[w.id]?.streak || 0;
+              const isCurrent = currentWord && w.id === currentWord.id;
+              return (
+                <div key={w.id} style={{
+                  width: isCurrent ? 20 : 8, height: 8, borderRadius: 4,
+                  background: streak >= 5 ? "#007aff" : streak > 0 ? "#ff9f0a" : "#e5e5ea",
+                  transition: "all 0.2s"
+                }} />
+              );
+            })}
+            <span style={{ fontSize: 11, color: "#8e8e93" }}>{done}/{focus.length}</span>
+          </div>
+        );
+      })()}
 
       <div style={{
         background: showHebrew ? "#ff9f0a" : "#007aff",
