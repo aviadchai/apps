@@ -346,6 +346,7 @@ function HomeScreen({ wordState, onStart, onRoadmap, startedAt }) {
         {[
           { label: "נלמדו", value: learned, color: "#007aff" },
           { label: "שולטים", value: mastered, color: "#007aff" },
+          { label: "קצב יומי", value: dailyRate > 0 ? (Math.round(dailyRate * 10) / 10) : "—", color: "#007aff" },
           { label: "חלשות", value: weak, color: "#ff9f0a" },
         ].map(s => (
           <div key={s.label} style={{
@@ -407,9 +408,9 @@ function HomeScreen({ wordState, onStart, onRoadmap, startedAt }) {
         <div style={{ fontSize: 13, color: "#1c1c1e", fontWeight: 500 }}>
           {prediction}
         </div>
-        {learned > 0 && daysActive > 1 && (
+        {learned > 0 && (
           <div style={{ fontSize: 11, color: "#8e8e93", marginTop: 4 }}>
-            קצב ממוצע: {(learned / daysActive).toFixed(1)} מילים ליום · {daysActive} ימים פעילים
+            יום {daysActive} · {(learned / daysActive).toFixed(1)} מילים ליום בממוצע
           </div>
         )}
       </div>
