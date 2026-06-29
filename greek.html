@@ -95,8 +95,8 @@ const ALL_WORDS = [
 ];
 
 const WORD_IMAGES = {
-  12:"1f4a7",13:"1f37d",15:"1f3e5",16:"1f46e",39:"1f525",40:"2744",
-  49:"1f4b6",
+  12:"1f4a7",13:"1f37d",14:"1f6bd",15:"1f3e5",16:"1f46e",
+  39:"1f525",40:"2744",49:"1f4b6",
   61:"2615",62:"1f375",63:"1f9c3",64:"1f377",65:"1f37a",67:"1f35e",
   68:"1f9c0",69:"1fad2",70:"1f957",72:"1f345",73:"1f952",74:"1f9c5",
   75:"1f9c4",80:"1f357",81:"1f969",82:"1f41f",83:"1f419",84:"1f990",
@@ -618,22 +618,34 @@ function LearnNewScreen({ wordState, onDone, onUpdateWord }) {
     return { word: w, options: [w, ...others].sort(() => Math.random() - 0.5) };
   }, [unlockedLevel]);
 
-  const buildQueue = useCallback((wordList) => {
-    const q = [];
-    for (let r = 0; r < 3; r++) {
-      const shuffled = [...wordList].sort(() => Math.random() - 0.5);
-      shuffled.forEach(w => q.push(makeQuestion(w)));
-    }
-    return q;
-  }, [makeQuestion]);
-
   const startQuiz = useCallback(() => {
-    setQueue(buildQueue(words));
+    const focusCount = 18;
+    const widerCount = 7;
+    const focusQ = [];
+    for (let r = 0; r < 3; r++) {
+      [...words].sort(() => Math.random() - 0.5).forEach(w => focusQ.push(makeQuestion(w)));
+    }
+    const widerPool = ALL_WORDS.filter(w =>
+      w.level <= unlockedLevel &&
+      (wordState[w.id]?.streak || 0) < 5 &&
+      !words.find(fw => fw.id === w.id)
+    ).sort(() => Math.random() - 0.5).slice(0, widerCount);
+    const widerQ = widerPool.map(w => makeQuestion(w));
+    const mixed = [];
+    let fi = 0, wi = 0;
+    while (fi < focusQ.length || wi < widerQ.length) {
+      if (fi < focusQ.length && (Math.random() < 0.7 || wi >= widerQ.length)) {
+        mixed.push(focusQ[fi++]);
+      } else if (wi < widerQ.length) {
+        mixed.push(widerQ[wi++]);
+      }
+    }
+    setQueue(mixed);
     setQIdx(0);
     setSelected(null);
     setRound(1);
     setPhase("quiz");
-  }, [words, buildQueue]);
+  }, [words, wordState, makeQuestion, unlockedLevel]);
 
   if (phase === "cards") {
     const w = words[cardIndex];
@@ -735,7 +747,7 @@ function LearnNewScreen({ wordState, onDone, onUpdateWord }) {
   if (queue.length === 0) return null;
   const q = queue[qIdx];
   const totalQ = queue.length;
-  const currentRound = Math.floor(qIdx / words.length) + 1;
+  const isFocusWord = words.find(w => w.id === q.word.id);
 
   function handleQuizSelect(id) {
     if (selected !== null) return;
@@ -765,9 +777,6 @@ function LearnNewScreen({ wordState, onDone, onUpdateWord }) {
     }
   }
 
-  const roundLabels = ["סבב ראשון", "סבב שני", "סבב שלישי", "חזרה על טעויות"];
-  const roundLabel = currentRound <= 3 ? roundLabels[currentRound - 1] : roundLabels[3];
-
   return (
     <div style={{ padding: "20px 16px", maxWidth: 480, margin: "0 auto", animation: "fadeIn 0.3s ease" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
@@ -777,7 +786,7 @@ function LearnNewScreen({ wordState, onDone, onUpdateWord }) {
           boxShadow: "0 1px 4px rgba(0,0,0,0.06)", color: "#007aff", cursor: "pointer"
         }}>←</button>
         <div style={{ fontSize: 13, color: "#8e8e93", fontWeight: 600 }}>
-          {roundLabel} · {qIdx + 1}/{totalQ}
+          {qIdx + 1}/{totalQ}
         </div>
         <div style={{ fontSize: 13, color: "#007aff", fontWeight: 600 }}>{stats.correct} נכון</div>
       </div>
