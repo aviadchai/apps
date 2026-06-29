@@ -197,6 +197,101 @@ function pickWord(wordState, unlockedLevel, mode, recentIds) {
   return weighted[weighted.length - 1].word;
 }
 
+function buildDailyParagraph(learnedWords) {
+  if (learnedWords.length < 3) return null;
+  const has = (greek) => learnedWords.some(w => w.greek === greek);
+  const w = (greek) => learnedWords.find(w => w.greek === greek);
+
+  const templates = [
+    { needs: ["γεια σου","καλημέρα","καφές","παρακαλώ","ευχαριστώ"],
+      build: () => ({
+        gr: "Γεια σου! Καλημέρα. Έναν καφέ, παρακαλώ. Ευχαριστώ!",
+        he: "שלום! בוקר טוב. קפה אחד, בבקשה. תודה!"
+      })},
+    { needs: ["γεια σου","πού","τουαλέτα","ευχαριστώ"],
+      build: () => ({
+        gr: "Γεια σου! Πού είναι η τουαλέτα; Ευχαριστώ!",
+        he: "שלום! איפה השירותים? תודה!"
+      })},
+    { needs: ["καλησπέρα","νερό","παρακαλώ"],
+      build: () => ({
+        gr: "Καλησπέρα! Νερό, παρακαλώ.",
+        he: "ערב טוב! מים, בבקשה."
+      })},
+    { needs: ["πού","εστιατόριο","καλό"],
+      build: () => ({
+        gr: "Πού είναι ένα καλό εστιατόριο;",
+        he: "איפה יש מסעדה טובה?"
+      })},
+    { needs: ["πόσο","ευρώ","ακριβό"],
+      build: () => ({
+        gr: "Πόσο κάνει; Είναι πολύ ακριβό!",
+        he: "כמה זה עולה? זה מאוד יקר!"
+      })},
+    { needs: ["συγγνώμη","δεν καταλαβαίνω","πιο αργά παρακαλώ"],
+      build: () => ({
+        gr: "Συγγνώμη, δεν καταλαβαίνω. Πιο αργά, παρακαλώ.",
+        he: "סליחה, אני לא מבין. לאט יותר, בבקשה."
+      })},
+    { needs: ["καλημέρα","θάλασσα","ήλιος","όμορφος"],
+      build: () => ({
+        gr: "Καλημέρα! Η θάλασσα είναι όμορφη σήμερα. Ο ήλιος λάμπει!",
+        he: "בוקר טוב! הים יפה היום. השמש זורחת!"
+      })},
+    { needs: ["με λένε","χαίρομαι","πώς σε λένε;"],
+      build: () => ({
+        gr: "Γεια! Με λένε... Πώς σε λένε; Χαίρομαι!",
+        he: "היי! שמי... מה שמך? נעים מאוד!"
+      })},
+    { needs: ["σήμερα","ζεστό","παγωτό"],
+      build: () => ({
+        gr: "Σήμερα είναι πολύ ζεστό. Θέλω ένα παγωτό!",
+        he: "היום חם מאוד. אני רוצה גלידה!"
+      })},
+    { needs: ["νησί","πλοίο","εισιτήριο","πόσο"],
+      build: () => ({
+        gr: "Θέλω να πάω στο νησί. Πόσο κάνει το εισιτήριο για το πλοίο;",
+        he: "אני רוצה לנסוע לאי. כמה עולה כרטיס למעבורת?"
+      })},
+    { needs: ["ξενοδοχείο","δωμάτιο","κλειδί"],
+      build: () => ({
+        gr: "Καλησπέρα. Έχω κράτηση. Μπορώ να πάρω το κλειδί του δωματίου;",
+        he: "ערב טוב. יש לי הזמנה. אפשר לקבל את מפתח החדר?"
+      })},
+    { needs: ["λεωφορείο","σταθμός","πού"],
+      build: () => ({
+        gr: "Συγγνώμη, πού είναι ο σταθμός λεωφορείου;",
+        he: "סליחה, איפה תחנת האוטובוס?"
+      })},
+    { needs: ["στην υγειά μας","κρασί","νόστιμο"],
+      build: () => ({
+        gr: "Στην υγειά μας! Το κρασί είναι πολύ νόστιμο!",
+        he: "לחיים! היין מאוד טעים!"
+      })},
+    { needs: ["πονάω","κεφάλι","φαρμακείο","πού"],
+      build: () => ({
+        gr: "Πονάω το κεφάλι μου. Πού είναι το φαρμακείο;",
+        he: "כואב לי הראש. איפה בית המרקחת?"
+      })},
+    { needs: ["αγοράζω","δώρο","πόσο"],
+      build: () => ({
+        gr: "Θέλω να αγοράσω ένα δώρο. Πόσο κάνει;",
+        he: "אני רוצה לקנות מתנה. כמה זה עולה?"
+      })},
+  ];
+
+  const dayHash = new Date().toISOString().slice(0, 10).split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+  const matching = templates.filter(t => t.needs.every(n => has(n)));
+  if (matching.length === 0) {
+    const known = learnedWords.slice(0, 4);
+    return {
+      gr: known.map(w => w.greek).join(", "),
+      he: known.map(w => w.hebrew).join(", "),
+    };
+  }
+  return matching[dayHash % matching.length].build();
+}
+
 function speak(text) {
   if (!window.speechSynthesis) return;
   window.speechSynthesis.cancel();
@@ -282,6 +377,7 @@ function StarRating({ score }) {
 }
 
 function HomeScreen({ wordState, onStart, onRoadmap, startedAt }) {
+  const [showParagraph, setShowParagraph] = useState(false);
   const total = ALL_WORDS.length;
   const learned = ALL_WORDS.filter(w => (wordState[w.id]?.streak || 0) >= 5).length;
   const mastered = ALL_WORDS.filter(w => wordState[w.id]?.score >= 8).length;
@@ -411,6 +507,66 @@ function HomeScreen({ wordState, onStart, onRoadmap, startedAt }) {
           {prediction}
         </div>
       </div>
+
+      {(() => {
+        const learnedWords = ALL_WORDS.filter(w => (wordState[w.id]?.streak || 0) >= 5);
+        const para = buildDailyParagraph(learnedWords);
+        if (!para) return null;
+        return (<>
+          <button onClick={() => setShowParagraph(true)} style={{
+            width: "100%", padding: "14px 16px", fontSize: 14, fontWeight: 600,
+            background: "#fff", color: "#007aff", border: "none", borderRadius: 14,
+            cursor: "pointer", marginBottom: 14, boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+            textAlign: "center"
+          }}>
+            פסקה יומית מהמילים שלמדת
+          </button>
+          {showParagraph && (
+            <div onClick={() => setShowParagraph(false)} style={{
+              position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+              background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center",
+              justifyContent: "center", zIndex: 1000, padding: 20,
+              animation: "fadeIn 0.2s ease"
+            }}>
+              <div onClick={e => e.stopPropagation()} style={{
+                background: "#fff", borderRadius: 20, padding: "28px 24px",
+                maxWidth: 400, width: "100%", boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
+                animation: "slideUp 0.25s ease"
+              }}>
+                <div style={{ fontSize: 16, fontWeight: 700, color: "#1c1c1e", marginBottom: 16, textAlign: "center" }}>
+                  פסקה יומית
+                </div>
+                <div style={{
+                  fontSize: 20, lineHeight: 1.6, color: "#1c1c1e", textAlign: "center",
+                  direction: "ltr", marginBottom: 12, fontWeight: 500
+                }}>
+                  {para.gr}
+                </div>
+                <button onClick={() => speak(para.gr)} style={{
+                  display: "block", margin: "0 auto 16px", background: "#f2f2f7",
+                  border: "none", borderRadius: 10, padding: "8px 20px",
+                  fontSize: 14, color: "#007aff", fontWeight: 600, cursor: "pointer"
+                }}>
+                  השמע
+                </button>
+                <div style={{
+                  fontSize: 14, lineHeight: 1.6, color: "#8e8e93", textAlign: "center",
+                  borderTop: "1px solid #e5e5ea", paddingTop: 12
+                }}>
+                  {para.he}
+                </div>
+                <button onClick={() => setShowParagraph(false)} style={{
+                  width: "100%", padding: "12px 0", fontSize: 15, fontWeight: 600,
+                  background: "#007aff", color: "#fff", border: "none", borderRadius: 12,
+                  cursor: "pointer", marginTop: 16
+                }}>
+                  סגור
+                </button>
+              </div>
+            </div>
+          )}
+        </>);
+      })()}
 
       {(() => {
         const almostDone = ALL_WORDS.filter(w => {
