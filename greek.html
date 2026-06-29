@@ -598,9 +598,11 @@ function LearnNewScreen({ wordState, onDone, onUpdateWord }) {
   const [phase, setPhase] = useState("cards");
   const [cardIndex, setCardIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
-  const [quizIndex, setQuizIndex] = useState(0);
   const [selected, setSelected] = useState(null);
   const [stats, setStats] = useState({ correct: 0, total: 0 });
+  const [queue, setQueue] = useState([]);
+  const [qIdx, setQIdx] = useState(0);
+  const [round, setRound] = useState(1);
 
   const unlockedLevel = Math.min(10, Math.floor(ALL_WORDS.filter(w => wordState[w.id]?.score >= 8).length / 50) + 1);
   const [words] = useState(() => {
@@ -610,13 +612,28 @@ function LearnNewScreen({ wordState, onDone, onUpdateWord }) {
     return batch.length > 0 ? batch : ALL_WORDS.filter(w => w.level <= unlockedLevel).slice(0, 6);
   });
 
-  const [quizQuestions] = useState(() =>
-    words.map(w => {
-      const others = ALL_WORDS.filter(o => o.id !== w.id && o.level <= unlockedLevel)
-        .sort(() => Math.random() - 0.5).slice(0, 3);
-      return { word: w, options: [w, ...others].sort(() => Math.random() - 0.5) };
-    }).sort(() => Math.random() - 0.5)
-  );
+  const makeQuestion = useCallback((w) => {
+    const others = ALL_WORDS.filter(o => o.id !== w.id && o.level <= unlockedLevel)
+      .sort(() => Math.random() - 0.5).slice(0, 3);
+    return { word: w, options: [w, ...others].sort(() => Math.random() - 0.5) };
+  }, [unlockedLevel]);
+
+  const buildQueue = useCallback((wordList) => {
+    const q = [];
+    for (let r = 0; r < 3; r++) {
+      const shuffled = [...wordList].sort(() => Math.random() - 0.5);
+      shuffled.forEach(w => q.push(makeQuestion(w)));
+    }
+    return q;
+  }, [makeQuestion]);
+
+  const startQuiz = useCallback(() => {
+    setQueue(buildQueue(words));
+    setQIdx(0);
+    setSelected(null);
+    setRound(1);
+    setPhase("quiz");
+  }, [words, buildQueue]);
 
   if (phase === "cards") {
     const w = words[cardIndex];
@@ -685,7 +702,7 @@ function LearnNewScreen({ wordState, onDone, onUpdateWord }) {
           )}
           <button onClick={() => {
             if (cardIndex < words.length - 1) { setCardIndex(cardIndex + 1); setFlipped(false); }
-            else setPhase("quiz");
+            else startQuiz();
           }} style={{
             flex: 1, padding: "14px 0", fontSize: 16, fontWeight: 700,
             background: "#007aff", color: "#fff", border: "none", borderRadius: 14, cursor: "pointer",
@@ -715,8 +732,10 @@ function LearnNewScreen({ wordState, onDone, onUpdateWord }) {
     );
   }
 
-  const q = quizQuestions[quizIndex];
-  const isCorrect = selected !== null ? selected === q.word.id : null;
+  if (queue.length === 0) return null;
+  const q = queue[qIdx];
+  const totalQ = queue.length;
+  const currentRound = Math.floor(qIdx / words.length) + 1;
 
   function handleQuizSelect(id) {
     if (selected !== null) return;
@@ -732,7 +751,22 @@ function LearnNewScreen({ wordState, onDone, onUpdateWord }) {
       lastSeen: new Date().toISOString()
     });
     if (correct) speak(q.word.greek);
+    if (!correct) {
+      setQueue(prev => [...prev, makeQuestion(q.word)]);
+    }
   }
+
+  function handleNext() {
+    if (qIdx < queue.length - 1) {
+      setQIdx(qIdx + 1);
+      setSelected(null);
+    } else {
+      setPhase("done");
+    }
+  }
+
+  const roundLabels = ["סבב ראשון", "סבב שני", "סבב שלישי", "חזרה על טעויות"];
+  const roundLabel = currentRound <= 3 ? roundLabels[currentRound - 1] : roundLabels[3];
 
   return (
     <div style={{ padding: "20px 16px", maxWidth: 480, margin: "0 auto", animation: "fadeIn 0.3s ease" }}>
@@ -742,11 +776,13 @@ function LearnNewScreen({ wordState, onDone, onUpdateWord }) {
           width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center",
           boxShadow: "0 1px 4px rgba(0,0,0,0.06)", color: "#007aff", cursor: "pointer"
         }}>←</button>
-        <div style={{ fontSize: 14, color: "#8e8e93", fontWeight: 600 }}>מבחן {quizIndex + 1}/{quizQuestions.length}</div>
+        <div style={{ fontSize: 13, color: "#8e8e93", fontWeight: 600 }}>
+          {roundLabel} · {qIdx + 1}/{totalQ}
+        </div>
         <div style={{ fontSize: 13, color: "#007aff", fontWeight: 600 }}>{stats.correct} נכון</div>
       </div>
       <div style={{ background: "#e5e5ea", borderRadius: 99, height: 4, marginBottom: 24, overflow: "hidden" }}>
-        <div style={{ width: ((quizIndex + 1) / quizQuestions.length * 100) + "%", height: "100%", background: "#007aff", borderRadius: 99, transition: "width 0.3s" }} />
+        <div style={{ width: ((qIdx + 1) / totalQ * 100) + "%", height: "100%", background: "#007aff", borderRadius: 99, transition: "width 0.3s" }} />
       </div>
 
       <div style={{
@@ -791,14 +827,11 @@ function LearnNewScreen({ wordState, onDone, onUpdateWord }) {
       </div>
 
       {selected !== null && (
-        <button onClick={() => {
-          if (quizIndex < quizQuestions.length - 1) { setQuizIndex(quizIndex + 1); setSelected(null); }
-          else setPhase("done");
-        }} style={{
+        <button onClick={handleNext} style={{
           width: "100%", padding: "14px 0", fontSize: 16, fontWeight: 700,
           background: "#007aff", color: "#fff", border: "none", borderRadius: 14, cursor: "pointer"
         }}>
-          {quizIndex < quizQuestions.length - 1 ? "הבא" : "סיכום"}
+          {qIdx < queue.length - 1 ? "הבא" : "סיכום"}
         </button>
       )}
     </div>
