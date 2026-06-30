@@ -94,59 +94,39 @@ const ALL_WORDS = [
   {id:491,greek:"μεσημέρι",hebrew:"צהריים",level:10},{id:492,greek:"Ακρόπολη",hebrew:"האקרופוליס",level:10},{id:493,greek:"Παρθενώνας",hebrew:"הפרתנון",level:10},{id:494,greek:"Ολυμπία",hebrew:"אולימפיה",level:10},{id:495,greek:"Δελφοί",hebrew:"דלפי",level:10},{id:496,greek:"Μετέωρα",hebrew:"מטאורה",level:10},{id:497,greek:"Δωδεκάνησα",hebrew:"האיים הדודקנסיים",level:10},{id:498,greek:"Κυκλάδες",hebrew:"האיים הקיקלדיים",level:10},{id:499,greek:"Ιόνιο",hebrew:"הים האיוני",level:10},{id:500,greek:"Αιγαίο",hebrew:"הים האגאי",level:10}
 ];
 
-const WORD_IMAGES = {
-  // Level 1 — greetings & basics
-  1:"2705",2:"274c",3:"1f64f",4:"1f91d",5:"1f614",
-  6:"1f44b",7:"1f31e",8:"1f306",9:"1f634",10:"1f6b6",
-  11:"1f198",
-  12:"1f4a7",13:"1f37d",14:"1f6bd",15:"1f3e5",16:"1f46e",
-  17:"1f4cd",18:"23f0",20:"1f4b0",22:"2753",
-  26:"1f513",27:"1f512",28:"1f6aa",30:"27a1",31:"2b05",
-  35:"1f418",36:"1f42d",37:"1f44d",38:"1f44e",
-  39:"1f525",40:"2744",49:"1f4b6",
-  // Level 2 — food & restaurant
-  51:"1f374",53:"1f4cb",54:"1f9fe",55:"1f935",57:"1fa91",
-  61:"2615",62:"1f375",63:"1f9c3",64:"1f377",65:"1f37a",66:"1f943",67:"1f35e",
-  68:"1f9c0",69:"1fad2",70:"1f957",71:"1f96c",72:"1f345",73:"1f952",74:"1f9c5",
-  75:"1f9c4",78:"1f9c2",79:"1f336",80:"1f357",81:"1f969",82:"1f41f",83:"1f419",84:"1f990",
-  86:"1f32f",89:"1f95b",90:"1f36f",91:"1f34e",92:"1f370",93:"1f368",94:"1f950",
-  // Level 3 — hotel & beach
-  101:"1f3e8",103:"1f511",104:"1f4c5",
-  106:"1f6d7",108:"1f6c1",109:"1f6bf",112:"1f6cc",117:"1f3ca",
-  118:"1f3d6",119:"1f30a",120:"2600",122:"2602",128:"1f6a2",130:"1f3dd",
-  133:"1f9f3",140:"1f4b3",
-  // Level 4 — transport & navigation
-  151:"1f6ec",152:"2708",153:"1f6eb",154:"1f3ab",155:"1f689",156:"1f68c",
-  157:"1f682",158:"1f687",159:"1f695",160:"1f697",161:"1f6f5",162:"1f6b2",
-  164:"26fd",165:"1f17f",169:"1f5fa",
-  // Level 5 — shopping & colours
-  201:"1f3ea",203:"1f6d2",204:"1f48a",206:"1f455",207:"1f45f",
-  209:"1f3a8",210:"1f90d",211:"1f5a4",212:"1f534",213:"1f499",214:"1f49a",215:"1f49b",
-  216:"1f381",218:"1f45c",226:"1f48e",238:"1f4f1",246:"1f48a",250:"1fa7a",
-  // Level 6 — sights & culture
-  252:"26ea",256:"1f3f0",261:"26f0",262:"1f3de",268:"1f4f8",
-  282:"1f60d",289:"1f3ad",290:"1f3b5",291:"1f483",293:"1f378",298:"1f5ff",299:"1f5bc",
-  // Level 7 — people & expressions
-  301:"1f468",302:"1f469",303:"1f9d2",304:"1f476",305:"1f46a",306:"1f46b",
-  311:"1f4ac",322:"1f44c",324:"1f44f",
-  341:"1f382",342:"1f386",343:"1f334",345:"1f942",346:"2764",347:"1f48b",348:"1f917",
-  349:"1f60a",350:"1f622",
-  // Level 8 — weather & nature
-  354:"1f327",355:"2744",356:"1f4a8",357:"26c8",358:"1f32b",359:"2601",
-  364:"26c4",365:"1f338",366:"1f342",367:"1f332",368:"1f33e",
-  369:"1f33b",370:"1f333",374:"1f415",375:"1f408",376:"1f40e",
-  378:"1f426",380:"1f422",381:"1f41d",382:"2b50",383:"1f319",385:"1f325",386:"1f305",
-  // Level 9 — health & emergency
-  401:"1f623",413:"1fac0",415:"1fa79",
-  428:"1f691",429:"1f692",430:"1f525",435:"1f40d",436:"1f982",
-  // Level 10 — language & Greek culture
-  460:"1f524",477:"1f384",478:"1f389",486:"1f604",489:"1f465"
+// ~4-5 concrete visual words per level → Wikipedia article title for thumbnail
+const WORD_WIKI = {
+  12:"Water", 14:"Flush toilet", 15:"Hospital", 39:"Fire", 40:"Ice",
+  61:"Coffee", 64:"Red wine", 67:"Bread", 82:"Fish", 93:"Ice cream",
+  101:"Hotel", 118:"Beach", 119:"Ocean", 120:"Sun", 128:"Ship",
+  152:"Airplane", 156:"Bus", 159:"Taxicab", 160:"Automobile", 162:"Bicycle",
+  206:"Clothing", 207:"Sneakers", 216:"Gift", 218:"Handbag", 238:"Smartphone",
+  252:"Greek Orthodox Church", 256:"Castle", 261:"Mountain", 262:"River", 270:"Landscape",
+  341:"Birthday cake", 342:"Fireworks", 345:"Champagne", 349:"Joy", 350:"Sadness",
+  369:"Flower", 374:"Dog", 375:"Cat", 376:"Horse", 378:"Bird",
+  413:"Heart", 428:"Ambulance", 430:"Wildfire", 435:"Snake", 436:"Scorpion",
+  451:"Santorini", 477:"Christmas tree", 482:"Sirtaki", 484:"Taverna", 492:"Acropolis of Athens"
 };
 
-function wordImageUrl(wordId) {
-  const code = WORD_IMAGES[wordId];
-  if (!code) return null;
-  return `https://fonts.gstatic.com/s/e/notoemoji/latest/${code}/512.png`;
+const _wikiCache = {};
+
+function WordImage({ wordId, size = 80, style }) {
+  const title = WORD_WIKI[wordId];
+  const [src, setSrc] = React.useState(null);
+  React.useEffect(() => {
+    if (!title) return;
+    if (_wikiCache[wordId] !== undefined) {
+      if (_wikiCache[wordId]) setSrc(_wikiCache[wordId]);
+      return;
+    }
+    _wikiCache[wordId] = false;
+    fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`)
+      .then(r => r.json())
+      .then(d => { const u = d?.thumbnail?.source; _wikiCache[wordId] = u || false; if (u) setSrc(u); })
+      .catch(() => { _wikiCache[wordId] = false; });
+  }, [wordId]);
+  if (!src) return null;
+  return <img src={src} alt="" style={{ width: size, height: size, objectFit: "cover", borderRadius: 10, marginBottom: 8, boxShadow: "0 2px 10px rgba(0,0,0,0.25)", ...style }} onError={() => setSrc(null)} />;
 }
 
 const LEVEL_NAMES = {
@@ -715,11 +695,7 @@ function LearnNewScreen({ wordState, onDone, onUpdateWord }) {
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#007aff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{verticalAlign:"middle",marginLeft:4}}><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
             השמע
           </button>
-          {wordImageUrl(w.id) && (
-            <img src={wordImageUrl(w.id)} alt="" style={{
-              width: 64, height: 64, objectFit: "contain", marginBottom: 8
-            }} onError={e => e.target.style.display = "none"} />
-          )}
+          <WordImage wordId={w.id} size={64} />
           {flipped ? (
             <div style={{ animation: "fadeIn 0.2s ease" }}>
               <div style={{ fontSize: 22, fontWeight: 600, color: "#007aff", marginBottom: 4 }}>
@@ -830,11 +806,7 @@ function LearnNewScreen({ wordState, onDone, onUpdateWord }) {
       }}>
         <div style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", marginBottom: 8 }}>{LEVEL_NAMES[q.word.level]}</div>
         <div style={{ fontSize: 32, fontWeight: 700, color: "#fff", direction: "ltr" }}>{q.word.greek}</div>
-        {wordImageUrl(q.word.id) && (
-          <img src={wordImageUrl(q.word.id)} alt="" style={{
-            width: 48, height: 48, objectFit: "contain", marginTop: 8
-          }} onError={e => e.target.style.display = "none"} />
-        )}
+        <WordImage wordId={q.word.id} size={48} style={{marginTop:8}} />
         <button onClick={() => speak(q.word.greek)} style={{
           marginTop: 8, background: "rgba(255,255,255,0.2)", border: "none",
           borderRadius: 99, padding: "6px 16px", fontSize: 13, color: "#fff", cursor: "pointer"
@@ -1153,11 +1125,7 @@ function PracticeScreen({ wordState, mode, onEnd, onUpdateWord }) {
           }}>♪ ♪ ♪</div>
         ) : (
           <>
-            {wordImageUrl(currentWord.id) && !showHebrew && (
-              <img src={wordImageUrl(currentWord.id)} alt="" style={{
-                width: 72, height: 72, objectFit: "contain", marginBottom: 8
-              }} onError={e => e.target.style.display = "none"} />
-            )}
+            {!showHebrew && <WordImage wordId={currentWord.id} size={80} />}
             <div style={{
               fontSize: 44, fontWeight: 700, color: "#fff",
               letterSpacing: 1, marginBottom: 16, wordBreak: "break-word",
