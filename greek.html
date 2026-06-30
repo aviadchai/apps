@@ -953,35 +953,8 @@ function RoadmapScreen({ wordState, onBack }) {
   );
 }
 
-function pickVariation(word, wordState) {
-  const s = wordState[word.id];
-  const streak = s?.streak || 0;
-  const attempts = s?.attempts || 0;
-  const types = ["greekToHebrew"];
-  if (attempts >= 2) types.push("hebrewToGreek");
-  if (streak >= 2) types.push("audioOnly");
-  if (streak >= 3) types.push("hebrewToGreek");
-  return types[Math.floor(Math.random() * types.length)];
-}
-
-function generateChoices(correctWord, wordState, unlockedLevel, field) {
-  const pool = ALL_WORDS.filter(w => w.level <= unlockedLevel && w.id !== correctWord.id);
-  const shuffled = pool.sort(() => Math.random() - 0.5);
-  const wrongs = shuffled.slice(0, 3);
-  const all = [correctWord, ...wrongs].sort(() => Math.random() - 0.5);
-  return all;
-}
-
-const VAR_LABELS = {
-  greekToHebrew: "תרגם לעברית",
-  hebrewToGreek: "בחר ביוונית",
-  audioOnly: "מה שמעת?"
-};
-
 function PracticeScreen({ wordState, mode, onEnd, onUpdateWord }) {
   const [currentWord, setCurrentWord] = useState(null);
-  const [variation, setVariation] = useState("greekToHebrew");
-  const [choices, setChoices] = useState([]);
   const [input, setInput] = useState("");
   const [result, setResult] = useState(null);
   const [revealed, setRevealed] = useState(false);
@@ -993,40 +966,26 @@ function PracticeScreen({ wordState, mode, onEnd, onUpdateWord }) {
     Math.floor(ALL_WORDS.filter(w => wordState[w.id]?.score >= 8).length / 50) + 1
   );
 
-  const recentCap = 5;
-
   const loadNext = useCallback(() => {
     const word = pickWord(wordState, unlockedLevel, mode, recentRef.current);
-    recentRef.current = [...recentRef.current, word.id].slice(-recentCap);
-    const v = pickVariation(word, wordState);
+    recentRef.current = [...recentRef.current, word.id].slice(-5);
     setCurrentWord(word);
-    setVariation(v);
-    if (v === "hebrewToGreek") {
-      setChoices(generateChoices(word, wordState, unlockedLevel));
-    }
     setInput("");
     setResult(null);
     setRevealed(false);
-    if (v !== "hebrewToGreek") setTimeout(() => inputRef.current?.focus(), 100);
-  }, [wordState, unlockedLevel, mode, recentCap]);
+    setTimeout(() => inputRef.current?.focus(), 80);
+  }, [wordState, unlockedLevel, mode]);
 
   useEffect(() => { loadNext(); }, []);
-
-  useEffect(() => {
-    if (currentWord && variation !== "hebrewToGreek") speak(currentWord.greek);
-  }, [currentWord, variation]);
+  useEffect(() => { if (currentWord) speak(currentWord.greek); }, [currentWord]);
 
   const recordResult = (correct) => {
     const prev = wordState[currentWord.id];
-    const newScore = correct
-      ? Math.min(10, prev.score + 1)
-      : Math.max(0, prev.score - 1);
-    const newStreak = correct ? (prev.streak || 0) + 1 : 0;
     onUpdateWord(currentWord.id, {
-      score: newScore,
+      score: correct ? Math.min(10, prev.score + 1) : Math.max(0, prev.score - 1),
       attempts: prev.attempts + 1,
       correct: prev.correct + (correct ? 1 : 0),
-      streak: newStreak,
+      streak: correct ? (prev.streak || 0) + 1 : 0,
       lastSeen: new Date().toISOString()
     });
     setSessionStats(s => ({
@@ -1041,16 +1000,6 @@ function PracticeScreen({ wordState, mode, onEnd, onUpdateWord }) {
     const res = checkAnswer(currentWord.greek, currentWord.hebrew, input);
     setResult({ correct: res.correct, feedback: res.feedback });
     recordResult(res.correct);
-  };
-
-  const handleChoice = (word) => {
-    if (result) return;
-    const correct = word.id === currentWord.id;
-    setResult({
-      correct,
-      feedback: correct ? "מצוין!" : "התשובה הנכונה: " + currentWord.greek
-    });
-    recordResult(correct);
   };
 
   const handleReveal = () => {
@@ -1069,20 +1018,11 @@ function PracticeScreen({ wordState, mode, onEnd, onUpdateWord }) {
 
   if (!currentWord) return <div style={{ padding: 40, textAlign: "center" }}>טוען...</div>;
 
-  const accuracy = sessionStats.total
-    ? Math.round((sessionStats.correct / sessionStats.total) * 100) : 0;
-
-  const isTyping = variation !== "hebrewToGreek";
-  const showGreek = variation === "greekToHebrew";
-  const showHebrew = variation === "hebrewToGreek";
-  const showAudioOnly = variation === "audioOnly";
+  const accuracy = sessionStats.total ? Math.round((sessionStats.correct / sessionStats.total) * 100) : 0;
 
   return (
     <div style={{ padding: "20px 16px", maxWidth: 480, margin: "0 auto", animation: "slideUp 0.3s ease" }}>
-      <div style={{
-        display: "flex", justifyContent: "space-between", alignItems: "center",
-        marginBottom: 16
-      }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
         <button onClick={onEnd} style={{
           background: "#fff", border: "none", borderRadius: 10,
           fontSize: 18, cursor: "pointer", width: 36, height: 36,
@@ -1091,7 +1031,7 @@ function PracticeScreen({ wordState, mode, onEnd, onUpdateWord }) {
         }}>←</button>
         <div style={{
           display: "flex", gap: 14, background: "#fff",
-          padding: "6px 14px", borderRadius: 99, border: "none",
+          padding: "6px 14px", borderRadius: 99,
           boxShadow: "0 1px 4px rgba(0,0,0,0.06)"
         }}>
           <span style={{ fontSize: 13, color: "#007aff", fontWeight: 600 }}>{sessionStats.correct} נכון</span>
@@ -1101,138 +1041,54 @@ function PracticeScreen({ wordState, mode, onEnd, onUpdateWord }) {
       </div>
 
       <div style={{
-        background: showHebrew ? "#ff9f0a" : "#007aff",
-        borderRadius: 20, padding: "28px 24px", textAlign: "center",
-        marginBottom: 20,
-        boxShadow: showHebrew
-          ? "0 4px 16px rgba(255,159,10,0.25)"
-          : "0 4px 16px rgba(0,122,255,0.25)"
+        background: "#007aff", borderRadius: 20, padding: "28px 24px",
+        textAlign: "center", marginBottom: 20,
+        boxShadow: "0 4px 16px rgba(0,122,255,0.25)"
       }}>
-        <div style={{
-          display: "inline-block", padding: "3px 12px", borderRadius: 99, marginBottom: 10,
-          background: "rgba(255,255,255,0.2)", fontSize: 11, color: "#fff", fontWeight: 600
-        }}>
-          {VAR_LABELS[variation]}
-        </div>
-        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", marginBottom: 8, letterSpacing: 1 }}>
+        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", marginBottom: 12, letterSpacing: 1 }}>
           רמה {currentWord.level} · {LEVEL_NAMES[currentWord.level]}
         </div>
-
-        {showAudioOnly ? (
-          <div style={{
-            fontSize: 42, marginBottom: 16, color: "#fff", fontWeight: 300,
-            letterSpacing: 4
-          }}>♪ ♪ ♪</div>
-        ) : (
-          <>
-            {!showHebrew && <WordImage wordId={currentWord.id} size={80} />}
-            <div style={{
-              fontSize: 44, fontWeight: 700, color: "#fff",
-              letterSpacing: 1, marginBottom: 16, wordBreak: "break-word",
-              direction: showHebrew ? "rtl" : "ltr"
-            }}>
-              {showHebrew ? currentWord.hebrew : currentWord.greek}
-            </div>
-          </>
-        )}
-
-        <div style={{ display: "flex", justifyContent: "center", gap: 10 }}>
-          <button
-            onClick={() => speak(currentWord.greek)}
-            style={{
-              padding: "8px 18px", borderRadius: 99,
-              background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.3)",
-              color: "#fff", fontSize: 14, cursor: "pointer", display: "inline-flex",
-              alignItems: "center", gap: 6, fontWeight: 500
-            }}>
-            {showAudioOnly && !result ? "שמע שוב" : "שמע"}
-          </button>
-          <button
-            onClick={() => onUpdateWord(currentWord.id, { pinned: !wordState[currentWord.id]?.pinned })}
-            style={{
-              padding: "8px 18px", borderRadius: 99,
-              background: wordState[currentWord.id]?.pinned ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.2)",
-              border: "1px solid rgba(255,255,255,0.3)",
-              color: "#fff", fontSize: 14, cursor: "pointer", display: "inline-flex",
-              alignItems: "center", gap: 6, fontWeight: 500
-            }}>
-            {wordState[currentWord.id]?.pinned ? "נעוץ" : "נעץ"}
-          </button>
+        <WordImage wordId={currentWord.id} size={80} />
+        <div style={{
+          fontSize: 46, fontWeight: 700, color: "#fff",
+          letterSpacing: 1, marginBottom: 20, wordBreak: "break-word", direction: "ltr"
+        }}>
+          {currentWord.greek}
         </div>
+        <button onClick={() => speak(currentWord.greek)} style={{
+          padding: "8px 22px", borderRadius: 99,
+          background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.3)",
+          color: "#fff", fontSize: 14, cursor: "pointer", display: "inline-flex",
+          alignItems: "center", gap: 6, fontWeight: 500
+        }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+          שמע
+        </button>
       </div>
 
-      {variation === "hebrewToGreek" ? (
-        <div style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 13, color: "#8e8e93", marginBottom: 10, textAlign: "center" }}>
-            בחר את המילה הנכונה ביוונית:
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {choices.map(w => {
-              const isCorrectChoice = w.id === currentWord.id;
-              const chosen = result !== null;
-              let bg = "#fff", border = "#e5e5ea", color = "#1c1c1e";
-              if (chosen && isCorrectChoice) { bg = "#e8f4fd"; border = "#007aff"; color = "#007aff"; }
-              else if (chosen && !isCorrectChoice) { bg = "#fff3e0"; border = "#ff9f0a"; color = "#cc7a00"; }
-              return (
-                <button key={w.id} onClick={() => handleChoice(w)}
-                  disabled={!!result}
-                  style={{
-                    padding: "14px 16px", fontSize: 18, fontWeight: 600,
-                    background: bg, border: `1.5px solid ${border}`, color,
-                    borderRadius: 12, cursor: result ? "default" : "pointer",
-                    textAlign: "left", direction: "ltr", width: "100%",
-                    letterSpacing: 1,
-                    boxShadow: chosen ? "none" : "0 1px 4px rgba(0,0,0,0.06)"
-                  }}>
-                  {w.greek}
-                </button>
-              );
-            })}
-          </div>
-          {!result && !revealed && (
-            <button onClick={handleReveal} style={{
-              width: "100%", padding: "10px 0", fontSize: 14, fontWeight: 600,
-              background: "#fff", color: "#8e8e93", marginTop: 10,
-              border: "none", borderRadius: 12, cursor: "pointer",
-              boxShadow: "0 1px 4px rgba(0,0,0,0.06)"
-            }}>
-              לא יודע — הצג תשובה
-            </button>
-          )}
-        </div>
-      ) : (
-        <div style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 13, color: "#8e8e93", marginBottom: 8, textAlign: "center" }}>
-            מה הפירוש בעברית?
-          </div>
-          <input
-            ref={inputRef}
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={e => e.key === "Enter" && handleSubmit()}
-            disabled={!!result}
-            placeholder="הקלד את התרגום..."
-            dir="rtl"
-            style={{
-              width: "100%", padding: "14px 16px", fontSize: 18,
-              border: result
-                ? ("1.5px solid " + (result.correct ? "#007aff" : "#ff9f0a"))
-                : "1.5px solid #e5e5ea",
-              borderRadius: 12, outline: "none", boxSizing: "border-box",
-              background: result
-                ? (result.correct ? "#e8f4fd" : "#fff3e0")
-                : "#fff",
-              textAlign: "right"
-            }}
-          />
-        </div>
-      )}
+      <input
+        ref={inputRef}
+        value={input}
+        onChange={e => setInput(e.target.value)}
+        onKeyDown={e => e.key === "Enter" && handleSubmit()}
+        disabled={!!result || revealed}
+        placeholder="תרגום לעברית..."
+        dir="rtl"
+        style={{
+          width: "100%", padding: "15px 16px", fontSize: 19,
+          border: result
+            ? ("1.5px solid " + (result.correct ? "#007aff" : "#ff9f0a"))
+            : "1.5px solid #e5e5ea",
+          borderRadius: 14, outline: "none", boxSizing: "border-box",
+          background: result ? (result.correct ? "#e8f4fd" : "#fff3e0") : "#fff",
+          textAlign: "right", marginBottom: 12
+        }}
+      />
 
       {result && (
         <div style={{
-          padding: "12px 16px", borderRadius: 12, marginBottom: 16,
+          padding: "12px 16px", borderRadius: 12, marginBottom: 12,
           background: result.correct ? "#e8f4fd" : "#fff3e0",
-          border: "none",
           color: result.correct ? "#007aff" : "#cc7a00",
           fontSize: 15, fontWeight: 600, textAlign: "center", direction: "rtl"
         }}>
@@ -1242,49 +1098,38 @@ function PracticeScreen({ wordState, mode, onEnd, onUpdateWord }) {
 
       {revealed && !result && (
         <div style={{
-          padding: "12px 16px", borderRadius: 12, marginBottom: 16,
-          background: "#fff3e0", border: "none",
-          color: "#cc7a00", fontSize: 16, fontWeight: 700,
-          textAlign: "center", direction: "rtl"
+          padding: "12px 16px", borderRadius: 12, marginBottom: 12,
+          background: "#fff3e0", color: "#cc7a00",
+          fontSize: 16, fontWeight: 700, textAlign: "center", direction: "rtl"
         }}>
           התשובה: {currentWord.hebrew}
-          <div style={{ fontSize: 12, fontWeight: 400, color: "#8e8e93", marginTop: 4 }}>
-            נספר כטעות — לחץ המשך
-          </div>
+          <div style={{ fontSize: 12, fontWeight: 400, color: "#8e8e93", marginTop: 4 }}>נספר כטעות</div>
         </div>
       )}
 
       {!result && !revealed ? (
-        variation === "hebrewToGreek" ? null : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <button
-              onClick={handleSubmit}
-              disabled={!input.trim()}
-              style={{
-                width: "100%", padding: "15px 0", fontSize: 17, fontWeight: 700,
-                background: "#007aff",
-                color: "#fff", border: "none", borderRadius: 14, cursor: "pointer",
-                opacity: !input.trim() ? 0.5 : 1
-              }}>
-              בדוק
-            </button>
-            <button
-              onClick={handleReveal}
-              style={{
-                width: "100%", padding: "12px 0", fontSize: 15, fontWeight: 600,
-                background: "#fff", color: "#8e8e93",
-                border: "none", borderRadius: 14, cursor: "pointer",
-                boxShadow: "0 1px 4px rgba(0,0,0,0.06)"
-              }}>
-              לא יודע — הצג תשובה
-            </button>
-          </div>
-        )
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <button onClick={handleSubmit} disabled={!input.trim()} style={{
+            width: "100%", padding: "15px 0", fontSize: 17, fontWeight: 700,
+            background: "#007aff", color: "#fff", border: "none",
+            borderRadius: 14, cursor: "pointer", opacity: !input.trim() ? 0.4 : 1
+          }}>
+            בדוק
+          </button>
+          <button onClick={handleReveal} style={{
+            width: "100%", padding: "12px 0", fontSize: 15, fontWeight: 600,
+            background: "#fff", color: "#8e8e93", border: "none",
+            borderRadius: 14, cursor: "pointer",
+            boxShadow: "0 1px 4px rgba(0,0,0,0.06)"
+          }}>
+            לא יודע — הצג תשובה
+          </button>
+        </div>
       ) : (
         <button onClick={loadNext} style={{
           width: "100%", padding: "15px 0", fontSize: 17, fontWeight: 700,
-          background: "#007aff",
-          color: "#fff", border: "none", borderRadius: 14, cursor: "pointer"
+          background: "#007aff", color: "#fff", border: "none",
+          borderRadius: 14, cursor: "pointer"
         }}>
           המשך
         </button>
