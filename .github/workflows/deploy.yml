@@ -1,0 +1,26 @@
+name: Deploy feature branch
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: Source branch
+        required: true
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Merge to master
+        run: |
+          git config user.email "action@github.com"
+          git config user.name "GitHub Action"
+          git fetch origin ${{ inputs.branch }}
+          git checkout -b merge-temp origin/${{ inputs.branch }}
+          git checkout master
+          git merge --ff-only merge-temp || git merge --no-ff merge-temp -m "Deploy ${{ inputs.branch }}"
+          git push origin master
