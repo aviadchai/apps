@@ -1502,8 +1502,17 @@ function AlphaOrderScreen({ onEnd }) {
     return () => clearInterval(t);
   }, [done]);
 
+  function speakLetter(letter) {
+    if (!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const utt = new SpeechSynthesisUtterance(letter.name);
+    utt.lang = "el-GR"; utt.rate = 0.85;
+    window.speechSynthesis.speak(utt);
+  }
+
   function handleTap(letter) {
     if (done || tapped.has(letter.id)) return;
+    speakLetter(letter);
     if (letter.id === LETTERS[nextIdx].id) {
       const newTapped = new Set(tapped);
       newTapped.add(letter.id);
@@ -1552,14 +1561,16 @@ function AlphaOrderScreen({ onEnd }) {
           const isWrong = wrongId === letter.id;
           return (
             <button key={letter.id} onClick={() => handleTap(letter)} style={{
-              padding:"12px 4px",fontSize:26,fontWeight:600,
+              padding:"10px 4px",fontSize:26,fontWeight:600,
               background: isOk ? "#34c759" : isWrong ? "#ff3b30" : "#fff",
               color: isOk || isWrong ? "#fff" : "#1a237e",
               border:"1.5px solid " + (isOk ? "#34c759" : isWrong ? "#ff3b30" : "#e5e5ea"),
               borderRadius:12,transition:"background 0.15s, border 0.15s",
-              cursor: isOk ? "default" : "pointer"
+              cursor: isOk ? "default" : "pointer",
+              display:"flex",flexDirection:"column",alignItems:"center",lineHeight:1.1
             }}>
-              {letter.upper}
+              <div style={{ fontSize:22,fontWeight:700 }}>{letter.upper}</div>
+              <div style={{ fontSize:15,fontWeight:400,opacity:0.8 }}>{letter.lower}</div>
             </button>
           );
         })}
