@@ -1,0 +1,33 @@
+name: Deploy feature branch
+on:
+  push:
+    branches:
+      - claude/greek-vocab-app-wgfh1i
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: Source branch
+        required: false
+        default: claude/greek-vocab-app-wgfh1i
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Checkout files from feature branch
+        env:
+          SRC_BRANCH: ${{ github.event.inputs.branch || github.ref_name }}
+        run: |
+          git config user.email "action@github.com"
+          git config user.name "GitHub Action"
+          git fetch origin "$SRC_BRANCH"
+          git checkout "origin/$SRC_BRANCH" -- greek.html greek-abc.html
+          git add greek.html greek-abc.html
+          git diff --cached --quiet && echo "No changes" || git commit -m "Deploy $SRC_BRANCH"
+          git push origin master
