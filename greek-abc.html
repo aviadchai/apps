@@ -376,7 +376,7 @@ function LetterModal({ letter, state, onClose, onNext, onPrev }) {
     const dx = e.changedTouches[0].clientX - touchRef.current;
     touchRef.current = null;
     if (Math.abs(dx) > 50) {
-      if (dx < 0) { slideDirRef.current = "Right"; onNext && onNext(); }
+      if (dx > 0) { slideDirRef.current = "Right"; onNext && onNext(); }
       else { slideDirRef.current = "Left"; onPrev && onPrev(); }
     }
   }
@@ -420,15 +420,15 @@ function LetterModal({ letter, state, onClose, onNext, onPrev }) {
               textAlign: "center", background: "#f2f2f7", borderRadius: 16,
               padding: "10px 22px 14px", minWidth: 100
             }}>
-              <div style={{ fontSize: 11, color: "#8e8e93", marginBottom: 4, fontWeight: 500 }}>גדולה</div>
-              <div style={{ fontSize: 56, fontWeight: 300, color: "#1c1c1e", lineHeight: 1 }}>{letter.upper}</div>
+              <div style={{ fontSize: 11, color: "#8e8e93", marginBottom: 4, fontWeight: 500 }}>קטנה</div>
+              <div style={{ fontSize: 56, fontWeight: 300, color: "#1c1c1e", lineHeight: 1 }}>{letter.lower}</div>
             </div>
             <div style={{
               textAlign: "center", background: "#f2f2f7", borderRadius: 16,
               padding: "10px 22px 14px", minWidth: 100
             }}>
-              <div style={{ fontSize: 11, color: "#8e8e93", marginBottom: 4, fontWeight: 500 }}>קטנה</div>
-              <div style={{ fontSize: 56, fontWeight: 300, color: "#1c1c1e", lineHeight: 1 }}>{letter.lower}</div>
+              <div style={{ fontSize: 11, color: "#8e8e93", marginBottom: 4, fontWeight: 500 }}>גדולה</div>
+              <div style={{ fontSize: 56, fontWeight: 300, color: "#1c1c1e", lineHeight: 1 }}>{letter.upper}</div>
             </div>
           </div>
 
@@ -982,7 +982,7 @@ function NumberModal({ num, state, onClose, onNext, onPrev }) {
     const dx = e.changedTouches[0].clientX - touchRef.current;
     touchRef.current = null;
     if (Math.abs(dx) > 50) {
-      if (dx < 0) { slideDirRef.current = "Right"; onNext && onNext(); }
+      if (dx > 0) { slideDirRef.current = "Right"; onNext && onNext(); }
       else { slideDirRef.current = "Left"; onPrev && onPrev(); }
     }
   }
