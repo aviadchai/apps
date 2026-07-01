@@ -1202,7 +1202,7 @@ function NumberQuizScreen({ numberStates, onEnd, onUpdate }) {
   );
 }
 
-function NotebookScreen() {
+function NotebookScreen({ onEnd }) {
   const [passageIdx, setPassageIdx] = useState(0);
   const [translation, setTranslation] = useState("");
   const [revealed, setRevealed] = useState(false);
@@ -1272,7 +1272,24 @@ function NotebookScreen() {
   const notebookH = lines.length * lineH + 28;
 
   return (
-    <div style={{ marginTop: 4 }}>
+    <div style={{
+      position: "fixed", inset: 0, background: "#f2f2f7", zIndex: 100,
+      overflowY: "auto", padding: "0 16px 24px",
+      paddingTop: "calc(env(safe-area-inset-top) + 12px)"
+    }}>
+      <div style={{ display: "flex", alignItems: "center", marginBottom: 12 }}>
+        <button onClick={onEnd} style={{
+          background: "none", border: "none", fontSize: 22, color: "#007aff",
+          padding: "4px 0", lineHeight: 1, marginLeft: 0, marginRight: "auto"
+        }}>
+          ←
+        </button>
+        <div style={{ fontSize: 17, fontWeight: 600, color: "#1c1c1e", marginLeft: "auto", marginRight: "auto", position: "absolute", left: 0, right: 0, textAlign: "center", pointerEvents: "none" }}>
+          מחברת
+        </div>
+        <div style={{ width: 32 }} />
+      </div>
+
       <div style={{
         background: "#fffde7", borderRadius: 14, padding: "12px 14px",
         marginBottom: 10, boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
@@ -1381,7 +1398,7 @@ function NotebookScreen() {
   );
 }
 
-function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading, onStartFinal, challengeStart, numberStates, onSelectNumber, onStartNumberQuiz, numChallengeStart }) {
+function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading, onStartFinal, challengeStart, numberStates, onSelectNumber, onStartNumberQuiz, numChallengeStart, onStartNotebook }) {
   const [tab, setTab] = useState("letters");
   const [showAbcParagraph, setShowAbcParagraph] = useState(false);
   const learnedCount = LETTERS.filter(l => letterStates[l.id]?.learned).length;
@@ -1431,8 +1448,7 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
       }}>
         {[
           {id:"letters",label:"אותיות",count:`${learnedCount}/24`},
-          {id:"numbers",label:"מספרים",count:`${numLearned}/${NUMBERS.length}`},
-          {id:"notebook",label:"מחברת",count:null}
+          {id:"numbers",label:"מספרים",count:`${numLearned}/${NUMBERS.length}`}
         ].map(t => (
           <button key={t.id} onClick={() => setTab(t.id)} style={{
             flex: 1, padding: "8px 0", fontSize: 13, fontWeight: 600,
@@ -1619,7 +1635,7 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
         ))}
       </div>
 
-      <div style={{ display: "flex", gap: 8, marginBottom: 0 }}>
+      <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
         <button onClick={onStartQuiz} style={{
           flex: 1, padding: "14px 0", fontSize: 16, fontWeight: 600,
           background: "#007aff",
@@ -1637,6 +1653,13 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
           מבחן קריאה
         </button>
       </div>
+      <button onClick={onStartNotebook} style={{
+        width: "100%", padding: "13px 0", fontSize: 15, fontWeight: 600,
+        background: "#fff", color: "#5856d6", border: "1.5px solid #5856d6",
+        borderRadius: 12, marginBottom: 0
+      }}>
+        📓 מחברת יוונית
+      </button>
 
       {learnedCount >= 20 && learnedCount < 24 && (
         <div style={{
@@ -1829,56 +1852,6 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
       })()}
       </>)}
 
-      {tab === "notebook" && <NotebookScreen />}
-
-      <div style={{ marginTop: 20, marginBottom: 16 }}>
-        <div style={{ fontSize: 15, fontWeight: 600, color: "#1c1c1e", marginBottom: 10 }}>
-          טיפים ולימוד מתקדם
-        </div>
-        <div style={{
-          display: "flex", gap: 12, overflowX: "auto", paddingBottom: 8,
-          scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch",
-          msOverflowStyle: "none", scrollbarWidth: "none"
-        }}>
-          {[
-            { title: "טונוס — הסימן מעל האות", color: "#007aff",
-              content: "הסימן ´ (τόνος) מראה איפה ההדגשה במילה.\n\nπαρακαλώ → ההדגשה על ω האחרונה\nκαλημέρα → ההדגשה על έ\n\nביוונית ההדגשה משנה משמעות!\nγέρος = זקן\nγερός = חזק" },
-            { title: "אות גדולה וקטנה", color: "#ff9f0a",
-              content: "גדולה (κεφαλαίο) משמשת ל:\n• תחילת משפט\n• שמות פרטיים: Μαρία, Γιώργος\n• שמות מקומות: Αθήνα, Κρήτη\n• ראשי תיבות: ΟΤΕ, ΔΕΗ\n\nקטנה (πεζό) לכל השאר — רוב הטקסט ביוונית." },
-            { title: "צירופי אותיות חשובים", color: "#007aff",
-              content: "μπ = B (מפּ → ב)\nντ = D (נט → ד)\nγκ = G (גק → ג)\nτσ = TS (טס)\nτζ = DZ (טז)\nγγ = NG (נג)\n\nלמשל:\nμπίρα = bira (בירה)\nντομάτα = domata (עגבנייה)" },
-            { title: "תנועות כפולות", color: "#ff9f0a",
-              content: "αι = e (אֶ)\nει = i (אִי)\nοι = i (אִי)\nου = u (אוּ)\nαυ = av/af\nευ = ev/ef\n\nαυ ו-ευ משתנות:\nלפני תנועה/β,γ,δ,μ,ν → v\nלפני עיצור חזק → f\nαυτός = aftos\nαύριο = avrio" },
-            { title: "שאלון ותחביר", color: "#007aff",
-              content: "סימן שאלה ביוונית = ;\n(נקודה-פסיק, לא סימן שאלה!)\n\nΠού είναι; = ?איפה זה\nΠόσο κάνει; = ?כמה עולה\n\nנקודה עליונה · = נקודתיים\nκύριε· = :אדוני" },
-            { title: "מילים שימושיות בשלט", color: "#ff9f0a",
-              content: "ΕΙΣΟΔΟΣ = כניסה\nΕΞΟΔΟΣ = יציאה\nΑΝΟΙΧΤΟ = פתוח\nΚΛΕΙΣΤΟ = סגור\nΤΟΥΑΛΕΤΕΣ = שירותים\nΦΑΡΜΑΚΕΙΟ = בית מרקחת\nΑΣΤΥΝΟΜΙΑ = משטרה\nΝΟΣΟΚΟΜΕΙΟ = בית חולים\nΣΤΑΘΜΟΣ = תחנה" },
-            { title: "מספרים 1-10", color: "#007aff",
-              content: "1 = ένα (אנה)\n2 = δύο (דיו)\n3 = τρία (טריה)\n4 = τέσσερα (טסרה)\n5 = πέντε (פנדה)\n6 = έξι (אקסי)\n7 = επτά (אפטה)\n8 = οκτώ (אוקטו)\n9 = εννέα (אנאה)\n10 = δέκα (דקה)" },
-            { title: "ביטויים לתייר", color: "#ff9f0a",
-              content: "Γεια σας = שלום (ג׳ה סאס)\nΕυχαριστώ = תודה (אפחריסטו)\nΠαρακαλώ = בבקשה (פרקלו)\nΣυγγνώμη = סליחה (סיגנומי)\nΠόσο κάνει; = כמה עולה?\nΤον λογαριασμό = את החשבון\nΝερό = מים (נרו)\nΜπύρα = בירה (בירה)" },
-            { title: "טיפים לקריאה מהירה", color: "#007aff",
-              content: "1. התחל משלטים — הם באותיות גדולות וקלים לקרוא\n\n2. תרגל בתפריטים — המילים חוזרות\n\n3. אל תתרגם — נסה לקרוא את הצליל\n\n4. שים לב לטונוס — הוא עוזר להגייה\n\n5. צירופי אותיות קודם — μπ,ντ,γκ הכי נפוצים" }
-          ].map((tip, i) => (
-            <div key={i} style={{
-              minWidth: 260, maxWidth: 260, flexShrink: 0,
-              background: "#fff", borderRadius: 14,
-              boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-              padding: "14px 16px",
-              scrollSnapAlign: "start"
-            }}>
-              <div style={{
-                fontSize: 14, fontWeight: 600, color: "#1c1c1e",
-                marginBottom: 10, borderRight: `3px solid ${tip.color}`, paddingRight: 10
-              }}>{tip.title}</div>
-              <div style={{
-                fontSize: 13, color: "#374151", lineHeight: 1.6,
-                whiteSpace: "pre-line", direction: "rtl"
-              }}>{tip.content}</div>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }
@@ -2168,8 +2141,12 @@ function App() {
           onStartReading={() => setScreen("reading")}
           onStartFinal={() => setScreen("final")}
           onStartNumberQuiz={() => setScreen("numquiz")}
+          onStartNotebook={() => setScreen("notebook")}
           numChallengeStart={numChallengeStart}
         />
+      )}
+      {screen === "notebook" && (
+        <NotebookScreen onEnd={() => setScreen("home")} />
       )}
       {screen === "quiz" && (
         <QuizScreen
