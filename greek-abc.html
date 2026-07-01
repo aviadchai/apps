@@ -122,6 +122,15 @@ const READING_WORDS = [
   {gr:"νοσοκομείο",en:"nosokomio",he:"בית חולים",scene:"sign",emoji:"🏥"}
 ];
 
+const GREEK_PASSAGES = [
+  {id:1,title:"ברכות",gr:"— Καλημέρα! Πώς είσαι;\n— Είμαι καλά, ευχαριστώ.\n— Χαίρομαι πολύ!",he:"— בוקר טוב! איך אתה?\n— אני בסדר, תודה.\n— נעים מאוד!"},
+  {id:2,title:"בטברנה",gr:"— Τι θέλετε παρακαλώ;\n— Ένα νερό και μια μπίρα.\n— Αμέσως, ευχαριστώ!",he:"— מה תרצו בבקשה?\n— מים אחד ובירה אחת.\n— מיד, תודה!"},
+  {id:3,title:"הים",gr:"Η θάλασσα είναι μπλε.\nΟ ήλιος είναι ζεστός.\nΗ Ελλάδα είναι όμορφη!",he:"הים כחול.\nהשמש חמה.\nיוון יפה!"},
+  {id:4,title:"בשוק",gr:"— Πόσο κάνει αυτό;\n— Κάνει δύο ευρώ.\n— Ευχαριστώ πολύ!",he:"— כמה זה עולה?\n— זה עולה שני יורו.\n— תודה רבה!"},
+  {id:5,title:"מלון",gr:"— Πού είναι το ξενοδοχείο;\n— Είναι στο κέντρο της πόλης.\n— Ευχαριστώ!",he:"— איפה המלון?\n— הוא במרכז העיר.\n— תודה!"},
+  {id:6,title:"אוכל",gr:"Το ψωμί είναι φρέσκο.\nΤο τυρί είναι νόστιμο.\nΤο λεμόνι είναι ξινό.",he:"הלחם טרי.\nהגבינה טעימה.\nהלימון חמוץ."}
+];
+
 const SCENE_IMGS = {
   menu: [
     "https://images.unsplash.com/photo-1602591546738-ceab3d349681?w=420&h=220&fit=crop&q=80",
@@ -1193,6 +1202,185 @@ function NumberQuizScreen({ numberStates, onEnd, onUpdate }) {
   );
 }
 
+function NotebookScreen() {
+  const [passageIdx, setPassageIdx] = useState(0);
+  const [translation, setTranslation] = useState("");
+  const [revealed, setRevealed] = useState(false);
+  const canvasRef = useRef(null);
+  const drawingRef = useRef(false);
+  const lastPosRef = useRef(null);
+
+  const passage = GREEK_PASSAGES[passageIdx];
+  const lines = passage.gr.split("\n");
+
+  function getPos(e, canvas) {
+    const rect = canvas.getBoundingClientRect();
+    const src = e.touches ? e.touches[0] : e;
+    return {
+      x: (src.clientX - rect.left) * (canvas.width / rect.width),
+      y: (src.clientY - rect.top) * (canvas.height / rect.height)
+    };
+  }
+
+  function startDraw(e) {
+    e.preventDefault();
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    drawingRef.current = true;
+    const pos = getPos(e, canvas);
+    lastPosRef.current = pos;
+    const ctx = canvas.getContext("2d");
+    ctx.beginPath();
+    ctx.arc(pos.x, pos.y, 1.5, 0, Math.PI * 2);
+    ctx.fillStyle = "#1a237e";
+    ctx.fill();
+  }
+
+  function doDraw(e) {
+    e.preventDefault();
+    if (!drawingRef.current || !lastPosRef.current) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const pos = getPos(e, canvas);
+    const ctx = canvas.getContext("2d");
+    ctx.beginPath();
+    ctx.moveTo(lastPosRef.current.x, lastPosRef.current.y);
+    ctx.lineTo(pos.x, pos.y);
+    ctx.strokeStyle = "#1a237e";
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    ctx.stroke();
+    lastPosRef.current = pos;
+  }
+
+  function endDraw() { drawingRef.current = false; lastPosRef.current = null; }
+
+  function clearCanvas() {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  function goToPassage(idx) {
+    setPassageIdx(idx);
+    setTranslation("");
+    setRevealed(false);
+    setTimeout(clearCanvas, 0);
+  }
+
+  const lineH = 46;
+  const notebookH = lines.length * lineH + 28;
+
+  return (
+    <div style={{ marginTop: 4 }}>
+      <div style={{
+        background: "#fffde7", borderRadius: 14, padding: "12px 14px",
+        marginBottom: 10, boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+        border: "1px solid #f5e642"
+      }}>
+        <div style={{ fontSize: 11, color: "#8e8e93", fontWeight: 500, marginBottom: 6 }}>התרגום שלי</div>
+        <textarea
+          value={translation}
+          onChange={e => setTranslation(e.target.value)}
+          placeholder="כתוב כאן את התרגום..."
+          style={{
+            width: "100%", minHeight: 58, border: "none", background: "transparent",
+            fontSize: 15, color: "#1c1c1e", fontFamily: "inherit",
+            resize: "none", outline: "none", direction: "rtl", lineHeight: 1.7
+          }}
+        />
+      </div>
+
+      <div style={{
+        position: "relative", borderRadius: 14, overflow: "hidden",
+        boxShadow: "0 2px 12px rgba(0,0,0,0.1)", marginBottom: 10,
+        userSelect: "none"
+      }}>
+        <div style={{ background: "#fafaf2", padding: "14px 14px 14px 20px", position: "relative" }}>
+          <div style={{ position: "absolute", left: 48, top: 0, bottom: 0, width: 1.5, background: "#ffcdd2" }} />
+          {lines.map((line, i) => (
+            <div key={i} style={{
+              height: lineH, display: "flex", alignItems: "center",
+              borderBottom: "1px solid #c8e6c9",
+              fontSize: 21, fontWeight: 500, color: "#1a237e",
+              direction: "ltr", letterSpacing: 0.3, paddingRight: 4
+            }}>
+              {line}
+            </div>
+          ))}
+        </div>
+        <canvas
+          ref={canvasRef}
+          width={440}
+          height={notebookH}
+          style={{
+            position: "absolute", inset: 0, width: "100%", height: "100%",
+            touchAction: "none", cursor: "crosshair"
+          }}
+          onTouchStart={startDraw}
+          onTouchMove={doDraw}
+          onTouchEnd={endDraw}
+          onMouseDown={startDraw}
+          onMouseMove={doDraw}
+          onMouseUp={endDraw}
+          onMouseLeave={endDraw}
+        />
+      </div>
+
+      <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+        <button onClick={clearCanvas} style={{
+          flex: 1, padding: "11px 0", fontSize: 13, fontWeight: 600,
+          background: "#fff", color: "#8e8e93",
+          border: "1.5px solid #e5e5ea", borderRadius: 12
+        }}>
+          נקה שרבוט
+        </button>
+        <button onClick={() => setRevealed(r => !r)} style={{
+          flex: 1, padding: "11px 0", fontSize: 13, fontWeight: 600,
+          background: revealed ? "#e8f4fd" : "#007aff",
+          color: revealed ? "#007aff" : "#fff",
+          border: "none", borderRadius: 12
+        }}>
+          {revealed ? "הסתר" : "גלה תרגום"}
+        </button>
+        <button onClick={() => goToPassage((passageIdx + 1) % GREEK_PASSAGES.length)} style={{
+          flex: 1, padding: "11px 0", fontSize: 13, fontWeight: 600,
+          background: "#fff", color: "#007aff",
+          border: "1.5px solid #007aff", borderRadius: 12
+        }}>
+          פסקה הבאה
+        </button>
+      </div>
+
+      {revealed && (
+        <div style={{
+          background: "#e8f4fd", borderRadius: 14, padding: "14px 16px",
+          marginBottom: 10, animation: "fadeIn 0.2s ease"
+        }}>
+          <div style={{ fontSize: 11, color: "#007aff", fontWeight: 700, marginBottom: 8 }}>תרגום</div>
+          {passage.he.split("\n").map((line, i) => (
+            <div key={i} style={{ fontSize: 16, color: "#1c1c1e", lineHeight: 1.9 }}>{line}</div>
+          ))}
+        </div>
+      )}
+
+      <div style={{ display: "flex", gap: 8, justifyContent: "center", paddingBottom: 8 }}>
+        {GREEK_PASSAGES.map((p, i) => (
+          <button key={i} onClick={() => goToPassage(i)} style={{
+            width: 34, height: 34, borderRadius: "50%",
+            background: i === passageIdx ? "#007aff" : "#e5e5ea",
+            color: i === passageIdx ? "#fff" : "#8e8e93",
+            border: "none", fontSize: 12, fontWeight: 700,
+            boxShadow: i === passageIdx ? "0 2px 8px rgba(0,122,255,0.3)" : "none"
+          }}>
+            {i + 1}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading, onStartFinal, challengeStart, numberStates, onSelectNumber, onStartNumberQuiz, numChallengeStart }) {
   const [tab, setTab] = useState("letters");
   const [showAbcParagraph, setShowAbcParagraph] = useState(false);
@@ -1241,16 +1429,20 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
       <div style={{
         display: "flex", background: "#e5e5ea", borderRadius: 10, padding: 3, marginBottom: 16
       }}>
-        {[{id:"letters",label:"אותיות",count:`${learnedCount}/24`},{id:"numbers",label:"מספרים",count:`${numLearned}/${NUMBERS.length}`}].map(t => (
+        {[
+          {id:"letters",label:"אותיות",count:`${learnedCount}/24`},
+          {id:"numbers",label:"מספרים",count:`${numLearned}/${NUMBERS.length}`},
+          {id:"notebook",label:"מחברת",count:null}
+        ].map(t => (
           <button key={t.id} onClick={() => setTab(t.id)} style={{
-            flex: 1, padding: "8px 0", fontSize: 14, fontWeight: 600,
+            flex: 1, padding: "8px 0", fontSize: 13, fontWeight: 600,
             background: tab === t.id ? "#fff" : "transparent",
             color: tab === t.id ? "#1c1c1e" : "#8e8e93",
             border: "none", borderRadius: 8,
             boxShadow: tab === t.id ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
             transition: "all 0.2s"
           }}>
-            {t.label} <span style={{ fontSize: 11, color: tab === t.id ? "#007aff" : "#aeaeb2" }}>{t.count}</span>
+            {t.label}{t.count ? <span style={{ fontSize: 11, color: tab === t.id ? "#007aff" : "#aeaeb2" }}> {t.count}</span> : null}
           </button>
         ))}
       </div>
@@ -1267,18 +1459,86 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
           <span>{challengeDay > 0 ? `יום ${challengeDay} מתוך 10` : "אלפבית יווני"}</span>
           <span style={{ color: "#8e8e93" }}>{learnedCount}/24</span>
         </div>
-        <div style={{ background: "#e5e5ea", borderRadius: 99, height: 6, overflow: "hidden", marginBottom: 8 }}>
+        {challengeDay > 0 && todayRemaining > 0 ? (
+          <div style={{ fontSize: 13, color: "#007aff", fontWeight: 600, marginBottom: 8, textAlign: "center", padding: "6px 10px", borderRadius: 8, background: "#e8f4fd" }}>
+            {todayNew}/{todayDaily} אותיות חדשות היום · נשאר: {todayRemaining}
+          </div>
+        ) : challengeDay > 0 && todayPlan ? (
+          <div style={{ fontSize: 13, color: "#34c759", fontWeight: 600, marginBottom: 8, textAlign: "center", padding: "6px 10px", borderRadius: 8, background: "#e8f4fd" }}>
+            סיימת את המשימה של היום ✓
+          </div>
+        ) : null}
+        <div style={{ background: "#e5e5ea", borderRadius: 99, height: 6, overflow: "hidden", marginBottom: challengeStart ? 10 : 8 }}>
           <div style={{
             width: (learnedCount / 24 * 100) + "%",
             height: "100%", background: "#007aff", borderRadius: 99,
             transition: "width 0.6s"
           }} />
         </div>
+        {challengeStart && (
+          <div style={{ display: "flex", gap: 4, justifyContent: "center", flexWrap: "wrap", marginBottom: 8 }}>
+            {DAY_PLAN.map((dp, i) => {
+              const dayNum = i + 1;
+              const current = dayNum === challengeDay;
+              const isFuture = dayNum > challengeDay;
+              const met = learnedCount >= dp.target;
+              const aheadMet = isFuture && met;
+              const prevT = i > 0 ? DAY_PLAN[i - 1].target : 0;
+              const dayNew = current ? Math.max(0, learnedCount - prevT) : met ? dp.daily : 0;
+              let bg, color, border;
+              if (current) {
+                bg = met ? "#007aff" : "#e5e5ea";
+                color = met ? "#fff" : "#1c1c1e";
+                border = "2.5px solid #ff9f0a";
+              } else if (aheadMet) {
+                bg = "transparent"; color = "#007aff"; border = "2px dashed #007aff";
+              } else if (!isFuture && met) {
+                bg = "#007aff"; color = "#fff"; border = "none";
+              } else {
+                bg = "#e5e5ea"; color = "#aeaeb2"; border = "none";
+              }
+              return (
+                <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, width: 30 }}>
+                  <div style={{
+                    width: 24, height: 24, borderRadius: "50%",
+                    background: bg, color, border,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 10, fontWeight: 600, boxSizing: "border-box",
+                    boxShadow: current ? "0 0 8px rgba(255,159,10,0.45)" : "none"
+                  }}>
+                    {(!isFuture && met && !current) ? "✓" : aheadMet ? "✓" : dayNum}
+                  </div>
+                  <div style={{ fontSize: 8, fontWeight: 600, color: current ? (met ? "#007aff" : "#ff9f0a") : met ? "#007aff" : isFuture ? "#c7c7cc" : "#8e8e93" }}>
+                    {isFuture && !aheadMet ? dp.daily : `${Math.min(dayNew, dp.daily)}/${dp.daily}`}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
         {letterPrediction && (
           <div style={{ fontSize: 12, color: "#8e8e93", textAlign: "center" }}>
             {letterPrediction}
           </div>
         )}
+      </div>
+
+      <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+        {[1,2,3].map(d => {
+          const count = d === 1 ? learnedEasy : d === 2 ? learnedMed : learnedHard;
+          return (
+            <div key={d} style={{
+              flex: 1, textAlign: "center", padding: "10px 4px",
+              borderRadius: 12, background: "#fff",
+              boxShadow: "0 1px 4px rgba(0,0,0,0.06)"
+            }}>
+              <div style={{ fontSize: 11, color: "#8e8e93", fontWeight: 500 }}>{DIFF_NAMES[d]}</div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: DIFF_COLORS[d], marginTop: 2 }}>
+                {count}<span style={{ fontSize: 13, color: "#aeaeb2" }}>/8</span>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {(() => {
@@ -1568,6 +1828,8 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
         );
       })()}
       </>)}
+
+      {tab === "notebook" && <NotebookScreen />}
 
       <div style={{ marginTop: 20, marginBottom: 16 }}>
         <div style={{ fontSize: 15, fontWeight: 600, color: "#1c1c1e", marginBottom: 10 }}>
