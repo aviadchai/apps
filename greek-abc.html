@@ -1202,7 +1202,7 @@ function NumberQuizScreen({ numberStates, onEnd, onUpdate }) {
   );
 }
 
-function NotebookScreen({ onEnd }) {
+function NotebookScreen() {
   const [passageIdx, setPassageIdx] = useState(0);
   const [translation, setTranslation] = useState("");
   const [revealed, setRevealed] = useState(false);
@@ -1211,7 +1211,11 @@ function NotebookScreen({ onEnd }) {
   const lastPosRef = useRef(null);
 
   const passage = GREEK_PASSAGES[passageIdx];
-  const lines = passage.gr.split("\n");
+  const textLines = passage.gr.split("\n");
+  const lineH = 86;
+  const minLines = 9;
+  const totalLines = Math.max(minLines, textLines.length + 5);
+  const notebookH = totalLines * lineH + 28;
 
   function getPos(e, canvas) {
     const rect = canvas.getBoundingClientRect();
@@ -1247,7 +1251,7 @@ function NotebookScreen({ onEnd }) {
     ctx.moveTo(lastPosRef.current.x, lastPosRef.current.y);
     ctx.lineTo(pos.x, pos.y);
     ctx.strokeStyle = "#1a237e";
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2.5;
     ctx.lineCap = "round";
     ctx.stroke();
     lastPosRef.current = pos;
@@ -1268,28 +1272,8 @@ function NotebookScreen({ onEnd }) {
     setTimeout(clearCanvas, 0);
   }
 
-  const lineH = 46;
-  const notebookH = lines.length * lineH + 28;
-
   return (
-    <div style={{
-      position: "fixed", inset: 0, background: "#f2f2f7", zIndex: 100,
-      overflowY: "auto", padding: "0 16px 24px",
-      paddingTop: "calc(env(safe-area-inset-top) + 12px)"
-    }}>
-      <div style={{ display: "flex", alignItems: "center", marginBottom: 12 }}>
-        <button onClick={onEnd} style={{
-          background: "none", border: "none", fontSize: 22, color: "#007aff",
-          padding: "4px 0", lineHeight: 1, marginLeft: 0, marginRight: "auto"
-        }}>
-          ←
-        </button>
-        <div style={{ fontSize: 17, fontWeight: 600, color: "#1c1c1e", marginLeft: "auto", marginRight: "auto", position: "absolute", left: 0, right: 0, textAlign: "center", pointerEvents: "none" }}>
-          מחברת
-        </div>
-        <div style={{ width: 32 }} />
-      </div>
-
+    <div>
       <div style={{
         background: "#fffde7", borderRadius: 14, padding: "12px 14px",
         marginBottom: 10, boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
@@ -1309,26 +1293,26 @@ function NotebookScreen({ onEnd }) {
       </div>
 
       <div style={{
-        position: "relative", borderRadius: 14, overflow: "hidden",
+        position: "relative", overflow: "hidden",
         boxShadow: "0 2px 12px rgba(0,0,0,0.1)", marginBottom: 10,
-        userSelect: "none"
+        userSelect: "none", margin: "0 -16px 10px"
       }}>
-        <div style={{ background: "#fafaf2", padding: "14px 14px 14px 20px", position: "relative" }}>
-          <div style={{ position: "absolute", left: 48, top: 0, bottom: 0, width: 1.5, background: "#ffcdd2" }} />
-          {lines.map((line, i) => (
+        <div style={{ background: "#fafaf2", padding: "14px 14px 14px 52px", position: "relative" }}>
+          <div style={{ position: "absolute", left: 48, top: 0, bottom: 0, width: 2, background: "#ffcdd2" }} />
+          {Array.from({ length: totalLines }, (_, i) => (
             <div key={i} style={{
               height: lineH, display: "flex", alignItems: "center",
               borderBottom: "1px solid #c8e6c9",
-              fontSize: 21, fontWeight: 500, color: "#1a237e",
-              direction: "ltr", letterSpacing: 0.3, paddingRight: 4
+              fontSize: 22, fontWeight: 500, color: "#1a237e",
+              direction: "ltr", letterSpacing: 1, wordSpacing: "0.7em"
             }}>
-              {line}
+              {textLines[i] || ""}
             </div>
           ))}
         </div>
         <canvas
           ref={canvasRef}
-          width={440}
+          width={660}
           height={notebookH}
           style={{
             position: "absolute", inset: 0, width: "100%", height: "100%",
@@ -1398,7 +1382,7 @@ function NotebookScreen({ onEnd }) {
   );
 }
 
-function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading, onStartFinal, challengeStart, numberStates, onSelectNumber, onStartNumberQuiz, numChallengeStart, onStartNotebook }) {
+function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading, onStartFinal, challengeStart, numberStates, onSelectNumber, onStartNumberQuiz, numChallengeStart }) {
   const [tab, setTab] = useState("letters");
   const [showAbcParagraph, setShowAbcParagraph] = useState(false);
   const learnedCount = LETTERS.filter(l => letterStates[l.id]?.learned).length;
@@ -1448,7 +1432,8 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
       }}>
         {[
           {id:"letters",label:"אותיות",count:`${learnedCount}/24`},
-          {id:"numbers",label:"מספרים",count:`${numLearned}/${NUMBERS.length}`}
+          {id:"numbers",label:"מספרים",count:`${numLearned}/${NUMBERS.length}`},
+          {id:"notebook",label:"מחברת",count:null}
         ].map(t => (
           <button key={t.id} onClick={() => setTab(t.id)} style={{
             flex: 1, padding: "8px 0", fontSize: 13, fontWeight: 600,
@@ -1653,13 +1638,6 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
           מבחן קריאה
         </button>
       </div>
-      <button onClick={onStartNotebook} style={{
-        width: "100%", padding: "13px 0", fontSize: 15, fontWeight: 600,
-        background: "#fff", color: "#5856d6", border: "1.5px solid #5856d6",
-        borderRadius: 12, marginBottom: 0
-      }}>
-        📓 מחברת יוונית
-      </button>
 
       {learnedCount >= 20 && learnedCount < 24 && (
         <div style={{
@@ -1851,6 +1829,8 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
         );
       })()}
       </>)}
+
+      {tab === "notebook" && <NotebookScreen />}
 
     </div>
   );
@@ -2141,12 +2121,8 @@ function App() {
           onStartReading={() => setScreen("reading")}
           onStartFinal={() => setScreen("final")}
           onStartNumberQuiz={() => setScreen("numquiz")}
-          onStartNotebook={() => setScreen("notebook")}
           numChallengeStart={numChallengeStart}
         />
-      )}
-      {screen === "notebook" && (
-        <NotebookScreen onEnd={() => setScreen("home")} />
       )}
       {screen === "quiz" && (
         <QuizScreen
