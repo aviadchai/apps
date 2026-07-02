@@ -94,6 +94,119 @@ const ALL_WORDS = [
   {id:491,greek:"μεσημέρι",hebrew:"צהריים",level:10},{id:492,greek:"Ακρόπολη",hebrew:"האקרופוליס",level:10},{id:493,greek:"Παρθενώνας",hebrew:"הפרתנון",level:10},{id:494,greek:"Ολυμπία",hebrew:"אולימפיה",level:10},{id:495,greek:"Δελφοί",hebrew:"דלפי",level:10},{id:496,greek:"Μετέωρα",hebrew:"מטאורה",level:10},{id:497,greek:"Δωδεκάνησα",hebrew:"האיים הדודקנסיים",level:10},{id:498,greek:"Κυκλάδες",hebrew:"האיים הקיקלדיים",level:10},{id:499,greek:"Ιόνιο",hebrew:"הים האיוני",level:10},{id:500,greek:"Αιγαίο",hebrew:"הים האגאי",level:10}
 ];
 
+// Practical sentence patterns built mostly from ALL_WORDS vocabulary — the real-world payoff for learning words.
+const PHRASE_PATTERNS = [
+  {id:1001,greek:"Γεια σου, τι κάνεις;",hebrew:"שלום, מה שלומך?",level:1,usesWordIds:[6,21]},
+  {id:1002,greek:"Καλημέρα! Πώς είσαι;",hebrew:"בוקר טוב! איך אתה?",level:1,usesWordIds:[7,19]},
+  {id:1003,greek:"Ευχαριστώ πολύ!",hebrew:"תודה רבה!",level:1,usesWordIds:[4]},
+  {id:1004,greek:"Βοήθεια, παρακαλώ!",hebrew:"עזרה, בבקשה!",level:1,usesWordIds:[11,3]},
+  {id:1005,greek:"Πού είναι η τουαλέτα;",hebrew:"איפה השירותים?",level:1,usesWordIds:[17,14]},
+  {id:1006,greek:"Πού είναι το νοσοκομείο;",hebrew:"איפה בית החולים?",level:1,usesWordIds:[17,15]},
+  {id:1007,greek:"Ένα λεπτό, παρακαλώ.",hebrew:"דקה אחת, בבקשה.",level:1,usesWordIds:[41,50,3]},
+  {id:1008,greek:"Συγγνώμη, πού είναι η αστυνομία;",hebrew:"סליחה, איפה המשטרה?",level:1,usesWordIds:[5,17,16]},
+  {id:1009,greek:"Καληνύχτα και ευχαριστώ!",hebrew:"לילה טוב ותודה!",level:1,usesWordIds:[9,4]},
+  {id:1010,greek:"Ένα, δύο, τρία — πάμε!",hebrew:"אחת, שתיים, שלוש — קדימה!",level:1,usesWordIds:[41,42,43]},
+
+  {id:1011,greek:"Θέλω έναν καφέ, παρακαλώ.",hebrew:"אני רוצה קפה, בבקשה.",level:2,usesWordIds:[61,3]},
+  {id:1012,greek:"Τον λογαριασμό, παρακαλώ.",hebrew:"את החשבון, בבקשה.",level:2,usesWordIds:[54,3]},
+  {id:1013,greek:"Ένα τραπέζι για δύο, παρακαλώ.",hebrew:"שולחן לשניים, בבקשה.",level:2,usesWordIds:[56,42,3]},
+  {id:1014,greek:"Το μενού, παρακαλώ.",hebrew:"התפריט, בבקשה.",level:2,usesWordIds:[53,3]},
+  {id:1015,greek:"Είναι πολύ νόστιμο!",hebrew:"זה מאוד טעים!",level:2,usesWordIds:[99]},
+  {id:1016,greek:"Μια σαλάτα και ψωμί, παρακαλώ.",hebrew:"סלט אחד ולחם, בבקשה.",level:2,usesWordIds:[70,67,3]},
+  {id:1017,greek:"Ένα ποτήρι κρασί, παρακαλώ.",hebrew:"כוס יין אחת, בבקשה.",level:2,usesWordIds:[58,64,3]},
+  {id:1018,greek:"Πεινάω πολύ, θέλω φαγητό.",hebrew:"אני רעב מאוד, אני רוצה אוכל.",level:2,usesWordIds:[97,13]},
+  {id:1019,greek:"Διψάω, θέλω νερό.",hebrew:"אני צמא, אני רוצה מים.",level:2,usesWordIds:[98,12]},
+  {id:1020,greek:"Ο λογαριασμός είναι πολύ ακριβός.",hebrew:"החשבון מאוד יקר.",level:2,usesWordIds:[54,100]},
+
+  {id:1021,greek:"Έχω μια κράτηση.",hebrew:"יש לי הזמנה.",level:3,usesWordIds:[104]},
+  {id:1022,greek:"Το κλειδί του δωματίου, παρακαλώ.",hebrew:"מפתח החדר, בבקשה.",level:3,usesWordIds:[103,102,3]},
+  {id:1023,greek:"Πού είναι η πισίνα;",hebrew:"איפה הבריכה?",level:3,usesWordIds:[17,117]},
+  {id:1024,greek:"Πού είναι η παραλία;",hebrew:"איפה החוף?",level:3,usesWordIds:[17,118]},
+  {id:1025,greek:"Μπορώ να έχω μια πετσέτα;",hebrew:"אפשר לקבל מגבת?",level:3,usesWordIds:[110]},
+  {id:1026,greek:"Το δωμάτιο δεν είναι καθαρό.",hebrew:"החדר לא נקי.",level:3,usesWordIds:[102,148]},
+  {id:1027,greek:"Δέχεστε κάρτα ή μετρητά;",hebrew:"אתם מקבלים כרטיס אשראי או מזומן?",level:3,usesWordIds:[140,141]},
+  {id:1028,greek:"Ο κωδικός wi-fi, παρακαλώ.",hebrew:"קוד הוויפיי, בבקשה.",level:3,usesWordIds:[116,115,3]},
+  {id:1029,greek:"Τι ώρα είναι το check-out;",hebrew:"באיזו שעה הצ'ק אאוט?",level:3,usesWordIds:[132]},
+  {id:1030,greek:"Θέλω μια ξαπλώστρα κοντά στη θάλασσα.",hebrew:"אני רוצה כיסא נוח קרוב לים.",level:3,usesWordIds:[123,33,119]},
+
+  {id:1031,greek:"Πόσο κάνει το εισιτήριο;",hebrew:"כמה עולה הכרטיס?",level:4,usesWordIds:[20,154]},
+  {id:1032,greek:"Πού είναι ο σταθμός;",hebrew:"איפה התחנה?",level:4,usesWordIds:[17,155]},
+  {id:1033,greek:"Ένα εισιτήριο για το λεωφορείο, παρακαλώ.",hebrew:"כרטיס אחד לאוטובוס, בבקשה.",level:4,usesWordIds:[154,156,3]},
+  {id:1034,greek:"Τι ώρα φεύγει το τρένο;",hebrew:"באיזו שעה יוצאת הרכבת?",level:4,usesWordIds:[188,157]},
+  {id:1035,greek:"Στρίψτε δεξιά και συνεχίστε ευθεία.",hebrew:"פנה ימינה והמשך ישר.",level:4,usesWordIds:[175,30,176,32]},
+  {id:1036,greek:"Πόσο μακριά είναι το αεροδρόμιο;",hebrew:"כמה רחוק שדה התעופה?",level:4,usesWordIds:[20,34,151]},
+  {id:1037,greek:"Θέλω να νοικιάσω ένα αυτοκίνητο.",hebrew:"אני רוצה לשכור מכונית.",level:4,usesWordIds:[163,160]},
+  {id:1038,greek:"Θα φύγουμε αύριο το πρωί.",hebrew:"ניסע מחר בבוקר.",level:4,usesWordIds:[181,184]},
+  {id:1039,greek:"Πόσο κάνει το ταξί μέχρι το ξενοδοχείο;",hebrew:"כמה עולה המונית עד המלון?",level:4,usesWordIds:[20,159,101]},
+  {id:1040,greek:"Ο δρόμος είναι κλειστός.",hebrew:"הכביש סגור.",level:4,usesWordIds:[166,27]},
+
+  {id:1041,greek:"Πόσο κάνει αυτό;",hebrew:"כמה זה עולה?",level:5,usesWordIds:[20]},
+  {id:1042,greek:"Έχετε μικρότερο μέγεθος;",hebrew:"יש לכם מידה קטנה יותר?",level:5,usesWordIds:[208,36]},
+  {id:1043,greek:"Είναι πολύ ακριβό, έχετε έκπτωση;",hebrew:"זה מאוד יקר, יש הנחה?",level:5,usesWordIds:[226,137]},
+  {id:1044,greek:"Πού είναι το φαρμακείο;",hebrew:"איפה בית המרקחת?",level:5,usesWordIds:[17,204]},
+  {id:1045,greek:"Χρειάζομαι ένα φάρμακο για τον πόνο.",hebrew:"אני צריך תרופה נגד הכאב.",level:5,usesWordIds:[246,247]},
+  {id:1046,greek:"Έχω αλλεργία, πού είναι ο γιατρός;",hebrew:"יש לי אלרגיה, איפה הרופא?",level:5,usesWordIds:[249,250]},
+  {id:1047,greek:"Δέχεστε κάρτα;",hebrew:"אתם מקבלים כרטיס אשראי?",level:5,usesWordIds:[140]},
+  {id:1048,greek:"Έχασα το πορτοφόλι μου!",hebrew:"איבדתי את הארנק שלי!",level:5,usesWordIds:[221,219]},
+  {id:1049,greek:"Θέλω να αγοράσω ένα δώρο.",hebrew:"אני רוצה לקנות מתנה.",level:5,usesWordIds:[223,216]},
+  {id:1050,greek:"Υπάρχει σούπερ μάρκετ εδώ κοντά;",hebrew:"יש סופרמרקט כאן קרוב?",level:5,usesWordIds:[203,24,33]},
+
+  {id:1051,greek:"Πού είναι το μουσείο;",hebrew:"איפה המוזיאון?",level:6,usesWordIds:[17,251]},
+  {id:1052,greek:"Τι ώρα ανοίγει η ακρόπολη;",hebrew:"באיזו שעה נפתח האקרופוליס?",level:6,usesWordIds:[254]},
+  {id:1053,greek:"Έχετε ξεναγό που μιλάει αγγλικά;",hebrew:"יש לכם מדריך שמדבר אנגלית?",level:6,usesWordIds:[272]},
+  {id:1054,greek:"Η θέα είναι πολύ όμορφη!",hebrew:"הנוף מאוד יפה!",level:6,usesWordIds:[270,282]},
+  {id:1055,greek:"Πόσο κάνει η είσοδος;",hebrew:"כמה עולה הכניסה?",level:6,usesWordIds:[20,271]},
+  {id:1056,greek:"Θέλω πληροφορίες για το κάστρο.",hebrew:"אני רוצה מידע על המצודה.",level:6,usesWordIds:[275,256]},
+  {id:1057,greek:"Ο αρχαιολογικός χώρος είναι πολύ ενδιαφέρον.",hebrew:"האתר הארכאולוגי מאוד מעניין.",level:6,usesWordIds:[255,284]},
+  {id:1058,greek:"Μπορώ να βγάλω φωτογραφία εδώ;",hebrew:"אפשר לצלם כאן?",level:6,usesWordIds:[269,24]},
+  {id:1059,greek:"Πού είναι το γραφείο τουρισμού;",hebrew:"איפה משרד התיירות?",level:6,usesWordIds:[17,274]},
+  {id:1060,greek:"Το μέρος είναι πολύ πολυσύχναστο.",hebrew:"המקום מאוד עמוס.",level:6,usesWordIds:[286]},
+
+  {id:1061,greek:"Πώς σε λένε;",hebrew:"מה שמך?",level:7,usesWordIds:[320]},
+  {id:1062,greek:"Με λένε Άννα, χαίρομαι.",hebrew:"קוראים לי אנה, נעים מאוד.",level:7,usesWordIds:[319,321]},
+  {id:1063,greek:"Μιλάτε αγγλικά;",hebrew:"אתה מדבר אנגלית?",level:7,usesWordIds:[314]},
+  {id:1064,greek:"Δεν καταλαβαίνω, μπορείτε να επαναλάβετε;",hebrew:"אני לא מבין, תוכל לחזור על זה?",level:7,usesWordIds:[315,316]},
+  {id:1065,greek:"Πιο αργά παρακαλώ, σιγά σιγά.",hebrew:"לאט יותר בבקשה, לאט לאט.",level:7,usesWordIds:[317,325,3]},
+  {id:1066,greek:"Χρόνια πολλά και καλή χρονιά!",hebrew:"ברכות ושנה טובה!",level:7,usesWordIds:[341,342]},
+  {id:1067,greek:"Καλό ταξίδι και καλές διακοπές!",hebrew:"נסיעה טובה וחופשה טובה!",level:7,usesWordIds:[344,343]},
+  {id:1068,greek:"Στην υγειά μας!",hebrew:"לחיים!",level:7,usesWordIds:[345]},
+  {id:1069,greek:"Είμαι εδώ με την οικογένειά μου.",hebrew:"אני כאן עם המשפחה שלי.",level:7,usesWordIds:[24,305]},
+  {id:1070,greek:"Χαίρομαι πολύ που σε γνωρίζω.",hebrew:"אני שמח מאוד להכיר אותך.",level:7,usesWordIds:[321]},
+
+  {id:1071,greek:"Τι καιρό κάνει σήμερα;",hebrew:"מה מזג האוויר היום?",level:8,usesWordIds:[351,183]},
+  {id:1072,greek:"Θα βρέξει αύριο.",hebrew:"ירד גשם מחר.",level:8,usesWordIds:[354,181]},
+  {id:1073,greek:"Κάνει πολύ ζέστη σήμερα.",hebrew:"חם מאוד היום.",level:8,usesWordIds:[39,183]},
+  {id:1074,greek:"Ο ήλιος είναι πολύ δυνατός, χρειάζομαι αντηλιακό.",hebrew:"השמש חזקה מאוד, אני צריך קרם הגנה.",level:8,usesWordIds:[120,243]},
+  {id:1075,greek:"Τα νερά εδώ είναι πολύ καθαρά.",hebrew:"המים כאן צלולים מאוד.",level:8,usesWordIds:[393,24]},
+  {id:1076,greek:"Πρόσεχε τα τσιμπήματα από μέδουσα.",hebrew:"היזהר מעקיצות מדוזה.",level:8,usesWordIds:[395,418]},
+  {id:1077,greek:"Πάμε για κολύμπι στη θάλασσα!",hebrew:"בואו נלך לשחות בים!",level:8,usesWordIds:[399,119]},
+  {id:1078,greek:"Το ηλιοβασίλεμα εδώ είναι εντυπωσιακό.",hebrew:"השקיעה כאן מרשימה.",level:8,usesWordIds:[386,283]},
+  {id:1079,greek:"Υπάρχουν πολλά έντομα το βράδυ.",hebrew:"יש הרבה חרקים בערב.",level:8,usesWordIds:[244,186]},
+  {id:1080,greek:"Ο ουρανός είναι καθαρός απόψε.",hebrew:"השמיים בהירים הלילה.",level:8,usesWordIds:[384]},
+
+  {id:1081,greek:"Βοήθεια! Έκτακτη ανάγκη!",hebrew:"עזרה! מצב חירום!",level:9,usesWordIds:[11,427]},
+  {id:1082,greek:"Χρειάζομαι ασθενοφόρο!",hebrew:"אני צריך אמבולנס!",level:9,usesWordIds:[428]},
+  {id:1083,greek:"Πονάει το στομάχι μου.",hebrew:"כואבת לי הבטן.",level:9,usesWordIds:[401,403]},
+  {id:1084,greek:"Πονάει το κεφάλι μου, έχω και πυρετό.",hebrew:"כואב לי הראש, ויש לי גם חום.",level:9,usesWordIds:[402,248,401]},
+  {id:1085,greek:"Καλέστε την αστυνομία, παρακαλώ!",hebrew:"תתקשרו למשטרה, בבקשה!",level:9,usesWordIds:[16,3]},
+  {id:1086,greek:"Υπάρχει φωτιά, καλέστε την πυροσβεστική!",hebrew:"יש שריפה, תתקשרו לכיבוי אש!",level:9,usesWordIds:[430,429]},
+  {id:1087,greek:"Χρειάζομαι πρώτες βοήθειες.",hebrew:"אני צריך עזרה ראשונה.",level:9,usesWordIds:[437]},
+  {id:1088,greek:"Είμαι αλλεργικός, χρειάζομαι φάρμακο.",hebrew:"אני אלרגי, אני צריך תרופה.",level:9,usesWordIds:[249,246]},
+  {id:1089,greek:"Με τσίμπησε μια μέλισσα.",hebrew:"דבורה עקצה אותי.",level:9,usesWordIds:[418,381]},
+  {id:1090,greek:"Πού είναι το πλησιέστερο νοσοκομείο;",hebrew:"איפה בית החולים הקרוב ביותר?",level:9,usesWordIds:[17,15]},
+
+  {id:1091,greek:"Πώς λέγεται αυτό στα ελληνικά;",hebrew:"איך קוראים לזה ביוונית?",level:10,usesWordIds:[318,459]},
+  {id:1092,greek:"Ψάχνω ένα καλό λεξικό.",hebrew:"אני מחפש מילון טוב.",level:10,usesWordIds:[465,37]},
+  {id:1093,greek:"Η ελληνική γλώσσα έχει πολλή ιστορία.",hebrew:"השפה היוונית עשירה בהיסטוריה.",level:10,usesWordIds:[461,276,459]},
+  {id:1094,greek:"Πάμε σε μια παραδοσιακή ταβέρνα!",hebrew:"בואו נלך לטברנה מסורתית!",level:10,usesWordIds:[280,484]},
+  {id:1095,greek:"Ο μεζές εδώ είναι υπέροχος.",hebrew:"המזה כאן נהדר.",level:10,usesWordIds:[483,24]},
+  {id:1096,greek:"Χορεύουμε συρτάκι απόψε!",hebrew:"נרקוד סירטאקי הלילה!",level:10,usesWordIds:[482]},
+  {id:1097,greek:"Καλό Πάσχα και καλά Χριστούγεννα!",hebrew:"פסחא שמח וחג מולד שמח!",level:10,usesWordIds:[476,477]},
+  {id:1098,greek:"Η Σαντορίνη είναι πανέμορφη το ηλιοβασίλεμα.",hebrew:"סנטוריני יפהפייה בזמן השקיעה.",level:10,usesWordIds:[455,386]},
+  {id:1099,greek:"Θέλω να επισκεφτώ την Ακρόπολη και τον Παρθενώνα.",hebrew:"אני רוצה לבקר באקרופוליס ובפרתנון.",level:10,usesWordIds:[492,493]},
+  {id:1100,greek:"Η κρητική παρέα έχει πολύ κέφι.",hebrew:"החברה הקרתית מלאה בחיוניות.",level:10,usesWordIds:[454,489,486]}
+];
+
 // ~4-5 concrete visual words per level → Wikipedia article title for thumbnail
 const WORD_WIKI = {
   12:"Water", 14:"Flush toilet", 15:"Hospital", 39:"Fire", 40:"Ice",
@@ -136,7 +249,8 @@ const LEVEL_NAMES = {
   10:"שפה ותרבות"
 };
 
-const STORAGE_KEY = "greek_vocab_v4";
+const STORAGE_KEY = "greek_vocab_v5";
+const OLD_STORAGE_KEY = "greek_vocab_v4";
 const IDB_NAME = "greekVocabDB";
 const IDB_STORE = "state";
 
@@ -156,13 +270,17 @@ function idbSave(data) {
   }).catch(() => {});
 }
 
-function idbLoad() {
+function idbLoadKey(key) {
   return openIDB().then(db => new Promise((resolve, reject) => {
     const tx = db.transaction(IDB_STORE, "readonly");
-    const req = tx.objectStore(IDB_STORE).get(STORAGE_KEY);
+    const req = tx.objectStore(IDB_STORE).get(key);
     req.onsuccess = () => resolve(req.result || null);
     req.onerror = () => reject(req.error);
   })).catch(() => null);
+}
+
+function idbLoad() {
+  return idbLoadKey(STORAGE_KEY).then(data => data || idbLoadKey(OLD_STORAGE_KEY));
 }
 
 function migrateStreak(data) {
@@ -176,12 +294,28 @@ function migrateStreak(data) {
   return data;
 }
 
+// v4 -> v5: add per-phrase scoring map + practice-type preference, keep all existing word progress intact.
+function migrateToV5(data) {
+  if (!data) return data;
+  if (!data.phraseState) data.phraseState = {};
+  if (data.practiceType !== "words" && data.practiceType !== "phrases" && data.practiceType !== "mixed") {
+    data.practiceType = "mixed";
+  }
+  return data;
+}
+
+function migrateData(data) {
+  return migrateToV5(migrateStreak(data));
+}
+
 function loadData() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      return migrateStreak(JSON.parse(raw));
-    }
+    if (raw) return migrateData(JSON.parse(raw));
+  } catch (e) {}
+  try {
+    const rawOld = localStorage.getItem(OLD_STORAGE_KEY);
+    if (rawOld) return migrateData(JSON.parse(rawOld));
   } catch (e) {}
   return null;
 }
@@ -199,6 +333,72 @@ function initWordState() {
     map[w.id] = { score: 0, attempts: 0, correct: 0, streak: 0, lastSeen: null, pinned: false };
   });
   return map;
+}
+
+function initPhraseState() {
+  const map = {};
+  PHRASE_PATTERNS.forEach(p => {
+    map[p.id] = { score: 0, attempts: 0, correct: 0, streak: 0, lastSeen: null, pinned: false };
+  });
+  return map;
+}
+
+const PHRASE_UNLOCK_SCORE = 4;
+
+function isPatternUnlocked(wordState, pattern) {
+  const ids = pattern.usesWordIds || [];
+  if (ids.length === 0) return true;
+  const readyCount = ids.filter(id => (wordState[id]?.score || 0) >= PHRASE_UNLOCK_SCORE).length;
+  return readyCount / ids.length >= 0.6;
+}
+
+function getUnlockedPhrases(wordState, phraseState, unlockedLevel) {
+  return PHRASE_PATTERNS.filter(p =>
+    p.level <= unlockedLevel &&
+    isPatternUnlocked(wordState, p) &&
+    (phraseState[p.id]?.streak || 0) < 5
+  );
+}
+
+function pickPhrase(wordState, phraseState, unlockedLevel, recentIds) {
+  const pool = getUnlockedPhrases(wordState, phraseState, unlockedLevel);
+  if (pool.length === 0) return null;
+  const recentSet = new Set(recentIds || []);
+  const nonRecent = pool.filter(p => !recentSet.has(p.id));
+  const candidates = nonRecent.length > 0 ? nonRecent : pool;
+  const weighted = candidates.map(p => {
+    const s = phraseState[p.id] || { score: 0, attempts: 0, lastSeen: null };
+    const daysSince = s.lastSeen ? (Date.now() - new Date(s.lastSeen)) / 86400000 : 999;
+    const scoreFactor = Math.pow(10 - s.score, 2);
+    const timeFactor = Math.min(daysSince * 3, 30);
+    const newBonus = s.attempts === 0 ? 15 : 0;
+    const weight = Math.max(1, scoreFactor + timeFactor + newBonus);
+    return { item: p, weight };
+  });
+  const total = weighted.reduce((a, b) => a + b.weight, 0);
+  let r = Math.random() * total;
+  for (const it of weighted) {
+    r -= it.weight;
+    if (r <= 0) return it.item;
+  }
+  return weighted[weighted.length - 1].item;
+}
+
+// practiceType: "words" | "phrases" | "mixed" — decides whether pickPracticeItem draws from ALL_WORDS, PHRASE_PATTERNS, or both.
+function pickPracticeItem(wordState, phraseState, unlockedLevel, mode, practiceType, recentIds) {
+  if (practiceType === "phrases") {
+    const phrase = pickPhrase(wordState, phraseState, unlockedLevel, recentIds);
+    return phrase ? { ...phrase, _isPhrase: true } : null;
+  }
+  if (practiceType === "mixed") {
+    const phrasePool = getUnlockedPhrases(wordState, phraseState, unlockedLevel);
+    if (phrasePool.length > 0 && Math.random() < 0.3) {
+      const phrase = pickPhrase(wordState, phraseState, unlockedLevel, recentIds);
+      if (phrase) return { ...phrase, _isPhrase: true };
+    }
+  }
+  const word = pickWord(wordState, unlockedLevel, mode, recentIds);
+  return { ...word, _isPhrase: false };
 }
 
 function getFocusGroup(wordState, unlockedLevel, mode) {
@@ -447,7 +647,7 @@ function getReviewDue(wordState) {
   });
 }
 
-function HomeScreen({ wordState, onLearn, onReview, onRoadmap, onShowLearned, startedAt }) {
+function HomeScreen({ wordState, onLearn, onReview, onRoadmap, onShowLearned, startedAt, practiceType, onChangePracticeType }) {
   const [showParagraph, setShowParagraph] = useState(false);
   const total = ALL_WORDS.length;
   const learned = ALL_WORDS.filter(w => (wordState[w.id]?.streak || 0) >= 5).length;
@@ -525,6 +725,24 @@ function HomeScreen({ wordState, onLearn, onReview, onRoadmap, onShowLearned, st
         {prediction && (
           <div style={{ marginTop: 8, fontSize: 12, color: "#8e8e93", textAlign: "center" }}>{prediction}</div>
         )}
+      </div>
+
+      <div style={{ display: "flex", background: "#e5e5ea", borderRadius: 12, padding: 4, marginBottom: 14 }}>
+        {[
+          { key: "words", label: "מילים בודדות" },
+          { key: "mixed", label: "מעורב" },
+          { key: "phrases", label: "משפטים" },
+        ].map(opt => (
+          <button key={opt.key} onClick={() => onChangePracticeType(opt.key)} style={{
+            flex: 1, padding: "8px 0", fontSize: 13, fontWeight: 600, border: "none", borderRadius: 9,
+            background: practiceType === opt.key ? "#fff" : "transparent",
+            color: practiceType === opt.key ? "#007aff" : "#8e8e93",
+            boxShadow: practiceType === opt.key ? "0 1px 4px rgba(0,0,0,0.08)" : "none",
+            cursor: "pointer"
+          }}>
+            {opt.label}
+          </button>
+        ))}
       </div>
 
       <button onClick={onLearn} style={{
@@ -953,7 +1171,7 @@ function RoadmapScreen({ wordState, onBack }) {
   );
 }
 
-function PracticeScreen({ wordState, mode, onEnd, onUpdateWord }) {
+function PracticeScreen({ wordState, phraseState, mode, practiceType, onEnd, onUpdateWord, onUpdatePhrase }) {
   const [currentWord, setCurrentWord] = useState(null);
   const [input, setInput] = useState("");
   const [result, setResult] = useState(null);
@@ -967,21 +1185,28 @@ function PracticeScreen({ wordState, mode, onEnd, onUpdateWord }) {
   );
 
   const loadNext = useCallback(() => {
-    const word = pickWord(wordState, unlockedLevel, mode, recentRef.current);
-    recentRef.current = [...recentRef.current, word.id].slice(-5);
-    setCurrentWord(word);
+    const item = pickPracticeItem(wordState, phraseState, unlockedLevel, mode, practiceType, recentRef.current);
+    if (!item) {
+      setCurrentWord({ _locked: true });
+      return;
+    }
+    recentRef.current = [...recentRef.current, item.id].slice(-5);
+    setCurrentWord(item);
     setInput("");
     setResult(null);
     setRevealed(false);
     setTimeout(() => inputRef.current?.focus(), 80);
-  }, [wordState, unlockedLevel, mode]);
+  }, [wordState, phraseState, unlockedLevel, mode, practiceType]);
 
   useEffect(() => { loadNext(); }, []);
-  useEffect(() => { if (currentWord) speak(currentWord.greek); }, [currentWord]);
+  useEffect(() => { if (currentWord && !currentWord._locked) speak(currentWord.greek); }, [currentWord]);
 
   const recordResult = (correct) => {
-    const prev = wordState[currentWord.id];
-    onUpdateWord(currentWord.id, {
+    const isPhrase = !!currentWord._isPhrase;
+    const stateMap = isPhrase ? phraseState : wordState;
+    const update = isPhrase ? onUpdatePhrase : onUpdateWord;
+    const prev = stateMap[currentWord.id];
+    update(currentWord.id, {
       score: correct ? Math.min(10, prev.score + 1) : Math.max(0, prev.score - 1),
       attempts: prev.attempts + 1,
       correct: prev.correct + (correct ? 1 : 0),
@@ -1005,8 +1230,11 @@ function PracticeScreen({ wordState, mode, onEnd, onUpdateWord }) {
   const handleReveal = () => {
     if (revealed || result) return;
     setRevealed(true);
-    const prev = wordState[currentWord.id];
-    onUpdateWord(currentWord.id, {
+    const isPhrase = !!currentWord._isPhrase;
+    const stateMap = isPhrase ? phraseState : wordState;
+    const update = isPhrase ? onUpdatePhrase : onUpdateWord;
+    const prev = stateMap[currentWord.id];
+    update(currentWord.id, {
       score: Math.max(0, prev.score - 1),
       attempts: prev.attempts + 1,
       correct: prev.correct,
@@ -1017,6 +1245,23 @@ function PracticeScreen({ wordState, mode, onEnd, onUpdateWord }) {
   };
 
   if (!currentWord) return <div style={{ padding: 40, textAlign: "center" }}>טוען...</div>;
+
+  if (currentWord._locked) {
+    return (
+      <div style={{ padding: "40px 20px", maxWidth: 480, margin: "0 auto", textAlign: "center", animation: "fadeIn 0.3s ease" }}>
+        <div style={{ fontSize: 17, fontWeight: 700, color: "#1c1c1e", marginBottom: 12 }}>
+          עוד אין תבניות משפט זמינות
+        </div>
+        <div style={{ fontSize: 14, color: "#8e8e93", marginBottom: 32 }}>
+          למד עוד מילים כדי לפתוח משפטים שימושיים כתגמול
+        </div>
+        <button onClick={onEnd} style={{
+          padding: "14px 40px", fontSize: 16, fontWeight: 700,
+          background: "#007aff", color: "#fff", border: "none", borderRadius: 14, cursor: "pointer"
+        }}>חזרה</button>
+      </div>
+    );
+  }
 
   const accuracy = sessionStats.total ? Math.round((sessionStats.correct / sessionStats.total) * 100) : 0;
 
@@ -1046,11 +1291,11 @@ function PracticeScreen({ wordState, mode, onEnd, onUpdateWord }) {
         boxShadow: "0 4px 16px rgba(0,122,255,0.25)"
       }}>
         <div style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", marginBottom: 12, letterSpacing: 1 }}>
-          רמה {currentWord.level} · {LEVEL_NAMES[currentWord.level]}
+          רמה {currentWord.level} · {LEVEL_NAMES[currentWord.level]}{currentWord._isPhrase ? " · משפט" : ""}
         </div>
-        <WordImage wordId={currentWord.id} size={80} />
+        {!currentWord._isPhrase && <WordImage wordId={currentWord.id} size={80} />}
         <div style={{
-          fontSize: 46, fontWeight: 700, color: "#fff",
+          fontSize: currentWord._isPhrase ? 28 : 46, fontWeight: 700, color: "#fff",
           letterSpacing: 1, marginBottom: 20, wordBreak: "break-word", direction: "ltr"
         }}>
           {currentWord.greek}
@@ -1211,7 +1456,9 @@ function LearnedScreen({ wordState, onBack, onResetWord }) {
 function App() {
   const [screen, setScreen] = useState("loading");
   const [wordState, setWordState] = useState(null);
+  const [phraseState, setPhraseState] = useState(null);
   const [practiceMode, setPracticeMode] = useState("all");
+  const [practiceType, setPracticeType] = useState("mixed");
   const [startedAt, setStartedAt] = useState(null);
 
   const [recovered, setRecovered] = useState(false);
@@ -1219,16 +1466,23 @@ function App() {
   useEffect(() => {
     function applyData(saved) {
       if (saved?.wordState) {
-        const merged = initWordState();
+        const mergedWords = initWordState();
         Object.keys(saved.wordState).forEach(id => {
-          if (merged[id] !== undefined) merged[id] = { ...merged[id], ...saved.wordState[id] };
+          if (mergedWords[id] !== undefined) mergedWords[id] = { ...mergedWords[id], ...saved.wordState[id] };
         });
+        const mergedPhrases = initPhraseState();
+        if (saved.phraseState) {
+          Object.keys(saved.phraseState).forEach(id => {
+            if (mergedPhrases[id] !== undefined) mergedPhrases[id] = { ...mergedPhrases[id], ...saved.phraseState[id] };
+          });
+        }
         let sa = saved.startedAt || null;
         if (!sa) {
-          const dates = Object.values(merged).map(s => s.lastSeen).filter(Boolean);
+          const dates = Object.values(mergedWords).map(s => s.lastSeen).filter(Boolean);
           if (dates.length > 0) sa = dates.sort()[0];
         }
-        return { state: merged, startedAt: sa };
+        const pt = ["words", "phrases", "mixed"].includes(saved.practiceType) ? saved.practiceType : "mixed";
+        return { wordState: mergedWords, phraseState: mergedPhrases, startedAt: sa, practiceType: pt };
       }
       return null;
     }
@@ -1236,20 +1490,25 @@ function App() {
     const lsData = loadData();
     const lsResult = applyData(lsData);
     if (lsResult) {
-      setWordState(lsResult.state);
+      setWordState(lsResult.wordState);
+      setPhraseState(lsResult.phraseState);
       setStartedAt(lsResult.startedAt);
+      setPracticeType(lsResult.practiceType);
       setScreen("home");
     } else {
       idbLoad().then(idbData => {
-        const idbResult = applyData(idbData ? migrateStreak(idbData) : null);
+        const idbResult = applyData(idbData ? migrateData(idbData) : null);
         if (idbResult) {
-          setWordState(idbResult.state);
+          setWordState(idbResult.wordState);
+          setPhraseState(idbResult.phraseState);
           setStartedAt(idbResult.startedAt);
+          setPracticeType(idbResult.practiceType);
           setRecovered(true);
-          saveData({ wordState: idbResult.state, startedAt: idbResult.startedAt, savedAt: new Date().toISOString() });
+          saveData({ wordState: idbResult.wordState, phraseState: idbResult.phraseState, practiceType: idbResult.practiceType, startedAt: idbResult.startedAt, savedAt: new Date().toISOString() });
         } else {
           const now = new Date().toISOString();
           setWordState(initWordState());
+          setPhraseState(initPhraseState());
           setStartedAt(now);
         }
         setScreen("home");
@@ -1258,18 +1517,22 @@ function App() {
   }, []);
 
   const wordStateRef = useRef(wordState);
+  const phraseStateRef = useRef(phraseState);
+  const practiceTypeRef = useRef(practiceType);
   const startedAtRef = useRef(startedAt);
   useEffect(() => { startedAtRef.current = startedAt; }, [startedAt]);
   useEffect(() => {
     wordStateRef.current = wordState;
+    phraseStateRef.current = phraseState;
+    practiceTypeRef.current = practiceType;
     if (!wordState) return;
-    saveData({ wordState, startedAt: startedAtRef.current, savedAt: new Date().toISOString() });
-  }, [wordState]);
+    saveData({ wordState, phraseState, practiceType, startedAt: startedAtRef.current, savedAt: new Date().toISOString() });
+  }, [wordState, phraseState, practiceType]);
 
   useEffect(() => {
     function emergencySave() {
       if (wordStateRef.current) {
-        saveData({ wordState: wordStateRef.current, startedAt: startedAtRef.current, savedAt: new Date().toISOString() });
+        saveData({ wordState: wordStateRef.current, phraseState: phraseStateRef.current, practiceType: practiceTypeRef.current, startedAt: startedAtRef.current, savedAt: new Date().toISOString() });
       }
     }
     document.addEventListener("visibilitychange", () => {
@@ -1288,12 +1551,25 @@ function App() {
     setWordState(prev => {
       const next = { ...prev, [id]: { ...prev[id], ...updates } };
       wordStateRef.current = next;
-      try { saveData({ wordState: next, startedAt: startedAtRef.current, savedAt: new Date().toISOString() }); } catch(e) {}
+      try { saveData({ wordState: next, phraseState: phraseStateRef.current, practiceType: practiceTypeRef.current, startedAt: startedAtRef.current, savedAt: new Date().toISOString() }); } catch(e) {}
       return next;
     });
   }, []);
 
-  if (screen === "loading" || !wordState) {
+  const handleUpdatePhrase = useCallback((id, updates) => {
+    setPhraseState(prev => {
+      const next = { ...prev, [id]: { ...prev[id], ...updates } };
+      phraseStateRef.current = next;
+      try { saveData({ wordState: wordStateRef.current, phraseState: next, practiceType: practiceTypeRef.current, startedAt: startedAtRef.current, savedAt: new Date().toISOString() }); } catch(e) {}
+      return next;
+    });
+  }, []);
+
+  const handleChangePracticeType = useCallback((type) => {
+    setPracticeType(type);
+  }, []);
+
+  if (screen === "loading" || !wordState || !phraseState) {
     return (
       <div style={{
         minHeight: "100vh", display: "flex", alignItems: "center",
@@ -1327,6 +1603,8 @@ function App() {
         <HomeScreen
           wordState={wordState}
           startedAt={startedAt}
+          practiceType={practiceType}
+          onChangePracticeType={handleChangePracticeType}
           onLearn={() => { setPracticeMode("all"); setScreen("practice"); }}
           onReview={() => { setPracticeMode("all"); setScreen("practice"); }}
           onRoadmap={() => setScreen("roadmap")}
@@ -1343,9 +1621,12 @@ function App() {
       {screen === "practice" && (
         <PracticeScreen
           wordState={wordState}
+          phraseState={phraseState}
           mode={practiceMode}
+          practiceType={practiceType}
           onEnd={() => setScreen("home")}
           onUpdateWord={handleUpdateWord}
+          onUpdatePhrase={handleUpdatePhrase}
         />
       )}
       {screen === "roadmap" && (
