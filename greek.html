@@ -344,13 +344,14 @@ function initPhraseState() {
 }
 
 const LEARNED_STREAK = 3;
-const PHRASE_UNLOCK_SCORE = 4;
+const PHRASE_UNLOCK_SCORE = 2;
+const PHRASE_UNLOCK_RATIO = 0.4;
 
 function isPatternUnlocked(wordState, pattern) {
   const ids = pattern.usesWordIds || [];
   if (ids.length === 0) return true;
   const readyCount = ids.filter(id => (wordState[id]?.score || 0) >= PHRASE_UNLOCK_SCORE).length;
-  return readyCount / ids.length >= 0.6;
+  return readyCount / ids.length >= PHRASE_UNLOCK_RATIO;
 }
 
 function getUnlockedPhrases(wordState, phraseState, unlockedLevel) {
