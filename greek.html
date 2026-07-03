@@ -343,6 +343,7 @@ function initPhraseState() {
   return map;
 }
 
+const LEARNED_STREAK = 3;
 const PHRASE_UNLOCK_SCORE = 4;
 
 function isPatternUnlocked(wordState, pattern) {
@@ -356,7 +357,7 @@ function getUnlockedPhrases(wordState, phraseState, unlockedLevel) {
   return PHRASE_PATTERNS.filter(p =>
     p.level <= unlockedLevel &&
     isPatternUnlocked(wordState, p) &&
-    (phraseState[p.id]?.streak || 0) < 5
+    (phraseState[p.id]?.streak || 0) < LEARNED_STREAK
   );
 }
 
@@ -408,7 +409,7 @@ function getFocusGroup(wordState, unlockedLevel, mode) {
 
   const inProgress = pool.filter(w => {
     const s = wordState[w.id];
-    return s.attempts > 0 && s.streak < 5;
+    return s.attempts > 0 && s.streak < LEARNED_STREAK;
   });
   const notStarted = pool.filter(w => wordState[w.id].attempts === 0);
 
@@ -423,12 +424,12 @@ function getFocusGroup(wordState, unlockedLevel, mode) {
       if (!group.includes(w)) group.push(w);
     }
   }
-  return group.length > 0 ? group : pool.filter(w => wordState[w.id].streak < 5).slice(0, 7);
+  return group.length > 0 ? group : pool.filter(w => wordState[w.id].streak < LEARNED_STREAK).slice(0, 7);
 }
 
 function pickWord(wordState, unlockedLevel, mode, recentIds) {
   const focus = getFocusGroup(wordState, unlockedLevel, mode);
-  const allPool = ALL_WORDS.filter(w => w.level <= unlockedLevel && (wordState[w.id]?.streak || 0) < 5);
+  const allPool = ALL_WORDS.filter(w => w.level <= unlockedLevel && (wordState[w.id]?.streak || 0) < LEARNED_STREAK);
   const useFocus = focus.length > 0 && Math.random() < 0.75;
   const pool = useFocus ? focus : (allPool.length > 0 ? allPool : ALL_WORDS.filter(w => w.level <= unlockedLevel));
 
@@ -639,7 +640,7 @@ function StarRating({ score }) {
 function getReviewDue(wordState) {
   return ALL_WORDS.filter(w => {
     const s = wordState[w.id];
-    if (!s || s.streak < 5) return false;
+    if (!s || s.streak < LEARNED_STREAK) return false;
     if (!s.lastSeen) return true;
     const hoursSince = (Date.now() - new Date(s.lastSeen).getTime()) / 3600000;
     const interval = Math.pow(2, Math.min(s.score, 8)) * 4;
@@ -650,7 +651,7 @@ function getReviewDue(wordState) {
 function HomeScreen({ wordState, onLearn, onReview, onRoadmap, onShowLearned, startedAt, practiceType, onChangePracticeType }) {
   const [showParagraph, setShowParagraph] = useState(false);
   const total = ALL_WORDS.length;
-  const learned = ALL_WORDS.filter(w => (wordState[w.id]?.streak || 0) >= 5).length;
+  const learned = ALL_WORDS.filter(w => (wordState[w.id]?.streak || 0) >= LEARNED_STREAK).length;
   const unlockedLevel = Math.min(10, Math.floor(ALL_WORDS.filter(w => wordState[w.id]?.score >= 8).length / 50) + 1);
   const newWords = ALL_WORDS.filter(w => w.level <= unlockedLevel && wordState[w.id]?.attempts === 0);
   const reviewDue = getReviewDue(wordState);
@@ -766,7 +767,7 @@ function HomeScreen({ wordState, onLearn, onReview, onRoadmap, onShowLearned, st
       )}
 
       {(() => {
-        const learnedWords = ALL_WORDS.filter(w => (wordState[w.id]?.streak || 0) >= 5);
+        const learnedWords = ALL_WORDS.filter(w => (wordState[w.id]?.streak || 0) >= LEARNED_STREAK);
         const para = buildDailyParagraph(learnedWords);
         if (!para) return null;
         return (<>
@@ -833,7 +834,7 @@ function LearnNewScreen({ wordState, onDone, onUpdateWord }) {
 
   const unlockedLevel = Math.min(10, Math.floor(ALL_WORDS.filter(w => wordState[w.id]?.score >= 8).length / 50) + 1);
   const [words] = useState(() => {
-    const inProgress = ALL_WORDS.filter(w => w.level <= unlockedLevel && wordState[w.id]?.attempts > 0 && wordState[w.id]?.streak < 5);
+    const inProgress = ALL_WORDS.filter(w => w.level <= unlockedLevel && wordState[w.id]?.attempts > 0 && wordState[w.id]?.streak < LEARNED_STREAK);
     const fresh = ALL_WORDS.filter(w => w.level <= unlockedLevel && wordState[w.id]?.attempts === 0);
     const batch = [...inProgress.slice(0, 3), ...fresh].slice(0, 6);
     return batch.length > 0 ? batch : ALL_WORDS.filter(w => w.level <= unlockedLevel).slice(0, 6);
@@ -854,7 +855,7 @@ function LearnNewScreen({ wordState, onDone, onUpdateWord }) {
     }
     const widerPool = ALL_WORDS.filter(w =>
       w.level <= unlockedLevel &&
-      (wordState[w.id]?.streak || 0) < 5 &&
+      (wordState[w.id]?.streak || 0) < LEARNED_STREAK &&
       !words.find(fw => fw.id === w.id)
     ).sort(() => Math.random() - 0.5).slice(0, widerCount);
     const widerQ = widerPool.map(w => makeQuestion(w));
@@ -1086,7 +1087,7 @@ function RoadmapScreen({ wordState, onBack }) {
 
       {levels.map(lvl => {
         const words = ALL_WORDS.filter(w => w.level === lvl);
-        const learnedWords = words.filter(w => (wordState[w.id]?.streak || 0) >= 5);
+        const learnedWords = words.filter(w => (wordState[w.id]?.streak || 0) >= LEARNED_STREAK);
         const attempted = learnedWords.length;
         const mastered = words.filter(w => wordState[w.id]?.score >= 8).length;
         const pct = Math.round((mastered / 50) * 100);
@@ -1142,7 +1143,7 @@ function RoadmapScreen({ wordState, onBack }) {
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6, paddingTop: 10 }}>
                   {words.map(w => {
                     const streak = wordState[w.id]?.streak || 0;
-                    const isLearned = streak >= 5;
+                    const isLearned = streak >= LEARNED_STREAK;
                     const isMastered = wordState[w.id]?.score >= 8;
                     return (
                       <div key={w.id} style={{
@@ -1384,7 +1385,7 @@ function PracticeScreen({ wordState, phraseState, mode, practiceType, onEnd, onU
 }
 
 function LearnedScreen({ wordState, onBack, onResetWord }) {
-  const learnedWords = ALL_WORDS.filter(w => (wordState[w.id]?.streak || 0) >= 5);
+  const learnedWords = ALL_WORDS.filter(w => (wordState[w.id]?.streak || 0) >= LEARNED_STREAK);
   const grouped = {};
   learnedWords.forEach(w => {
     if (!grouped[w.level]) grouped[w.level] = [];
