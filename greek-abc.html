@@ -1579,12 +1579,31 @@ function AlphaOrderScreen({ onEnd }) {
   );
 }
 
+// Groups hardest letters first so they come up early in the writing test (difficulty 3 > 2 > 1).
+function buildWritingQueue() {
+  const byDiff = { 3: [], 2: [], 1: [] };
+  LETTERS.forEach(l => byDiff[l.difficulty].push(l));
+  return [...shuffle(byDiff[3]), ...shuffle(byDiff[2]), ...shuffle(byDiff[1])];
+}
+
+const WRITE_CHECK_SYSTEM = `אתה מזהה אותיות יווניות בכתב יד מצוירות ביד (עכבר/מגע), לעיתים לא מדויקות. היה סלחני לכתב יד לא מושלם.
+החזר JSON בלבד, ללא הסברים ובלי markdown: {"letter":"<אות יוונית קטנה (lowercase) אחת, לדוגמה α, β, γ>","confidence":<מספר בין 0 ל-1>}
+אם אין ציור ברור בתמונה, החזר {"letter":"","confidence":0}. נחש תמיד את האות הכי דומה, גם אם לא בטוח.`;
+
+function matchesLetter(letter, detected) {
+  const options = letter.lower.split("/").map(s => s.trim().toLowerCase());
+  return options.includes((detected || "").trim().toLowerCase());
+}
+
 function DrawScreen({ onEnd }) {
-  const [letters] = useState(() => shuffle([...LETTERS]));
+  const [letters] = useState(buildWritingQueue);
   const [idx, setIdx] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [score, setScore] = useState({ c: 0, w: 0 });
   const [done, setDone] = useState(false);
+  const [hasDrawing, setHasDrawing] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [result, setResult] = useState(null); // { correct, detected, confidence } | { failed: true } | null
   const canvasRef = useRef(null);
   const drawingRef = useRef(false);
   const lastPosRef = useRef(null);
@@ -1603,6 +1622,7 @@ function DrawScreen({ onEnd }) {
     e.preventDefault();
     const canvas = canvasRef.current; if (!canvas) return;
     drawingRef.current = true;
+    setHasDrawing(true);
     const pos = getPos(e, canvas);
     lastPosRef.current = {...pos};
     currentStrokeRef.current = { points: [{...pos}] };
@@ -1640,19 +1660,63 @@ function DrawScreen({ onEnd }) {
     });
   }
 
-  function undo() { strokesRef.current = strokesRef.current.slice(0,-1); redrawAll(); }
+  function undo() {
+    strokesRef.current = strokesRef.current.slice(0,-1);
+    redrawAll();
+    setHasDrawing(strokesRef.current.length > 0);
+  }
 
   function clearCanvas() {
     strokesRef.current = [];
+    setHasDrawing(false);
+    setResult(null);
     const canvas = canvasRef.current;
     if (canvas) canvas.getContext("2d").clearRect(0,0,canvas.width,canvas.height);
   }
 
-  function grade(correct) {
-    const ns = correct ? { c:score.c+1,w:score.w } : { c:score.c,w:score.w+1 };
-    setScore(ns);
+  async function checkDrawing() {
+    if (!hasDrawing || checking) return;
+    setChecking(true);
+    setResult(null);
+    try {
+      const canvas = canvasRef.current;
+      const base64 = canvas.toDataURL("image/png").split(",")[1];
+      const resp = await fetch("https://carty-api.aviadchai.workers.dev", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 200,
+          system: WRITE_CHECK_SYSTEM,
+          messages: [{
+            role: "user",
+            content: [
+              { type: "image", source: { type: "base64", media_type: "image/png", data: base64 } },
+              { type: "text", text: "איזו אות יוונית זו? החזר JSON בלבד." }
+            ]
+          }]
+        })
+      });
+      const data = await resp.json();
+      if (data.error) throw new Error(data.error.message);
+      const text = data.content?.[0]?.text || "{}";
+      const parsed = JSON.parse(text.replace(/```json|```/g, "").trim());
+      setResult({ correct: matchesLetter(letter, parsed.letter), detected: parsed.letter || "", confidence: parsed.confidence });
+    } catch (e) {
+      setResult({ failed: true });
+    } finally {
+      setChecking(false);
+    }
+  }
+
+  function retry() {
+    clearCanvas();
+  }
+
+  function next(correct) {
+    setScore(s => correct ? { c: s.c+1, w: s.w } : { c: s.c, w: s.w+1 });
     if (idx+1 >= letters.length) { setDone(true); return; }
-    setIdx(idx+1); setRevealed(false);
+    setIdx(idx+1); setRevealed(false); setResult(null); setHasDrawing(false);
     strokesRef.current = [];
     setTimeout(() => { const c=canvasRef.current; if(c) c.getContext("2d").clearRect(0,0,c.width,c.height); }, 0);
   }
@@ -1661,10 +1725,10 @@ function DrawScreen({ onEnd }) {
     return (
       <div style={{ position:"fixed",inset:0,background:"#f2f2f7",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16,padding:32 }}>
         <div style={{ fontSize:60 }}>✍️</div>
-        <div style={{ fontSize:24,fontWeight:700,color:"#1c1c1e" }}>סיימת כתיבה!</div>
+        <div style={{ fontSize:24,fontWeight:700,color:"#1c1c1e" }}>סיימת את מבחן הכתיבה!</div>
         <div style={{ display:"flex",gap:24,marginTop:8 }}>
-          <div style={{ textAlign:"center" }}><div style={{ fontSize:40,fontWeight:700,color:"#34c759" }}>{score.c}</div><div style={{ fontSize:12,color:"#8e8e93" }}>ידעתי</div></div>
-          <div style={{ textAlign:"center" }}><div style={{ fontSize:40,fontWeight:700,color:"#ff3b30" }}>{score.w}</div><div style={{ fontSize:12,color:"#8e8e93" }}>לא ידעתי</div></div>
+          <div style={{ textAlign:"center" }}><div style={{ fontSize:40,fontWeight:700,color:"#34c759" }}>{score.c}</div><div style={{ fontSize:12,color:"#8e8e93" }}>נכון</div></div>
+          <div style={{ textAlign:"center" }}><div style={{ fontSize:40,fontWeight:700,color:"#ff3b30" }}>{score.w}</div><div style={{ fontSize:12,color:"#8e8e93" }}>לא נכון</div></div>
         </div>
         <button onClick={onEnd} style={{ marginTop:12,padding:"14px 44px",fontSize:16,fontWeight:600,background:"#34c759",color:"#fff",border:"none",borderRadius:14 }}>חזרה</button>
       </div>
@@ -1676,7 +1740,7 @@ function DrawScreen({ onEnd }) {
       <div style={{ display:"flex",alignItems:"center",marginBottom:12 }}>
         <button onClick={onEnd} style={{ background:"none",border:"none",fontSize:22,color:"#34c759",padding:"4px 0" }}>←</button>
         <div style={{ flex:1,textAlign:"center" }}>
-          <div style={{ fontSize:17,fontWeight:600,color:"#1c1c1e" }}>כתיבה חופשית</div>
+          <div style={{ fontSize:17,fontWeight:600,color:"#1c1c1e" }}>מבחן כתיבה</div>
           <div style={{ fontSize:12,color:"#8e8e93" }}>{idx+1}/{letters.length} · ✓{score.c} ✗{score.w}</div>
         </div>
         <div style={{ width:32 }} />
@@ -1707,15 +1771,55 @@ function DrawScreen({ onEnd }) {
       <div style={{ display:"flex",gap:8,marginBottom:10 }}>
         <button onClick={undo} style={{ flex:1,padding:"11px 0",fontSize:13,fontWeight:600,background:"#fff",color:"#636366",border:"1.5px solid #e5e5ea",borderRadius:12 }}>↩ בטל</button>
         <button onClick={clearCanvas} style={{ flex:1,padding:"11px 0",fontSize:13,fontWeight:600,background:"#fff",color:"#636366",border:"1.5px solid #e5e5ea",borderRadius:12 }}>נקה</button>
-        <button onClick={() => setRevealed(r => !r)} style={{ flex:1.5,padding:"11px 0",fontSize:13,fontWeight:600,background:revealed?"#e8f4fd":"#007aff",color:revealed?"#007aff":"#fff",border:"none",borderRadius:12 }}>
-          {revealed ? "הסתר" : "הצג תשובה"}
+        <button onClick={() => setRevealed(r => !r)} style={{ flex:1.5,padding:"11px 0",fontSize:13,fontWeight:600,background:revealed?"#e8f4fd":"#fff",color:"#007aff",border:"1.5px solid #007aff",borderRadius:12 }}>
+          {revealed ? "הסתר צורה" : "הראה לי את הצורה הנכונה"}
         </button>
       </div>
 
-      {revealed && (
+      {result && !result.failed && (
+        <div style={{
+          padding:"14px 16px",borderRadius:14,marginBottom:12,textAlign:"center",
+          background: result.correct ? "#e8f9ee" : "#fff0ef",
+          color: result.correct ? "#248a3d" : "#d70015"
+        }}>
+          <div style={{ fontSize:17,fontWeight:700 }}>{result.correct ? "✓ נכון!" : "✗ לא בדיוק"}</div>
+          <div style={{ fontSize:13,marginTop:4,opacity:0.85 }}>
+            {result.detected ? `זיהיתי: ${result.detected}` : "לא זיהיתי ציור ברור"} · הצורה הנכונה: {letter.lower}
+          </div>
+        </div>
+      )}
+
+      {result?.failed && (
+        <div style={{ padding:"14px 16px",borderRadius:14,marginBottom:12,textAlign:"center",background:"#fff3e0",color:"#a15c00" }}>
+          <div style={{ fontSize:15,fontWeight:600 }}>לא הצלחתי להתחבר לבדיקה</div>
+          <div style={{ fontSize:12,marginTop:2,opacity:0.85 }}>אפשר לנסות שוב או לדרג בעצמך</div>
+        </div>
+      )}
+
+      {!result && (
+        <button onClick={checkDrawing} disabled={!hasDrawing || checking} style={{
+          width:"100%",padding:"16px 0",fontSize:16,fontWeight:700,
+          background:"#007aff",color:"#fff",border:"none",borderRadius:14,
+          opacity: (!hasDrawing || checking) ? 0.4 : 1
+        }}>
+          {checking ? "בודק..." : "בדוק"}
+        </button>
+      )}
+
+      {result && !result.failed && (
         <div style={{ display:"flex",gap:10 }}>
-          <button onClick={() => grade(false)} style={{ flex:1,padding:"16px 0",fontSize:16,fontWeight:700,background:"#ff3b30",color:"#fff",border:"none",borderRadius:14 }}>✗ לא ידעתי</button>
-          <button onClick={() => grade(true)} style={{ flex:1,padding:"16px 0",fontSize:16,fontWeight:700,background:"#34c759",color:"#fff",border:"none",borderRadius:14 }}>✓ ידעתי</button>
+          {!result.correct && (
+            <button onClick={retry} style={{ flex:1,padding:"16px 0",fontSize:16,fontWeight:700,background:"#fff",color:"#007aff",border:"1.5px solid #007aff",borderRadius:14 }}>נסה שוב</button>
+          )}
+          <button onClick={() => next(result.correct)} style={{ flex:1,padding:"16px 0",fontSize:16,fontWeight:700,background:"#34c759",color:"#fff",border:"none",borderRadius:14 }}>הבא</button>
+        </div>
+      )}
+
+      {result?.failed && (
+        <div style={{ display:"flex",gap:10 }}>
+          <button onClick={checkDrawing} style={{ flex:1,padding:"14px 0",fontSize:15,fontWeight:600,background:"#fff",color:"#007aff",border:"1.5px solid #007aff",borderRadius:14 }}>נסה בדיקה שוב</button>
+          <button onClick={() => next(false)} style={{ flex:1,padding:"14px 0",fontSize:15,fontWeight:600,background:"#fff",color:"#ff3b30",border:"1.5px solid #ff3b30",borderRadius:14 }}>✗ לא ידעתי</button>
+          <button onClick={() => next(true)} style={{ flex:1,padding:"14px 0",fontSize:15,fontWeight:600,background:"#fff",color:"#34c759",border:"1.5px solid #34c759",borderRadius:14 }}>✓ ידעתי</button>
         </div>
       )}
     </div>
@@ -2000,7 +2104,7 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
         <button onClick={onStartDraw} style={{
           flex: 1, padding: "11px 0", fontSize: 13, fontWeight: 600,
           background: "#fff", color: "#34c759", border: "1.5px solid #34c759", borderRadius: 12
-        }}>✍️ כתיבה חופשית</button>
+        }}>✍️ מבחן כתיבה</button>
       </div>
 
       {learnedCount >= 20 && learnedCount < 24 && (
