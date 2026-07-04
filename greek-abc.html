@@ -1612,6 +1612,38 @@ function extractLetterFallback(text) {
   return m ? m[0] : "";
 }
 
+// The drawing canvas is much larger than any single letter drawn on it, so a naive full-canvas
+// export is mostly blank white space with a tiny mark in the middle - very hard for a vision
+// model to read confidently. Crop tightly to the actual strokes (with padding) and upscale into
+// a fixed square canvas so the shape fills most of the frame.
+function getCroppedDrawingDataURL(canvas, strokes) {
+  if (!strokes.length) return canvas.toDataURL("image/png");
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  strokes.forEach(s => s.points.forEach(p => {
+    minX = Math.min(minX, p.x); minY = Math.min(minY, p.y);
+    maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y);
+  }));
+  const pad = 30;
+  minX = Math.max(0, minX - pad);
+  minY = Math.max(0, minY - pad);
+  maxX = Math.min(canvas.width, maxX + pad);
+  maxY = Math.min(canvas.height, maxY + pad);
+  const w = maxX - minX, h = maxY - minY;
+  if (w <= 0 || h <= 0) return canvas.toDataURL("image/png");
+
+  const OUT_SIZE = 400;
+  const out = document.createElement("canvas");
+  out.width = OUT_SIZE;
+  out.height = OUT_SIZE;
+  const octx = out.getContext("2d");
+  octx.fillStyle = "#fff";
+  octx.fillRect(0, 0, OUT_SIZE, OUT_SIZE);
+  const scale = OUT_SIZE / Math.max(w, h);
+  const destW = w * scale, destH = h * scale;
+  octx.drawImage(canvas, minX, minY, w, h, (OUT_SIZE - destW) / 2, (OUT_SIZE - destH) / 2, destW, destH);
+  return out.toDataURL("image/png");
+}
+
 function DrawScreen({ onEnd }) {
   const [letters] = useState(buildWritingQueue);
   const [idx, setIdx] = useState(0);
@@ -1698,7 +1730,7 @@ function DrawScreen({ onEnd }) {
     setResult(null);
     try {
       const canvas = canvasRef.current;
-      const base64 = canvas.toDataURL("image/png").split(",")[1];
+      const base64 = getCroppedDrawingDataURL(canvas, strokesRef.current).split(",")[1];
       const resp = await fetch("https://carty-api.aviadchai.workers.dev", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1788,7 +1820,7 @@ function DrawScreen({ onEnd }) {
           </div>
         )}
         <canvas ref={canvasRef} width={600} height={380}
-          style={{ width:"100%",height:210,display:"block",touchAction:"none",cursor:"crosshair" }}
+          style={{ width:"100%",aspectRatio:"600 / 380",display:"block",touchAction:"none",cursor:"crosshair" }}
           onTouchStart={startDraw} onTouchMove={doDraw} onTouchEnd={endDraw}
           onMouseDown={startDraw} onMouseMove={doDraw} onMouseUp={endDraw} onMouseLeave={endDraw}
         />
