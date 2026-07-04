@@ -1178,9 +1178,23 @@ function PracticeScreen({ wordState, phraseState, mode, practiceType, onEnd, onU
   const [input, setInput] = useState("");
   const [result, setResult] = useState(null);
   const [revealed, setRevealed] = useState(false);
+  const [showImageHint, setShowImageHint] = useState(false);
   const [sessionStats, setSessionStats] = useState({ correct: 0, wrong: 0, total: 0 });
   const inputRef = useRef(null);
   const recentRef = useRef([]);
+
+  const learned = ALL_WORDS.filter(w => (wordState[w.id]?.streak || 0) >= LEARNED_STREAK).length;
+  const [learnedBump, setLearnedBump] = useState(false);
+  const learnedRef = useRef(learned);
+  useEffect(() => {
+    if (learned > learnedRef.current) {
+      setLearnedBump(true);
+      const t = setTimeout(() => setLearnedBump(false), 700);
+      learnedRef.current = learned;
+      return () => clearTimeout(t);
+    }
+    learnedRef.current = learned;
+  }, [learned]);
 
   const unlockedLevel = Math.min(10,
     Math.floor(ALL_WORDS.filter(w => wordState[w.id]?.score >= 8).length / 50) + 1
@@ -1197,6 +1211,7 @@ function PracticeScreen({ wordState, phraseState, mode, practiceType, onEnd, onU
     setInput("");
     setResult(null);
     setRevealed(false);
+    setShowImageHint(false);
     setTimeout(() => inputRef.current?.focus(), 80);
   }, [wordState, phraseState, unlockedLevel, mode, practiceType]);
 
@@ -1288,6 +1303,18 @@ function PracticeScreen({ wordState, phraseState, mode, practiceType, onEnd, onU
       </div>
 
       <div style={{
+        display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+        marginBottom: 16, fontSize: 13, color: "#8e8e93", fontWeight: 600,
+        transform: learnedBump ? "scale(1.15)" : "scale(1)",
+        transition: "transform 0.25s ease",
+        animation: learnedBump ? "pulse 0.6s ease" : "none"
+      }}>
+        <span>📚</span>
+        <span style={{ color: learnedBump ? "#34c759" : "#007aff", fontWeight: 700 }}>{learned}</span>
+        <span>מילים שלמדת</span>
+      </div>
+
+      <div style={{
         background: "#007aff", borderRadius: 20, padding: "28px 24px",
         textAlign: "center", marginBottom: 20,
         boxShadow: "0 4px 16px rgba(0,122,255,0.25)"
@@ -1295,7 +1322,18 @@ function PracticeScreen({ wordState, phraseState, mode, practiceType, onEnd, onU
         <div style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", marginBottom: 12, letterSpacing: 1 }}>
           רמה {currentWord.level} · {LEVEL_NAMES[currentWord.level]}{currentWord._isPhrase ? " · משפט" : ""}
         </div>
-        {!currentWord._isPhrase && <WordImage wordId={currentWord.id} size={80} />}
+        {!currentWord._isPhrase && WORD_WIKI[currentWord.id] && (
+          showImageHint ? (
+            <WordImage wordId={currentWord.id} size={80} />
+          ) : (
+            <button onClick={() => setShowImageHint(true)} title="הצג רמז" style={{
+              width: 32, height: 32, borderRadius: "50%", marginBottom: 8,
+              border: "1px solid rgba(255,255,255,0.4)", background: "rgba(255,255,255,0.15)",
+              color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer",
+              display: "inline-flex", alignItems: "center", justifyContent: "center"
+            }}>?</button>
+          )
+        )}
         <div style={{
           fontSize: currentWord._isPhrase ? 28 : 46, fontWeight: 700, color: "#fff",
           letterSpacing: 1, marginBottom: 20, wordBreak: "break-word", direction: "ltr"
