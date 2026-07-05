@@ -1591,68 +1591,152 @@ function buildWritingQueue() {
   return [...shuffle(byDiff[3]), ...shuffle(byDiff[2]), ...shuffle(byDiff[1])];
 }
 
-const WRITE_CHECK_SYSTEM = `אתה מזהה אותיות יווניות בכתב יד מצוירות ביד (עכבר/מגע), לעיתים לא מדויקות. היה סלחני לכתב יד לא מושלם, אבל התבונן בקפידה בפרטים המבחינים בין אותיות דומות לפני שאתה עונה.
-
-שים לב במיוחד לזוגות אותיות שקל להתבלבל ביניהם:
-- ψ (פסי קטנה) מול ω (אומגה קטנה): ל-ψ יש קו אנכי (גבעול) שעובר במרכז הצורה ויורד מתחתיה; ל-ω אין קו כזה, רק בסיס גלי עם שני תלתלים בקצוות ובלי שום קו במרכז.
-- Ψ (פסי גדולה) מול Υ (איפסילון גדולה): Ψ היא קלשון עם שלושה קווים שמתחברים לגבעול אחד; Υ היא רק צורת V עם קו יורד אחד.
-- θ/φ/ο: ל-θ יש קו אופקי במרכז המעגל, ל-φ יש קו אנכי שעובר דרך המעגל וממשיך מעליו ומתחתיו, ל-ο אין שום קו נוסף - רק מעגל/אליפסה נקיים.
-- ν/υ/ω: ν היא צורת V פשוטה, υ היא V עם קצה קטן/וו בתחתית, ω היא צורת גל עם שני תלתלים ובלי קו במרכז.
-- Ξ/Ε/Σ: ל-Ξ שלושה קווים אופקיים נפרדים בלי גב אנכי, ל-Ε שלושה קווים אופקיים עם גב אנכי מחבר (צורת E), ל-Σ יש קו זיגזג רציף מחבר.
-- Λ/Α/Δ: Λ היא V הפוך פשוט בלי קו רוחב, Α היא V הפוך עם קו רוחב (מפרק) באמצע, Δ הוא משולש סגור לגמרי.
-
-לפני שאתה קובע תשובה, בדוק: האם יש קו/גבעול נוסף שעובר או יוצא מהצורה הבסיסית? זה כמעט תמיד ההבדל בין שתי אותיות שנראות דומות ממבט ראשון.
-
-שים לב אם האות מצוירת כאות גדולה/רישית (למשל Α, Β, Γ) או כאות קטנה (למשל α, β, γ), ושמור על אותה צורה בתשובה - אל תמיר קטנה לגדולה או להפך.
-החזר JSON בלבד, ללא הסברים ובלי markdown: {"letter":"<אות יוונית אחת בדיוק כפי שצויירה, כולל אם גדולה או קטנה>"}
-אם אין ציור ברור בתמונה, החזר {"letter":""}. נחש תמיד את האות הכי דומה, גם אם לא בטוח.`;
-
-function acceptedGlyphs(letter, caseType) {
-  if (caseType === "upper") return [letter.upper.trim()];
-  return letter.lower.split("/").map(s => s.trim());
+// Local geometric shape matching (no external API): each letter form is a hand-authored
+// reference path (in a normalized 0..1 box, y-down like canvas coordinates). The user's drawn
+// strokes are resampled/normalized the same way and compared to every template by point-to-point
+// distance; closest template wins. Fully deterministic, no network dependency.
+function arcPts(cx, cy, rx, ry, a0, a1, n) {
+  const pts = [];
+  for (let i = 0; i <= n; i++) {
+    const t = a0 + (a1 - a0) * (i / n);
+    const rad = t * Math.PI / 180;
+    pts.push({ x: cx + rx * Math.cos(rad), y: cy + ry * Math.sin(rad) });
+  }
+  return pts;
+}
+function linePts(x0, y0, x1, y1, n = 2) {
+  const pts = [];
+  for (let i = 0; i <= n; i++) {
+    const t = i / n;
+    pts.push({ x: x0 + (x1 - x0) * t, y: y0 + (y1 - y0) * t });
+  }
+  return pts;
 }
 
-function matchesLetter(letter, caseType, detected) {
-  return acceptedGlyphs(letter, caseType).includes((detected || "").trim());
+const LETTER_SHAPE_TEMPLATES = {
+  upper_Α: [linePts(0.5,0.1,0.15,0.9), linePts(0.5,0.1,0.85,0.9), linePts(0.28,0.55,0.72,0.55)],
+  upper_Β: [linePts(0.22,0.1,0.22,0.9), [...arcPts(0.22,0.3,0.26,0.2,-90,90,8)], [...arcPts(0.22,0.7,0.3,0.2,-90,90,8)]],
+  upper_Γ: [linePts(0.2,0.15,0.8,0.15), linePts(0.2,0.15,0.2,0.9)],
+  upper_Δ: [linePts(0.5,0.1,0.15,0.9), linePts(0.15,0.9,0.85,0.9), linePts(0.85,0.9,0.5,0.1)],
+  upper_Ε: [linePts(0.2,0.1,0.2,0.9), linePts(0.2,0.1,0.8,0.1), linePts(0.2,0.5,0.65,0.5), linePts(0.2,0.9,0.8,0.9)],
+  upper_Ζ: [linePts(0.15,0.15,0.85,0.15), linePts(0.85,0.15,0.15,0.85), linePts(0.15,0.85,0.85,0.85)],
+  upper_Η: [linePts(0.2,0.1,0.2,0.9), linePts(0.8,0.1,0.8,0.9), linePts(0.2,0.5,0.8,0.5)],
+  upper_Θ: [arcPts(0.5,0.5,0.35,0.4,0,360,16), linePts(0.15,0.5,0.85,0.5)],
+  upper_Ι: [linePts(0.5,0.1,0.5,0.9)],
+  upper_Κ: [linePts(0.2,0.1,0.2,0.9), linePts(0.2,0.5,0.8,0.1), linePts(0.2,0.5,0.8,0.9)],
+  upper_Λ: [linePts(0.5,0.1,0.15,0.9), linePts(0.5,0.1,0.85,0.9)],
+  upper_Μ: [linePts(0.15,0.9,0.15,0.1), linePts(0.15,0.1,0.5,0.6), linePts(0.5,0.6,0.85,0.1), linePts(0.85,0.1,0.85,0.9)],
+  upper_Ν: [linePts(0.2,0.9,0.2,0.1), linePts(0.2,0.1,0.8,0.9), linePts(0.8,0.9,0.8,0.1)],
+  upper_Ξ: [linePts(0.15,0.15,0.85,0.15), linePts(0.15,0.5,0.85,0.5), linePts(0.15,0.85,0.85,0.85)],
+  upper_Ο: [arcPts(0.5,0.5,0.35,0.4,0,360,16)],
+  upper_Π: [linePts(0.15,0.15,0.85,0.15), linePts(0.15,0.15,0.15,0.9), linePts(0.85,0.15,0.85,0.9)],
+  upper_Ρ: [linePts(0.25,0.1,0.25,0.9), arcPts(0.25,0.3,0.3,0.2,-90,90,10)],
+  upper_Σ: [linePts(0.8,0.15,0.2,0.15), linePts(0.2,0.15,0.55,0.5), linePts(0.55,0.5,0.2,0.85), linePts(0.2,0.85,0.8,0.85)],
+  upper_Τ: [linePts(0.15,0.15,0.85,0.15), linePts(0.5,0.15,0.5,0.9)],
+  upper_Υ: [linePts(0.2,0.15,0.5,0.55), linePts(0.8,0.15,0.5,0.55), linePts(0.5,0.55,0.5,0.9)],
+  upper_Φ: [linePts(0.5,0.1,0.5,0.9), arcPts(0.5,0.45,0.28,0.28,0,360,14)],
+  upper_Χ: [linePts(0.15,0.1,0.85,0.9), linePts(0.85,0.1,0.15,0.9)],
+  upper_Ψ: [arcPts(0.5,0.45,0.32,0.3,200,-20,10), linePts(0.5,0.1,0.5,0.9)],
+  upper_Ω: [arcPts(0.5,0.45,0.32,0.3,200,-20,10), linePts(0.22,0.75,0.12,0.8), linePts(0.78,0.75,0.88,0.8)],
+
+  lower_α: [arcPts(0.35,0.55,0.22,0.22,0,360,12), linePts(0.5,0.7,0.85,0.25)],
+  lower_β: [linePts(0.35,0.1,0.35,0.9), arcPts(0.35,0.35,0.25,0.22,-90,270,14)],
+  lower_γ: [linePts(0.2,0.15,0.5,0.55), linePts(0.8,0.15,0.5,0.55), linePts(0.5,0.55,0.4,0.9)],
+  lower_δ: [arcPts(0.5,0.6,0.28,0.25,0,360,14), linePts(0.35,0.35,0.2,0.15)],
+  lower_ε: [arcPts(0.5,0.5,0.3,0.28,20,340,12), linePts(0.3,0.5,0.65,0.5)],
+  lower_ζ: [linePts(0.25,0.2,0.75,0.2), linePts(0.75,0.2,0.3,0.6), linePts(0.3,0.6,0.7,0.6), linePts(0.7,0.6,0.35,0.9)],
+  lower_η: [linePts(0.25,0.35,0.25,0.75), arcPts(0.25,0.45,0.2,0.15,180,360,8), linePts(0.65,0.35,0.65,0.95)],
+  lower_θ: [arcPts(0.5,0.5,0.28,0.38,0,360,16), linePts(0.25,0.5,0.75,0.5)],
+  lower_ι: [linePts(0.5,0.35,0.5,0.85)],
+  lower_κ: [linePts(0.3,0.15,0.3,0.9), linePts(0.3,0.55,0.75,0.3), linePts(0.3,0.55,0.75,0.85)],
+  lower_λ: [linePts(0.55,0.15,0.25,0.85), linePts(0.4,0.5,0.8,0.85)],
+  lower_μ: [linePts(0.3,0.35,0.3,0.95), arcPts(0.3,0.55,0.22,0.2,180,360,8), linePts(0.52,0.35,0.52,0.75)],
+  lower_ν: [linePts(0.25,0.35,0.5,0.8), linePts(0.75,0.35,0.5,0.8)],
+  lower_ξ: [linePts(0.25,0.2,0.7,0.2), linePts(0.25,0.45,0.7,0.45), arcPts(0.45,0.75,0.22,0.18,0,360,10)],
+  lower_ο: [arcPts(0.5,0.55,0.28,0.28,0,360,14)],
+  lower_π: [linePts(0.2,0.35,0.8,0.35), linePts(0.25,0.35,0.25,0.85), linePts(0.75,0.35,0.75,0.85)],
+  lower_ρ: [linePts(0.3,0.35,0.3,0.95), arcPts(0.3,0.5,0.25,0.18,-90,270,10)],
+  "lower_σ/ς": [arcPts(0.55,0.55,0.28,0.25,20,320,12), linePts(0.75,0.68,0.65,0.85)],
+  lower_τ: [linePts(0.25,0.3,0.75,0.3), linePts(0.55,0.3,0.55,0.85)],
+  lower_υ: [arcPts(0.5,0.5,0.3,0.3,200,-20,10)],
+  lower_φ: [linePts(0.5,0.1,0.5,0.9), arcPts(0.5,0.5,0.26,0.26,0,360,14)],
+  lower_χ: [linePts(0.2,0.3,0.8,0.95), linePts(0.8,0.3,0.2,0.95)],
+  lower_ψ: [arcPts(0.5,0.45,0.3,0.28,200,-20,10), linePts(0.5,0.15,0.5,0.9)],
+  lower_ω: [arcPts(0.5,0.5,0.3,0.25,200,-20,10), linePts(0.24,0.72,0.15,0.78), linePts(0.76,0.72,0.85,0.78)]
+};
+
+const SHAPE_RESAMPLE_N = 48;
+
+function resamplePath(points, n) {
+  if (points.length === 0) return new Array(n).fill({ x: 0, y: 0 });
+  if (points.length === 1) return new Array(n).fill(points[0]);
+  const lens = [0];
+  for (let i = 1; i < points.length; i++) {
+    lens.push(lens[i - 1] + Math.hypot(points[i].x - points[i - 1].x, points[i].y - points[i - 1].y));
+  }
+  const total = lens[lens.length - 1] || 1;
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const target = (i / (n - 1)) * total;
+    let idx = 0;
+    while (idx < lens.length - 2 && lens[idx + 1] < target) idx++;
+    const segLen = (lens[idx + 1] - lens[idx]) || 1;
+    const t = (target - lens[idx]) / segLen;
+    const p0 = points[idx], p1 = points[Math.min(idx + 1, points.length - 1)];
+    out.push({ x: p0.x + (p1.x - p0.x) * t, y: p0.y + (p1.y - p0.y) * t });
+  }
+  return out;
 }
 
-// Claude is asked to reply with strict JSON, but occasionally wraps it in prose - fall back to
-// pulling the first Greek letter out of the raw text rather than treating that as a hard failure.
-function extractLetterFallback(text) {
-  const m = text.match(/[Α-Ωα-ωΆ-Ώά-ώ]/);
-  return m ? m[0] : "";
+function normalizePoints(points) {
+  const xs = points.map(p => p.x), ys = points.map(p => p.y);
+  const minX = Math.min(...xs), maxX = Math.max(...xs);
+  const minY = Math.min(...ys), maxY = Math.max(...ys);
+  const scale = Math.max(maxX - minX, maxY - minY) || 1;
+  const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+  return points.map(p => ({ x: (p.x - cx) / scale, y: (p.y - cy) / scale }));
 }
 
-// The drawing canvas is much larger than any single letter drawn on it, so a naive full-canvas
-// export is mostly blank white space with a tiny mark in the middle - very hard for a vision
-// model to read confidently. Crop tightly to the actual strokes (with padding) and upscale into
-// a fixed square canvas so the shape fills most of the frame.
-function getCroppedDrawingDataURL(canvas, strokes) {
-  if (!strokes.length) return canvas.toDataURL("image/png");
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  strokes.forEach(s => s.points.forEach(p => {
-    minX = Math.min(minX, p.x); minY = Math.min(minY, p.y);
-    maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y);
-  }));
-  const pad = 30;
-  minX = Math.max(0, minX - pad);
-  minY = Math.max(0, minY - pad);
-  maxX = Math.min(canvas.width, maxX + pad);
-  maxY = Math.min(canvas.height, maxY + pad);
-  const w = maxX - minX, h = maxY - minY;
-  if (w <= 0 || h <= 0) return canvas.toDataURL("image/png");
+function pathDistance(a, b) {
+  let sum = 0;
+  for (let i = 0; i < a.length; i++) sum += Math.hypot(a[i].x - b[i].x, a[i].y - b[i].y);
+  return sum / a.length;
+}
 
-  const OUT_SIZE = 400;
-  const out = document.createElement("canvas");
-  out.width = OUT_SIZE;
-  out.height = OUT_SIZE;
-  const octx = out.getContext("2d");
-  octx.fillStyle = "#fff";
-  octx.fillRect(0, 0, OUT_SIZE, OUT_SIZE);
-  const scale = OUT_SIZE / Math.max(w, h);
-  const destW = w * scale, destH = h * scale;
-  octx.drawImage(canvas, minX, minY, w, h, (OUT_SIZE - destW) / 2, (OUT_SIZE - destH) / 2, destW, destH);
-  return out.toDataURL("image/png");
+const _templateCache = {};
+function getTemplatePoints(key) {
+  if (_templateCache[key]) return _templateCache[key];
+  const flat = [];
+  LETTER_SHAPE_TEMPLATES[key].forEach(stroke => flat.push(...stroke));
+  const points = normalizePoints(resamplePath(flat, SHAPE_RESAMPLE_N));
+  _templateCache[key] = points;
+  return points;
+}
+
+// Concatenates all drawn strokes into one path (connecting jumps between strokes are a known,
+// accepted simplification for this kind of rough shape matching) and finds the closest-matching
+// template by normalized point-to-point distance.
+function matchDrawing(strokes) {
+  const flat = [];
+  strokes.forEach(s => flat.push(...s.points));
+  if (flat.length < 2) return null;
+  const drawn = normalizePoints(resamplePath(flat, SHAPE_RESAMPLE_N));
+
+  let bestKey = null, bestDist = Infinity;
+  Object.keys(LETTER_SHAPE_TEMPLATES).forEach(key => {
+    const d = pathDistance(drawn, getTemplatePoints(key));
+    if (d < bestDist) { bestDist = d; bestKey = key; }
+  });
+  return { key: bestKey, distance: bestDist };
+}
+
+function templateKeyFor(letter, caseType) {
+  return caseType === "upper" ? `upper_${letter.upper}` : `lower_${letter.lower}`;
+}
+
+function glyphFromTemplateKey(key) {
+  const glyph = key.slice(key.indexOf("_") + 1);
+  return glyph.includes("/") ? glyph.split("/")[0] : glyph;
 }
 
 function DrawScreen({ onEnd }) {
@@ -1662,8 +1746,7 @@ function DrawScreen({ onEnd }) {
   const [score, setScore] = useState({ c: 0, w: 0 });
   const [done, setDone] = useState(false);
   const [hasDrawing, setHasDrawing] = useState(false);
-  const [checking, setChecking] = useState(false);
-  const [result, setResult] = useState(null); // { correct, detected } | { failed: true } | null
+  const [result, setResult] = useState(null); // { correct, detected } | null
   const canvasRef = useRef(null);
   const drawingRef = useRef(false);
   const lastPosRef = useRef(null);
@@ -1735,45 +1818,16 @@ function DrawScreen({ onEnd }) {
     if (canvas) canvas.getContext("2d").clearRect(0,0,canvas.width,canvas.height);
   }
 
-  async function checkDrawing() {
-    if (!hasDrawing || checking) return;
-    setChecking(true);
-    setResult(null);
-    try {
-      const canvas = canvasRef.current;
-      const base64 = getCroppedDrawingDataURL(canvas, strokesRef.current).split(",")[1];
-      const resp = await fetch("https://carty-api.aviadchai.workers.dev", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-5",
-          max_tokens: 1000,
-          system: WRITE_CHECK_SYSTEM,
-          messages: [{
-            role: "user",
-            content: [
-              { type: "image", source: { type: "base64", media_type: "image/png", data: base64 } },
-              { type: "text", text: "איזו אות יוונית זו? החזר JSON בלבד." }
-            ]
-          }]
-        })
-      });
-      const data = await resp.json();
-      if (data.error) throw new Error(data.error.message);
-      const text = data.content?.[0]?.text || "{}";
-      let detected;
-      try {
-        detected = JSON.parse(text.replace(/```json|```/g, "").trim()).letter || "";
-      } catch (parseErr) {
-        detected = extractLetterFallback(text);
-        if (!detected) throw parseErr;
-      }
-      setResult({ correct: matchesLetter(letter, caseType, detected), detected });
-    } catch (e) {
-      setResult({ failed: true });
-    } finally {
-      setChecking(false);
-    }
+  function checkDrawing() {
+    if (!hasDrawing) return;
+    const match = matchDrawing(strokesRef.current);
+    if (!match) { setResult({ correct: false, detected: "" }); return; }
+    const expectedKey = templateKeyFor(letter, caseType);
+    // A few letters (ι/Ι, ψ/Ψ, φ/Φ...) are nearly the same shape at different scale, and scale is
+    // normalized away during matching - accept either case of the same target letter as correct.
+    const otherCaseKey = caseType === "upper" ? `lower_${letter.lower}` : `upper_${letter.upper}`;
+    const correct = match.key === expectedKey || match.key === otherCaseKey;
+    setResult({ correct, detected: glyphFromTemplateKey(match.key) });
   }
 
   function retry() {
@@ -1845,7 +1899,7 @@ function DrawScreen({ onEnd }) {
         </button>
       </div>
 
-      {result && !result.failed && (
+      {result && (
         <div style={{
           padding:"14px 16px",borderRadius:14,marginBottom:12,textAlign:"center",
           background: result.correct ? "#e8f9ee" : "#fff0ef",
@@ -1858,37 +1912,22 @@ function DrawScreen({ onEnd }) {
         </div>
       )}
 
-      {result?.failed && (
-        <div style={{ padding:"14px 16px",borderRadius:14,marginBottom:12,textAlign:"center",background:"#fff3e0",color:"#a15c00" }}>
-          <div style={{ fontSize:15,fontWeight:600 }}>לא הצלחתי להתחבר לבדיקה</div>
-          <div style={{ fontSize:12,marginTop:2,opacity:0.85 }}>אפשר לנסות שוב או לדרג בעצמך</div>
-        </div>
-      )}
-
       {!result && (
-        <button onClick={checkDrawing} disabled={!hasDrawing || checking} style={{
+        <button onClick={checkDrawing} disabled={!hasDrawing} style={{
           width:"100%",padding:"16px 0",fontSize:16,fontWeight:700,
           background:"#007aff",color:"#fff",border:"none",borderRadius:14,
-          opacity: (!hasDrawing || checking) ? 0.4 : 1
+          opacity: !hasDrawing ? 0.4 : 1
         }}>
-          {checking ? "בודק..." : "בדוק"}
+          בדוק
         </button>
       )}
 
-      {result && !result.failed && (
+      {result && (
         <div style={{ display:"flex",gap:10 }}>
           {!result.correct && (
             <button onClick={retry} style={{ flex:1,padding:"16px 0",fontSize:16,fontWeight:700,background:"#fff",color:"#007aff",border:"1.5px solid #007aff",borderRadius:14 }}>נסה שוב</button>
           )}
           <button onClick={() => next(result.correct)} style={{ flex:1,padding:"16px 0",fontSize:16,fontWeight:700,background:"#34c759",color:"#fff",border:"none",borderRadius:14 }}>הבא</button>
-        </div>
-      )}
-
-      {result?.failed && (
-        <div style={{ display:"flex",gap:10 }}>
-          <button onClick={checkDrawing} style={{ flex:1,padding:"14px 0",fontSize:15,fontWeight:600,background:"#fff",color:"#007aff",border:"1.5px solid #007aff",borderRadius:14 }}>נסה בדיקה שוב</button>
-          <button onClick={() => next(false)} style={{ flex:1,padding:"14px 0",fontSize:15,fontWeight:600,background:"#fff",color:"#ff3b30",border:"1.5px solid #ff3b30",borderRadius:14 }}>✗ לא ידעתי</button>
-          <button onClick={() => next(true)} style={{ flex:1,padding:"14px 0",fontSize:15,fontWeight:600,background:"#fff",color:"#34c759",border:"1.5px solid #34c759",borderRadius:14 }}>✓ ידעתי</button>
         </div>
       )}
     </div>
