@@ -2694,12 +2694,14 @@ function App() {
   }, [letterStates, numberStates, challengeStart, numChallengeStart, letterChallengeDays, numChallengeDays]);
 
   function resetLetterChallenge() {
-    if (!window.confirm("לאפס את אתגר האלפבית ולהתחיל את מניית הימים מחדש? האותיות שכבר למדת יישארו.")) return;
+    if (!window.confirm("לאפס את אתגר האלפבית לגמרי? כל האותיות שלמדת יחזרו ל-0 והימים יתחילו מחדש.")) return;
+    setLetterStates(initState());
     setChallengeStart(null);
   }
 
   function resetNumChallenge() {
-    if (!window.confirm("לאפס את אתגר המספרים ולהתחיל את מניית הימים מחדש? המספרים שכבר למדת יישארו.")) return;
+    if (!window.confirm("לאפס את אתגר המספרים לגמרי? כל המספרים שלמדת יחזרו ל-0 והימים יתחילו מחדש.")) return;
+    setNumberStates(initNumberState());
     setNumChallengeStart(null);
   }
 
