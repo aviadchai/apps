@@ -174,26 +174,22 @@ const DIFF_NAMES = {1:"קלה",2:"בינונית",3:"קשה"};
 const DIFF_COLORS = {1:"#007aff",2:"#ff9f0a",3:"#ff9f0a"};
 const DIFF_BG = {1:"#e8f4fd",2:"#fff3e0",3:"#fff3e0"};
 
-const DAY_PLAN = [
-  {day:1,daily:3,target:3},
-  {day:2,daily:2,target:5},
-  {day:3,daily:3,target:8},
-  {day:4,daily:3,target:11},
-  {day:5,daily:3,target:14},
-  {day:6,daily:2,target:16},
-  {day:7,daily:3,target:19},
-  {day:8,daily:2,target:21},
-  {day:9,daily:2,target:23},
-  {day:10,daily:1,target:24}
-];
+const LETTER_CHALLENGE_DEFAULT_DAYS = 10;
+const NUM_CHALLENGE_DEFAULT_DAYS = 5;
+const LETTER_CHALLENGE_DAY_PRESETS = [5,7,10,14,20,30];
+const NUM_CHALLENGE_DAY_PRESETS = [3,5,7,10,15];
 
-const NUM_DAY_PLAN = [
-  {day:1,daily:3,target:3},
-  {day:2,daily:3,target:6},
-  {day:3,daily:4,target:10},
-  {day:4,daily:3,target:13},
-  {day:5,daily:2,target:15},
-];
+// Spreads `total` items evenly across `days`, with the last day's cumulative target always
+// landing exactly on `total` (avoids rounding drift accumulating).
+function buildDayPlan(total, days) {
+  const plan = [];
+  for (let d = 1; d <= days; d++) {
+    const target = d === days ? total : Math.min(total, Math.round((total * d) / days));
+    const prevTarget = d > 1 ? plan[d - 2].target : 0;
+    plan.push({ day: d, daily: target - prevTarget, target });
+  }
+  return plan;
+}
 
 const STORAGE_KEY = "greek_abc_v2";
 
@@ -1934,9 +1930,51 @@ function DrawScreen({ onEnd }) {
   );
 }
 
-function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading, onStartFinal, challengeStart, numberStates, onSelectNumber, onStartNumberQuiz, numChallengeStart, onStartAlphaOrder, onStartDraw }) {
+function ChallengeSettingsModal({ title, days, presets, accentColor, onSetDays, onReset, onClose }) {
+  return (
+    <div onClick={onClose} style={{
+      position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",display:"flex",
+      alignItems:"center",justifyContent:"center",zIndex:1000,padding:20,animation:"fadeIn 0.2s ease"
+    }}>
+      <div onClick={e => e.stopPropagation()} style={{
+        background:"#fff",borderRadius:20,padding:"24px 20px",maxWidth:340,width:"100%",
+        boxShadow:"0 8px 32px rgba(0,0,0,0.2)",animation:"slideUp 0.25s ease"
+      }}>
+        <div style={{ fontSize:17,fontWeight:700,color:"#1c1c1e",marginBottom:16,textAlign:"center" }}>{title}</div>
+        <div style={{ fontSize:13,color:"#8e8e93",marginBottom:8 }}>כמה ימים לאתגר?</div>
+        <div style={{ display:"flex",gap:6,flexWrap:"wrap",marginBottom:20 }}>
+          {presets.map(p => (
+            <button key={p} onClick={() => onSetDays(p)} style={{
+              flex:"1 0 27%",padding:"10px 0",fontSize:14,fontWeight:700,borderRadius:10,
+              background: days === p ? accentColor : "#f2f2f7",
+              color: days === p ? "#fff" : "#1c1c1e",
+              border:"none",cursor:"pointer"
+            }}>{p}</button>
+          ))}
+        </div>
+        <button onClick={onReset} style={{
+          width:"100%",padding:"14px 0",fontSize:15,fontWeight:700,
+          background:"#fff3e0",color:"#a15c00",border:"none",borderRadius:12,cursor:"pointer",marginBottom:10
+        }}>אפס את האתגר מחדש</button>
+        <button onClick={onClose} style={{
+          width:"100%",padding:"12px 0",fontSize:15,fontWeight:600,
+          background:"#f2f2f7",color:"#636366",border:"none",borderRadius:12,cursor:"pointer"
+        }}>סגור</button>
+      </div>
+    </div>
+  );
+}
+
+function HomeScreen({
+  letterStates, onSelectLetter, onStartQuiz, onStartReading, onStartFinal, challengeStart, numberStates,
+  onSelectNumber, onStartNumberQuiz, numChallengeStart, onStartAlphaOrder, onStartDraw,
+  letterChallengeDays, onSetLetterChallengeDays, onResetLetterChallenge,
+  numChallengeDays, onSetNumChallengeDays, onResetNumChallenge
+}) {
   const [tab, setTab] = useState("letters");
   const [showAbcParagraph, setShowAbcParagraph] = useState(false);
+  const [showLetterSettings, setShowLetterSettings] = useState(false);
+  const [showNumSettings, setShowNumSettings] = useState(false);
   const learnedCount = LETTERS.filter(l => letterStates[l.id]?.learned).length;
   const learnedEasy = LETTERS.filter(l => l.difficulty === 1 && letterStates[l.id]?.learned).length;
   const learnedMed = LETTERS.filter(l => l.difficulty === 2 && letterStates[l.id]?.learned).length;
@@ -1944,9 +1982,12 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
   const unlockedLevel = getUnlockedLevel(letterStates);
   const numLearned = NUMBERS.filter(n => numberStates[n.id]?.learned).length;
 
+  const DAY_PLAN = buildDayPlan(24, letterChallengeDays);
+  const NUM_DAY_PLAN = buildDayPlan(NUMBERS.length, numChallengeDays);
+
   const challengeDays = challengeStart ? daysSince(challengeStart) + 1 : 0;
   const challengeDay = challengeStart
-    ? Math.min(10, challengeDays)
+    ? Math.min(letterChallengeDays, challengeDays)
     : 0;
   const letterRate = challengeDays > 0 ? Math.round(learnedCount / challengeDays * 10) / 10 : 0;
   let letterPrediction = "";
@@ -1975,7 +2016,7 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
           αβγ
         </h1>
         <p style={{ margin: "4px 0 0", color: "#8e8e93", fontSize: 14, fontWeight: 400 }}>
-          האלפבית היווני ב-10 ימים <span style={{ fontSize: 11 }}>(v30)</span>
+          האלפבית היווני ב-{letterChallengeDays} ימים <span style={{ fontSize: 11 }}>(v30)</span>
         </p>
       </div>
 
@@ -2006,10 +2047,16 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
         marginBottom: 14, boxShadow: "0 1px 4px rgba(0,0,0,0.06)"
       }}>
         <div style={{
-          display: "flex", justifyContent: "space-between",
+          display: "flex", justifyContent: "space-between", alignItems: "center",
           fontSize: 14, fontWeight: 600, color: "#1c1c1e", marginBottom: 8
         }}>
-          <span>{challengeDay > 0 ? `יום ${challengeDay} מתוך 10` : "אלפבית יווני"}</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span>{challengeDay > 0 ? `יום ${challengeDay} מתוך ${letterChallengeDays}` : "אלפבית יווני"}</span>
+            <button onClick={() => setShowLetterSettings(true)} style={{
+              background: "none", border: "none", padding: 0, cursor: "pointer",
+              fontSize: 14, color: "#8e8e93", lineHeight: 1
+            }}>⚙</button>
+          </div>
           <span style={{ color: "#8e8e93" }}>{learnedCount}/24</span>
         </div>
         {challengeDay > 0 && todayRemaining > 0 ? (
@@ -2078,8 +2125,8 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
           <div style={{ display: "flex", gap: 6, marginTop: 10 }}>
             {[
               { val: 24 - learnedCount, label: "אותיות נשארו", bg: "#e8f4fd", color: "#007aff" },
-              { val: Math.max(0, 10 - challengeDay), label: "ימים בתוכנית", bg: "#f3e8ff", color: "#8b5cf6" },
-              { val: Math.max(0, 10 - challengeDay) > 0 ? Math.ceil((24 - learnedCount) / Math.max(1, 10 - challengeDay)) : (24 - learnedCount), label: "ליום להשלמה", bg: "#fef3e8", color: "#ff9f0a" }
+              { val: Math.max(0, letterChallengeDays - challengeDay), label: "ימים בתוכנית", bg: "#f3e8ff", color: "#8b5cf6" },
+              { val: Math.max(0, letterChallengeDays - challengeDay) > 0 ? Math.ceil((24 - learnedCount) / Math.max(1, letterChallengeDays - challengeDay)) : (24 - learnedCount), label: "ליום להשלמה", bg: "#fef3e8", color: "#ff9f0a" }
             ].map((s, i) => (
               <div key={i} style={{ flex: 1, textAlign: "center", padding: "6px 4px", background: s.bg, borderRadius: 10 }}>
                 <div style={{ fontSize: 18, fontWeight: 700, color: s.color }}>{s.val}</div>
@@ -2089,6 +2136,18 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
           </div>
         )}
       </div>
+
+      {showLetterSettings && (
+        <ChallengeSettingsModal
+          title="הגדרות אתגר אלפבית"
+          days={letterChallengeDays}
+          presets={LETTER_CHALLENGE_DAY_PRESETS}
+          accentColor="#007aff"
+          onSetDays={onSetLetterChallengeDays}
+          onReset={onResetLetterChallenge}
+          onClose={() => setShowLetterSettings(false)}
+        />
+      )}
 
       <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
         {[1,2,3].map(d => {
@@ -2250,26 +2309,31 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
 
       {tab === "numbers" && (<>
       {(() => {
-        const numDay = numChallengeStart ? Math.min(5, daysSince(numChallengeStart) + 1) : 0;
+        const numDay = numChallengeStart ? Math.min(numChallengeDays, daysSince(numChallengeStart) + 1) : 0;
         const numTodayPlan = numDay > 0 ? NUM_DAY_PLAN[numDay - 1] : null;
         const numTodayTarget = numTodayPlan ? numTodayPlan.target : 0;
         const numPrevTarget = numDay > 1 ? NUM_DAY_PLAN[numDay - 2].target : 0;
         const numTodayNew = Math.max(0, numLearned - numPrevTarget);
         const numTodayRemaining = Math.max(0, numTodayTarget - numLearned);
-        if (numDay === 0) return null;
         return (
           <div style={{
             background: "#fff", borderRadius: 14, padding: 14,
             marginBottom: 14, boxShadow: "0 1px 4px rgba(0,0,0,0.06)"
           }}>
             <div style={{
-              display: "flex", justifyContent: "space-between",
+              display: "flex", justifyContent: "space-between", alignItems: "center",
               fontSize: 14, fontWeight: 600, color: "#1c1c1e", marginBottom: 8
             }}>
-              <span>יום {numDay} מתוך 5</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span>{numDay > 0 ? `יום ${numDay} מתוך ${numChallengeDays}` : "אתגר מספרים"}</span>
+                <button onClick={() => setShowNumSettings(true)} style={{
+                  background: "none", border: "none", padding: 0, cursor: "pointer",
+                  fontSize: 14, color: "#8e8e93", lineHeight: 1
+                }}>⚙</button>
+              </div>
               <span style={{ color: "#8e8e93" }}>{numLearned}/{NUMBERS.length}</span>
             </div>
-            {numTodayRemaining > 0 ? (
+            {numDay > 0 && numTodayRemaining > 0 ? (
               <div style={{
                 fontSize: 13, color: "#636366", fontWeight: 500,
                 marginBottom: 8, textAlign: "center",
@@ -2277,7 +2341,7 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
               }}>
                 {numTodayNew}/{numTodayPlan.daily} מספרים חדשים היום · נשאר: {numTodayRemaining}
               </div>
-            ) : numTodayPlan && (
+            ) : numDay > 0 && numTodayPlan && (
               <div style={{
                 fontSize: 13, color: "#007aff", fontWeight: 600,
                 marginBottom: 8, textAlign: "center",
@@ -2293,6 +2357,7 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
                 transition: "width 0.6s"
               }} />
             </div>
+            {numDay > 0 && (
             <div style={{
               display: "flex", gap: 6, marginTop: 10, justifyContent: "center"
             }}>
@@ -2347,9 +2412,22 @@ function HomeScreen({ letterStates, onSelectLetter, onStartQuiz, onStartReading,
                 );
               })}
             </div>
+            )}
           </div>
         );
       })()}
+
+      {showNumSettings && (
+        <ChallengeSettingsModal
+          title="הגדרות אתגר מספרים"
+          days={numChallengeDays}
+          presets={NUM_CHALLENGE_DAY_PRESETS}
+          accentColor="#ff9f0a"
+          onSetDays={onSetNumChallengeDays}
+          onReset={onResetNumChallenge}
+          onClose={() => setShowNumSettings(false)}
+        />
+      )}
 
       <div style={{
         display: "grid", gridTemplateColumns: "repeat(5, 1fr)",
@@ -2575,6 +2653,8 @@ function App() {
   const [selectedNumber, setSelectedNumber] = useState(null);
   const [challengeStart, setChallengeStart] = useState(null);
   const [numChallengeStart, setNumChallengeStart] = useState(null);
+  const [letterChallengeDays, setLetterChallengeDays] = useState(LETTER_CHALLENGE_DEFAULT_DAYS);
+  const [numChallengeDays, setNumChallengeDays] = useState(NUM_CHALLENGE_DEFAULT_DAYS);
 
   useEffect(() => {
     const saved = loadData();
@@ -2598,6 +2678,8 @@ function App() {
       setNumberStates(initNumberState());
     }
     setNumChallengeStart(saved?.numChallengeStart || null);
+    setLetterChallengeDays(saved?.letterChallengeDays || LETTER_CHALLENGE_DEFAULT_DAYS);
+    setNumChallengeDays(saved?.numChallengeDays || NUM_CHALLENGE_DEFAULT_DAYS);
     setScreen("home");
   }, []);
 
@@ -2606,10 +2688,20 @@ function App() {
     if (!letterStates || !numberStates) return;
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
-      saveData({ letterStates, numberStates, challengeStart, numChallengeStart, savedAt: new Date().toISOString() });
+      saveData({ letterStates, numberStates, challengeStart, numChallengeStart, letterChallengeDays, numChallengeDays, savedAt: new Date().toISOString() });
     }, 300);
     return () => clearTimeout(saveTimer.current);
-  }, [letterStates, numberStates, challengeStart, numChallengeStart]);
+  }, [letterStates, numberStates, challengeStart, numChallengeStart, letterChallengeDays, numChallengeDays]);
+
+  function resetLetterChallenge() {
+    if (!window.confirm("לאפס את אתגר האלפבית ולהתחיל את מניית הימים מחדש? האותיות שכבר למדת יישארו.")) return;
+    setChallengeStart(null);
+  }
+
+  function resetNumChallenge() {
+    if (!window.confirm("לאפס את אתגר המספרים ולהתחיל את מניית הימים מחדש? המספרים שכבר למדת יישארו.")) return;
+    setNumChallengeStart(null);
+  }
 
   function handleQuizUpdate(id, correct) {
     setLetterStates(prev => {
@@ -2700,6 +2792,12 @@ function App() {
           onStartAlphaOrder={() => setScreen("alphaorder")}
           onStartDraw={() => setScreen("draw")}
           numChallengeStart={numChallengeStart}
+          letterChallengeDays={letterChallengeDays}
+          onSetLetterChallengeDays={setLetterChallengeDays}
+          onResetLetterChallenge={resetLetterChallenge}
+          numChallengeDays={numChallengeDays}
+          onSetNumChallengeDays={setNumChallengeDays}
+          onResetNumChallenge={resetNumChallenge}
         />
       )}
       {screen === "alphaorder" && <AlphaOrderScreen onEnd={() => setScreen("home")} />}
