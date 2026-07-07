@@ -207,6 +207,38 @@ const PHRASE_PATTERNS = [
   {id:1100,greek:"Η κρητική παρέα έχει πολύ κέφι.",hebrew:"החברה הקרתית מלאה בחיוניות.",level:10,usesWordIds:[454,489,486]}
 ];
 
+// Curated "first hour in Greece" pack — airport-to-hotel journey, for a brand-new tourist who needs to orient
+// themselves immediately. Separate from ALL_WORDS/PHRASE_PATTERNS (own id range, own progress tracking) so it
+// stays unlocked from minute one instead of waiting behind the level-gated curriculum.
+const ARRIVAL_PACK = [
+  {id:9001,greek:"Αφίξεις",hebrew:"הגעות (שלט בשדה התעופה)"},
+  {id:9002,greek:"Αναχωρήσεις",hebrew:"יציאות (שלט בשדה התעופה)"},
+  {id:9003,greek:"Έλεγχος διαβατηρίων",hebrew:"ביקורת דרכונים"},
+  {id:9004,greek:"Διαβατήριο",hebrew:"דרכון"},
+  {id:9005,greek:"Τελωνείο",hebrew:"מכס"},
+  {id:9006,greek:"Αποσκευές",hebrew:"מזוודות"},
+  {id:9007,greek:"Παραλαβή αποσκευών",hebrew:"איסוף כבודה"},
+  {id:9008,greek:"Καρότσι αποσκευών",hebrew:"עגלת מזוודות"},
+  {id:9009,greek:"Πύλη επιβίβασης",hebrew:"שער עלייה למטוס"},
+  {id:9010,greek:"Συνάλλαγμα",hebrew:"החלפת מטבע"},
+  {id:9011,greek:"ΑΤΜ",hebrew:"כספומט"},
+  {id:9012,greek:"Κάρτα SIM",hebrew:"כרטיס סים"},
+  {id:9013,greek:"Δωρεάν Wi-Fi",hebrew:"ווביי חינם"},
+  {id:9014,greek:"Πιάτσα ταξί",hebrew:"תחנת מוניות"},
+  {id:9015,greek:"Πόσο κάνει μέχρι το κέντρο;",hebrew:"כמה עולה עד המרכז?"},
+  {id:9016,greek:"Ξενοδοχείο",hebrew:"מלון"},
+  {id:9017,greek:"Έχω κράτηση.",hebrew:"יש לי הזמנה."},
+  {id:9018,greek:"Πού είναι...;",hebrew:"איפה ה...?"},
+  {id:9019,greek:"Έξοδος",hebrew:"יציאה"},
+  {id:9020,greek:"Χάρτης",hebrew:"מפה"},
+  {id:9021,greek:"Μιλάτε αγγλικά;",hebrew:"אתה מדבר אנגלית?"},
+  {id:9022,greek:"Βοήθεια!",hebrew:"עזרה!"},
+  {id:9023,greek:"Πού είναι η τουαλέτα;",hebrew:"איפה השירותים?"},
+  {id:9024,greek:"Νερό, παρακαλώ.",hebrew:"מים, בבקשה."},
+  {id:9025,greek:"Ευχαριστώ!",hebrew:"תודה!"},
+  {id:9026,greek:"Καλώς ήρθατε στην Ελλάδα!",hebrew:"ברוכים הבאים ליוון!"}
+];
+
 // ~4-5 concrete visual words per level → Wikipedia article title for thumbnail
 const WORD_WIKI = {
   12:"Water", 14:"Flush toilet", 15:"Hospital", 39:"Fire", 40:"Ice",
@@ -218,7 +250,9 @@ const WORD_WIKI = {
   341:"Birthday cake", 342:"Fireworks", 345:"Champagne", 349:"Joy", 350:"Sadness",
   369:"Flower", 374:"Dog", 375:"Cat", 376:"Horse", 378:"Bird",
   413:"Heart", 428:"Ambulance", 430:"Wildfire", 435:"Snake", 436:"Scorpion",
-  451:"Santorini", 477:"Christmas tree", 482:"Sirtaki", 484:"Taverna", 492:"Acropolis of Athens"
+  451:"Santorini", 477:"Christmas tree", 482:"Sirtaki", 484:"Taverna", 492:"Acropolis of Athens",
+  9001:"Airport", 9006:"Baggage", 9011:"Automated teller machine", 9012:"SIM card",
+  9014:"Taxicab", 9016:"Hotel", 9020:"Map"
 };
 
 const _wikiCache = {};
@@ -249,8 +283,8 @@ const LEVEL_NAMES = {
   10:"שפה ותרבות"
 };
 
-const STORAGE_KEY = "greek_vocab_v5";
-const OLD_STORAGE_KEY = "greek_vocab_v4";
+const STORAGE_KEY = "greek_vocab_v6";
+const OLD_STORAGE_KEY = "greek_vocab_v5";
 const IDB_NAME = "greekVocabDB";
 const IDB_STORE = "state";
 
@@ -304,8 +338,18 @@ function migrateToV5(data) {
   return data;
 }
 
+// v5 -> v6: add arrival-pack progress map + daily streak counters, keep everything else intact.
+function migrateToV6(data) {
+  if (!data) return data;
+  if (!data.arrivalState) data.arrivalState = {};
+  if (typeof data.dailyStreak !== "number") data.dailyStreak = 0;
+  if (typeof data.bestStreak !== "number") data.bestStreak = data.dailyStreak || 0;
+  if (data.lastActiveDate === undefined) data.lastActiveDate = null;
+  return data;
+}
+
 function migrateData(data) {
-  return migrateToV5(migrateStreak(data));
+  return migrateToV6(migrateToV5(migrateStreak(data)));
 }
 
 function loadData() {
@@ -341,6 +385,25 @@ function initPhraseState() {
     map[p.id] = { score: 0, attempts: 0, correct: 0, streak: 0, lastSeen: null, pinned: false };
   });
   return map;
+}
+
+function initArrivalState() {
+  const map = {};
+  ARRIVAL_PACK.forEach(p => {
+    map[p.id] = { score: 0, attempts: 0, correct: 0, streak: 0, lastSeen: null };
+  });
+  return map;
+}
+
+function updateDailyStreak(dailyStreak, bestStreak, lastActiveDate) {
+  const today = new Date().toISOString().slice(0, 10);
+  if (lastActiveDate === today) return { dailyStreak, bestStreak, lastActiveDate };
+  let next = 1;
+  if (lastActiveDate) {
+    const daysSince = Math.round((new Date(today) - new Date(lastActiveDate)) / 86400000);
+    if (daysSince === 1) next = dailyStreak + 1;
+  }
+  return { dailyStreak: next, bestStreak: Math.max(bestStreak, next), lastActiveDate: today };
 }
 
 const LEARNED_STREAK = 3;
@@ -649,9 +712,10 @@ function getReviewDue(wordState) {
   });
 }
 
-function HomeScreen({ wordState, onLearn, onReview, onRoadmap, onShowLearned, startedAt, practiceType, onChangePracticeType }) {
+function HomeScreen({ wordState, arrivalState, onLearn, onReview, onRoadmap, onShowLearned, onArrival, startedAt, practiceType, onChangePracticeType, dailyStreak }) {
   const [showParagraph, setShowParagraph] = useState(false);
   const total = ALL_WORDS.length;
+  const arrivalDone = isArrivalDone(arrivalState);
   const learned = ALL_WORDS.filter(w => (wordState[w.id]?.streak || 0) >= LEARNED_STREAK).length;
   const unlockedLevel = Math.min(10, Math.floor(ALL_WORDS.filter(w => wordState[w.id]?.score >= 8).length / 50) + 1);
   const newWords = ALL_WORDS.filter(w => w.level <= unlockedLevel && wordState[w.id]?.attempts === 0);
@@ -685,14 +749,50 @@ function HomeScreen({ wordState, onLearn, onReview, onRoadmap, onShowLearned, st
 
   return (
     <div style={{ padding: "24px 20px", maxWidth: 480, margin: "0 auto" }}>
-      <div style={{ textAlign: "center", marginBottom: 24 }}>
+      <div style={{ textAlign: "center", marginBottom: 24, position: "relative" }}>
         <h1 style={{ margin: 0, fontSize: 28, fontWeight: 700, color: "#1c1c1e", letterSpacing: -0.5 }}>
           Greek Vocabulary
         </h1>
         <p style={{ margin: "4px 0 0", color: "#8e8e93", fontSize: 15, fontWeight: 400, direction: "ltr" }}>
           Ελληνικό Λεξιλόγιο
         </p>
+        {dailyStreak > 0 && (
+          <div style={{
+            position: "absolute", top: -6, left: 0,
+            display: "inline-flex", alignItems: "center", gap: 4,
+            background: "#fff", borderRadius: 99, padding: "5px 10px",
+            boxShadow: "0 1px 4px rgba(0,0,0,0.08)", fontSize: 13, fontWeight: 700, color: "#ff6b35"
+          }}>
+            🔥 {dailyStreak}
+          </div>
+        )}
       </div>
+
+      {!arrivalDone ? (
+        <div onClick={onArrival} style={{
+          display: "flex", alignItems: "center", gap: 12,
+          background: `linear-gradient(135deg, ${ARRIVAL_ACCENT}, #14b8ac)`,
+          borderRadius: 16, padding: "16px 16px", marginBottom: 14, cursor: "pointer",
+          boxShadow: "0 4px 14px rgba(10,147,150,0.35)"
+        }}>
+          <div style={{ fontSize: 30 }}>✈️</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "#fff" }}>ממש נחתת ביוון?</div>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", marginTop: 2 }}>
+              מסלול נחיתה — {ARRIVAL_PACK.length} מילים כדי להתמצא מיד, בלי חסימות
+            </div>
+          </div>
+          <div style={{ fontSize: 20, color: "#fff" }}>‹</div>
+        </div>
+      ) : (
+        <div onClick={onArrival} style={{
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+          background: "#fff", borderRadius: 12, padding: "10px 14px", marginBottom: 14, cursor: "pointer",
+          boxShadow: "0 1px 4px rgba(0,0,0,0.06)", fontSize: 13, fontWeight: 600, color: ARRIVAL_ACCENT
+        }}>
+          <span>✈️</span><span>מסלול נחיתה — הושלם, לתרגול חוזר</span>
+        </div>
+      )}
 
       <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
         <div onClick={learned > 0 ? onShowLearned : undefined} style={{
@@ -1060,6 +1160,250 @@ function LearnNewScreen({ wordState, onDone, onUpdateWord }) {
         <button onClick={handleNext} style={{
           width: "100%", padding: "14px 0", fontSize: 16, fontWeight: 700,
           background: "#007aff", color: "#fff", border: "none", borderRadius: 14, cursor: "pointer"
+        }}>
+          {qIdx < queue.length - 1 ? "הבא" : "סיכום"}
+        </button>
+      )}
+    </div>
+  );
+}
+
+const ARRIVAL_ACCENT = "#0a9396";
+
+function isArrivalDone(arrivalState) {
+  return ARRIVAL_PACK.every(p => (arrivalState[p.id]?.attempts || 0) > 0);
+}
+
+function ArrivalScreen({ arrivalState, onDone, onUpdateArrival }) {
+  const [phase, setPhase] = useState("intro");
+  const [cardIndex, setCardIndex] = useState(0);
+  const [flipped, setFlipped] = useState(false);
+  const [selected, setSelected] = useState(null);
+  const [stats, setStats] = useState({ correct: 0, total: 0 });
+  const [queue, setQueue] = useState([]);
+  const [qIdx, setQIdx] = useState(0);
+
+  const makeQuestion = useCallback((p) => {
+    const others = ARRIVAL_PACK.filter(o => o.id !== p.id).sort(() => Math.random() - 0.5).slice(0, 3);
+    return { item: p, options: [p, ...others].sort(() => Math.random() - 0.5) };
+  }, []);
+
+  const startQuiz = useCallback(() => {
+    setQueue([...ARRIVAL_PACK].sort(() => Math.random() - 0.5).map(makeQuestion));
+    setQIdx(0);
+    setSelected(null);
+    setStats({ correct: 0, total: 0 });
+    setPhase("quiz");
+  }, [makeQuestion]);
+
+  if (phase === "intro") {
+    return (
+      <div style={{ padding: "40px 20px", maxWidth: 480, margin: "0 auto", textAlign: "center", animation: "fadeIn 0.3s ease" }}>
+        <div style={{ fontSize: 56, marginBottom: 16 }}>✈️</div>
+        <div style={{ fontSize: 22, fontWeight: 700, color: "#1c1c1e", marginBottom: 10 }}>
+          ממש נחתת ביוון?
+        </div>
+        <div style={{ fontSize: 15, color: "#8e8e93", lineHeight: 1.6, marginBottom: 32 }}>
+          {ARRIVAL_PACK.length} מילים וביטויים שיעזרו לך להתמצא כבר מהרגע שיורדים מהמטוס —
+          דרכון, מזוודות, מונית, מלון ועוד. בלי חסימות רמה, זמין עכשיו.
+        </div>
+        <button onClick={() => setPhase("cards")} style={{
+          width: "100%", padding: "16px 0", fontSize: 17, fontWeight: 700,
+          background: ARRIVAL_ACCENT, color: "#fff", border: "none",
+          borderRadius: 14, cursor: "pointer", marginBottom: 10,
+          boxShadow: "0 2px 8px rgba(10,147,150,0.3)"
+        }}>
+          בואו נתחיל
+        </button>
+        <button onClick={onDone} style={{
+          width: "100%", padding: "12px 0", fontSize: 15, fontWeight: 600,
+          background: "#fff", color: "#8e8e93", border: "none", borderRadius: 14, cursor: "pointer"
+        }}>חזרה</button>
+      </div>
+    );
+  }
+
+  if (phase === "cards") {
+    const p = ARRIVAL_PACK[cardIndex];
+    return (
+      <div style={{ padding: "20px 16px", maxWidth: 480, margin: "0 auto", animation: "fadeIn 0.3s ease" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <button onClick={onDone} style={{
+            background: "#fff", border: "none", borderRadius: 10, fontSize: 18,
+            width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center",
+            boxShadow: "0 1px 4px rgba(0,0,0,0.06)", color: ARRIVAL_ACCENT, cursor: "pointer"
+          }}>←</button>
+          <div style={{ fontSize: 14, color: "#8e8e93", fontWeight: 600 }}>
+            {cardIndex + 1} / {ARRIVAL_PACK.length}
+          </div>
+          <div style={{ width: 36 }} />
+        </div>
+
+        <div style={{ background: "#e5e5ea", borderRadius: 99, height: 4, marginBottom: 24, overflow: "hidden" }}>
+          <div style={{ width: ((cardIndex + 1) / ARRIVAL_PACK.length * 100) + "%", height: "100%", background: ARRIVAL_ACCENT, borderRadius: 99, transition: "width 0.3s" }} />
+        </div>
+
+        <div onClick={() => { setFlipped(!flipped); speak(p.greek); }} style={{
+          background: "#fff", borderRadius: 20, padding: "40px 24px",
+          textAlign: "center", cursor: "pointer", minHeight: 260,
+          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+          boxShadow: "0 4px 16px rgba(0,0,0,0.08)", marginBottom: 20
+        }}>
+          <div style={{ fontSize: 11, color: "#8e8e93", fontWeight: 500, marginBottom: 12 }}>
+            ✈️ מסלול נחיתה
+          </div>
+          <div style={{ fontSize: 28, fontWeight: 700, color: "#1c1c1e", direction: "ltr", marginBottom: 8 }}>
+            {p.greek}
+          </div>
+          <button onClick={(e) => { e.stopPropagation(); speak(p.greek); }} style={{
+            background: "#f2f2f7", border: "none", borderRadius: 99, padding: "6px 16px",
+            fontSize: 13, color: ARRIVAL_ACCENT, fontWeight: 500, cursor: "pointer", marginBottom: 16
+          }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={ARRIVAL_ACCENT} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{verticalAlign:"middle",marginLeft:4}}><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+            השמע
+          </button>
+          <WordImage wordId={p.id} size={64} />
+          {flipped ? (
+            <div style={{ animation: "fadeIn 0.2s ease" }}>
+              <div style={{ fontSize: 20, fontWeight: 600, color: ARRIVAL_ACCENT, marginBottom: 4 }}>
+                {p.hebrew}
+              </div>
+            </div>
+          ) : (
+            <div style={{ fontSize: 14, color: "#aeaeb2" }}>
+              הקש לתרגום
+            </div>
+          )}
+        </div>
+
+        <div style={{ display: "flex", gap: 10 }}>
+          {cardIndex > 0 && (
+            <button onClick={() => { setCardIndex(cardIndex - 1); setFlipped(false); }} style={{
+              flex: 1, padding: "14px 0", fontSize: 16, fontWeight: 600,
+              background: "#fff", color: "#8e8e93", border: "none", borderRadius: 14, cursor: "pointer",
+              boxShadow: "0 1px 4px rgba(0,0,0,0.06)"
+            }}>הקודם</button>
+          )}
+          <button onClick={() => {
+            if (cardIndex < ARRIVAL_PACK.length - 1) { setCardIndex(cardIndex + 1); setFlipped(false); }
+            else startQuiz();
+          }} style={{
+            flex: 1, padding: "14px 0", fontSize: 16, fontWeight: 700,
+            background: ARRIVAL_ACCENT, color: "#fff", border: "none", borderRadius: 14, cursor: "pointer",
+            boxShadow: "0 2px 8px rgba(10,147,150,0.3)"
+          }}>
+            {cardIndex < ARRIVAL_PACK.length - 1 ? "הבא" : "התחל מבחן"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (phase === "done") {
+    const pct = stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0;
+    return (
+      <div style={{ padding: "40px 20px", maxWidth: 480, margin: "0 auto", textAlign: "center", animation: "fadeIn 0.3s ease" }}>
+        <div style={{ fontSize: 48, marginBottom: 8 }}>🎉</div>
+        <div style={{ fontSize: 20, fontWeight: 700, color: "#1c1c1e", marginBottom: 8 }}>
+          מוכן/ה לנחיתה!
+        </div>
+        <div style={{ fontSize: 15, color: "#8e8e93", marginBottom: 32 }}>
+          {stats.correct} מתוך {stats.total} נכון — עכשיו את/ה יודע/ת להתמצא מהשנייה הראשונה ביוון
+        </div>
+        <button onClick={onDone} style={{
+          padding: "14px 40px", fontSize: 16, fontWeight: 700,
+          background: ARRIVAL_ACCENT, color: "#fff", border: "none", borderRadius: 14, cursor: "pointer"
+        }}>חזרה</button>
+      </div>
+    );
+  }
+
+  const q = queue[qIdx];
+  if (!q) return null;
+
+  function handleSelect(id) {
+    if (selected !== null) return;
+    setSelected(id);
+    const correct = id === q.item.id;
+    setStats(s => ({ correct: s.correct + (correct ? 1 : 0), total: s.total + 1 }));
+    const prev = arrivalState[q.item.id];
+    onUpdateArrival(q.item.id, {
+      score: correct ? Math.min(10, prev.score + 1) : Math.max(0, prev.score - 1),
+      attempts: prev.attempts + 1,
+      correct: prev.correct + (correct ? 1 : 0),
+      streak: correct ? (prev.streak || 0) + 1 : 0,
+      lastSeen: new Date().toISOString()
+    });
+    if (correct) speak(q.item.greek);
+  }
+
+  function handleNext() {
+    if (qIdx < queue.length - 1) {
+      setQIdx(qIdx + 1);
+      setSelected(null);
+    } else {
+      setPhase("done");
+    }
+  }
+
+  return (
+    <div style={{ padding: "20px 16px", maxWidth: 480, margin: "0 auto", animation: "fadeIn 0.3s ease" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+        <button onClick={onDone} style={{
+          background: "#fff", border: "none", borderRadius: 10, fontSize: 18,
+          width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center",
+          boxShadow: "0 1px 4px rgba(0,0,0,0.06)", color: ARRIVAL_ACCENT, cursor: "pointer"
+        }}>←</button>
+        <div style={{ fontSize: 13, color: "#8e8e93", fontWeight: 600 }}>
+          {qIdx + 1}/{queue.length}
+        </div>
+        <div style={{ fontSize: 13, color: ARRIVAL_ACCENT, fontWeight: 600 }}>{stats.correct} נכון</div>
+      </div>
+      <div style={{ background: "#e5e5ea", borderRadius: 99, height: 4, marginBottom: 24, overflow: "hidden" }}>
+        <div style={{ width: ((qIdx + 1) / queue.length * 100) + "%", height: "100%", background: ARRIVAL_ACCENT, borderRadius: 99, transition: "width 0.3s" }} />
+      </div>
+
+      <div style={{
+        background: ARRIVAL_ACCENT, borderRadius: 20, padding: "28px 24px",
+        textAlign: "center", marginBottom: 20,
+        boxShadow: "0 4px 16px rgba(10,147,150,0.25)"
+      }}>
+        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", marginBottom: 8 }}>✈️ מסלול נחיתה</div>
+        <div style={{ fontSize: 26, fontWeight: 700, color: "#fff", direction: "ltr" }}>{q.item.greek}</div>
+        <WordImage wordId={q.item.id} size={48} style={{marginTop:8}} />
+        <button onClick={() => speak(q.item.greek)} style={{
+          marginTop: 8, background: "rgba(255,255,255,0.2)", border: "none",
+          borderRadius: 99, padding: "6px 16px", fontSize: 13, color: "#fff", cursor: "pointer"
+        }}>השמע</button>
+      </div>
+
+      <div style={{ fontSize: 16, fontWeight: 600, color: "#1c1c1e", textAlign: "center", marginBottom: 16 }}>מה התרגום?</div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
+        {q.options.map(opt => {
+          const isThis = selected === opt.id;
+          const isRight = opt.id === q.item.id;
+          let bg = "#fff", border = "1px solid #e5e5ea", color = "#1c1c1e";
+          if (selected !== null) {
+            if (isRight) { bg = "#e6f5f5"; border = `2px solid ${ARRIVAL_ACCENT}`; color = ARRIVAL_ACCENT; }
+            else if (isThis) { bg = "#fff3e0"; border = "2px solid #ff9f0a"; color = "#ff9f0a"; }
+          }
+          return (
+            <button key={opt.id} onClick={() => handleSelect(opt.id)} style={{
+              padding: "14px 16px", fontSize: 15, fontWeight: 600, textAlign: "right",
+              background: bg, border, color, borderRadius: 14, cursor: selected ? "default" : "pointer",
+              boxShadow: "0 1px 4px rgba(0,0,0,0.04)"
+            }}>
+              {isRight && selected !== null ? "✓ " : ""}{opt.hebrew}
+            </button>
+          );
+        })}
+      </div>
+
+      {selected !== null && (
+        <button onClick={handleNext} style={{
+          width: "100%", padding: "14px 0", fontSize: 16, fontWeight: 700,
+          background: ARRIVAL_ACCENT, color: "#fff", border: "none", borderRadius: 14, cursor: "pointer"
         }}>
           {qIdx < queue.length - 1 ? "הבא" : "סיכום"}
         </button>
@@ -1497,9 +1841,14 @@ function App() {
   const [screen, setScreen] = useState("loading");
   const [wordState, setWordState] = useState(null);
   const [phraseState, setPhraseState] = useState(null);
+  const [arrivalState, setArrivalState] = useState(null);
   const [practiceMode, setPracticeMode] = useState("all");
   const [practiceType, setPracticeType] = useState("mixed");
   const [startedAt, setStartedAt] = useState(null);
+  const [dailyStreak, setDailyStreak] = useState(0);
+  const [bestStreak, setBestStreak] = useState(0);
+  const [lastActiveDate, setLastActiveDate] = useState(null);
+  const [celebrateLevel, setCelebrateLevel] = useState(null);
 
   const [recovered, setRecovered] = useState(false);
 
@@ -1516,13 +1865,22 @@ function App() {
             if (mergedPhrases[id] !== undefined) mergedPhrases[id] = { ...mergedPhrases[id], ...saved.phraseState[id] };
           });
         }
+        const mergedArrival = initArrivalState();
+        if (saved.arrivalState) {
+          Object.keys(saved.arrivalState).forEach(id => {
+            if (mergedArrival[id] !== undefined) mergedArrival[id] = { ...mergedArrival[id], ...saved.arrivalState[id] };
+          });
+        }
         let sa = saved.startedAt || null;
         if (!sa) {
           const dates = Object.values(mergedWords).map(s => s.lastSeen).filter(Boolean);
           if (dates.length > 0) sa = dates.sort()[0];
         }
         const pt = ["words", "phrases", "mixed"].includes(saved.practiceType) ? saved.practiceType : "mixed";
-        return { wordState: mergedWords, phraseState: mergedPhrases, startedAt: sa, practiceType: pt };
+        const dailyStreak = typeof saved.dailyStreak === "number" ? saved.dailyStreak : 0;
+        const bestStreak = typeof saved.bestStreak === "number" ? saved.bestStreak : dailyStreak;
+        const lastActiveDate = saved.lastActiveDate || null;
+        return { wordState: mergedWords, phraseState: mergedPhrases, arrivalState: mergedArrival, startedAt: sa, practiceType: pt, dailyStreak, bestStreak, lastActiveDate };
       }
       return null;
     }
@@ -1532,8 +1890,12 @@ function App() {
     if (lsResult) {
       setWordState(lsResult.wordState);
       setPhraseState(lsResult.phraseState);
+      setArrivalState(lsResult.arrivalState);
       setStartedAt(lsResult.startedAt);
       setPracticeType(lsResult.practiceType);
+      setDailyStreak(lsResult.dailyStreak);
+      setBestStreak(lsResult.bestStreak);
+      setLastActiveDate(lsResult.lastActiveDate);
       setScreen("home");
     } else {
       idbLoad().then(idbData => {
@@ -1541,14 +1903,19 @@ function App() {
         if (idbResult) {
           setWordState(idbResult.wordState);
           setPhraseState(idbResult.phraseState);
+          setArrivalState(idbResult.arrivalState);
           setStartedAt(idbResult.startedAt);
           setPracticeType(idbResult.practiceType);
+          setDailyStreak(idbResult.dailyStreak);
+          setBestStreak(idbResult.bestStreak);
+          setLastActiveDate(idbResult.lastActiveDate);
           setRecovered(true);
-          saveData({ wordState: idbResult.wordState, phraseState: idbResult.phraseState, practiceType: idbResult.practiceType, startedAt: idbResult.startedAt, savedAt: new Date().toISOString() });
+          saveData({ wordState: idbResult.wordState, phraseState: idbResult.phraseState, arrivalState: idbResult.arrivalState, practiceType: idbResult.practiceType, startedAt: idbResult.startedAt, dailyStreak: idbResult.dailyStreak, bestStreak: idbResult.bestStreak, lastActiveDate: idbResult.lastActiveDate, savedAt: new Date().toISOString() });
         } else {
           const now = new Date().toISOString();
           setWordState(initWordState());
           setPhraseState(initPhraseState());
+          setArrivalState(initArrivalState());
           setStartedAt(now);
         }
         setScreen("home");
@@ -1558,21 +1925,29 @@ function App() {
 
   const wordStateRef = useRef(wordState);
   const phraseStateRef = useRef(phraseState);
+  const arrivalStateRef = useRef(arrivalState);
   const practiceTypeRef = useRef(practiceType);
   const startedAtRef = useRef(startedAt);
+  const dailyStreakRef = useRef(dailyStreak);
+  const bestStreakRef = useRef(bestStreak);
+  const lastActiveDateRef = useRef(lastActiveDate);
   useEffect(() => { startedAtRef.current = startedAt; }, [startedAt]);
   useEffect(() => {
     wordStateRef.current = wordState;
     phraseStateRef.current = phraseState;
+    arrivalStateRef.current = arrivalState;
     practiceTypeRef.current = practiceType;
+    dailyStreakRef.current = dailyStreak;
+    bestStreakRef.current = bestStreak;
+    lastActiveDateRef.current = lastActiveDate;
     if (!wordState) return;
-    saveData({ wordState, phraseState, practiceType, startedAt: startedAtRef.current, savedAt: new Date().toISOString() });
-  }, [wordState, phraseState, practiceType]);
+    saveData({ wordState, phraseState, arrivalState, practiceType, startedAt: startedAtRef.current, dailyStreak, bestStreak, lastActiveDate, savedAt: new Date().toISOString() });
+  }, [wordState, phraseState, arrivalState, practiceType, dailyStreak, bestStreak, lastActiveDate]);
 
   useEffect(() => {
     function emergencySave() {
       if (wordStateRef.current) {
-        saveData({ wordState: wordStateRef.current, phraseState: phraseStateRef.current, practiceType: practiceTypeRef.current, startedAt: startedAtRef.current, savedAt: new Date().toISOString() });
+        saveData({ wordState: wordStateRef.current, phraseState: phraseStateRef.current, arrivalState: arrivalStateRef.current, practiceType: practiceTypeRef.current, startedAt: startedAtRef.current, dailyStreak: dailyStreakRef.current, bestStreak: bestStreakRef.current, lastActiveDate: lastActiveDateRef.current, savedAt: new Date().toISOString() });
       }
     }
     document.addEventListener("visibilitychange", () => {
@@ -1587,29 +1962,69 @@ function App() {
     };
   }, []);
 
+  const recordActivity = useCallback(() => {
+    const next = updateDailyStreak(dailyStreakRef.current, bestStreakRef.current, lastActiveDateRef.current);
+    if (next.lastActiveDate !== lastActiveDateRef.current) {
+      dailyStreakRef.current = next.dailyStreak;
+      bestStreakRef.current = next.bestStreak;
+      lastActiveDateRef.current = next.lastActiveDate;
+      setDailyStreak(next.dailyStreak);
+      setBestStreak(next.bestStreak);
+      setLastActiveDate(next.lastActiveDate);
+    }
+  }, []);
+
   const handleUpdateWord = useCallback((id, updates) => {
+    recordActivity();
     setWordState(prev => {
       const next = { ...prev, [id]: { ...prev[id], ...updates } };
       wordStateRef.current = next;
-      try { saveData({ wordState: next, phraseState: phraseStateRef.current, practiceType: practiceTypeRef.current, startedAt: startedAtRef.current, savedAt: new Date().toISOString() }); } catch(e) {}
+      try { saveData({ wordState: next, phraseState: phraseStateRef.current, arrivalState: arrivalStateRef.current, practiceType: practiceTypeRef.current, startedAt: startedAtRef.current, dailyStreak: dailyStreakRef.current, bestStreak: bestStreakRef.current, lastActiveDate: lastActiveDateRef.current, savedAt: new Date().toISOString() }); } catch(e) {}
       return next;
     });
-  }, []);
+  }, [recordActivity]);
 
   const handleUpdatePhrase = useCallback((id, updates) => {
+    recordActivity();
     setPhraseState(prev => {
       const next = { ...prev, [id]: { ...prev[id], ...updates } };
       phraseStateRef.current = next;
-      try { saveData({ wordState: wordStateRef.current, phraseState: next, practiceType: practiceTypeRef.current, startedAt: startedAtRef.current, savedAt: new Date().toISOString() }); } catch(e) {}
+      try { saveData({ wordState: wordStateRef.current, phraseState: next, arrivalState: arrivalStateRef.current, practiceType: practiceTypeRef.current, startedAt: startedAtRef.current, dailyStreak: dailyStreakRef.current, bestStreak: bestStreakRef.current, lastActiveDate: lastActiveDateRef.current, savedAt: new Date().toISOString() }); } catch(e) {}
       return next;
     });
-  }, []);
+  }, [recordActivity]);
+
+  const handleUpdateArrival = useCallback((id, updates) => {
+    recordActivity();
+    setArrivalState(prev => {
+      const next = { ...prev, [id]: { ...prev[id], ...updates } };
+      arrivalStateRef.current = next;
+      try { saveData({ wordState: wordStateRef.current, phraseState: phraseStateRef.current, arrivalState: next, practiceType: practiceTypeRef.current, startedAt: startedAtRef.current, dailyStreak: dailyStreakRef.current, bestStreak: bestStreakRef.current, lastActiveDate: lastActiveDateRef.current, savedAt: new Date().toISOString() }); } catch(e) {}
+      return next;
+    });
+  }, [recordActivity]);
 
   const handleChangePracticeType = useCallback((type) => {
     setPracticeType(type);
   }, []);
 
-  if (screen === "loading" || !wordState || !phraseState) {
+  const unlockedLevel = wordState
+    ? Math.min(10, Math.floor(ALL_WORDS.filter(w => wordState[w.id]?.score >= 8).length / 50) + 1)
+    : 1;
+  const prevLevelRef = useRef(null);
+  useEffect(() => {
+    if (!wordState) return;
+    if (prevLevelRef.current === null) {
+      prevLevelRef.current = unlockedLevel;
+      return;
+    }
+    if (unlockedLevel > prevLevelRef.current) {
+      setCelebrateLevel(unlockedLevel);
+    }
+    prevLevelRef.current = unlockedLevel;
+  }, [unlockedLevel, wordState]);
+
+  if (screen === "loading" || !wordState || !phraseState || !arrivalState) {
     return (
       <div style={{
         minHeight: "100vh", display: "flex", alignItems: "center",
@@ -1639,16 +2054,44 @@ function App() {
           הנתונים שוחזרו מגיבוי — הקש לסגור
         </div>
       )}
+      {celebrateLevel && (
+        <div onClick={() => setCelebrateLevel(null)} style={{
+          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+          background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center",
+          justifyContent: "center", zIndex: 1100, padding: 20, animation: "fadeIn 0.2s ease"
+        }}>
+          <div onClick={e => e.stopPropagation()} style={{
+            background: "#fff", borderRadius: 20, padding: "32px 24px",
+            maxWidth: 360, width: "100%", textAlign: "center",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.25)", animation: "slideUp 0.25s ease"
+          }}>
+            <div style={{ fontSize: 52, marginBottom: 8, animation: "pulse 1s ease infinite" }}>🎉</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: "#1c1c1e", marginBottom: 6 }}>
+              עלית לרמה {celebrateLevel}!
+            </div>
+            <div style={{ fontSize: 15, color: "#8e8e93", marginBottom: 24 }}>
+              {LEVEL_NAMES[celebrateLevel]} נפתחה עכשיו — בהצלחה עם המילים החדשות
+            </div>
+            <button onClick={() => setCelebrateLevel(null)} style={{
+              width: "100%", padding: "14px 0", fontSize: 16, fontWeight: 700,
+              background: "#007aff", color: "#fff", border: "none", borderRadius: 14, cursor: "pointer"
+            }}>קדימה!</button>
+          </div>
+        </div>
+      )}
       {screen === "home" && (
         <HomeScreen
           wordState={wordState}
+          arrivalState={arrivalState}
           startedAt={startedAt}
           practiceType={practiceType}
+          dailyStreak={dailyStreak}
           onChangePracticeType={handleChangePracticeType}
           onLearn={() => { setPracticeMode("all"); setScreen("practice"); }}
           onReview={() => { setPracticeMode("all"); setScreen("practice"); }}
           onRoadmap={() => setScreen("roadmap")}
           onShowLearned={() => setScreen("learned")}
+          onArrival={() => setScreen("arrival")}
         />
       )}
       {screen === "learn" && (
@@ -1680,6 +2123,13 @@ function App() {
           wordState={wordState}
           onBack={() => setScreen("home")}
           onResetWord={(id) => handleUpdateWord(id, { streak: 0, score: 0 })}
+        />
+      )}
+      {screen === "arrival" && (
+        <ArrivalScreen
+          arrivalState={arrivalState}
+          onDone={() => setScreen("home")}
+          onUpdateArrival={handleUpdateArrival}
         />
       )}
     </div>
