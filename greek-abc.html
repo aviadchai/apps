@@ -122,15 +122,6 @@ const READING_WORDS = [
   {gr:"νοσοκομείο",en:"nosokomio",he:"בית חולים",scene:"sign",emoji:"🏥"}
 ];
 
-const GREEK_PASSAGES = [
-  {id:1,title:"ברכות",gr:"— Καλημέρα! Πώς είσαι;\n— Είμαι καλά, ευχαριστώ.\n— Χαίρομαι πολύ!",he:"— בוקר טוב! איך אתה?\n— אני בסדר, תודה.\n— נעים מאוד!"},
-  {id:2,title:"בטברנה",gr:"— Τι θέλετε παρακαλώ;\n— Ένα νερό και μια μπίρα.\n— Αμέσως, ευχαριστώ!",he:"— מה תרצו בבקשה?\n— מים אחד ובירה אחת.\n— מיד, תודה!"},
-  {id:3,title:"הים",gr:"Η θάλασσα είναι μπλε.\nΟ ήλιος είναι ζεστός.\nΗ Ελλάδα είναι όμορφη!",he:"הים כחול.\nהשמש חמה.\nיוון יפה!"},
-  {id:4,title:"בשוק",gr:"— Πόσο κάνει αυτό;\n— Κάνει δύο ευρώ.\n— Ευχαριστώ πολύ!",he:"— כמה זה עולה?\n— זה עולה שני יורו.\n— תודה רבה!"},
-  {id:5,title:"מלון",gr:"— Πού είναι το ξενοδοχείο;\n— Είναι στο κέντρο της πόλης.\n— Ευχαριστώ!",he:"— איפה המלון?\n— הוא במרכז העיר.\n— תודה!"},
-  {id:6,title:"אוכל",gr:"Το ψωμί είναι φρέσκο.\nΤο τυρί είναι νόστιμο.\nΤο λεμόνι είναι ξινό.",he:"הלחם טרי.\nהגבינה טעימה.\nהלימון חמוץ."}
-];
-
 const SCENE_IMGS = {
   menu: [
     "https://images.unsplash.com/photo-1602591546738-ceab3d349681?w=420&h=220&fit=crop&q=80",
@@ -1070,9 +1061,9 @@ function NumberQuizScreen({ numberStates, onEnd, onUpdate }) {
       if (!used.has(n.id)) { picked.push(n); used.add(n.id); }
       if (picked.length >= 10) break;
     }
-    const types = ["identify", "sound", "reverse"];
+    const types = ["sound", "soundDigit"];
     const qs = picked.map((num, i) => {
-      const type = types[i % 3];
+      const type = types[i % 2];
       const numVal = parseInt(num.val);
       const similar = NUMBERS.filter(n => n.id !== num.id && (
         numVal <= 10 ? parseInt(n.val) <= 10 : parseInt(n.val) > 10
@@ -1081,12 +1072,10 @@ function NumberQuizScreen({ numberStates, onEnd, onUpdate }) {
       const pool3 = similar.length >= 3 ? similar : fallback;
       const others = shuffle(pool3).slice(0, 3);
       const options = shuffle([num, ...others]);
-      if (type === "identify") {
-        return { num, options, type, question: `מה המספר הזה?`, getLabel: n => `${n.he} (${n.val})`, correctId: num.id, showBig: true };
-      } else if (type === "sound") {
-        return { num, options, type, question: `איך אומרים ${num.he} ביוונית?`, getLabel: n => `${n.gr} (${n.pron})`, correctId: num.id, ltr: true };
+      if (type === "soundDigit") {
+        return { num, options, type, question: `איך כותבים את ${num.val} ביוונית?`, getLabel: n => `${n.gr} (${n.pron})`, correctId: num.id, ltr: true, showDigit: true };
       } else {
-        return { num, options, type, question: `איפה המספר ${num.he} ?`, getLabel: n => `${n.val}`, correctId: num.id, bigOptions: true };
+        return { num, options, type, question: `איך אומרים ${num.he} ביוונית?`, getLabel: n => `${n.gr} (${n.pron})`, correctId: num.id, ltr: true };
       }
     });
     setQuestions(shuffle(qs));
@@ -1138,18 +1127,11 @@ function NumberQuizScreen({ numberStates, onEnd, onUpdate }) {
       <div style={{ background: "#e5e5ea", borderRadius: 99, height: 6, marginBottom: 24, overflow: "hidden" }}>
         <div style={{ width: ((qi + 1) / questions.length * 100) + "%", height: "100%", background: "#007aff", borderRadius: 99, transition: "width 0.4s" }} />
       </div>
-      {q.showBig && (
+      {q.showDigit && (
         <div style={{ textAlign: "center", marginBottom: 16 }}>
-          <div style={{ fontSize: 48, fontWeight: 700, color: "#1c1c1e", lineHeight: 1, marginBottom: 4, direction: "ltr", cursor: "pointer" }}
-            onClick={() => speak(q.num.gr)}>
-            {q.num.gr}
+          <div style={{ fontSize: 48, fontWeight: 700, color: "#1c1c1e", lineHeight: 1, direction: "ltr" }}>
+            {q.num.val}
           </div>
-          <div style={{ fontSize: 16, color: "#8e8e93", direction: "ltr" }}>{q.num.pron}</div>
-          <button onClick={() => speak(q.num.gr)} style={{
-            marginTop: 8, padding: "6px 16px", borderRadius: 99,
-            background: "#e8f4fd", border: "none",
-            color: "#007aff", fontSize: 13, fontWeight: 500, cursor: "pointer"
-          }}>שמע</button>
         </div>
       )}
 
@@ -1199,28 +1181,24 @@ function NumberQuizScreen({ numberStates, onEnd, onUpdate }) {
 }
 
 function NotebookScreen() {
-  const todayIdx = Math.floor(Date.now() / 86400000) % GREEK_PASSAGES.length;
-  const [passageIdx, setPassageIdx] = useState(todayIdx);
-  const [translation, setTranslation] = useState("");
+  const [words] = useState(() => shuffle(READING_WORDS));
+  const [wordIdx, setWordIdx] = useState(0);
   const [revealed, setRevealed] = useState(false);
-  const [drawMode, setDrawMode] = useState("pen"); // "pen" | "mark"
   const canvasRef = useRef(null);
   const drawingRef = useRef(false);
   const lastPosRef = useRef(null);
   const strokesRef = useRef([]);
   const currentStrokeRef = useRef(null);
-  const wordTouchRef = useRef({ x: 0, y: 0 });
 
-  const passage = GREEK_PASSAGES[passageIdx];
-  const textLines = passage.gr.split("\n");
-  const lineH = 86;
-  const totalLines = Math.max(9, textLines.length + 5);
-  const notebookH = totalLines * lineH + 28;
+  const word = words[wordIdx];
+  const totalLines = 3;
+  const lineH = 74;
+  const notebookH = totalLines * lineH + 20;
 
-  function speakWord(word) {
+  function speakWord(w) {
     if (!window.speechSynthesis) return;
     window.speechSynthesis.cancel();
-    const utt = new SpeechSynthesisUtterance(word.replace(/[—\-]/g, ""));
+    const utt = new SpeechSynthesisUtterance(w);
     utt.lang = "el-GR";
     utt.rate = 0.85;
     window.speechSynthesis.speak(utt);
@@ -1235,16 +1213,9 @@ function NotebookScreen() {
     };
   }
 
-  function applyStyle(ctx, mode) {
-    if (mode === "pen") {
-      ctx.strokeStyle = "#1a237e";
-      ctx.lineWidth = 2.5;
-      ctx.globalAlpha = 1;
-    } else {
-      ctx.strokeStyle = "#ffe066";
-      ctx.lineWidth = 20;
-      ctx.globalAlpha = 0.45;
-    }
+  function applyStyle(ctx) {
+    ctx.strokeStyle = "#1a237e";
+    ctx.lineWidth = 2.5;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
   }
@@ -1256,14 +1227,12 @@ function NotebookScreen() {
     drawingRef.current = true;
     const pos = getPos(e, canvas);
     lastPosRef.current = { ...pos };
-    currentStrokeRef.current = { mode: drawMode, points: [{ ...pos }] };
-    if (drawMode === "pen") {
-      const ctx = canvas.getContext("2d");
-      ctx.beginPath();
-      ctx.arc(pos.x, pos.y, 1.5, 0, Math.PI * 2);
-      ctx.fillStyle = "#1a237e";
-      ctx.fill();
-    }
+    currentStrokeRef.current = { points: [{ ...pos }] };
+    const ctx = canvas.getContext("2d");
+    ctx.beginPath();
+    ctx.arc(pos.x, pos.y, 1.5, 0, Math.PI * 2);
+    ctx.fillStyle = "#1a237e";
+    ctx.fill();
   }
 
   function doDraw(e) {
@@ -1276,9 +1245,8 @@ function NotebookScreen() {
     ctx.beginPath();
     ctx.moveTo(lastPosRef.current.x, lastPosRef.current.y);
     ctx.lineTo(pos.x, pos.y);
-    applyStyle(ctx, drawMode);
+    applyStyle(ctx);
     ctx.stroke();
-    ctx.globalAlpha = 1;
     currentStrokeRef.current.points.push({ ...pos });
     lastPosRef.current = { ...pos };
   }
@@ -1299,20 +1267,16 @@ function NotebookScreen() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     strokesRef.current.forEach(stroke => {
       if (stroke.points.length < 2) {
-        if (stroke.mode === "pen") {
-          ctx.beginPath();
-          ctx.arc(stroke.points[0].x, stroke.points[0].y, 1.5, 0, Math.PI * 2);
-          ctx.fillStyle = "#1a237e";
-          ctx.globalAlpha = 1;
-          ctx.fill();
-        }
+        ctx.beginPath();
+        ctx.arc(stroke.points[0].x, stroke.points[0].y, 1.5, 0, Math.PI * 2);
+        ctx.fillStyle = "#1a237e";
+        ctx.fill();
         return;
       }
       ctx.beginPath();
       stroke.points.forEach((p, i) => { if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); });
-      applyStyle(ctx, stroke.mode);
+      applyStyle(ctx);
       ctx.stroke();
-      ctx.globalAlpha = 1;
     });
   }
 
@@ -1328,9 +1292,8 @@ function NotebookScreen() {
     if (canvas) canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
   }
 
-  function goToPassage(idx) {
-    setPassageIdx(idx);
-    setTranslation("");
+  function goToWord(idx) {
+    setWordIdx(idx);
     setRevealed(false);
     strokesRef.current = [];
     setTimeout(() => {
@@ -1341,50 +1304,36 @@ function NotebookScreen() {
 
   return (
     <div>
-      <div style={{
-        background: "#fffde7", borderRadius: 14, padding: "12px 14px",
-        marginBottom: 10, boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-        border: "1px solid #f5e642"
-      }}>
-        <div style={{ fontSize: 11, color: "#8e8e93", fontWeight: 500, marginBottom: 6 }}>התרגום שלי</div>
-        <textarea
-          value={translation}
-          onChange={e => setTranslation(e.target.value)}
-          placeholder="כתוב כאן את התרגום..."
-          style={{
-            width: "100%", minHeight: 58, border: "none", background: "transparent",
-            fontSize: 15, color: "#1c1c1e", fontFamily: "inherit",
-            resize: "none", outline: "none", direction: "rtl", lineHeight: 1.7
-          }}
-        />
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+        <button onClick={() => goToWord((wordIdx - 1 + words.length) % words.length)} style={{
+          width: 38, height: 38, borderRadius: 12, background: "#fff", border: "1.5px solid #e5e5ea",
+          color: "#007aff", fontSize: 18, boxShadow: "0 1px 4px rgba(0,0,0,0.06)"
+        }}>→</button>
+        <div style={{ fontSize: 13, color: "#8e8e93", fontWeight: 600 }}>{wordIdx + 1} / {words.length}</div>
+        <button onClick={() => goToWord((wordIdx + 1) % words.length)} style={{
+          width: 38, height: 38, borderRadius: 12, background: "#fff", border: "1.5px solid #e5e5ea",
+          color: "#007aff", fontSize: 18, boxShadow: "0 1px 4px rgba(0,0,0,0.06)"
+        }}>←</button>
       </div>
 
-      <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-        <button onClick={() => setDrawMode("pen")} style={{
-          flex: 1, padding: "10px 0", fontSize: 13, fontWeight: 600,
-          background: drawMode === "pen" ? "#1a237e" : "#fff",
-          color: drawMode === "pen" ? "#fff" : "#1a237e",
-          border: "1.5px solid #1a237e", borderRadius: 12
-        }}>✏️ עט</button>
-        <button onClick={() => setDrawMode("mark")} style={{
-          flex: 1, padding: "10px 0", fontSize: 13, fontWeight: 600,
-          background: drawMode === "mark" ? "#ffe066" : "#fff",
-          color: "#7a5c00",
-          border: "1.5px solid #ffe066", borderRadius: 12
-        }}>🖍️ סמן</button>
-        <button onClick={undo} style={{
-          flex: 1, padding: "10px 0", fontSize: 13, fontWeight: 600,
-          background: "#fff", color: "#636366",
-          border: "1.5px solid #e5e5ea", borderRadius: 12
-        }}>↩ בטל</button>
+      <div onClick={() => speakWord(word.gr)} style={{
+        background: "#fff", borderRadius: 16, padding: "22px 16px", textAlign: "center",
+        marginBottom: 14, boxShadow: "0 1px 4px rgba(0,0,0,0.06)", cursor: "pointer"
+      }}>
+        <div style={{ fontSize: 34, marginBottom: 6 }}>{word.emoji}</div>
+        <div style={{ fontSize: 40, fontWeight: 700, color: "#1c1c1e", direction: "ltr", lineHeight: 1.2 }}>{word.gr}</div>
+        <div style={{ fontSize: 15, color: "#8e8e93", direction: "ltr", marginTop: 4 }}>{word.en}</div>
+      </div>
+
+      <div style={{ fontSize: 12, color: "#8e8e93", fontWeight: 500, marginBottom: 6, textAlign: "center" }}>
+        כתוב כאן בעצמך מה הפירוש
       </div>
 
       <div style={{
         position: "relative", overflow: "hidden", userSelect: "none",
         margin: "0 -16px 10px", boxShadow: "0 2px 12px rgba(0,0,0,0.1)"
       }}>
-        <div style={{ background: "#fafaf2", padding: "14px 14px 14px 52px", position: "relative" }}>
-          <div style={{ position: "absolute", left: 48, top: 0, bottom: 0, width: 2, background: "#ffcdd2" }} />
+        <div style={{ background: "#fafaf2", padding: "10px 14px", position: "relative" }}>
           {Array.from({ length: totalLines }, (_, i) => (
             <div key={i} style={{ height: lineH, borderBottom: "1px solid #c8e6c9" }} />
           ))}
@@ -1405,80 +1354,41 @@ function NotebookScreen() {
           onMouseUp={endDraw}
           onMouseLeave={endDraw}
         />
-        <div style={{ position: "absolute", inset: 0, padding: "14px 14px 14px 52px", pointerEvents: "none" }}>
-          {Array.from({ length: totalLines }, (_, i) => (
-            <div key={i} style={{ height: lineH, display: "flex", alignItems: "center", direction: "ltr" }}>
-              {textLines[i] ? textLines[i].split(/\s+/).filter(Boolean).map((word, j) => (
-                <span
-                  key={j}
-                  onTouchStart={e => { wordTouchRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }; }}
-                  onTouchEnd={e => {
-                    const dx = Math.abs(e.changedTouches[0].clientX - wordTouchRef.current.x);
-                    const dy = Math.abs(e.changedTouches[0].clientY - wordTouchRef.current.y);
-                    if (dx < 12 && dy < 12) { e.preventDefault(); speakWord(word); }
-                  }}
-                  onClick={() => speakWord(word)}
-                  style={{
-                    fontSize: 22, fontWeight: 500, color: "#1a237e",
-                    letterSpacing: 1, marginLeft: j > 0 ? "0.7em" : 0,
-                    cursor: "pointer", pointerEvents: "auto",
-                    userSelect: "none", WebkitUserSelect: "none",
-                    touchAction: "manipulation", padding: "4px 1px", borderRadius: 4
-                  }}
-                >
-                  {word}
-                </span>
-              )) : null}
-            </div>
-          ))}
-        </div>
       </div>
 
       <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+        <button onClick={undo} style={{
+          flex: 1, padding: "11px 0", fontSize: 13, fontWeight: 600,
+          background: "#fff", color: "#636366",
+          border: "1.5px solid #e5e5ea", borderRadius: 12
+        }}>↩ בטל</button>
         <button onClick={clearCanvas} style={{
           flex: 1, padding: "11px 0", fontSize: 13, fontWeight: 600,
           background: "#fff", color: "#8e8e93",
           border: "1.5px solid #e5e5ea", borderRadius: 12
-        }}>נקה הכל</button>
+        }}>נקה</button>
         <button onClick={() => setRevealed(r => !r)} style={{
           flex: 1.4, padding: "11px 0", fontSize: 13, fontWeight: 600,
           background: revealed ? "#e8f4fd" : "#007aff",
           color: revealed ? "#007aff" : "#fff",
           border: "none", borderRadius: 12
-        }}>{revealed ? "הסתר" : "גלה תרגום"}</button>
-        <button onClick={() => goToPassage((passageIdx + 1) % GREEK_PASSAGES.length)} style={{
-          flex: 1.4, padding: "11px 0", fontSize: 13, fontWeight: 600,
-          background: "#fff", color: "#007aff",
-          border: "1.5px solid #007aff", borderRadius: 12
-        }}>פסקה הבאה</button>
+        }}>{revealed ? "הסתר" : "בדוק את עצמי"}</button>
       </div>
 
       {revealed && (
         <div style={{
           background: "#e8f4fd", borderRadius: 14, padding: "14px 16px",
-          marginBottom: 10, animation: "fadeIn 0.2s ease"
+          marginBottom: 10, textAlign: "center", animation: "fadeIn 0.2s ease"
         }}>
-          <div style={{ fontSize: 11, color: "#007aff", fontWeight: 700, marginBottom: 8 }}>תרגום</div>
-          {passage.he.split("\n").map((line, i) => (
-            <div key={i} style={{ fontSize: 16, color: "#1c1c1e", lineHeight: 1.9 }}>{line}</div>
-          ))}
+          <div style={{ fontSize: 11, color: "#007aff", fontWeight: 700, marginBottom: 6 }}>הפירוש</div>
+          <div style={{ fontSize: 20, color: "#1c1c1e", fontWeight: 700 }}>{word.he}</div>
         </div>
       )}
 
-      <div style={{ display: "flex", gap: 8, justifyContent: "center", paddingBottom: 8 }}>
-        {GREEK_PASSAGES.map((p, i) => (
-          <button key={i} onClick={() => goToPassage(i)} style={{
-            width: 34, height: 34, borderRadius: "50%",
-            background: i === passageIdx ? "#007aff" : "#e5e5ea",
-            color: i === passageIdx ? "#fff" : "#8e8e93",
-            border: i === passageIdx ? "none" : (i === todayIdx ? "2px solid #007aff" : "none"),
-            fontSize: 12, fontWeight: 700,
-            boxShadow: i === passageIdx ? "0 2px 8px rgba(0,122,255,0.3)" : "none"
-          }}>
-            {i + 1}
-          </button>
-        ))}
-      </div>
+      <button onClick={() => goToWord((wordIdx + 1) % words.length)} style={{
+        width: "100%", padding: "14px 0", fontSize: 15, fontWeight: 700,
+        background: "#007aff", color: "#fff", border: "none", borderRadius: 14
+      }}>מילה הבאה</button>
     </div>
   );
 }
