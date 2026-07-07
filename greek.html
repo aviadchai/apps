@@ -249,8 +249,64 @@ const LEVEL_NAMES = {
   10:"שפה ותרבות"
 };
 
-const STORAGE_KEY = "greek_vocab_v5";
-const OLD_STORAGE_KEY = "greek_vocab_v4";
+/* ============================================================
+   LEARNING ENGINE — spaced repetition + daily habit loop
+   ============================================================ */
+
+// ---- Text-to-speech (Greek) ----
+function speak(text) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang = "el-GR";
+  utt.rate = 0.85;
+  const voices = window.speechSynthesis.getVoices();
+  const greek = voices.find(v => v.lang === "el-GR") || voices.find(v => v.lang && v.lang.startsWith("el"));
+  if (greek) utt.voice = greek;
+  window.speechSynthesis.speak(utt);
+}
+if (window.speechSynthesis) {
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+}
+
+// ---- Answer checking ----
+function normalize(s) {
+  return s.trim().replace(/[.,!?;:"'()\/\-]/g, "").replace(/\s+/g, " ").toLowerCase();
+}
+function normalizeGreek(s) {
+  return (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[.,!?;:"'()]/g, "").replace(/\s+/g, " ").trim();
+}
+function checkAnswer(correctHebrew, userAnswer) {
+  if (!userAnswer.trim()) return { correct: false };
+  const nu = normalize(userAnswer);
+  const nc = normalize(correctHebrew);
+  if (nu === nc) return { correct: true };
+  const variants = correctHebrew.split("/").map(v => normalize(v.trim())).filter(Boolean);
+  for (const v of variants) if (nu === v) return { correct: true };
+  for (const v of variants) {
+    if ((nu.includes(v) || v.includes(nu)) && nu.length >= 2 && v.length >= 2) return { correct: true };
+  }
+  const paren = correctHebrew.match(/^([^(]+)\s*\(/);
+  if (paren) {
+    const main = normalize(paren[1]);
+    if ((nu === main || nu.includes(main) || main.includes(nu)) && nu.length >= 2) return { correct: true };
+  }
+  return { correct: false };
+}
+
+// ---- Spaced-repetition model (Leitner boxes) ----
+const DAY = 86400000;
+// interval (in days) that a card waits before it is due again, indexed by box
+const INTERVALS = [0, 0.01, 1, 3, 7, 16, 35, 75];
+const MAX_BOX = 7;
+const KNOWN_BOX = 4;     // survived a ~7-day gap -> "you know this word"
+const MASTERED_BOX = 6;  // ~35-day gap -> mastered
+
+const GREEK_LETTERS = "αβγδεζηθικλμνξοπρστυφχψω".split("");
+
+const STORAGE_KEY = "greek_vocab_v6";
+const LEGACY_KEYS = ["greek_vocab_v5", "greek_vocab_v4"];
 const IDB_NAME = "greekVocabDB";
 const IDB_STORE = "state";
 
@@ -262,907 +318,694 @@ function openIDB() {
     req.onerror = () => reject(req.error);
   });
 }
-
 function idbSave(data) {
-  openIDB().then(db => {
-    const tx = db.transaction(IDB_STORE, "readwrite");
-    tx.objectStore(IDB_STORE).put(data, STORAGE_KEY);
-  }).catch(() => {});
+  openIDB().then(db => { db.transaction(IDB_STORE, "readwrite").objectStore(IDB_STORE).put(data, STORAGE_KEY); }).catch(() => {});
 }
-
 function idbLoadKey(key) {
   return openIDB().then(db => new Promise((resolve, reject) => {
-    const tx = db.transaction(IDB_STORE, "readonly");
-    const req = tx.objectStore(IDB_STORE).get(key);
+    const req = db.transaction(IDB_STORE, "readonly").objectStore(IDB_STORE).get(key);
     req.onsuccess = () => resolve(req.result || null);
     req.onerror = () => reject(req.error);
   })).catch(() => null);
 }
-
 function idbLoad() {
-  return idbLoadKey(STORAGE_KEY).then(data => data || idbLoadKey(OLD_STORAGE_KEY));
+  return idbLoadKey(STORAGE_KEY)
+    .then(d => d || idbLoadKey("greek_vocab_v5"))
+    .then(d => d || idbLoadKey("greek_vocab_v4"));
 }
 
-function migrateStreak(data) {
-  if (data && data.wordState) {
-    Object.keys(data.wordState).forEach(id => {
-      if (data.wordState[id].streak === undefined) {
-        data.wordState[id].streak = 0;
-      }
-    });
-  }
-  return data;
+function freshCard() {
+  return { box: 0, due: 0, reps: 0, correct: 0, lapses: 0, streak: 0, lastSeen: null };
+}
+function initState(list) {
+  const map = {};
+  list.forEach(x => { map[x.id] = freshCard(); });
+  return map;
 }
 
-// v4 -> v5: add per-phrase scoring map + practice-type preference, keep all existing word progress intact.
-function migrateToV5(data) {
-  if (!data) return data;
-  if (!data.phraseState) data.phraseState = {};
-  if (data.practiceType !== "words" && data.practiceType !== "phrases" && data.practiceType !== "mixed") {
-    data.practiceType = "mixed";
-  }
-  return data;
+// Convert an old v4/v5 card {score,attempts,correct,streak,lastSeen} into a v6 box card.
+function migrateCard(old) {
+  const c = freshCard();
+  if (!old) return c;
+  c.reps = old.attempts || 0;
+  c.correct = old.correct || 0;
+  c.lastSeen = old.lastSeen || null;
+  if ((old.attempts || 0) === 0) { c.box = 0; return c; }
+  // map score 0..10 and streak into a box; long streak / high score => higher box
+  const score = old.score || 0;
+  let box = Math.round(score / 1.7);            // 0..6
+  if ((old.streak || 0) >= 3) box = Math.max(box, 4);
+  c.box = Math.min(MAX_BOX, Math.max(1, box));
+  c.streak = old.streak || 0;
+  c.due = Date.now();                            // make everything due so it re-enters review
+  return c;
 }
 
-function migrateData(data) {
-  return migrateToV5(migrateStreak(data));
-}
+const DEFAULT_META = { streak: 0, longest: 0, lastStudyDate: null, today: null, newDone: 0, reviewsDone: 0, newPerDay: 8, startedAt: null };
 
-function loadData() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return migrateData(JSON.parse(raw));
-  } catch (e) {}
-  try {
-    const rawOld = localStorage.getItem(OLD_STORAGE_KEY);
-    if (rawOld) return migrateData(JSON.parse(rawOld));
-  } catch (e) {}
+function loadRaw() {
+  try { const r = localStorage.getItem(STORAGE_KEY); if (r) return JSON.parse(r); } catch (e) {}
+  for (const k of LEGACY_KEYS) { try { const r = localStorage.getItem(k); if (r) return { __legacy: true, data: JSON.parse(r) }; } catch (e) {} }
   return null;
 }
-
-function saveData(data) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  } catch (e) {}
-  idbSave(data);
+function saveAll(payload) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(payload)); } catch (e) {}
+  idbSave(payload);
 }
 
-function initWordState() {
-  const map = {};
-  ALL_WORDS.forEach(w => {
-    map[w.id] = { score: 0, attempts: 0, correct: 0, streak: 0, lastSeen: null, pinned: false };
-  });
-  return map;
+// ---- date helpers ----
+function dateStr(ms) {
+  const d = new Date(ms);
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+const todayStr = () => dateStr(Date.now());
+const yesterdayStr = () => dateStr(Date.now() - DAY);
+
+// roll the daily counters over at midnight
+function refreshDaily(meta) {
+  if (meta.today !== todayStr()) {
+    return { ...meta, today: todayStr(), newDone: 0, reviewsDone: 0 };
+  }
+  return meta;
 }
 
-function initPhraseState() {
-  const map = {};
-  PHRASE_PATTERNS.forEach(p => {
-    map[p.id] = { score: 0, attempts: 0, correct: 0, streak: 0, lastSeen: null, pinned: false };
-  });
-  return map;
+// ---- grading ----
+function gradeCard(card, correct) {
+  const c = { ...card };
+  c.reps += 1;
+  c.lastSeen = new Date().toISOString();
+  if (correct) {
+    c.correct += 1;
+    c.streak = (c.streak || 0) + 1;
+    c.box = Math.min(MAX_BOX, (c.box || 0) + 1);
+  } else {
+    c.streak = 0;
+    if ((c.box || 0) > 0) c.lapses += 1;
+    c.box = c.box === 0 ? 1 : Math.max(1, c.box - 2);
+  }
+  c.due = Date.now() + INTERVALS[c.box] * DAY;
+  return c;
 }
 
-const LEARNED_STREAK = 3;
-const PHRASE_UNLOCK_SCORE = 2;
-const PHRASE_UNLOCK_RATIO = 0.4;
+const isDue = (c) => c && c.box >= 1 && c.due <= Date.now();
+const isNew = (c) => !c || c.box === 0;
+const isKnown = (c) => c && c.box >= KNOWN_BOX;
+const isMastered = (c) => c && c.box >= MASTERED_BOX;
 
-function isPatternUnlocked(wordState, pattern) {
-  const ids = pattern.usesWordIds || [];
+function countKnown(wordState) { return ALL_WORDS.filter(w => isKnown(wordState[w.id])).length; }
+function countMastered(wordState) { return ALL_WORDS.filter(w => isMastered(wordState[w.id])).length; }
+function countLearning(wordState) { return ALL_WORDS.filter(w => { const c = wordState[w.id]; return c && c.box >= 1 && c.box < KNOWN_BOX; }).length; }
+function countDueWords(wordState) { return ALL_WORDS.filter(w => isDue(wordState[w.id])).length; }
+
+// ---- phrases unlock when most of their component words are established ----
+function phraseUnlocked(wordState, p) {
+  const ids = p.usesWordIds || [];
   if (ids.length === 0) return true;
-  const readyCount = ids.filter(id => (wordState[id]?.score || 0) >= PHRASE_UNLOCK_SCORE).length;
-  return readyCount / ids.length >= PHRASE_UNLOCK_RATIO;
+  const ready = ids.filter(id => (wordState[id]?.box || 0) >= 2).length;
+  return ready / ids.length >= 0.6;
+}
+function countDuePhrases(wordState, phraseState) {
+  return PHRASE_PATTERNS.filter(p => phraseUnlocked(wordState, p) && isDue(phraseState[p.id])).length;
 }
 
-function getUnlockedPhrases(wordState, phraseState, unlockedLevel) {
-  return PHRASE_PATTERNS.filter(p =>
-    p.level <= unlockedLevel &&
-    isPatternUnlocked(wordState, p) &&
-    (phraseState[p.id]?.streak || 0) < LEARNED_STREAK
+/* ============================================================
+   SESSION BUILDER
+   ============================================================ */
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+
+const SESSION_CAP = 30;
+
+function buildSession(wordState, phraseState, meta, opts) {
+  opts = opts || {};
+  const now = Date.now();
+  // due reviews (words + unlocked phrases), soonest-due first
+  const dueWords = ALL_WORDS.filter(w => isDue(wordState[w.id]))
+    .sort((a, b) => wordState[a.id].due - wordState[b.id].due)
+    .map(w => ({ kind: "word", id: w.id }));
+  const duePhrases = PHRASE_PATTERNS.filter(p => phraseUnlocked(wordState, p) && isDue(phraseState[p.id]))
+    .sort((a, b) => phraseState[a.id].due - phraseState[b.id].due)
+    .map(p => ({ kind: "phrase", id: p.id }));
+
+  let reviews = [...dueWords, ...duePhrases];
+
+  // new words (lowest id first = level 1 upward), limited by remaining daily goal
+  const newRemaining = opts.learnAhead ? opts.aheadCount || 6 : Math.max(0, meta.newPerDay - meta.newDone);
+  let fresh = ALL_WORDS.filter(w => isNew(wordState[w.id])).slice(0, newRemaining)
+    .map(w => ({ kind: "word", id: w.id, isNew: true }));
+
+  // if practicing ahead and nothing is due and no new words remain, pull soonest-upcoming reviews
+  if (opts.learnAhead && reviews.length === 0 && fresh.length === 0) {
+    reviews = ALL_WORDS.filter(w => wordState[w.id].box >= 1)
+      .sort((a, b) => wordState[a.id].due - wordState[b.id].due)
+      .slice(0, 10).map(w => ({ kind: "word", id: w.id }));
+  }
+
+  // cap reviews so a session stays finishable; always keep all the new words
+  const reviewBudget = Math.max(0, SESSION_CAP - fresh.length);
+  reviews = reviews.slice(0, reviewBudget);
+
+  // interleave: spread new words evenly through the review stream
+  const queue = [];
+  const R = shuffle(reviews);
+  const N = fresh;
+  const total = R.length + N.length;
+  if (total === 0) return [];
+  const gap = N.length > 0 ? Math.max(1, Math.floor((R.length + 1) / (N.length))) : Infinity;
+  let ri = 0, ni = 0, since = gap;
+  for (let k = 0; k < total; k++) {
+    const wantNew = ni < N.length && (since >= gap || ri >= R.length);
+    if (wantNew) { queue.push(N[ni++]); since = 0; }
+    else if (ri < R.length) { queue.push(R[ri++]); since++; }
+    else if (ni < N.length) { queue.push(N[ni++]); }
+  }
+  return queue;
+}
+
+/* ============================================================
+   EXERCISE SELECTION + DISTRACTORS
+   ============================================================ */
+function itemData(kind, id) {
+  return kind === "phrase" ? PHRASE_PATTERNS.find(p => p.id === id) : ALL_WORDS.find(w => w.id === id);
+}
+
+// pick an exercise mode from the card's strength (box) — difficulty escalates
+function modeFor(kind, box, greek) {
+  if (kind === "phrase") return box <= 2 ? "choiceE2H" : "typeE2H";
+  const buildable = !/\s/.test(greek) && greek.length <= 10;
+  if (box <= 1) return "choiceE2H";              // recognise meaning
+  if (box === 2) return "choiceH2E";             // recognise the Greek form
+  if (box === 3) return Math.random() < 0.5 ? "listenE2H" : "typeE2H";
+  return buildable ? "buildH2E" : "choiceH2E";   // produce the Greek word
+}
+
+function distractors(kind, item, field, n) {
+  const pool = kind === "phrase"
+    ? PHRASE_PATTERNS.filter(p => p.id !== item.id)
+    : ALL_WORDS.filter(w => w.id !== item.id && Math.abs(w.level - item.level) <= 2);
+  const out = [];
+  const seen = new Set([item[field]]);
+  for (const x of shuffle(pool)) {
+    if (seen.has(x[field])) continue;
+    seen.add(x[field]); out.push(x);
+    if (out.length >= n) break;
+  }
+  return out;
+}
+
+/* ============================================================
+   SMALL UI PIECES
+   ============================================================ */
+const C = { bg: "#f2f2f7", card: "#fff", ink: "#1c1c1e", sub: "#8e8e93", blue: "#007aff", orange: "#ff9f0a", green: "#34c759", faint: "#e5e5ea" };
+
+function SpeakerBtn({ text, light, size = 40 }) {
+  return (
+    <button onClick={() => speak(text)} aria-label="השמע" style={{
+      width: size, height: size, borderRadius: "50%", flexShrink: 0,
+      background: light ? "rgba(255,255,255,0.2)" : "#f2f2f7",
+      border: light ? "1px solid rgba(255,255,255,0.35)" : "none",
+      display: "inline-flex", alignItems: "center", justifyContent: "center", cursor: "pointer"
+    }}>
+      <svg width={size * 0.5} height={size * 0.5} viewBox="0 0 24 24" fill="none" stroke={light ? "#fff" : C.blue} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" /><path d="M15.54 8.46a5 5 0 0 1 0 7.07" /><path d="M19.07 4.93a10 10 0 0 1 0 14.14" /></svg>
+    </button>
   );
 }
 
-function pickPhrase(wordState, phraseState, unlockedLevel, recentIds) {
-  const pool = getUnlockedPhrases(wordState, phraseState, unlockedLevel);
-  if (pool.length === 0) return null;
-  const recentSet = new Set(recentIds || []);
-  const nonRecent = pool.filter(p => !recentSet.has(p.id));
-  const candidates = nonRecent.length > 0 ? nonRecent : pool;
-  const weighted = candidates.map(p => {
-    const s = phraseState[p.id] || { score: 0, attempts: 0, lastSeen: null };
-    const daysSince = s.lastSeen ? (Date.now() - new Date(s.lastSeen)) / 86400000 : 999;
-    const scoreFactor = Math.pow(10 - s.score, 2);
-    const timeFactor = Math.min(daysSince * 3, 30);
-    const newBonus = s.attempts === 0 ? 15 : 0;
-    const weight = Math.max(1, scoreFactor + timeFactor + newBonus);
-    return { item: p, weight };
-  });
-  const total = weighted.reduce((a, b) => a + b.weight, 0);
-  let r = Math.random() * total;
-  for (const it of weighted) {
-    r -= it.weight;
-    if (r <= 0) return it.item;
-  }
-  return weighted[weighted.length - 1].item;
-}
-
-// practiceType: "words" | "phrases" | "mixed" — decides whether pickPracticeItem draws from ALL_WORDS, PHRASE_PATTERNS, or both.
-function pickPracticeItem(wordState, phraseState, unlockedLevel, mode, practiceType, recentIds) {
-  if (practiceType === "phrases") {
-    const phrase = pickPhrase(wordState, phraseState, unlockedLevel, recentIds);
-    return phrase ? { ...phrase, _isPhrase: true } : null;
-  }
-  if (practiceType === "mixed") {
-    const phrasePool = getUnlockedPhrases(wordState, phraseState, unlockedLevel);
-    if (phrasePool.length > 0 && Math.random() < 0.3) {
-      const phrase = pickPhrase(wordState, phraseState, unlockedLevel, recentIds);
-      if (phrase) return { ...phrase, _isPhrase: true };
-    }
-  }
-  const word = pickWord(wordState, unlockedLevel, mode, recentIds);
-  return { ...word, _isPhrase: false };
-}
-
-function getFocusGroup(wordState, unlockedLevel, mode) {
-  let pool = ALL_WORDS.filter(w => w.level <= unlockedLevel);
-  if (mode === "weak") return pool.filter(w => wordState[w.id]?.attempts > 0 && wordState[w.id]?.score < 3).slice(0, 8);
-  if (mode === "pinned") return pool.filter(w => wordState[w.id]?.pinned).slice(0, 8);
-
-  const inProgress = pool.filter(w => {
-    const s = wordState[w.id];
-    return s.attempts > 0 && s.streak < LEARNED_STREAK;
-  });
-  const notStarted = pool.filter(w => wordState[w.id].attempts === 0);
-
-  const group = [...inProgress];
-  for (const w of notStarted) {
-    if (group.length >= 7) break;
-    group.push(w);
-  }
-  if (group.length < 4 && notStarted.length > 0) {
-    for (const w of notStarted) {
-      if (group.length >= 7) break;
-      if (!group.includes(w)) group.push(w);
-    }
-  }
-  return group.length > 0 ? group : pool.filter(w => wordState[w.id].streak < LEARNED_STREAK).slice(0, 7);
-}
-
-function pickWord(wordState, unlockedLevel, mode, recentIds) {
-  const focus = getFocusGroup(wordState, unlockedLevel, mode);
-  const allPool = ALL_WORDS.filter(w => w.level <= unlockedLevel && (wordState[w.id]?.streak || 0) < LEARNED_STREAK);
-  const useFocus = focus.length > 0 && Math.random() < 0.75;
-  const pool = useFocus ? focus : (allPool.length > 0 ? allPool : ALL_WORDS.filter(w => w.level <= unlockedLevel));
-
-  const recentSet = new Set(recentIds || []);
-  const nonRecent = pool.filter(w => !recentSet.has(w.id));
-  const candidates = nonRecent.length > 0 ? nonRecent : pool;
-
-  const weighted = candidates.map(w => {
-    const s = wordState[w.id];
-    const daysSince = s.lastSeen
-      ? (Date.now() - new Date(s.lastSeen)) / 86400000
-      : 999;
-    const scoreFactor = Math.pow(10 - s.score, 2);
-    const timeFactor = Math.min(daysSince * 3, 30);
-    const newBonus = s.attempts === 0 ? 15 : 0;
-    let weight = Math.max(1, scoreFactor + timeFactor + newBonus);
-    if (s.pinned) weight *= 4;
-    return { word: w, weight };
-  });
-  const total = weighted.reduce((a, b) => a + b.weight, 0);
-  let r = Math.random() * total;
-  for (const item of weighted) {
-    r -= item.weight;
-    if (r <= 0) return item.word;
-  }
-  return weighted[weighted.length - 1].word;
-}
-
-function buildDailyParagraph(learnedWords) {
-  if (learnedWords.length < 3) return null;
-  const has = (greek) => learnedWords.some(w => w.greek === greek);
-  const w = (greek) => learnedWords.find(w => w.greek === greek);
-
-  const templates = [
-    { needs: ["γεια σου","καλημέρα","καφές","παρακαλώ","ευχαριστώ"],
-      build: () => ({
-        gr: "Γεια σου! Καλημέρα. Έναν καφέ, παρακαλώ. Ευχαριστώ!",
-        he: "שלום! בוקר טוב. קפה אחד, בבקשה. תודה!"
-      })},
-    { needs: ["γεια σου","πού","τουαλέτα","ευχαριστώ"],
-      build: () => ({
-        gr: "Γεια σου! Πού είναι η τουαλέτα; Ευχαριστώ!",
-        he: "שלום! איפה השירותים? תודה!"
-      })},
-    { needs: ["καλησπέρα","νερό","παρακαλώ"],
-      build: () => ({
-        gr: "Καλησπέρα! Νερό, παρακαλώ.",
-        he: "ערב טוב! מים, בבקשה."
-      })},
-    { needs: ["πού","εστιατόριο","καλό"],
-      build: () => ({
-        gr: "Πού είναι ένα καλό εστιατόριο;",
-        he: "איפה יש מסעדה טובה?"
-      })},
-    { needs: ["πόσο","ευρώ","ακριβό"],
-      build: () => ({
-        gr: "Πόσο κάνει; Είναι πολύ ακριβό!",
-        he: "כמה זה עולה? זה מאוד יקר!"
-      })},
-    { needs: ["συγγνώμη","δεν καταλαβαίνω","πιο αργά παρακαλώ"],
-      build: () => ({
-        gr: "Συγγνώμη, δεν καταλαβαίνω. Πιο αργά, παρακαλώ.",
-        he: "סליחה, אני לא מבין. לאט יותר, בבקשה."
-      })},
-    { needs: ["καλημέρα","θάλασσα","ήλιος","όμορφος"],
-      build: () => ({
-        gr: "Καλημέρα! Η θάλασσα είναι όμορφη σήμερα. Ο ήλιος λάμπει!",
-        he: "בוקר טוב! הים יפה היום. השמש זורחת!"
-      })},
-    { needs: ["με λένε","χαίρομαι","πώς σε λένε;"],
-      build: () => ({
-        gr: "Γεια! Με λένε... Πώς σε λένε; Χαίρομαι!",
-        he: "היי! שמי... מה שמך? נעים מאוד!"
-      })},
-    { needs: ["σήμερα","ζεστό","παγωτό"],
-      build: () => ({
-        gr: "Σήμερα είναι πολύ ζεστό. Θέλω ένα παγωτό!",
-        he: "היום חם מאוד. אני רוצה גלידה!"
-      })},
-    { needs: ["νησί","πλοίο","εισιτήριο","πόσο"],
-      build: () => ({
-        gr: "Θέλω να πάω στο νησί. Πόσο κάνει το εισιτήριο για το πλοίο;",
-        he: "אני רוצה לנסוע לאי. כמה עולה כרטיס למעבורת?"
-      })},
-    { needs: ["ξενοδοχείο","δωμάτιο","κλειδί"],
-      build: () => ({
-        gr: "Καλησπέρα. Έχω κράτηση. Μπορώ να πάρω το κλειδί του δωματίου;",
-        he: "ערב טוב. יש לי הזמנה. אפשר לקבל את מפתח החדר?"
-      })},
-    { needs: ["λεωφορείο","σταθμός","πού"],
-      build: () => ({
-        gr: "Συγγνώμη, πού είναι ο σταθμός λεωφορείου;",
-        he: "סליחה, איפה תחנת האוטובוס?"
-      })},
-    { needs: ["στην υγειά μας","κρασί","νόστιμο"],
-      build: () => ({
-        gr: "Στην υγειά μας! Το κρασί είναι πολύ νόστιμο!",
-        he: "לחיים! היין מאוד טעים!"
-      })},
-    { needs: ["πονάω","κεφάλι","φαρμακείο","πού"],
-      build: () => ({
-        gr: "Πονάω το κεφάλι μου. Πού είναι το φαρμακείο;",
-        he: "כואב לי הראש. איפה בית המרקחת?"
-      })},
-    { needs: ["αγοράζω","δώρο","πόσο"],
-      build: () => ({
-        gr: "Θέλω να αγοράσω ένα δώρο. Πόσο κάνει;",
-        he: "אני רוצה לקנות מתנה. כמה זה עולה?"
-      })},
-  ];
-
-  const dayHash = new Date().toISOString().slice(0, 10).split("").reduce((a, c) => a + c.charCodeAt(0), 0);
-  const matching = templates.filter(t => t.needs.every(n => has(n)));
-  if (matching.length === 0) {
-    const known = learnedWords.slice(0, 4);
-    return {
-      gr: known.map(w => w.greek).join(", "),
-      he: known.map(w => w.hebrew).join(", "),
-    };
-  }
-  return matching[dayHash % matching.length].build();
-}
-
-function speak(text) {
-  if (!window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
-  const utt = new SpeechSynthesisUtterance(text);
-  utt.lang = "el-GR";
-  utt.rate = 0.85;
-  const voices = window.speechSynthesis.getVoices();
-  const greek = voices.find(v => v.lang === "el-GR") ||
-                voices.find(v => v.lang.startsWith("el"));
-  if (greek) utt.voice = greek;
-  window.speechSynthesis.speak(utt);
-}
-if (window.speechSynthesis) {
-  window.speechSynthesis.getVoices();
-  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
-}
-
-function normalize(s) {
-  return s.trim().replace(/[.,!?;:"'()\/\-]/g, "").replace(/\s+/g, " ").toLowerCase();
-}
-
-function checkAnswer(greek, correctHebrew, userAnswer) {
-  if (!userAnswer.trim()) return { correct: false, feedback: "לא הקלדת כלום" };
-
-  const normalUser = normalize(userAnswer);
-  const normalCorrect = normalize(correctHebrew);
-
-  if (normalUser === normalCorrect) {
-    return { correct: true, feedback: "מצוין!" };
-  }
-
-  const variants = correctHebrew.split("/").map(v => normalize(v.trim())).filter(Boolean);
-
-  for (const v of variants) {
-    if (normalUser === v || v === normalUser) {
-      return { correct: true, feedback: "נכון!" };
-    }
-  }
-
-  for (const v of variants) {
-    if (normalUser.includes(v) || v.includes(normalUser)) {
-      if (normalUser.length >= 2 && v.length >= 2) {
-        return { correct: true, feedback: "קרוב מספיק!" };
-      }
-    }
-  }
-
-  const parenthetical = correctHebrew.match(/^([^(]+)\s*\(/);
-  if (parenthetical) {
-    const mainPart = normalize(parenthetical[1]);
-    if (normalUser === mainPart || normalUser.includes(mainPart) || mainPart.includes(normalUser)) {
-      if (normalUser.length >= 2) {
-        return { correct: true, feedback: "נכון!" };
-      }
-    }
-  }
-
-  return { correct: false, feedback: "התשובה הנכונה: " + correctHebrew };
-}
-
-function ProgressBar({ value, max, color = "#007aff" }) {
-  const pct = max ? Math.round((value / max) * 100) : 0;
+function ProgressBar({ value, max, color = C.blue, height = 6 }) {
+  const pct = max ? Math.min(100, Math.round((value / max) * 100)) : 0;
   return (
-    <div style={{ background: "#e5e5ea", borderRadius: 99, height: 6, overflow: "hidden" }}>
-      <div style={{
-        width: pct + "%", height: "100%",
-        background: color, borderRadius: 99,
-        transition: "width 0.6s ease"
-      }} />
+    <div style={{ background: C.faint, borderRadius: 99, height, overflow: "hidden" }}>
+      <div style={{ width: pct + "%", height: "100%", background: color, borderRadius: 99, transition: "width 0.5s ease" }} />
     </div>
   );
 }
 
-function StarRating({ score }) {
-  const stars = Math.min(5, Math.max(0, Math.round(score / 2)));
+function Ring({ value, max, size = 96, color = C.blue, label, sub }) {
+  const r = (size - 12) / 2;
+  const circ = 2 * Math.PI * r;
+  const pct = max ? Math.min(1, value / max) : 0;
   return (
-    <span style={{ fontSize: 14, letterSpacing: 2 }}>
-      {[1,2,3,4,5].map(i => (
-        <span key={i} style={{ color: i <= stars ? "#ff9f0a" : "rgba(255,255,255,0.25)" }}>●</span>
-      ))}
-    </span>
+    <div style={{ position: "relative", width: size, height: size }}>
+      <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={C.faint} strokeWidth="8" />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth="8" strokeLinecap="round"
+          strokeDasharray={circ} strokeDashoffset={circ * (1 - pct)} style={{ transition: "stroke-dashoffset 0.6s ease" }} />
+      </svg>
+      <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ fontSize: 22, fontWeight: 800, color: C.ink }}>{label}</div>
+        {sub && <div style={{ fontSize: 11, color: C.sub, fontWeight: 600 }}>{sub}</div>}
+      </div>
+    </div>
   );
 }
 
-function getReviewDue(wordState) {
-  return ALL_WORDS.filter(w => {
-    const s = wordState[w.id];
-    if (!s || s.streak < LEARNED_STREAK) return false;
-    if (!s.lastSeen) return true;
-    const hoursSince = (Date.now() - new Date(s.lastSeen).getTime()) / 3600000;
-    const interval = Math.pow(2, Math.min(s.score, 8)) * 4;
-    return hoursSince >= interval;
-  });
+const cardShadow = "0 1px 4px rgba(0,0,0,0.06)";
+function BackBtn({ onClick, label }) {
+  return (
+    <button onClick={onClick} style={{
+      background: C.card, border: "none", borderRadius: 10, fontSize: 18, cursor: "pointer",
+      width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center",
+      boxShadow: cardShadow, color: C.blue
+    }} aria-label={label || "חזרה"}>←</button>
+  );
 }
 
-function HomeScreen({ wordState, onLearn, onReview, onRoadmap, onShowLearned, startedAt, practiceType, onChangePracticeType }) {
-  const [showParagraph, setShowParagraph] = useState(false);
-  const total = ALL_WORDS.length;
-  const learned = ALL_WORDS.filter(w => (wordState[w.id]?.streak || 0) >= LEARNED_STREAK).length;
-  const unlockedLevel = Math.min(10, Math.floor(ALL_WORDS.filter(w => wordState[w.id]?.score >= 8).length / 50) + 1);
-  const newWords = ALL_WORDS.filter(w => w.level <= unlockedLevel && wordState[w.id]?.attempts === 0);
-  const reviewDue = getReviewDue(wordState);
-
-  const daysActive = (() => {
-    if (!startedAt) return 1;
-    const s = new Date(startedAt);
-    const t = new Date();
-    const sd = new Date(s.getFullYear(), s.getMonth(), s.getDate());
-    const td = new Date(t.getFullYear(), t.getMonth(), t.getDate());
-    return Math.max(1, Math.floor((td - sd) / 86400000) + 1);
-  })();
-  const dailyRate = learned > 0 ? Math.round(learned / daysActive * 10) / 10 : 0;
-
-  const milestones = [
-    { target: 50, label: "תבין שלטים ותפריטים" },
-    { target: 150, label: "תסתדר בשיחה בסיסית" },
-    { target: 300, label: "תנהל שיחות יומיומיות" },
-    { target: 500, label: "תבין ותדבר ברמה טובה" },
-  ];
-  const nextMilestone = milestones.find(m => learned < m.target);
-  let prediction = "";
-  if (learned === 0) prediction = "התחל ללמוד — 6 מילים בכל שיעור";
-  else if (!nextMilestone) prediction = `${learned} מילים — את/ה מדבר/ת יוונית ברמה טובה!`;
-  else if (dailyRate > 0) {
-    const daysLeft = Math.ceil((nextMilestone.target - learned) / dailyRate);
-    const timeStr = daysLeft <= 30 ? `${daysLeft} ימים` : `${Math.round(daysLeft / 30)} חודשים`;
-    prediction = `בקצב של ${dailyRate} ליום — בעוד ${timeStr} ${nextMilestone.label}`;
-  }
-
+/* ============================================================
+   EXERCISE COMPONENTS
+   ============================================================ */
+function IntroCard({ item, onContinue }) {
+  useEffect(() => { const t = setTimeout(() => speak(item.greek), 250); return () => clearTimeout(t); }, [item.id]);
   return (
-    <div style={{ padding: "24px 20px", maxWidth: 480, margin: "0 auto" }}>
-      <div style={{ textAlign: "center", marginBottom: 24 }}>
-        <h1 style={{ margin: 0, fontSize: 28, fontWeight: 700, color: "#1c1c1e", letterSpacing: -0.5 }}>
-          Greek Vocabulary
-        </h1>
-        <p style={{ margin: "4px 0 0", color: "#8e8e93", fontSize: 15, fontWeight: 400, direction: "ltr" }}>
-          Ελληνικό Λεξιλόγιο
-        </p>
+    <div style={{ animation: "slideUp 0.3s ease" }}>
+      <div style={{ textAlign: "center", fontSize: 13, fontWeight: 700, color: C.green, marginBottom: 12 }}>מילה חדשה ✦</div>
+      <div style={{ background: C.card, borderRadius: 22, padding: "32px 20px", textAlign: "center", boxShadow: "0 4px 20px rgba(0,0,0,0.08)", marginBottom: 20 }}>
+        <div style={{ fontSize: 11, color: C.sub, fontWeight: 600, marginBottom: 14 }}>{LEVEL_NAMES[item.level]}</div>
+        <WordImage wordId={item.id} size={84} />
+        <div style={{ fontSize: 40, fontWeight: 800, color: C.ink, direction: "ltr", margin: "4px 0 14px" }}>{item.greek}</div>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}><SpeakerBtn text={item.greek} size={48} /></div>
+        <div style={{ borderTop: "1px solid " + C.faint, paddingTop: 16, fontSize: 26, fontWeight: 700, color: C.blue }}>{item.hebrew}</div>
       </div>
+      <button onClick={onContinue} style={btnPrimary}>הבנתי, בוא נתרגל</button>
+    </div>
+  );
+}
 
-      <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
-        <div onClick={learned > 0 ? onShowLearned : undefined} style={{
-          flex: 1, textAlign: "center", padding: "14px 4px", borderRadius: 14,
-          background: "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-          cursor: learned > 0 ? "pointer" : "default"
-        }}>
-          <div style={{ fontSize: 28, fontWeight: 700, color: "#007aff" }}>{learned}</div>
-          <div style={{ fontSize: 11, color: "#8e8e93", fontWeight: 500 }}>נלמדו{learned > 0 ? " ▸" : ""}</div>
-        </div>
-        <div style={{ flex: 1, textAlign: "center", padding: "14px 4px", borderRadius: 14,
-          background: "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
-          <div style={{ fontSize: 28, fontWeight: 700, color: "#007aff" }}>{dailyRate || "—"}</div>
-          <div style={{ fontSize: 11, color: "#8e8e93", fontWeight: 500 }}>ליום</div>
-        </div>
-        <div style={{ flex: 1, textAlign: "center", padding: "14px 4px", borderRadius: 14,
-          background: "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
-          <div style={{ fontSize: 28, fontWeight: 700, color: reviewDue.length > 0 ? "#ff9f0a" : "#007aff" }}>{reviewDue.length}</div>
-          <div style={{ fontSize: 11, color: "#8e8e93", fontWeight: 500 }}>לחזרה</div>
-        </div>
+const btnPrimary = { width: "100%", padding: "16px 0", fontSize: 17, fontWeight: 700, background: C.blue, color: "#fff", border: "none", borderRadius: 14, cursor: "pointer", boxShadow: "0 2px 8px rgba(0,122,255,0.3)" };
+const btnGhost = { width: "100%", padding: "13px 0", fontSize: 15, fontWeight: 600, background: C.card, color: C.sub, border: "none", borderRadius: 14, cursor: "pointer", boxShadow: cardShadow };
+
+// Prompt card at the top of an exercise
+function PromptCard({ big, text, dir, level, tagRight, speakText, hideText, revealed, imageId }) {
+  return (
+    <div style={{ background: C.blue, borderRadius: 20, padding: "26px 20px", textAlign: "center", marginBottom: 18, boxShadow: "0 4px 16px rgba(0,122,255,0.25)" }}>
+      <div style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", marginBottom: 10, letterSpacing: 0.5 }}>
+        {LEVEL_NAMES[level]}{tagRight ? " · " + tagRight : ""}
       </div>
-
-      <div style={{
-        background: "#fff", borderRadius: 14, padding: 14, marginBottom: 14,
-        boxShadow: "0 1px 4px rgba(0,0,0,0.06)"
-      }}>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 14, fontWeight: 600, color: "#1c1c1e" }}>
-          <span>רמה {Math.min(10, Math.floor(learned / 50) + 1)} — {LEVEL_NAMES[Math.min(10, Math.floor(learned / 50) + 1)]}</span>
-          <span style={{ color: "#8e8e93" }}>{learned}/{total}</span>
+      {imageId && <WordImage wordId={imageId} size={64} style={{ marginBottom: 6 }} />}
+      {hideText && !revealed ? (
+        <div style={{ fontSize: 34, color: "rgba(255,255,255,0.9)", margin: "6px 0 14px" }}>🎧</div>
+      ) : (
+        <div style={{ fontSize: big ? 40 : 24, fontWeight: 800, color: "#fff", direction: dir || "ltr", wordBreak: "break-word", margin: "2px 0 14px" }}>
+          {text}
         </div>
-        <ProgressBar value={learned} max={total} color="#007aff" />
-        {prediction && (
-          <div style={{ marginTop: 8, fontSize: 12, color: "#8e8e93", textAlign: "center" }}>{prediction}</div>
-        )}
-      </div>
-
-      <div style={{ display: "flex", background: "#e5e5ea", borderRadius: 12, padding: 4, marginBottom: 14 }}>
-        {[
-          { key: "words", label: "מילים בודדות" },
-          { key: "mixed", label: "מעורב" },
-          { key: "phrases", label: "משפטים" },
-        ].map(opt => (
-          <button key={opt.key} onClick={() => onChangePracticeType(opt.key)} style={{
-            flex: 1, padding: "8px 0", fontSize: 13, fontWeight: 600, border: "none", borderRadius: 9,
-            background: practiceType === opt.key ? "#fff" : "transparent",
-            color: practiceType === opt.key ? "#007aff" : "#8e8e93",
-            boxShadow: practiceType === opt.key ? "0 1px 4px rgba(0,0,0,0.08)" : "none",
-            cursor: "pointer"
-          }}>
-            {opt.label}
-          </button>
-        ))}
-      </div>
-
-      <button onClick={onLearn} style={{
-        width: "100%", padding: "18px 0", fontSize: 18, fontWeight: 700,
-        background: "#007aff", color: "#fff", border: "none",
-        borderRadius: 14, cursor: "pointer", marginBottom: 10,
-        boxShadow: "0 2px 8px rgba(0,122,255,0.3)"
-      }}>
-        תרגול
-      </button>
-
-      {reviewDue.length > 0 && (
-        <button onClick={onReview} style={{
-          width: "100%", padding: "14px 0", fontSize: 16, fontWeight: 600,
-          background: "#fff", color: "#ff9f0a", border: "none",
-          borderRadius: 14, cursor: "pointer", marginBottom: 10,
-          boxShadow: "0 1px 4px rgba(0,0,0,0.06)"
-        }}>
-          חזרה על {reviewDue.length} מילים
-        </button>
       )}
-
-      {(() => {
-        const learnedWords = ALL_WORDS.filter(w => (wordState[w.id]?.streak || 0) >= LEARNED_STREAK);
-        const para = buildDailyParagraph(learnedWords);
-        if (!para) return null;
-        return (<>
-          <button onClick={() => setShowParagraph(true)} style={{
-            width: "100%", padding: "14px 16px", fontSize: 14, fontWeight: 600,
-            background: "#fff", color: "#007aff", border: "none", borderRadius: 14,
-            cursor: "pointer", marginBottom: 10, boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-            textAlign: "center"
-          }}>
-            פסקה יומית
-          </button>
-          {showParagraph && (
-            <div onClick={() => setShowParagraph(false)} style={{
-              position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
-              background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center",
-              justifyContent: "center", zIndex: 1000, padding: 20, animation: "fadeIn 0.2s ease"
-            }}>
-              <div onClick={e => e.stopPropagation()} style={{
-                background: "#fff", borderRadius: 20, padding: "28px 24px",
-                maxWidth: 400, width: "100%", boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
-                animation: "slideUp 0.25s ease"
-              }}>
-                <div style={{ fontSize: 20, lineHeight: 1.6, color: "#1c1c1e", textAlign: "center",
-                  direction: "ltr", marginBottom: 12, fontWeight: 500 }}>{para.gr}</div>
-                <button onClick={() => speak(para.gr)} style={{
-                  display: "block", margin: "0 auto 16px", background: "#f2f2f7",
-                  border: "none", borderRadius: 10, padding: "8px 20px",
-                  fontSize: 14, color: "#007aff", fontWeight: 600, cursor: "pointer"
-                }}>השמע</button>
-                <div style={{ fontSize: 14, lineHeight: 1.6, color: "#8e8e93", textAlign: "center",
-                  borderTop: "1px solid #e5e5ea", paddingTop: 12 }}>{para.he}</div>
-                <button onClick={() => setShowParagraph(false)} style={{
-                  width: "100%", padding: "12px 0", fontSize: 15, fontWeight: 600,
-                  background: "#007aff", color: "#fff", border: "none", borderRadius: 12,
-                  cursor: "pointer", marginTop: 16
-                }}>סגור</button>
-              </div>
-            </div>
-          )}
-        </>);
-      })()}
-
-      <button onClick={onRoadmap} style={{
-        width: "100%", padding: "12px 0", fontSize: 15, fontWeight: 600,
-        background: "#fff", color: "#007aff",
-        border: "none", borderRadius: 14, cursor: "pointer",
-        boxShadow: "0 1px 4px rgba(0,0,0,0.06)"
-      }}>
-        מפת הדרכים
-      </button>
+      {speakText && <div style={{ display: "flex", justifyContent: "center" }}><SpeakerBtn text={speakText} light size={44} /></div>}
     </div>
   );
 }
 
-function LearnNewScreen({ wordState, onDone, onUpdateWord }) {
-  const [phase, setPhase] = useState("cards");
-  const [cardIndex, setCardIndex] = useState(0);
-  const [flipped, setFlipped] = useState(false);
-  const [selected, setSelected] = useState(null);
-  const [stats, setStats] = useState({ correct: 0, total: 0 });
-  const [queue, setQueue] = useState([]);
-  const [qIdx, setQIdx] = useState(0);
-  const [round, setRound] = useState(1);
-
-  const unlockedLevel = Math.min(10, Math.floor(ALL_WORDS.filter(w => wordState[w.id]?.score >= 8).length / 50) + 1);
-  const [words] = useState(() => {
-    const inProgress = ALL_WORDS.filter(w => w.level <= unlockedLevel && wordState[w.id]?.attempts > 0 && wordState[w.id]?.streak < LEARNED_STREAK);
-    const fresh = ALL_WORDS.filter(w => w.level <= unlockedLevel && wordState[w.id]?.attempts === 0);
-    const batch = [...inProgress.slice(0, 3), ...fresh].slice(0, 6);
-    return batch.length > 0 ? batch : ALL_WORDS.filter(w => w.level <= unlockedLevel).slice(0, 6);
+// Multiple-choice (either direction). options: array of {id, label}; correctId
+function ChoiceExercise({ item, kind, direction, onGrade, onNext }) {
+  const [picked, setPicked] = useState(null);
+  const isE2H = direction === "E2H";
+  const listen = direction === "listen";
+  const field = isE2H || listen ? "hebrew" : "greek";
+  const [opts] = useState(() => {
+    const d = distractors(kind, item, field, 3);
+    return shuffle([item, ...d]).map(x => ({ id: x.id, label: x[field] }));
   });
+  useEffect(() => { if (listen) { const t = setTimeout(() => speak(item.greek), 200); return () => clearTimeout(t); } }, [item.id]);
 
-  const makeQuestion = useCallback((w) => {
-    const others = ALL_WORDS.filter(o => o.id !== w.id && o.level <= unlockedLevel)
-      .sort(() => Math.random() - 0.5).slice(0, 3);
-    return { word: w, options: [w, ...others].sort(() => Math.random() - 0.5) };
-  }, [unlockedLevel]);
-
-  const startQuiz = useCallback(() => {
-    const focusCount = 18;
-    const widerCount = 7;
-    const focusQ = [];
-    for (let r = 0; r < 3; r++) {
-      [...words].sort(() => Math.random() - 0.5).forEach(w => focusQ.push(makeQuestion(w)));
-    }
-    const widerPool = ALL_WORDS.filter(w =>
-      w.level <= unlockedLevel &&
-      (wordState[w.id]?.streak || 0) < LEARNED_STREAK &&
-      !words.find(fw => fw.id === w.id)
-    ).sort(() => Math.random() - 0.5).slice(0, widerCount);
-    const widerQ = widerPool.map(w => makeQuestion(w));
-    const mixed = [];
-    let fi = 0, wi = 0;
-    while (fi < focusQ.length || wi < widerQ.length) {
-      if (fi < focusQ.length && (Math.random() < 0.7 || wi >= widerQ.length)) {
-        mixed.push(focusQ[fi++]);
-      } else if (wi < widerQ.length) {
-        mixed.push(widerQ[wi++]);
-      }
-    }
-    setQueue(mixed);
-    setQIdx(0);
-    setSelected(null);
-    setRound(1);
-    setPhase("quiz");
-  }, [words, wordState, makeQuestion, unlockedLevel]);
-
-  if (phase === "cards") {
-    const w = words[cardIndex];
-    return (
-      <div style={{ padding: "20px 16px", maxWidth: 480, margin: "0 auto", animation: "fadeIn 0.3s ease" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-          <button onClick={onDone} style={{
-            background: "#fff", border: "none", borderRadius: 10, fontSize: 18,
-            width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center",
-            boxShadow: "0 1px 4px rgba(0,0,0,0.06)", color: "#007aff", cursor: "pointer"
-          }}>←</button>
-          <div style={{ fontSize: 14, color: "#8e8e93", fontWeight: 600 }}>
-            {cardIndex + 1} / {words.length}
-          </div>
-          <div style={{ width: 36 }} />
-        </div>
-
-        <div style={{ background: "#e5e5ea", borderRadius: 99, height: 4, marginBottom: 24, overflow: "hidden" }}>
-          <div style={{ width: ((cardIndex + 1) / words.length * 100) + "%", height: "100%", background: "#007aff", borderRadius: 99, transition: "width 0.3s" }} />
-        </div>
-
-        <div onClick={() => { setFlipped(!flipped); speak(w.greek); }} style={{
-          background: "#fff", borderRadius: 20, padding: "40px 24px",
-          textAlign: "center", cursor: "pointer", minHeight: 260,
-          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-          boxShadow: "0 4px 16px rgba(0,0,0,0.08)", marginBottom: 20
-        }}>
-          <div style={{ fontSize: 11, color: "#8e8e93", fontWeight: 500, marginBottom: 12 }}>
-            {LEVEL_NAMES[w.level]}
-          </div>
-          <div style={{ fontSize: 36, fontWeight: 700, color: "#1c1c1e", direction: "ltr", marginBottom: 8 }}>
-            {w.greek}
-          </div>
-          <button onClick={(e) => { e.stopPropagation(); speak(w.greek); }} style={{
-            background: "#f2f2f7", border: "none", borderRadius: 99, padding: "6px 16px",
-            fontSize: 13, color: "#007aff", fontWeight: 500, cursor: "pointer", marginBottom: 16
-          }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#007aff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{verticalAlign:"middle",marginLeft:4}}><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-            השמע
-          </button>
-          <WordImage wordId={w.id} size={64} />
-          {flipped ? (
-            <div style={{ animation: "fadeIn 0.2s ease" }}>
-              <div style={{ fontSize: 22, fontWeight: 600, color: "#007aff", marginBottom: 4 }}>
-                {w.hebrew}
-              </div>
-            </div>
-          ) : (
-            <div style={{ fontSize: 14, color: "#aeaeb2" }}>
-              הקש לתרגום
-            </div>
-          )}
-        </div>
-
-        <div style={{ display: "flex", gap: 10 }}>
-          {cardIndex > 0 && (
-            <button onClick={() => { setCardIndex(cardIndex - 1); setFlipped(false); }} style={{
-              flex: 1, padding: "14px 0", fontSize: 16, fontWeight: 600,
-              background: "#fff", color: "#8e8e93", border: "none", borderRadius: 14, cursor: "pointer",
-              boxShadow: "0 1px 4px rgba(0,0,0,0.06)"
-            }}>הקודם</button>
-          )}
-          <button onClick={() => {
-            if (cardIndex < words.length - 1) { setCardIndex(cardIndex + 1); setFlipped(false); }
-            else startQuiz();
-          }} style={{
-            flex: 1, padding: "14px 0", fontSize: 16, fontWeight: 700,
-            background: "#007aff", color: "#fff", border: "none", borderRadius: 14, cursor: "pointer",
-            boxShadow: "0 2px 8px rgba(0,122,255,0.3)"
-          }}>
-            {cardIndex < words.length - 1 ? "הבא" : "התחל מבחן"}
-          </button>
-        </div>
-      </div>
-    );
+  function choose(id) {
+    if (picked !== null) return;
+    setPicked(id);
+    const correct = id === item.id;
+    onGrade(correct);
+    if (correct) speak(item.greek);
   }
-
-  if (phase === "done") {
-    const pct = stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0;
-    return (
-      <div style={{ padding: "40px 20px", maxWidth: 480, margin: "0 auto", textAlign: "center", animation: "fadeIn 0.3s ease" }}>
-        <div style={{ fontSize: 48, fontWeight: 700, color: pct >= 80 ? "#007aff" : "#ff9f0a", marginTop: 40, marginBottom: 8 }}>{pct}%</div>
-        <div style={{ fontSize: 20, fontWeight: 700, color: "#1c1c1e", marginBottom: 8 }}>
-          {pct >= 80 ? "מצוין!" : pct >= 50 ? "לא רע!" : "שווה לחזור"}
-        </div>
-        <div style={{ fontSize: 15, color: "#8e8e93", marginBottom: 32 }}>{stats.correct} מתוך {stats.total} נכון</div>
-        <button onClick={onDone} style={{
-          padding: "14px 40px", fontSize: 16, fontWeight: 700,
-          background: "#007aff", color: "#fff", border: "none", borderRadius: 14, cursor: "pointer"
-        }}>חזרה</button>
-      </div>
-    );
-  }
-
-  if (queue.length === 0) return null;
-  const q = queue[qIdx];
-  const totalQ = queue.length;
-  const isFocusWord = words.find(w => w.id === q.word.id);
-
-  function handleQuizSelect(id) {
-    if (selected !== null) return;
-    setSelected(id);
-    const correct = id === q.word.id;
-    setStats(s => ({ correct: s.correct + (correct ? 1 : 0), total: s.total + 1 }));
-    const prev = wordState[q.word.id];
-    onUpdateWord(q.word.id, {
-      score: correct ? Math.min(10, prev.score + 1) : Math.max(0, prev.score - 1),
-      attempts: prev.attempts + 1,
-      correct: prev.correct + (correct ? 1 : 0),
-      streak: correct ? (prev.streak || 0) + 1 : 0,
-      lastSeen: new Date().toISOString()
-    });
-    if (correct) speak(q.word.greek);
-    if (!correct) {
-      setQueue(prev => [...prev, makeQuestion(q.word)]);
-    }
-  }
-
-  function handleNext() {
-    if (qIdx < queue.length - 1) {
-      setQIdx(qIdx + 1);
-      setSelected(null);
-    } else {
-      setPhase("done");
-    }
-  }
-
+  const answered = picked !== null;
   return (
-    <div style={{ padding: "20px 16px", maxWidth: 480, margin: "0 auto", animation: "fadeIn 0.3s ease" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-        <button onClick={onDone} style={{
-          background: "#fff", border: "none", borderRadius: 10, fontSize: 18,
-          width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center",
-          boxShadow: "0 1px 4px rgba(0,0,0,0.06)", color: "#007aff", cursor: "pointer"
-        }}>←</button>
-        <div style={{ fontSize: 13, color: "#8e8e93", fontWeight: 600 }}>
-          {qIdx + 1}/{totalQ}
-        </div>
-        <div style={{ fontSize: 13, color: "#007aff", fontWeight: 600 }}>{stats.correct} נכון</div>
+    <div style={{ animation: "fadeIn 0.25s ease" }}>
+      {(isE2H || listen)
+        ? <PromptCard big={kind === "word"} text={item.greek} dir="ltr" level={item.level} tagRight={kind === "phrase" ? "משפט" : (listen ? "האזנה" : null)} speakText={item.greek} hideText={listen} revealed={answered} imageId={kind === "word" && !listen ? item.id : null} />
+        : <PromptCard text={item.hebrew} dir="rtl" level={item.level} tagRight={kind === "phrase" ? "משפט" : "בחר/י ביוונית"} />}
+      <div style={{ fontSize: 15, fontWeight: 600, color: C.ink, textAlign: "center", marginBottom: 14 }}>
+        {listen ? "מה שמעת?" : isE2H ? "מה התרגום?" : "איזו מילה ביוונית?"}
       </div>
-      <div style={{ background: "#e5e5ea", borderRadius: 99, height: 4, marginBottom: 24, overflow: "hidden" }}>
-        <div style={{ width: ((qIdx + 1) / totalQ * 100) + "%", height: "100%", background: "#007aff", borderRadius: 99, transition: "width 0.3s" }} />
-      </div>
-
-      <div style={{
-        background: "#007aff", borderRadius: 20, padding: "28px 24px",
-        textAlign: "center", marginBottom: 20,
-        boxShadow: "0 4px 16px rgba(0,122,255,0.25)"
-      }}>
-        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", marginBottom: 8 }}>{LEVEL_NAMES[q.word.level]}</div>
-        <div style={{ fontSize: 32, fontWeight: 700, color: "#fff", direction: "ltr" }}>{q.word.greek}</div>
-        <WordImage wordId={q.word.id} size={48} style={{marginTop:8}} />
-        <button onClick={() => speak(q.word.greek)} style={{
-          marginTop: 8, background: "rgba(255,255,255,0.2)", border: "none",
-          borderRadius: 99, padding: "6px 16px", fontSize: 13, color: "#fff", cursor: "pointer"
-        }}>השמע</button>
-      </div>
-
-      <div style={{ fontSize: 16, fontWeight: 600, color: "#1c1c1e", textAlign: "center", marginBottom: 16 }}>מה התרגום?</div>
-
       <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
-        {q.options.map(opt => {
-          const isThis = selected === opt.id;
-          const isRight = opt.id === q.word.id;
-          let bg = "#fff", border = "1px solid #e5e5ea", color = "#1c1c1e";
-          if (selected !== null) {
-            if (isRight) { bg = "#e8f4fd"; border = "2px solid #007aff"; color = "#007aff"; }
-            else if (isThis) { bg = "#fff3e0"; border = "2px solid #ff9f0a"; color = "#ff9f0a"; }
-          }
+        {opts.map(o => {
+          const right = o.id === item.id, mine = picked === o.id;
+          let bg = C.card, border = "1px solid " + C.faint, color = C.ink;
+          if (answered && right) { bg = "#eaf7ee"; border = "2px solid " + C.green; color = C.green; }
+          else if (answered && mine) { bg = "#fdecea"; border = "2px solid #ff453a"; color = "#ff453a"; }
           return (
-            <button key={opt.id} onClick={() => handleQuizSelect(opt.id)} style={{
-              padding: "14px 16px", fontSize: 16, fontWeight: 600, textAlign: "right",
-              background: bg, border, color, borderRadius: 14, cursor: selected ? "default" : "pointer",
-              boxShadow: "0 1px 4px rgba(0,0,0,0.04)"
-            }}>
-              {isRight && selected !== null ? "✓ " : ""}{opt.hebrew}
-            </button>
+            <button key={o.id} onClick={() => choose(o.id)} disabled={answered} style={{
+              padding: "14px 16px", fontSize: 17, fontWeight: 600, textAlign: !isE2H && !listen ? "left" : "right",
+              direction: !isE2H && !listen ? "ltr" : "rtl", background: bg, border, color, borderRadius: 14,
+              cursor: answered ? "default" : "pointer", boxShadow: "0 1px 3px rgba(0,0,0,0.04)"
+            }}>{answered && right ? "✓ " : ""}{o.label}</button>
           );
         })}
       </div>
-
-      {selected !== null && (
-        <button onClick={handleNext} style={{
-          width: "100%", padding: "14px 0", fontSize: 16, fontWeight: 700,
-          background: "#007aff", color: "#fff", border: "none", borderRadius: 14, cursor: "pointer"
-        }}>
-          {qIdx < queue.length - 1 ? "הבא" : "סיכום"}
-        </button>
-      )}
+      {answered && <ContinueBtn correct={picked === item.id} answer={isE2H || listen ? item.hebrew : item.greek} onNext={onNext} />}
     </div>
   );
 }
 
-function RoadmapScreen({ wordState, onBack }) {
-  const [expandedLevel, setExpandedLevel] = useState(null);
-  const levels = Array.from({ length: 10 }, (_, i) => i + 1);
-
+// Type the Hebrew translation
+function TypeExercise({ item, kind, onGrade, onNext }) {
+  const [val, setVal] = useState("");
+  const [res, setRes] = useState(null);
+  const ref = useRef(null);
+  useEffect(() => { setTimeout(() => ref.current && ref.current.focus(), 60); }, [item.id]);
+  function submit() {
+    if (res || !val.trim()) return;
+    const r = checkAnswer(item.hebrew, val);
+    setRes(r); onGrade(r.correct); if (r.correct) speak(item.greek);
+  }
+  function reveal() { if (res) return; setRes({ correct: false, revealed: true }); onGrade(false); }
   return (
-    <div style={{ padding: "24px 20px", maxWidth: 480, margin: "0 auto", animation: "fadeIn 0.4s ease" }}>
-      <div style={{ display: "flex", alignItems: "center", marginBottom: 20, gap: 12 }}>
-        <button onClick={onBack} style={{
-          background: "#fff", border: "none", borderRadius: 10,
-          fontSize: 18, cursor: "pointer", width: 36, height: 36,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          boxShadow: "0 1px 4px rgba(0,0,0,0.06)", color: "#007aff"
-        }}>←</button>
-        <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: "#1c1c1e" }}>
-          מפת הדרכים
-        </h2>
+    <div style={{ animation: "fadeIn 0.25s ease" }}>
+      <PromptCard big={kind === "word"} text={item.greek} dir="ltr" level={item.level} tagRight={kind === "phrase" ? "משפט" : null} speakText={item.greek} imageId={kind === "word" ? item.id : null} />
+      <input ref={ref} value={val} onChange={e => setVal(e.target.value)} onKeyDown={e => e.key === "Enter" && submit()}
+        disabled={!!res} placeholder="תרגום לעברית..." dir="rtl" style={{
+          width: "100%", padding: "15px 16px", fontSize: 19, borderRadius: 14, outline: "none", textAlign: "right", marginBottom: 12, boxSizing: "border-box",
+          border: res ? "1.5px solid " + (res.correct ? C.green : C.orange) : "1.5px solid " + C.faint,
+          background: res ? (res.correct ? "#eaf7ee" : "#fff3e0") : C.card
+        }} />
+      {!res ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <button onClick={submit} disabled={!val.trim()} style={{ ...btnPrimary, opacity: val.trim() ? 1 : 0.4 }}>בדוק</button>
+          <button onClick={reveal} style={btnGhost}>לא יודע — הצג תשובה</button>
+        </div>
+      ) : <ContinueBtn correct={res.correct} answer={item.hebrew} onNext={onNext} />}
+    </div>
+  );
+}
+
+// Assemble the Greek word from scrambled letter tiles (production)
+function BuildExercise({ item, onGrade, onNext }) {
+  const target = item.greek;
+  const [tiles] = useState(() => {
+    const base = target.split("");
+    const extras = shuffle(GREEK_LETTERS.filter(l => !normalizeGreek(target).includes(l))).slice(0, target.length <= 6 ? 3 : 2);
+    return shuffle(base.concat(extras)).map((ch, i) => ({ key: i, ch }));
+  });
+  const [placed, setPlaced] = useState([]);   // array of tile keys
+  const [res, setRes] = useState(null);
+  const placedSet = new Set(placed);
+  const assembled = placed.map(k => tiles.find(t => t.key === k).ch).join("");
+  function add(k) { if (res) return; setPlaced(p => [...p, k]); }
+  function removeAt(i) { if (res) return; setPlaced(p => p.filter((_, idx) => idx !== i)); }
+  function check() {
+    if (res || placed.length === 0) return;
+    const correct = normalizeGreek(assembled) === normalizeGreek(target);
+    setRes({ correct }); onGrade(correct); if (correct) speak(target);
+  }
+  function reveal() { if (res) return; setRes({ correct: false, revealed: true }); onGrade(false); }
+  return (
+    <div style={{ animation: "fadeIn 0.25s ease" }}>
+      <PromptCard text={item.hebrew} dir="rtl" level={item.level} tagRight="הרכב/י ביוונית" imageId={item.id} />
+      <div style={{ minHeight: 56, border: "1.5px dashed " + (res ? (res.correct ? C.green : C.orange) : C.faint), borderRadius: 14, padding: "10px 12px", marginBottom: 14, display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center", justifyContent: "center", direction: "ltr", background: C.card }}>
+        {placed.length === 0 && <span style={{ color: C.sub, fontSize: 14 }}>הקש/י על האותיות לפי הסדר</span>}
+        {placed.map((k, i) => (
+          <button key={i} onClick={() => removeAt(i)} style={{ padding: "8px 12px", fontSize: 20, fontWeight: 700, borderRadius: 10, border: "none", background: "#e8f0ff", color: C.blue, cursor: res ? "default" : "pointer" }}>{tiles.find(t => t.key === k).ch}</button>
+        ))}
+      </div>
+      {res && res.revealed && <div style={{ textAlign: "center", direction: "ltr", fontSize: 22, fontWeight: 700, color: C.orange, marginBottom: 12 }}>{target}</div>}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginBottom: 18, direction: "ltr" }}>
+        {tiles.map(t => (
+          <button key={t.key} onClick={() => add(t.key)} disabled={placedSet.has(t.key) || !!res} style={{
+            padding: "12px 16px", fontSize: 22, fontWeight: 700, borderRadius: 12, border: "1px solid " + C.faint,
+            background: placedSet.has(t.key) ? "#f2f2f7" : C.card, color: placedSet.has(t.key) ? "#c7c7cc" : C.ink,
+            cursor: placedSet.has(t.key) || res ? "default" : "pointer", minWidth: 44, boxShadow: cardShadow
+          }}>{t.ch}</button>
+        ))}
+      </div>
+      {!res ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <button onClick={check} disabled={placed.length === 0} style={{ ...btnPrimary, opacity: placed.length ? 1 : 0.4 }}>בדוק</button>
+          <button onClick={reveal} style={btnGhost}>לא יודע — הצג תשובה</button>
+        </div>
+      ) : <ContinueBtn correct={res.correct} answer={target} answerLtr onNext={onNext} />}
+    </div>
+  );
+}
+
+function ContinueBtn({ correct, answer, answerLtr, onNext }) {
+  return (
+    <div style={{ animation: "fadeIn 0.2s ease" }}>
+      <div style={{ padding: "12px 16px", borderRadius: 12, marginBottom: 12, textAlign: "center", fontWeight: 700, fontSize: 16,
+        background: correct ? "#eaf7ee" : "#fff3e0", color: correct ? C.green : "#cc7a00" }}>
+        {correct ? "מצוין! ✓" : <span>התשובה: <span style={{ direction: answerLtr ? "ltr" : "rtl", display: "inline-block" }}>{answer}</span></span>}
+      </div>
+      <button onClick={onNext} style={btnPrimary}>המשך</button>
+    </div>
+  );
+}
+
+/* ============================================================
+   SESSION SCREEN
+   ============================================================ */
+function SessionScreen({ queue, wordState, phraseState, knownCount, onAnswer, onExit }) {
+  const [items, setItems] = useState(() => queue.map(q => ({ ...q, phase: q.isNew ? "intro" : "quiz" })));
+  const [pos, setPos] = useState(0);
+  const [stats, setStats] = useState({ correct: 0, total: 0, learned: 0 });
+  const [initialLen] = useState(queue.length);
+  const [knownStart] = useState(knownCount);
+
+  const knownNow = countKnown(wordState);
+  const [bump, setBump] = useState(false);
+  const knownRef = useRef(knownNow);
+  useEffect(() => {
+    if (knownNow > knownRef.current) { setBump(true); const t = setTimeout(() => setBump(false), 700); knownRef.current = knownNow; return () => clearTimeout(t); }
+    knownRef.current = knownNow;
+  }, [knownNow]);
+
+  if (pos >= items.length) {
+    const gained = countKnown(wordState) - knownStart;
+    const acc = stats.total ? Math.round((stats.correct / stats.total) * 100) : 0;
+    return (
+      <div style={{ padding: "48px 20px", maxWidth: 480, margin: "0 auto", textAlign: "center", animation: "slideUp 0.3s ease" }}>
+        <div style={{ fontSize: 56, marginBottom: 8 }}>🎉</div>
+        <div style={{ fontSize: 24, fontWeight: 800, color: C.ink, marginBottom: 6 }}>סיימת את התרגול!</div>
+        <div style={{ fontSize: 15, color: C.sub, marginBottom: 28 }}>{stats.total} כרטיסים · {acc}% דיוק</div>
+        <div style={{ display: "flex", gap: 10, marginBottom: 28 }}>
+          <SummaryStat n={stats.total} label="תרגלת" color={C.blue} />
+          <SummaryStat n={"+" + Math.max(0, gained)} label="מילים חדשות שאתה יודע" color={C.green} />
+          <SummaryStat n={acc + "%"} label="דיוק" color={C.orange} />
+        </div>
+        <button onClick={onExit} style={btnPrimary}>חזרה למסך הבית</button>
+      </div>
+    );
+  }
+
+  const cur = items[pos];
+  const data = itemData(cur.kind, cur.id);
+  const card = cur.kind === "phrase" ? phraseState[cur.id] : wordState[cur.id];
+  const mode = cur.phase === "intro" ? "intro" : (cur._mode || modeFor(cur.kind, card.box, data.greek));
+  // lock the chosen mode onto the item so a re-render doesn't reshuffle it
+  if (cur.phase === "quiz" && !cur._mode) cur._mode = mode;
+
+  function advance() { setPos(p => p + 1); }
+
+  function handleGrade(correct) {
+    const wasNew = cur.isNew && card.box === 0;
+    onAnswer(cur.kind, cur.id, correct, wasNew);
+    setStats(s => ({ correct: s.correct + (correct ? 1 : 0), total: s.total + 1, learned: s.learned }));
+    if (!correct) {
+      // requeue this item a few positions later for immediate re-practice
+      setItems(prev => {
+        const copy = prev.slice();
+        const insertAt = Math.min(copy.length, pos + 3 + Math.floor(Math.random() * 2));
+        copy.splice(insertAt, 0, { kind: cur.kind, id: cur.id, phase: "quiz" });
+        return copy;
+      });
+    }
+  }
+
+  function introContinue() {
+    setItems(prev => { const copy = prev.slice(); copy[pos] = { ...copy[pos], phase: "quiz" }; return copy; });
+  }
+
+  const progressMax = Math.max(initialLen, items.length);
+  return (
+    <div style={{ padding: "16px 16px 32px", maxWidth: 480, margin: "0 auto" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+        <button onClick={onExit} aria-label="יציאה" style={{ background: "none", border: "none", fontSize: 26, color: C.sub, cursor: "pointer", lineHeight: 1, padding: 0 }}>×</button>
+        <div style={{ flex: 1 }}><ProgressBar value={pos} max={progressMax} height={8} /></div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: C.green, display: "flex", alignItems: "center", gap: 4, transform: bump ? "scale(1.15)" : "scale(1)", transition: "transform .25s" }}>
+          <span>✓</span><span>{knownNow}</span>
+        </div>
       </div>
 
+      {mode === "intro" && <IntroCard item={data} onContinue={introContinue} />}
+      {mode === "choiceE2H" && <ChoiceExercise key={cur.id + "-" + pos} item={data} kind={cur.kind} direction="E2H" onGrade={handleGrade} onNext={advance} />}
+      {mode === "choiceH2E" && <ChoiceExercise key={cur.id + "-" + pos} item={data} kind={cur.kind} direction="H2E" onGrade={handleGrade} onNext={advance} />}
+      {mode === "listenE2H" && <ChoiceExercise key={cur.id + "-" + pos} item={data} kind={cur.kind} direction="listen" onGrade={handleGrade} onNext={advance} />}
+      {mode === "typeE2H" && <TypeExercise key={cur.id + "-" + pos} item={data} kind={cur.kind} onGrade={handleGrade} onNext={advance} />}
+      {mode === "buildH2E" && <BuildExercise key={cur.id + "-" + pos} item={data} onGrade={handleGrade} onNext={advance} />}
+    </div>
+  );
+}
+
+function SummaryStat({ n, label, color }) {
+  return (
+    <div style={{ flex: 1, background: C.card, borderRadius: 14, padding: "14px 6px", boxShadow: cardShadow }}>
+      <div style={{ fontSize: 24, fontWeight: 800, color }}>{n}</div>
+      <div style={{ fontSize: 11, color: C.sub, fontWeight: 600, marginTop: 2 }}>{label}</div>
+    </div>
+  );
+}
+
+/* ============================================================
+   HOME SCREEN
+   ============================================================ */
+const MILESTONES = [
+  { target: 50, label: "תבין/י שלטים ותפריטים" },
+  { target: 150, label: "תסתדר/י בשיחה בסיסית" },
+  { target: 300, label: "תנהל/י שיחות יומיום" },
+  { target: 500, label: "תדבר/י יוונית ברמה טובה" },
+];
+
+function HomeScreen({ wordState, phraseState, meta, onStart, onLearnAhead, onBrowse, onSettings }) {
+  const known = countKnown(wordState);
+  const learning = countLearning(wordState);
+  const dueWords = countDueWords(wordState);
+  const duePhrases = countDuePhrases(wordState, phraseState);
+  const dueTotal = dueWords + duePhrases;
+  const newLeft = Math.max(0, meta.newPerDay - meta.newDone);
+  const newSeenEver = ALL_WORDS.filter(w => !isNew(wordState[w.id])).length;
+  const sessionSize = dueTotal + Math.min(newLeft, ALL_WORDS.length - newSeenEver);
+
+  const nextMs = MILESTONES.find(m => known < m.target);
+  const daysActive = meta.startedAt ? Math.max(1, Math.floor((Date.now() - new Date(meta.startedAt)) / DAY) + 1) : 1;
+  const rate = known > 0 ? Math.max(0.3, Math.round((known / daysActive) * 10) / 10) : meta.newPerDay;
+  let prediction = "";
+  if (known === 0) prediction = "כל יום: מילים חדשות + חזרה על מה שלמדת";
+  else if (!nextMs) prediction = "כל 500 המילים בידך — כל הכבוד! 🏆";
+  else {
+    const left = Math.ceil((nextMs.target - known) / rate);
+    const t = left <= 30 ? left + " ימים" : Math.round(left / 30) + " חודשים";
+    prediction = "בעוד ~" + t + " " + nextMs.label;
+  }
+
+  const dailyGoalMet = meta.newDone >= meta.newPerDay;
+  const nothingToDo = sessionSize === 0;
+
+  return (
+    <div style={{ padding: "22px 18px 40px", maxWidth: 480, margin: "0 auto" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 18 }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, color: C.ink, letterSpacing: -0.5 }}>יוונית</h1>
+          <div style={{ color: C.sub, fontSize: 14, direction: "ltr", textAlign: "right" }}>Ελληνικά</div>
+        </div>
+        <button onClick={onSettings} aria-label="הגדרות" style={{ background: C.card, border: "none", borderRadius: 12, width: 40, height: 40, cursor: "pointer", boxShadow: cardShadow, fontSize: 18 }}>⚙︎</button>
+      </div>
+
+      {/* streak + today ring */}
+      <div style={{ display: "flex", gap: 12, marginBottom: 14 }}>
+        <div style={{ flex: 1, background: C.card, borderRadius: 18, padding: "18px 14px", boxShadow: cardShadow, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+          <div style={{ fontSize: 32, fontWeight: 800, color: C.orange }}>🔥 {meta.streak}</div>
+          <div style={{ fontSize: 12, color: C.sub, fontWeight: 600, marginTop: 2 }}>ימים ברצף</div>
+          <div style={{ fontSize: 11, color: C.sub, marginTop: 8 }}>שיא: {meta.longest} · פעיל {daysActive} ימים</div>
+        </div>
+        <div style={{ background: C.card, borderRadius: 18, padding: "14px", boxShadow: cardShadow, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <Ring value={meta.newDone} max={meta.newPerDay} color={dailyGoalMet ? C.green : C.blue}
+            label={meta.newDone + "/" + meta.newPerDay} sub="חדשות היום" />
+        </div>
+      </div>
+
+      {/* progress toward all 500 */}
+      <div style={{ background: C.card, borderRadius: 18, padding: 16, marginBottom: 14, boxShadow: cardShadow }}>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 14, fontWeight: 700, color: C.ink }}>
+          <span>מילים שאתה יודע</span>
+          <span style={{ color: C.blue }}>{known} / {ALL_WORDS.length}</span>
+        </div>
+        <ProgressBar value={known} max={ALL_WORDS.length} />
+        <div style={{ marginTop: 8, fontSize: 12, color: C.sub, textAlign: "center" }}>{prediction}</div>
+      </div>
+
+      {/* main CTA */}
+      {!nothingToDo ? (
+        <button onClick={onStart} style={{ ...btnPrimary, padding: "18px 0", fontSize: 19, marginBottom: 10 }}>
+          {dueTotal > 0 && newLeft > 0 ? "התחל תרגול יומי" : dueTotal > 0 ? "חזרה על " + dueTotal + " מילים" : "למד " + Math.min(newLeft, sessionSize) + " מילים חדשות"}
+          <div style={{ fontSize: 12, fontWeight: 500, opacity: 0.85, marginTop: 3 }}>
+            {[Math.min(newLeft, ALL_WORDS.length - newSeenEver) > 0 ? Math.min(newLeft, ALL_WORDS.length - newSeenEver) + " חדשות" : null, dueTotal > 0 ? dueTotal + " לחזרה" : null].filter(Boolean).join(" · ")}
+          </div>
+        </button>
+      ) : (
+        <div style={{ background: "#eaf7ee", borderRadius: 18, padding: "18px 16px", textAlign: "center", marginBottom: 10 }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: C.green }}>סיימת להיום! 🎉</div>
+          <div style={{ fontSize: 13, color: "#4a8c5f", marginTop: 4 }}>אין מילים לחזרה כרגע. חזור/י מחר לשמור על הרצף.</div>
+        </div>
+      )}
+
+      <button onClick={onLearnAhead} style={{ ...btnGhost, color: C.blue, marginBottom: 10 }}>
+        {nothingToDo ? "תרגול נוסף (קדימה)" : "למד/י עוד קדימה"}
+      </button>
+
+      {/* mini stats */}
+      <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
+        <MiniStat n={known} label="יודע" color={C.green} />
+        <MiniStat n={learning} label="בלמידה" color={C.orange} />
+        <MiniStat n={dueTotal} label="לחזרה עכשיו" color={dueTotal ? C.blue : C.sub} />
+      </div>
+
+      <button onClick={onBrowse} style={{ ...btnGhost, color: C.blue }}>מפת המילים · כל 500</button>
+    </div>
+  );
+}
+
+function MiniStat({ n, label, color }) {
+  return (
+    <div style={{ flex: 1, textAlign: "center", background: C.card, borderRadius: 14, padding: "12px 4px", boxShadow: cardShadow }}>
+      <div style={{ fontSize: 22, fontWeight: 800, color }}>{n}</div>
+      <div style={{ fontSize: 11, color: C.sub, fontWeight: 600 }}>{label}</div>
+    </div>
+  );
+}
+
+/* ============================================================
+   BROWSE (map of all words by level + status)
+   ============================================================ */
+function BrowseScreen({ wordState, onBack }) {
+  const [open, setOpen] = useState(null);
+  const levels = Array.from({ length: 10 }, (_, i) => i + 1);
+  return (
+    <div style={{ padding: "22px 18px 40px", maxWidth: 480, margin: "0 auto", animation: "fadeIn 0.3s ease" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
+        <BackBtn onClick={onBack} />
+        <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: C.ink }}>מפת המילים</h2>
+      </div>
+      <div style={{ display: "flex", gap: 12, marginBottom: 16, justifyContent: "center", fontSize: 11, color: C.sub }}>
+        <Legend color={C.green} t="יודע" /><Legend color={C.orange} t="בלמידה" /><Legend color={C.faint} t="טרם" />
+      </div>
       {levels.map(lvl => {
         const words = ALL_WORDS.filter(w => w.level === lvl);
-        const learnedWords = words.filter(w => (wordState[w.id]?.streak || 0) >= LEARNED_STREAK);
-        const attempted = learnedWords.length;
-        const mastered = words.filter(w => wordState[w.id]?.score >= 8).length;
-        const pct = Math.round((mastered / 50) * 100);
-        const isActive = attempted > 0;
-        const done = mastered === 50;
-        const isExpanded = expandedLevel === lvl;
-
+        const known = words.filter(w => isKnown(wordState[w.id])).length;
+        const learning = words.filter(w => { const c = wordState[w.id]; return c && c.box >= 1 && c.box < KNOWN_BOX; }).length;
+        const started = known + learning;
+        const isOpen = open === lvl;
         return (
-          <div key={lvl} style={{
-            marginBottom: 10, opacity: isActive ? 1 : 0.5,
-            background: "#fff", borderRadius: 14,
-            border: "none",
-            boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-            overflow: "hidden"
-          }}>
-            <div onClick={() => attempted > 0 && setExpandedLevel(isExpanded ? null : lvl)} style={{
-              display: "flex", gap: 14, alignItems: "flex-start",
-              padding: "12px 14px",
-              cursor: attempted > 0 ? "pointer" : "default"
-            }}>
-              <div style={{
-                minWidth: 36, height: 36, borderRadius: "50%",
-                background: done ? "#007aff" : isActive ? "#ff9f0a" : "#e5e5ea",
-                color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
-                fontWeight: 700, fontSize: 14, flexShrink: 0
-              }}>
-                {done ? "✓" : lvl}
-              </div>
+          <div key={lvl} style={{ marginBottom: 10, background: C.card, borderRadius: 16, boxShadow: cardShadow, overflow: "hidden", opacity: started > 0 ? 1 : 0.6 }}>
+            <div onClick={() => setOpen(isOpen ? null : lvl)} style={{ display: "flex", gap: 12, alignItems: "center", padding: "14px 14px", cursor: "pointer" }}>
+              <div style={{ minWidth: 34, height: 34, borderRadius: "50%", background: known === 50 ? C.green : started > 0 ? C.orange : C.faint, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 14, flexShrink: 0 }}>{known === 50 ? "✓" : lvl}</div>
               <div style={{ flex: 1 }}>
-                <div style={{
-                  display: "flex", justifyContent: "space-between",
-                  fontSize: 14, fontWeight: 600, color: "#1c1c1e", marginBottom: 4
-                }}>
-                  <span>{LEVEL_NAMES[lvl]}</span>
-                  <span style={{ color: "#8e8e93", fontSize: 12 }}>
-                    {mastered}/50
-                    {attempted > 0 && <span style={{ marginRight: 6 }}>{isExpanded ? "▲" : "▼"}</span>}
-                  </span>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, fontWeight: 700, color: C.ink, marginBottom: 5 }}>
+                  <span>{LEVEL_NAMES[lvl]}</span><span style={{ color: C.sub, fontSize: 12 }}>{known}/50 {isOpen ? "▲" : "▼"}</span>
                 </div>
-                <ProgressBar value={mastered} max={50}
-                  color={done ? "#007aff" : "#ff9f0a"} />
-                <div style={{ fontSize: 11, color: "#8e8e93", marginTop: 3 }}>
-                  {pct}% שולטים · {attempted} נלמדו
-                </div>
+                <ProgressBar value={known} max={50} color={known === 50 ? C.green : C.orange} height={5} />
               </div>
             </div>
-            {isExpanded && (
-              <div style={{
-                padding: "0 14px 14px",
-                borderTop: "1px solid #f2f2f7",
-                animation: "fadeIn 0.2s ease"
-              }}>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, paddingTop: 10 }}>
+            {isOpen && (
+              <div style={{ padding: "0 12px 14px", borderTop: "1px solid #f2f2f7" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 5, paddingTop: 10 }}>
                   {words.map(w => {
-                    const streak = wordState[w.id]?.streak || 0;
-                    const isLearned = streak >= LEARNED_STREAK;
-                    const isMastered = wordState[w.id]?.score >= 8;
+                    const c = wordState[w.id];
+                    const st = isKnown(c) ? C.green : (c && c.box >= 1) ? C.orange : C.faint;
                     return (
-                      <div key={w.id} style={{
-                        padding: "6px 10px", borderRadius: 8,
-                        background: isMastered ? "#e8f4fd" : isLearned ? "#f0f9e8" : "#f2f2f7",
-                        border: isMastered ? "1px solid #007aff30" : isLearned ? "1px solid #34c75930" : "1px solid #e5e5ea",
-                        fontSize: 13, direction: "ltr", textAlign: "left"
-                      }}>
-                        <span style={{ fontWeight: 600, color: isLearned ? "#1c1c1e" : "#aeaeb2" }}>{w.greek}</span>
-                        <span style={{ color: "#8e8e93", fontSize: 11, marginLeft: 4 }}>{w.hebrew}</span>
+                      <div key={w.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 8px", borderRadius: 10, background: "#fafafa" }}>
+                        <span style={{ width: 8, height: 8, borderRadius: "50%", background: st, flexShrink: 0 }} />
+                        <SpeakerBtn text={w.greek} size={30} />
+                        <span style={{ direction: "ltr", fontWeight: 600, color: C.ink, fontSize: 15 }}>{w.greek}</span>
+                        <span style={{ color: C.sub, fontSize: 13, marginRight: "auto" }}>{w.hebrew}</span>
+                        {isMastered(c) && <span style={{ fontSize: 11 }}>⭐</span>}
                       </div>
                     );
                   })}
-                </div>
-                <div style={{ display: "flex", gap: 12, marginTop: 10, justifyContent: "center", fontSize: 11, color: "#8e8e93" }}>
-                  <span><span style={{ display: "inline-block", width: 8, height: 8, borderRadius: 2, background: "#e8f4fd", border: "1px solid #007aff30", marginLeft: 4 }} />שולט</span>
-                  <span><span style={{ display: "inline-block", width: 8, height: 8, borderRadius: 2, background: "#f0f9e8", border: "1px solid #34c75930", marginLeft: 4 }} />נלמד</span>
-                  <span><span style={{ display: "inline-block", width: 8, height: 8, borderRadius: 2, background: "#f2f2f7", border: "1px solid #e5e5ea", marginLeft: 4 }} />טרם נלמד</span>
                 </div>
               </div>
             )}
@@ -1172,516 +1015,166 @@ function RoadmapScreen({ wordState, onBack }) {
     </div>
   );
 }
+function Legend({ color, t }) {
+  return <span><span style={{ display: "inline-block", width: 9, height: 9, borderRadius: "50%", background: color, marginLeft: 4, verticalAlign: "middle" }} />{t}</span>;
+}
 
-function PracticeScreen({ wordState, phraseState, mode, practiceType, onEnd, onUpdateWord, onUpdatePhrase }) {
-  const [currentWord, setCurrentWord] = useState(null);
-  const [input, setInput] = useState("");
-  const [result, setResult] = useState(null);
-  const [revealed, setRevealed] = useState(false);
-  const [showImageHint, setShowImageHint] = useState(false);
-  const [sessionStats, setSessionStats] = useState({ correct: 0, wrong: 0, total: 0 });
-  const inputRef = useRef(null);
-  const recentRef = useRef([]);
-
-  const learned = ALL_WORDS.filter(w => (wordState[w.id]?.streak || 0) >= LEARNED_STREAK).length;
-  const [learnedBump, setLearnedBump] = useState(false);
-  const learnedRef = useRef(learned);
-  useEffect(() => {
-    if (learned > learnedRef.current) {
-      setLearnedBump(true);
-      const t = setTimeout(() => setLearnedBump(false), 700);
-      learnedRef.current = learned;
-      return () => clearTimeout(t);
-    }
-    learnedRef.current = learned;
-  }, [learned]);
-
-  const unlockedLevel = Math.min(10,
-    Math.floor(ALL_WORDS.filter(w => wordState[w.id]?.score >= 8).length / 50) + 1
-  );
-
-  const loadNext = useCallback(() => {
-    const item = pickPracticeItem(wordState, phraseState, unlockedLevel, mode, practiceType, recentRef.current);
-    if (!item) {
-      setCurrentWord({ _locked: true });
-      return;
-    }
-    recentRef.current = [...recentRef.current, item.id].slice(-5);
-    setCurrentWord(item);
-    setInput("");
-    setResult(null);
-    setRevealed(false);
-    setShowImageHint(false);
-    setTimeout(() => inputRef.current?.focus(), 80);
-  }, [wordState, phraseState, unlockedLevel, mode, practiceType]);
-
-  useEffect(() => { loadNext(); }, []);
-  useEffect(() => { if (currentWord && !currentWord._locked) speak(currentWord.greek); }, [currentWord]);
-
-  const recordResult = (correct) => {
-    const isPhrase = !!currentWord._isPhrase;
-    const stateMap = isPhrase ? phraseState : wordState;
-    const update = isPhrase ? onUpdatePhrase : onUpdateWord;
-    const prev = stateMap[currentWord.id];
-    update(currentWord.id, {
-      score: correct ? Math.min(10, prev.score + 1) : Math.max(0, prev.score - 1),
-      attempts: prev.attempts + 1,
-      correct: prev.correct + (correct ? 1 : 0),
-      streak: correct ? (prev.streak || 0) + 1 : 0,
-      lastSeen: new Date().toISOString()
-    });
-    setSessionStats(s => ({
-      correct: s.correct + (correct ? 1 : 0),
-      wrong: s.wrong + (correct ? 0 : 1),
-      total: s.total + 1
-    }));
-  };
-
-  const handleSubmit = () => {
-    if (!input.trim() || result) return;
-    const res = checkAnswer(currentWord.greek, currentWord.hebrew, input);
-    setResult({ correct: res.correct, feedback: res.feedback });
-    recordResult(res.correct);
-  };
-
-  const handleReveal = () => {
-    if (revealed || result) return;
-    setRevealed(true);
-    const isPhrase = !!currentWord._isPhrase;
-    const stateMap = isPhrase ? phraseState : wordState;
-    const update = isPhrase ? onUpdatePhrase : onUpdateWord;
-    const prev = stateMap[currentWord.id];
-    update(currentWord.id, {
-      score: Math.max(0, prev.score - 1),
-      attempts: prev.attempts + 1,
-      correct: prev.correct,
-      streak: 0,
-      lastSeen: new Date().toISOString()
-    });
-    setSessionStats(s => ({ ...s, wrong: s.wrong + 1, total: s.total + 1 }));
-  };
-
-  if (!currentWord) return <div style={{ padding: 40, textAlign: "center" }}>טוען...</div>;
-
-  if (currentWord._locked) {
-    return (
-      <div style={{ padding: "40px 20px", maxWidth: 480, margin: "0 auto", textAlign: "center", animation: "fadeIn 0.3s ease" }}>
-        <div style={{ fontSize: 17, fontWeight: 700, color: "#1c1c1e", marginBottom: 12 }}>
-          עוד אין תבניות משפט זמינות
-        </div>
-        <div style={{ fontSize: 14, color: "#8e8e93", marginBottom: 32 }}>
-          למד עוד מילים כדי לפתוח משפטים שימושיים כתגמול
-        </div>
-        <button onClick={onEnd} style={{
-          padding: "14px 40px", fontSize: 16, fontWeight: 700,
-          background: "#007aff", color: "#fff", border: "none", borderRadius: 14, cursor: "pointer"
-        }}>חזרה</button>
-      </div>
-    );
-  }
-
-  const accuracy = sessionStats.total ? Math.round((sessionStats.correct / sessionStats.total) * 100) : 0;
-
+/* ============================================================
+   SETTINGS
+   ============================================================ */
+function SettingsScreen({ meta, onSetGoal, onReset, onBack }) {
+  const [confirm, setConfirm] = useState(false);
   return (
-    <div style={{ padding: "20px 16px", maxWidth: 480, margin: "0 auto", animation: "slideUp 0.3s ease" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-        <button onClick={onEnd} style={{
-          background: "#fff", border: "none", borderRadius: 10,
-          fontSize: 18, cursor: "pointer", width: 36, height: 36,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          boxShadow: "0 1px 4px rgba(0,0,0,0.06)", color: "#007aff"
-        }}>←</button>
-        <div style={{
-          display: "flex", gap: 14, background: "#fff",
-          padding: "6px 14px", borderRadius: 99,
-          boxShadow: "0 1px 4px rgba(0,0,0,0.06)"
-        }}>
-          <span style={{ fontSize: 13, color: "#007aff", fontWeight: 600 }}>{sessionStats.correct} נכון</span>
-          <span style={{ fontSize: 13, color: "#ff9f0a", fontWeight: 600 }}>{sessionStats.wrong} שגוי</span>
-          {sessionStats.total > 0 && <span style={{ fontSize: 13, color: "#8e8e93", fontWeight: 600 }}>{accuracy}%</span>}
+    <div style={{ padding: "22px 18px 40px", maxWidth: 480, margin: "0 auto", animation: "fadeIn 0.3s ease" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+        <BackBtn onClick={onBack} />
+        <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: C.ink }}>הגדרות</h2>
+      </div>
+      <div style={{ background: C.card, borderRadius: 16, padding: 16, marginBottom: 16, boxShadow: cardShadow }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: C.ink, marginBottom: 4 }}>מילים חדשות ביום</div>
+        <div style={{ fontSize: 12, color: C.sub, marginBottom: 12 }}>כמה מילים חדשות להציג בכל יום. עדיף מעט וקבוע מהרבה ולא עקבי.</div>
+        <div style={{ display: "flex", gap: 8 }}>
+          {[5, 8, 12, 15].map(n => (
+            <button key={n} onClick={() => onSetGoal(n)} style={{
+              flex: 1, padding: "12px 0", fontSize: 16, fontWeight: 700, borderRadius: 12, cursor: "pointer",
+              border: meta.newPerDay === n ? "2px solid " + C.blue : "1px solid " + C.faint,
+              background: meta.newPerDay === n ? "#e8f0ff" : C.card, color: meta.newPerDay === n ? C.blue : C.ink
+            }}>{n}</button>
+          ))}
         </div>
       </div>
-
-      <div style={{
-        display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-        marginBottom: 16, fontSize: 13, color: "#8e8e93", fontWeight: 600,
-        transform: learnedBump ? "scale(1.15)" : "scale(1)",
-        transition: "transform 0.25s ease",
-        animation: learnedBump ? "pulse 0.6s ease" : "none"
-      }}>
-        <span>📚</span>
-        <span style={{ color: learnedBump ? "#34c759" : "#007aff", fontWeight: 700 }}>{learned}</span>
-        <span>מילים שלמדת</span>
-      </div>
-
-      <div style={{
-        background: "#007aff", borderRadius: 20, padding: "28px 24px",
-        textAlign: "center", marginBottom: 20,
-        boxShadow: "0 4px 16px rgba(0,122,255,0.25)"
-      }}>
-        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", marginBottom: 12, letterSpacing: 1 }}>
-          רמה {currentWord.level} · {LEVEL_NAMES[currentWord.level]}{currentWord._isPhrase ? " · משפט" : ""}
-        </div>
-        {!currentWord._isPhrase && WORD_WIKI[currentWord.id] && (
-          showImageHint ? (
-            <WordImage wordId={currentWord.id} size={80} />
-          ) : (
-            <button onClick={() => setShowImageHint(true)} title="הצג רמז" style={{
-              width: 32, height: 32, borderRadius: "50%", marginBottom: 8,
-              border: "1px solid rgba(255,255,255,0.4)", background: "rgba(255,255,255,0.15)",
-              color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer",
-              display: "inline-flex", alignItems: "center", justifyContent: "center"
-            }}>?</button>
-          )
+      <div style={{ background: C.card, borderRadius: 16, padding: 16, boxShadow: cardShadow }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: C.ink, marginBottom: 4 }}>איפוס התקדמות</div>
+        <div style={{ fontSize: 12, color: C.sub, marginBottom: 12 }}>מוחק את כל ההתקדמות, הרצף והמילים שנלמדו.</div>
+        {!confirm ? (
+          <button onClick={() => setConfirm(true)} style={{ ...btnGhost, color: "#ff453a" }}>אפס הכל</button>
+        ) : (
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={() => setConfirm(false)} style={{ ...btnGhost, flex: 1 }}>ביטול</button>
+            <button onClick={onReset} style={{ flex: 1, padding: "13px 0", fontSize: 15, fontWeight: 700, background: "#ff453a", color: "#fff", border: "none", borderRadius: 14, cursor: "pointer" }}>כן, אפס</button>
+          </div>
         )}
-        <div style={{
-          fontSize: currentWord._isPhrase ? 28 : 46, fontWeight: 700, color: "#fff",
-          letterSpacing: 1, marginBottom: 20, wordBreak: "break-word", direction: "ltr"
-        }}>
-          {currentWord.greek}
-        </div>
-        <button onClick={() => speak(currentWord.greek)} style={{
-          padding: "8px 22px", borderRadius: 99,
-          background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.3)",
-          color: "#fff", fontSize: 14, cursor: "pointer", display: "inline-flex",
-          alignItems: "center", gap: 6, fontWeight: 500
-        }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-          שמע
-        </button>
       </div>
-
-      <input
-        ref={inputRef}
-        value={input}
-        onChange={e => setInput(e.target.value)}
-        onKeyDown={e => e.key === "Enter" && handleSubmit()}
-        disabled={!!result || revealed}
-        placeholder="תרגום לעברית..."
-        dir="rtl"
-        style={{
-          width: "100%", padding: "15px 16px", fontSize: 19,
-          border: result
-            ? ("1.5px solid " + (result.correct ? "#007aff" : "#ff9f0a"))
-            : "1.5px solid #e5e5ea",
-          borderRadius: 14, outline: "none", boxSizing: "border-box",
-          background: result ? (result.correct ? "#e8f4fd" : "#fff3e0") : "#fff",
-          textAlign: "right", marginBottom: 12
-        }}
-      />
-
-      {result && (
-        <div style={{
-          padding: "12px 16px", borderRadius: 12, marginBottom: 12,
-          background: result.correct ? "#e8f4fd" : "#fff3e0",
-          color: result.correct ? "#007aff" : "#cc7a00",
-          fontSize: 15, fontWeight: 600, textAlign: "center", direction: "rtl"
-        }}>
-          {result.feedback}
-        </div>
-      )}
-
-      {revealed && !result && (
-        <div style={{
-          padding: "12px 16px", borderRadius: 12, marginBottom: 12,
-          background: "#fff3e0", color: "#cc7a00",
-          fontSize: 16, fontWeight: 700, textAlign: "center", direction: "rtl"
-        }}>
-          התשובה: {currentWord.hebrew}
-          <div style={{ fontSize: 12, fontWeight: 400, color: "#8e8e93", marginTop: 4 }}>נספר כטעות</div>
-        </div>
-      )}
-
-      {!result && !revealed ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          <button onClick={handleSubmit} disabled={!input.trim()} style={{
-            width: "100%", padding: "15px 0", fontSize: 17, fontWeight: 700,
-            background: "#007aff", color: "#fff", border: "none",
-            borderRadius: 14, cursor: "pointer", opacity: !input.trim() ? 0.4 : 1
-          }}>
-            בדוק
-          </button>
-          <button onClick={handleReveal} style={{
-            width: "100%", padding: "12px 0", fontSize: 15, fontWeight: 600,
-            background: "#fff", color: "#8e8e93", border: "none",
-            borderRadius: 14, cursor: "pointer",
-            boxShadow: "0 1px 4px rgba(0,0,0,0.06)"
-          }}>
-            לא יודע — הצג תשובה
-          </button>
-        </div>
-      ) : (
-        <button onClick={loadNext} style={{
-          width: "100%", padding: "15px 0", fontSize: 17, fontWeight: 700,
-          background: "#007aff", color: "#fff", border: "none",
-          borderRadius: 14, cursor: "pointer"
-        }}>
-          המשך
-        </button>
-      )}
     </div>
   );
 }
 
-function LearnedScreen({ wordState, onBack, onResetWord }) {
-  const learnedWords = ALL_WORDS.filter(w => (wordState[w.id]?.streak || 0) >= LEARNED_STREAK);
-  const grouped = {};
-  learnedWords.forEach(w => {
-    if (!grouped[w.level]) grouped[w.level] = [];
-    grouped[w.level].push(w);
-  });
-
-  return (
-    <div style={{ padding: "24px 20px", maxWidth: 480, margin: "0 auto", animation: "fadeIn 0.4s ease" }}>
-      <div style={{ display: "flex", alignItems: "center", marginBottom: 20, gap: 12 }}>
-        <button onClick={onBack} style={{
-          background: "#fff", border: "none", borderRadius: 10,
-          fontSize: 18, cursor: "pointer", width: 36, height: 36,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          boxShadow: "0 1px 4px rgba(0,0,0,0.06)", color: "#007aff"
-        }}>←</button>
-        <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: "#1c1c1e" }}>
-          מילים שנלמדו ({learnedWords.length})
-        </h2>
-      </div>
-
-      {learnedWords.length === 0 ? (
-        <div style={{ textAlign: "center", padding: 40, color: "#8e8e93", fontSize: 15 }}>
-          עוד לא למדת מילים — התחל לתרגל!
-        </div>
-      ) : Object.keys(grouped).sort((a, b) => a - b).map(lvl => (
-        <div key={lvl} style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: "#8e8e93", marginBottom: 8 }}>
-            {LEVEL_NAMES[lvl]} ({grouped[lvl].length})
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            {grouped[lvl].map(w => {
-              const isMastered = wordState[w.id]?.score >= 8;
-              return (
-                <div key={w.id} style={{
-                  display: "flex", justifyContent: "space-between", alignItems: "center",
-                  background: "#fff", borderRadius: 12, padding: "10px 14px",
-                  boxShadow: "0 1px 4px rgba(0,0,0,0.06)"
-                }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <button onClick={() => speak(w.greek)} style={{
-                      background: "none", border: "none", padding: 0, cursor: "pointer",
-                      fontSize: 18, color: "#007aff", flexShrink: 0
-                    }}>
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#007aff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
-                    </button>
-                    <div style={{ direction: "ltr", textAlign: "left" }}>
-                      <span style={{ fontSize: 16, fontWeight: 600, color: "#1c1c1e" }}>{w.greek}</span>
-                      <span style={{ fontSize: 13, color: "#8e8e93", marginLeft: 8 }}>{w.hebrew}</span>
-                      {isMastered && <span style={{ fontSize: 10, color: "#007aff", marginRight: 6 }}> שולט</span>}
-                    </div>
-                  </div>
-                  <button onClick={() => onResetWord(w.id)} style={{
-                    background: "#f2f2f7", border: "none", borderRadius: 8,
-                    padding: "6px 10px", fontSize: 11, fontWeight: 600,
-                    color: "#ff9f0a", cursor: "pointer"
-                  }}>
-                    החזר לתרגול
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
+/* ============================================================
+   APP
+   ============================================================ */
 function App() {
   const [screen, setScreen] = useState("loading");
   const [wordState, setWordState] = useState(null);
   const [phraseState, setPhraseState] = useState(null);
-  const [practiceMode, setPracticeMode] = useState("all");
-  const [practiceType, setPracticeType] = useState("mixed");
-  const [startedAt, setStartedAt] = useState(null);
+  const [meta, setMeta] = useState(null);
+  const [queue, setQueue] = useState([]);
 
-  const [recovered, setRecovered] = useState(false);
+  const wRef = useRef(null), pRef = useRef(null), mRef = useRef(null);
+  const persist = useCallback(() => {
+    if (!wRef.current) return;
+    saveAll({ wordState: wRef.current, phraseState: pRef.current, meta: mRef.current, savedAt: new Date().toISOString() });
+  }, []);
 
+  // ---- load ----
   useEffect(() => {
-    function applyData(saved) {
-      if (saved?.wordState) {
-        const mergedWords = initWordState();
-        Object.keys(saved.wordState).forEach(id => {
-          if (mergedWords[id] !== undefined) mergedWords[id] = { ...mergedWords[id], ...saved.wordState[id] };
-        });
-        const mergedPhrases = initPhraseState();
-        if (saved.phraseState) {
-          Object.keys(saved.phraseState).forEach(id => {
-            if (mergedPhrases[id] !== undefined) mergedPhrases[id] = { ...mergedPhrases[id], ...saved.phraseState[id] };
-          });
-        }
-        let sa = saved.startedAt || null;
-        if (!sa) {
-          const dates = Object.values(mergedWords).map(s => s.lastSeen).filter(Boolean);
-          if (dates.length > 0) sa = dates.sort()[0];
-        }
-        const pt = ["words", "phrases", "mixed"].includes(saved.practiceType) ? saved.practiceType : "mixed";
-        return { wordState: mergedWords, phraseState: mergedPhrases, startedAt: sa, practiceType: pt };
+    function hydrate(saved) {
+      const w = initState(ALL_WORDS), p = initState(PHRASE_PATTERNS);
+      let m = { ...DEFAULT_META };
+      if (saved && saved.__legacy) {
+        // migrate v4/v5
+        const old = saved.data;
+        if (old.wordState) Object.keys(old.wordState).forEach(id => { if (w[id]) w[id] = migrateCard(old.wordState[id]); });
+        if (old.phraseState) Object.keys(old.phraseState).forEach(id => { if (p[id]) p[id] = migrateCard(old.phraseState[id]); });
+        m.startedAt = old.startedAt || new Date().toISOString();
+      } else if (saved && saved.wordState) {
+        Object.keys(saved.wordState).forEach(id => { if (w[id]) w[id] = { ...w[id], ...saved.wordState[id] }; });
+        if (saved.phraseState) Object.keys(saved.phraseState).forEach(id => { if (p[id]) p[id] = { ...p[id], ...saved.phraseState[id] }; });
+        m = { ...DEFAULT_META, ...(saved.meta || {}) };
+        if (!m.startedAt) m.startedAt = new Date().toISOString();
+      } else {
+        m.startedAt = new Date().toISOString();
       }
-      return null;
+      m = refreshDaily(m);
+      return { w, p, m };
     }
-
-    const lsData = loadData();
-    const lsResult = applyData(lsData);
-    if (lsResult) {
-      setWordState(lsResult.wordState);
-      setPhraseState(lsResult.phraseState);
-      setStartedAt(lsResult.startedAt);
-      setPracticeType(lsResult.practiceType);
-      setScreen("home");
+    const raw = loadRaw();
+    if (raw) {
+      const { w, p, m } = hydrate(raw);
+      wRef.current = w; pRef.current = p; mRef.current = m;
+      setWordState(w); setPhraseState(p); setMeta(m); setScreen("home");
+      persist();
     } else {
-      idbLoad().then(idbData => {
-        const idbResult = applyData(idbData ? migrateData(idbData) : null);
-        if (idbResult) {
-          setWordState(idbResult.wordState);
-          setPhraseState(idbResult.phraseState);
-          setStartedAt(idbResult.startedAt);
-          setPracticeType(idbResult.practiceType);
-          setRecovered(true);
-          saveData({ wordState: idbResult.wordState, phraseState: idbResult.phraseState, practiceType: idbResult.practiceType, startedAt: idbResult.startedAt, savedAt: new Date().toISOString() });
-        } else {
-          const now = new Date().toISOString();
-          setWordState(initWordState());
-          setPhraseState(initPhraseState());
-          setStartedAt(now);
-        }
-        setScreen("home");
+      idbLoad().then(idb => {
+        const src = idb ? (idb.wordState && idb.meta ? idb : { __legacy: true, data: idb }) : null;
+        const { w, p, m } = hydrate(src);
+        wRef.current = w; pRef.current = p; mRef.current = m;
+        setWordState(w); setPhraseState(p); setMeta(m); setScreen("home");
+        persist();
       });
     }
   }, []);
 
-  const wordStateRef = useRef(wordState);
-  const phraseStateRef = useRef(phraseState);
-  const practiceTypeRef = useRef(practiceType);
-  const startedAtRef = useRef(startedAt);
-  useEffect(() => { startedAtRef.current = startedAt; }, [startedAt]);
+  // ---- emergency save ----
   useEffect(() => {
-    wordStateRef.current = wordState;
-    phraseStateRef.current = phraseState;
-    practiceTypeRef.current = practiceType;
-    if (!wordState) return;
-    saveData({ wordState, phraseState, practiceType, startedAt: startedAtRef.current, savedAt: new Date().toISOString() });
-  }, [wordState, phraseState, practiceType]);
+    const save = () => persist();
+    const vis = () => { if (document.visibilityState === "hidden") save(); };
+    document.addEventListener("visibilitychange", vis);
+    window.addEventListener("pagehide", save);
+    window.addEventListener("beforeunload", save);
+    return () => { document.removeEventListener("visibilitychange", vis); window.removeEventListener("pagehide", save); window.removeEventListener("beforeunload", save); };
+  }, [persist]);
 
-  useEffect(() => {
-    function emergencySave() {
-      if (wordStateRef.current) {
-        saveData({ wordState: wordStateRef.current, phraseState: phraseStateRef.current, practiceType: practiceTypeRef.current, startedAt: startedAtRef.current, savedAt: new Date().toISOString() });
-      }
+  // ---- record one answer: update card + daily counters + streak ----
+  const onAnswer = useCallback((kind, id, correct, wasNew) => {
+    const stateRef = kind === "phrase" ? pRef : wRef;
+    const setter = kind === "phrase" ? setPhraseState : setWordState;
+    const prev = stateRef.current[id];
+    const next = { ...stateRef.current, [id]: gradeCard(prev, correct) };
+    stateRef.current = next;
+    setter(next);
+
+    let m = refreshDaily({ ...mRef.current });
+    if (wasNew) m.newDone += 1; else m.reviewsDone += 1;
+    // streak: bump once per calendar day of study
+    if (m.lastStudyDate !== todayStr()) {
+      m.streak = m.lastStudyDate === yesterdayStr() ? m.streak + 1 : 1;
+      m.lastStudyDate = todayStr();
+      m.longest = Math.max(m.longest || 0, m.streak);
     }
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "hidden") emergencySave();
-    });
-    window.addEventListener("pagehide", emergencySave);
-    window.addEventListener("beforeunload", emergencySave);
-    return () => {
-      document.removeEventListener("visibilitychange", emergencySave);
-      window.removeEventListener("pagehide", emergencySave);
-      window.removeEventListener("beforeunload", emergencySave);
-    };
+    mRef.current = m; setMeta(m);
+    persist();
+  }, [persist]);
+
+  const startSession = useCallback((opts) => {
+    mRef.current = refreshDaily({ ...mRef.current }); setMeta(mRef.current);
+    const q = buildSession(wRef.current, pRef.current, mRef.current, opts);
+    if (q.length === 0) return;
+    setQueue(q); setScreen("session");
   }, []);
 
-  const handleUpdateWord = useCallback((id, updates) => {
-    setWordState(prev => {
-      const next = { ...prev, [id]: { ...prev[id], ...updates } };
-      wordStateRef.current = next;
-      try { saveData({ wordState: next, phraseState: phraseStateRef.current, practiceType: practiceTypeRef.current, startedAt: startedAtRef.current, savedAt: new Date().toISOString() }); } catch(e) {}
-      return next;
-    });
-  }, []);
+  const setGoal = useCallback((n) => { const m = { ...mRef.current, newPerDay: n }; mRef.current = m; setMeta(m); persist(); }, [persist]);
+  const resetAll = useCallback(() => {
+    const w = initState(ALL_WORDS), p = initState(PHRASE_PATTERNS), m = { ...DEFAULT_META, startedAt: new Date().toISOString(), today: todayStr() };
+    wRef.current = w; pRef.current = p; mRef.current = m;
+    setWordState(w); setPhraseState(p); setMeta(m); persist(); setScreen("home");
+  }, [persist]);
 
-  const handleUpdatePhrase = useCallback((id, updates) => {
-    setPhraseState(prev => {
-      const next = { ...prev, [id]: { ...prev[id], ...updates } };
-      phraseStateRef.current = next;
-      try { saveData({ wordState: wordStateRef.current, phraseState: next, practiceType: practiceTypeRef.current, startedAt: startedAtRef.current, savedAt: new Date().toISOString() }); } catch(e) {}
-      return next;
-    });
-  }, []);
-
-  const handleChangePracticeType = useCallback((type) => {
-    setPracticeType(type);
-  }, []);
-
-  if (screen === "loading" || !wordState || !phraseState) {
-    return (
-      <div style={{
-        minHeight: "100vh", display: "flex", alignItems: "center",
-        justifyContent: "center", flexDirection: "column", gap: 12,
-        background: "#f2f2f7"
-      }}>
-        <div style={{ fontSize: 20, fontWeight: 600, color: "#007aff" }}>Greek Vocabulary</div>
-        <div style={{ color: "#8e8e93", fontSize: 14 }}>טוען...</div>
-      </div>
-    );
+  if (screen === "loading" || !wordState || !meta) {
+    return <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 10, background: C.bg }}>
+      <div style={{ fontSize: 22, fontWeight: 800, color: C.blue }}>יוונית</div>
+      <div style={{ color: C.sub, fontSize: 14 }}>טוען…</div>
+    </div>;
   }
 
   return (
-    <div style={{
-      minHeight: "100vh", minHeight: "100dvh", background: "#f2f2f7",
-      direction: "rtl"
-    }}>
-      {recovered && (
-        <div style={{
-          position: "fixed", top: 16, left: 16, right: 16, zIndex: 999,
-          padding: "12px 16px", borderRadius: 12,
-          background: "#e8f4fd", border: "none",
-          textAlign: "center", fontSize: 14, fontWeight: 600, color: "#007aff",
-          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-          animation: "fadeIn 0.3s"
-        }} onClick={() => setRecovered(false)}>
-          הנתונים שוחזרו מגיבוי — הקש לסגור
-        </div>
-      )}
-      {screen === "home" && (
-        <HomeScreen
-          wordState={wordState}
-          startedAt={startedAt}
-          practiceType={practiceType}
-          onChangePracticeType={handleChangePracticeType}
-          onLearn={() => { setPracticeMode("all"); setScreen("practice"); }}
-          onReview={() => { setPracticeMode("all"); setScreen("practice"); }}
-          onRoadmap={() => setScreen("roadmap")}
-          onShowLearned={() => setScreen("learned")}
-        />
-      )}
-      {screen === "learn" && (
-        <LearnNewScreen
-          wordState={wordState}
-          onDone={() => setScreen("home")}
-          onUpdateWord={handleUpdateWord}
-        />
-      )}
-      {screen === "practice" && (
-        <PracticeScreen
-          wordState={wordState}
-          phraseState={phraseState}
-          mode={practiceMode}
-          practiceType={practiceType}
-          onEnd={() => setScreen("home")}
-          onUpdateWord={handleUpdateWord}
-          onUpdatePhrase={handleUpdatePhrase}
-        />
-      )}
-      {screen === "roadmap" && (
-        <RoadmapScreen
-          wordState={wordState}
-          onBack={() => setScreen("home")}
-        />
-      )}
-      {screen === "learned" && (
-        <LearnedScreen
-          wordState={wordState}
-          onBack={() => setScreen("home")}
-          onResetWord={(id) => handleUpdateWord(id, { streak: 0, score: 0 })}
-        />
-      )}
+    <div style={{ minHeight: "100vh", minHeight: "100dvh", background: C.bg, direction: "rtl" }}>
+      {screen === "home" && <HomeScreen wordState={wordState} phraseState={phraseState} meta={meta}
+        onStart={() => startSession({})} onLearnAhead={() => startSession({ learnAhead: true, aheadCount: 6 })}
+        onBrowse={() => setScreen("browse")} onSettings={() => setScreen("settings")} />}
+      {screen === "session" && <SessionScreen queue={queue} wordState={wordState} phraseState={phraseState}
+        knownCount={countKnown(wordState)} onAnswer={onAnswer} onExit={() => { persist(); setScreen("home"); }} />}
+      {screen === "browse" && <BrowseScreen wordState={wordState} onBack={() => setScreen("home")} />}
+      {screen === "settings" && <SettingsScreen meta={meta} onSetGoal={setGoal} onReset={resetAll} onBack={() => setScreen("home")} />}
     </div>
   );
 }
