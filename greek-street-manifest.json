@@ -1,0 +1,17 @@
+{
+  "name": "יוונית לרחוב — Greek2Go",
+  "short_name": "יוונית לרחוב",
+  "description": "130 המילים הכי שימושיות ליוונית לתייר — כרטיסיות, חידון, הקשבה ושיחון עם הגייה",
+  "start_url": "./greek-street.html",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0d4c9e",
+  "theme_color": "#0d4c9e",
+  "lang": "he",
+  "dir": "rtl",
+  "icons": [
+    { "src": "icon-greek-street.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icon-greek-street-180.png", "sizes": "180x180", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
