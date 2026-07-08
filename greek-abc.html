@@ -204,6 +204,89 @@ function initNumberState() {
   return m;
 }
 
+/* ===================== ערכות אתגר (packs) =====================
+   כל ערכה = תוכנית רב-יומית עצמאית: קובעים כמה ימים, לומדים לפי מנה
+   יומית, נבחנים, ואפשר לאפס. מבנה פריט זהה למספרים: {id,gr,pron,pronHe,he}.
+   הוספת ערכה חדשה = הוספת אובייקט למערך הזה בלבד. */
+const PACK_DAY_PRESETS = [3,5,7,10,14];
+const WORD_PACKS = [
+  {
+    id:"colors", label:"צבעים", emoji:"🎨", accent:"#af52de", accentBg:"#f5ebfc", accentLine:"#af52de", defaultDays:5, cols:3,
+    items:[
+      {id:"c_aspro",gr:"Άσπρο",pron:"aspro",pronHe:"אַספרו",he:"לבן",emoji:"⚪",difficulty:1},
+      {id:"c_mavro",gr:"Μαύρο",pron:"mavro",pronHe:"מַאברו",he:"שחור",emoji:"⚫",difficulty:1},
+      {id:"c_kokkino",gr:"Κόκκινο",pron:"kokino",pronHe:"קוֹקינו",he:"אדום",emoji:"🔴",difficulty:2},
+      {id:"c_ble",gr:"Μπλε",pron:"ble",pronHe:"בְּלֶה",he:"כחול",emoji:"🔵",difficulty:1},
+      {id:"c_prasino",gr:"Πράσινο",pron:"prasino",pronHe:"פְּרַאסינו",he:"ירוק",emoji:"🟢",difficulty:2},
+      {id:"c_kitrino",gr:"Κίτρινο",pron:"kitrino",pronHe:"קִיטרינו",he:"צהוב",emoji:"🟡",difficulty:2},
+      {id:"c_portokali",gr:"Πορτοκαλί",pron:"portokali",pronHe:"פּורטוקַלי",he:"כתום",emoji:"🟠",difficulty:2},
+      {id:"c_roz",gr:"Ροζ",pron:"roz",pronHe:"רוֹז",he:"ורוד",emoji:"🩷",difficulty:1},
+      {id:"c_mov",gr:"Μωβ",pron:"mov",pronHe:"מוֹב",he:"סגול",emoji:"🟣",difficulty:1},
+      {id:"c_kafe",gr:"Καφέ",pron:"kafe",pronHe:"קַאפֶה",he:"חום",emoji:"🟤",difficulty:1},
+      {id:"c_gri",gr:"Γκρι",pron:"gri",pronHe:"גְּרי",he:"אפור",emoji:"⚪",difficulty:1},
+    ]
+  },
+  {
+    id:"days", label:"ימים", emoji:"📅", accent:"#30b0c7", accentBg:"#e6f7fb", accentLine:"#30b0c7", defaultDays:7, cols:2,
+    items:[
+      {id:"d_1",gr:"Δευτέρα",pron:"deftera",pronHe:"דֶפטֶרַה",he:"יום שני",emoji:"1️⃣",difficulty:2},
+      {id:"d_2",gr:"Τρίτη",pron:"triti",pronHe:"טְריטי",he:"יום שלישי",emoji:"2️⃣",difficulty:1},
+      {id:"d_3",gr:"Τετάρτη",pron:"tetarti",pronHe:"טֶטַארטי",he:"יום רביעי",emoji:"3️⃣",difficulty:2},
+      {id:"d_4",gr:"Πέμπτη",pron:"pempti",pronHe:"פֶּמפטי",he:"יום חמישי",emoji:"4️⃣",difficulty:2},
+      {id:"d_5",gr:"Παρασκευή",pron:"paraskevi",pronHe:"פָּרַסקֶבי",he:"יום שישי",emoji:"5️⃣",difficulty:3},
+      {id:"d_6",gr:"Σάββατο",pron:"savato",pronHe:"סַאבַאטו",he:"שבת",emoji:"6️⃣",difficulty:1},
+      {id:"d_7",gr:"Κυριακή",pron:"kiriaki",pronHe:"קיריַאקי",he:"יום ראשון",emoji:"7️⃣",difficulty:2},
+    ]
+  },
+  {
+    id:"words", label:"מילים", emoji:"⚡", accent:"#ff375f", accentBg:"#ffe9ee", accentLine:"#ff375f", defaultDays:7, cols:2,
+    items:[
+      {id:"w_pare",gr:"Πάρε",pron:"pare",pronHe:"פַּארֶה",he:"קח",emoji:"🫴",difficulty:1},
+      {id:"w_dose",gr:"Δώσε",pron:"dose",pronHe:"דוֹסֶה",he:"תן",emoji:"🤲",difficulty:1},
+      {id:"w_edo",gr:"Εδώ",pron:"edo",pronHe:"אֶדוֹ",he:"פה / כאן",emoji:"📍",difficulty:1},
+      {id:"w_eki",gr:"Εκεί",pron:"eki",pronHe:"אֶקִי",he:"שם",emoji:"👉",difficulty:1},
+      {id:"w_simera",gr:"Σήμερα",pron:"simera",pronHe:"סִימֶרַה",he:"היום",emoji:"📆",difficulty:2},
+      {id:"w_avrio",gr:"Αύριο",pron:"avrio",pronHe:"אַבריו",he:"מחר",emoji:"⏭️",difficulty:2},
+      {id:"w_chthes",gr:"Χθες",pron:"chthes",pronHe:"חְתֶׂס",he:"אתמול",emoji:"⏮️",difficulty:2},
+      {id:"w_tora",gr:"Τώρα",pron:"tora",pronHe:"טוֹרַה",he:"עכשיו",emoji:"⏱️",difficulty:1},
+      {id:"w_thelo",gr:"Θέλω",pron:"thelo",pronHe:"תֶׂלוֹ",he:"אני רוצה",emoji:"🙋",difficulty:2},
+      {id:"w_echo",gr:"Έχω",pron:"echo",pronHe:"אֶחוֹ",he:"יש לי",emoji:"🫳",difficulty:1},
+      {id:"w_pame",gr:"Πάμε",pron:"pame",pronHe:"פַּאמֶה",he:"קדימה / בוא נלך",emoji:"🚶",difficulty:1},
+      {id:"w_ela",gr:"Έλα",pron:"ela",pronHe:"אֶלַה",he:"בוא",emoji:"👋",difficulty:1},
+      {id:"w_ne",gr:"Ναι",pron:"ne",pronHe:"נֶה",he:"כן",emoji:"✅",difficulty:1},
+      {id:"w_ochi",gr:"Όχι",pron:"ochi",pronHe:"אוֹחי",he:"לא",emoji:"❌",difficulty:1},
+      {id:"w_kalo",gr:"Καλό",pron:"kalo",pronHe:"קַאלוֹ",he:"טוב",emoji:"👍",difficulty:1},
+      {id:"w_poso",gr:"Πόσο",pron:"poso",pronHe:"פּוֹסוֹ",he:"כמה?",emoji:"💶",difficulty:2},
+    ]
+  },
+];
+const PACK_MAP = Object.fromEntries(WORD_PACKS.map(p => [p.id, p]));
+function initPackState(pack) {
+  const m = {};
+  pack.items.forEach(it => { m[it.id] = { learned:false, quizCorrect:0, quizTotal:0 }; });
+  return m;
+}
+function initAllPacks() {
+  const m = {};
+  WORD_PACKS.forEach(p => { m[p.id] = { states:initPackState(p), start:null, days:p.defaultDays }; });
+  return m;
+}
+function mergePacks(saved) {
+  const base = initAllPacks();
+  if (saved) {
+    WORD_PACKS.forEach(p => {
+      const sp = saved[p.id];
+      if (!sp) return;
+      if (sp.states) Object.keys(base[p.id].states).forEach(iid => {
+        if (sp.states[iid]) base[p.id].states[iid] = { ...base[p.id].states[iid], ...sp.states[iid] };
+      });
+      base[p.id].start = sp.start || null;
+      base[p.id].days = sp.days || p.defaultDays;
+    });
+  }
+  return base;
+}
+
 const LETTER_PRONUNCIATIONS = {
   "Άλφα":"άλφα","Βήτα":"βήτα","Γάμα":"γάμμα","Δέλτα":"δέλτα",
   "Έψιλον":"έψιλον","Ζήτα":"ζήτα","Ήτα":"ήτα","Θήτα":"θήτα",
@@ -1180,6 +1263,323 @@ function NumberQuizScreen({ numberStates, onEnd, onUpdate }) {
   );
 }
 
+/* ===================== רכיבי ערכות גנריים ===================== */
+function PackCell({ item, state, accent, onClick }) {
+  const learned = state?.learned;
+  return (
+    <div onClick={onClick} style={{
+      position:"relative", background: learned ? accent : "#fff",
+      borderRadius:12, padding:"10px 4px", textAlign:"center", cursor:"pointer",
+      minHeight:66, overflow:"hidden",
+      border: !learned ? "1px solid #e5e5ea" : "none",
+      boxShadow: learned ? `0 2px 8px ${accent}40` : "0 1px 4px rgba(0,0,0,0.06)"
+    }}>
+      <div style={{ fontSize:17, fontWeight:700, color: learned ? "#fff" : "#1c1c1e", direction:"ltr" }}>{item.gr}</div>
+      <div style={{ fontSize:11, color: learned ? "rgba(255,255,255,0.92)" : "#8e8e93", marginTop:2 }}>{item.emoji ? item.emoji + " " : ""}{item.he}</div>
+      <div style={{ fontSize:9, color: learned ? "rgba(255,255,255,0.6)" : "#aeaeb2", direction:"ltr" }}>{item.pron}</div>
+      {learned && <div style={{ position:"absolute", top:3, left:3, fontSize:9, color:"#fff", fontWeight:600 }}>✓</div>}
+      {!learned && (state?.quizCorrect > 0) && (
+        <div style={{ position:"absolute", bottom:5, left:4, right:4, height:2.5, borderRadius:2, background:"#e5e5ea", overflow:"hidden" }}>
+          <div style={{ width:(state.quizCorrect / 10 * 100) + "%", height:"100%", borderRadius:2, background:accent }} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PackModal({ item, state, accent, onClose, onNext, onPrev }) {
+  const touchRef = useRef(null);
+  const slideDirRef = useRef(null);
+  function handleTouchStart(e) { touchRef.current = e.touches[0].clientX; }
+  function handleTouchEnd(e) {
+    if (touchRef.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchRef.current;
+    touchRef.current = null;
+    if (Math.abs(dx) > 50) {
+      if (dx > 0) { slideDirRef.current = "Right"; onNext && onNext(); }
+      else { slideDirRef.current = "Left"; onPrev && onPrev(); }
+    }
+  }
+  return (
+    <div style={{
+      position:"fixed", inset:0, background:"rgba(0,0,0,0.4)",
+      display:"flex", alignItems:"center", justifyContent:"center",
+      zIndex:100, padding:20, backdropFilter:"blur(8px)", WebkitBackdropFilter:"blur(8px)"
+    }} onClick={onClose}>
+      <div onClick={e => e.stopPropagation()}
+        onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} key={item.id}
+        style={{
+          background:"#fff", borderRadius:20, padding:"24px 20px",
+          maxWidth:360, width:"100%", position:"relative",
+          boxShadow:"0 20px 60px rgba(0,0,0,0.15)",
+          animation:`${slideDirRef.current ? "slideIn" + slideDirRef.current : "fadeIn"} 0.25s ease`
+        }}>
+        <button onClick={onClose} style={{
+          position:"absolute", top:12, left:12,
+          background:"#f2f2f7", border:"none", fontSize:14, color:"#8e8e93",
+          width:28, height:28, borderRadius:"50%",
+          display:"flex", alignItems:"center", justifyContent:"center"
+        }}>✕</button>
+        <div style={{ textAlign:"center", marginBottom:20 }}>
+          {item.emoji && <div style={{ fontSize:44, lineHeight:1, marginBottom:6 }}>{item.emoji}</div>}
+          <div style={{ fontSize:34, fontWeight:600, color:"#1c1c1e", direction:"ltr" }}>{item.gr}</div>
+          <div style={{ fontSize:18, color:"#8e8e93", marginTop:4 }}>{item.he}</div>
+          <button onClick={() => speak(item.gr)} style={{
+            marginTop:12, padding:"8px 20px", borderRadius:99,
+            background:accent, border:"none", color:"#fff", fontSize:14, fontWeight:600
+          }}>🔊 השמע</button>
+        </div>
+        <div style={{ background:"#f2f2f7", borderRadius:12, padding:14, marginBottom:14 }}>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+            <div>
+              <div style={{ fontSize:11, color:"#8e8e93", marginBottom:2, fontWeight:500 }}>הגייה</div>
+              <div style={{ fontSize:17, fontWeight:600, color:"#1c1c1e" }}>{item.pronHe}</div>
+            </div>
+            <div>
+              <div style={{ fontSize:11, color:"#8e8e93", marginBottom:2, fontWeight:500 }}>תעתיק</div>
+              <div style={{ fontSize:17, fontWeight:600, color:"#1c1c1e", direction:"ltr" }}>{item.pron}</div>
+            </div>
+          </div>
+        </div>
+        <div style={{ padding:"12px 14px", borderRadius:12, background: state?.learned ? accent + "18" : "#f2f2f7", textAlign:"center" }}>
+          {state?.learned ? (
+            <div style={{ fontSize:14, fontWeight:600, color:accent }}>נלמד ✓ · {state.quizCorrect} תשובות נכונות</div>
+          ) : (
+            <div>
+              <div style={{ fontSize:13, color:"#8e8e93", marginBottom:6, fontWeight:500 }}>{state?.quizCorrect || 0} / 10 תשובות נכונות בחידון = נלמד</div>
+              <div style={{ background:"#e5e5ea", borderRadius:99, height:6, overflow:"hidden" }}>
+                <div style={{ width: Math.min(100, ((state?.quizCorrect || 0) / 10) * 100) + "%", height:"100%", background:accent, borderRadius:99, transition:"width 0.4s" }} />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PackQuizScreen({ pack, states, accent, onEnd, onUpdate }) {
+  const [questions, setQuestions] = useState([]);
+  const [qi, setQi] = useState(0);
+  const [selected, setSelected] = useState(null);
+  const [stats, setStats] = useState({ correct:0, total:0 });
+
+  useEffect(() => {
+    const items = pack.items;
+    const count = Math.min(10, items.length);
+    const picked = shuffle(items).slice(0, count);
+    const qs = picked.map((item, i) => {
+      const type = i % 2 === 0 ? "he2gr" : "gr2he";
+      const others = shuffle(items.filter(x => x.id !== item.id)).slice(0, 3);
+      const options = shuffle([item, ...others]);
+      if (type === "he2gr") {
+        return { item, options, correctId:item.id, ltr:true,
+          question:`איך אומרים "${item.he}" ביוונית?`, getLabel:o => `${o.gr} (${o.pron})` };
+      }
+      return { item, options, correctId:item.id, ltr:false,
+        question:`מה הפירוש של ${item.gr}?`, getLabel:o => o.he };
+    });
+    setQuestions(shuffle(qs));
+  }, []);
+
+  if (questions.length === 0) return null;
+
+  if (qi >= questions.length) {
+    const pct = Math.round((stats.correct / stats.total) * 100);
+    return (
+      <div style={{ padding:"40px 20px", maxWidth:480, margin:"0 auto", textAlign:"center" }}>
+        <div style={{ fontSize:56, marginTop:24 }}>{pct >= 80 ? "🏆" : pct >= 50 ? "👏" : "💪"}</div>
+        <h2 style={{ fontSize:24, fontWeight:700, color:"#1c1c1e", marginBottom:8 }}>
+          {pct >= 80 ? "מצוין!" : pct >= 50 ? "לא רע!" : "צריך תרגול"}
+        </h2>
+        <div style={{ fontSize:48, fontWeight:700, color:accent, marginBottom:8 }}>{pct}%</div>
+        <div style={{ fontSize:16, color:"#8e8e93", marginBottom:32 }}>{stats.correct} מתוך {stats.total} תשובות נכונות</div>
+        <button onClick={onEnd} style={{
+          padding:"14px 40px", fontSize:16, fontWeight:700,
+          background:accent, color:"#fff", border:"none", borderRadius:14
+        }}>חזרה הביתה</button>
+      </div>
+    );
+  }
+
+  const q = questions[qi];
+  const isCorrect = selected !== null ? selected === q.correctId : null;
+  function handleSelect(id) {
+    if (selected !== null) return;
+    setSelected(id);
+    const correct = id === q.correctId;
+    setStats(s => ({ correct: s.correct + (correct ? 1 : 0), total: s.total + 1 }));
+    onUpdate(q.item.id, correct);
+    if (correct) speak(q.item.gr);
+  }
+
+  return (
+    <div style={{ padding:"20px 16px", maxWidth:480, margin:"0 auto" }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
+        <button onClick={onEnd} style={{
+          background:"#fff", border:"none", fontSize:18, width:36, height:36, borderRadius:10, color:accent,
+          display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 1px 4px rgba(0,0,0,0.06)"
+        }}>←</button>
+        <div style={{ fontSize:14, color:"#8e8e93", fontWeight:600 }}>{pack.emoji} {qi + 1} / {questions.length}</div>
+        <div style={{ fontSize:13, color:accent, fontWeight:600 }}>{stats.correct} נכון</div>
+      </div>
+      <div style={{ background:"#e5e5ea", borderRadius:99, height:6, marginBottom:24, overflow:"hidden" }}>
+        <div style={{ width:((qi + 1) / questions.length * 100) + "%", height:"100%", background:accent, borderRadius:99, transition:"width 0.4s" }} />
+      </div>
+      <div style={{ fontSize:18, fontWeight:600, color:"#1c1c1e", textAlign:"center", marginBottom:20 }}>{q.question}</div>
+      <div style={{ display:"grid", gridTemplateColumns:"1fr", gap:10, marginBottom:20 }}>
+        {q.options.map(opt => {
+          const isThis = selected === opt.id;
+          const isRight = opt.id === q.correctId;
+          let bg = "#fff", border = "#e5e5ea", color = "#1c1c1e";
+          if (selected !== null) {
+            if (isRight) { bg = accent + "16"; border = accent; color = accent; }
+            else if (isThis && !isRight) { bg = "#fff3e0"; border = "#ff9f0a"; color = "#cc7a00"; }
+          }
+          return (
+            <button key={opt.id} onClick={() => handleSelect(opt.id)} style={{
+              padding:"14px 18px", fontSize:16, fontWeight:600,
+              background:bg, color, border:`1.5px solid ${border}`,
+              borderRadius:14, textAlign:"center", transition:"all 0.15s",
+              direction: q.ltr ? "ltr" : "rtl",
+              boxShadow: selected === null ? "0 1px 4px rgba(0,0,0,0.06)" : "none"
+            }}>
+              {q.getLabel(opt)}{selected !== null && isRight && " ✓"}
+            </button>
+          );
+        })}
+      </div>
+      {selected !== null && (
+        <div>
+          <div style={{
+            padding:"12px 16px", borderRadius:12, marginBottom:14,
+            background: isCorrect ? accent + "16" : "#fff3e0",
+            textAlign:"center", fontSize:14, fontWeight:600,
+            color: isCorrect ? accent : "#cc7a00"
+          }}>
+            {isCorrect ? `נכון! ${q.item.gr} (${q.item.pron}) = ${q.item.he}` : `לא — ${q.item.gr} (${q.item.pron}) = ${q.item.he}`}
+          </div>
+          <button onClick={() => { setSelected(null); setQi(qi + 1); }} style={{
+            width:"100%", padding:"14px 0", fontSize:16, fontWeight:700,
+            background:accent, color:"#fff", border:"none", borderRadius:14
+          }}>{qi + 1 < questions.length ? "הבא" : "סיכום"}</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PackTab({ pack, data, onSelectItem, onStartQuiz, onSetDays, onReset }) {
+  const [showSettings, setShowSettings] = useState(false);
+  const states = data.states, start = data.start, days = data.days;
+  const accent = pack.accent;
+  const total = pack.items.length;
+  const learned = pack.items.filter(it => states[it.id]?.learned).length;
+  const DAY_PLAN = buildDayPlan(total, days);
+  const day = start ? Math.min(days, daysSince(start) + 1) : 0;
+  const todayPlan = day > 0 ? DAY_PLAN[day - 1] : null;
+  const todayTarget = todayPlan ? todayPlan.target : 0;
+  const prevTarget = day > 1 ? DAY_PLAN[day - 2].target : 0;
+  const todayNew = Math.max(0, learned - prevTarget);
+  const todayRemaining = Math.max(0, todayTarget - learned);
+  const almost = pack.items.filter(it => { const s = states[it.id]; return !s?.learned && (s?.quizCorrect || 0) >= 8; });
+
+  return (<>
+    <div style={{ background:"#fff", borderRadius:14, padding:14, marginBottom:14, boxShadow:"0 1px 4px rgba(0,0,0,0.06)" }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", fontSize:14, fontWeight:600, color:"#1c1c1e", marginBottom:8 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+          <span>{day > 0 ? `יום ${day} מתוך ${days}` : `${pack.emoji} ${pack.label}`}</span>
+          <button onClick={() => setShowSettings(true)} style={{ background:"none", border:"none", padding:0, cursor:"pointer", fontSize:14, color:"#8e8e93", lineHeight:1 }}>⚙</button>
+        </div>
+        <span style={{ color:"#8e8e93" }}>{learned}/{total}</span>
+      </div>
+      {day > 0 && todayRemaining > 0 ? (
+        <div style={{ fontSize:13, color:"#636366", fontWeight:500, marginBottom:8, textAlign:"center", padding:"6px 10px", borderRadius:8, background:"#f2f2f7" }}>
+          {todayNew}/{todayPlan.daily} מילים חדשות היום · נשאר: {todayRemaining}
+        </div>
+      ) : day > 0 && todayPlan ? (
+        <div style={{ fontSize:13, color:accent, fontWeight:600, marginBottom:8, textAlign:"center", padding:"6px 10px", borderRadius:8, background:accent + "14" }}>
+          {learned >= total ? "השלמת את כל הערכה! 🎉" : "סיימת את המשימה של היום ✓"}
+        </div>
+      ) : (
+        <div style={{ fontSize:12.5, color:"#8e8e93", marginBottom:8, textAlign:"center" }}>
+          פתח פריט ועבור חידון — האתגר יתחיל אוטומטית
+        </div>
+      )}
+      <div style={{ background:"#e5e5ea", borderRadius:99, height:6, overflow:"hidden" }}>
+        <div style={{ width:(learned / total * 100) + "%", height:"100%", background:accent, borderRadius:99, transition:"width 0.6s" }} />
+      </div>
+      {day > 0 && (
+        <div style={{ display:"flex", gap:6, marginTop:10, justifyContent:"center", flexWrap:"wrap" }}>
+          {DAY_PLAN.map((dp, i) => {
+            const dayNum = i + 1;
+            const current = dayNum === day;
+            const isFuture = dayNum > day;
+            const met = learned >= dp.target;
+            const aheadMet = isFuture && met;
+            const prevT = i > 0 ? DAY_PLAN[i - 1].target : 0;
+            const dayNew = current ? Math.max(0, learned - prevT) : met ? dp.daily : 0;
+            let bg, color, border;
+            if (current) { bg = met ? accent : "#e5e5ea"; color = met ? "#fff" : "#1c1c1e"; border = `2.5px solid ${accent}`; }
+            else if (aheadMet) { bg = "transparent"; color = accent; border = `2px dashed ${accent}`; }
+            else if (!isFuture && met) { bg = accent; color = "#fff"; border = "none"; }
+            else { bg = "#e5e5ea"; color = "#aeaeb2"; border = "none"; }
+            return (
+              <div key={i} style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:2, width:40 }}>
+                <div style={{ width:28, height:28, borderRadius:"50%", background:bg, color, border, display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:600, boxSizing:"border-box" }}>
+                  {(!isFuture && met && !current) ? "✓" : aheadMet ? "✓" : dayNum}
+                </div>
+                <div style={{ fontSize:8, fontWeight:600, color: current ? accent : met ? accent : isFuture ? "#c7c7cc" : "#8e8e93" }}>
+                  {isFuture && !aheadMet ? dp.daily : `${Math.min(dayNew, dp.daily)}/${dp.daily}`}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+
+    {showSettings && (
+      <ChallengeSettingsModal
+        title={`הגדרות אתגר ${pack.label}`}
+        days={days} presets={PACK_DAY_PRESETS} accentColor={accent}
+        onSetDays={d => onSetDays(pack.id, d)}
+        onReset={() => { onReset(pack.id); setShowSettings(false); }}
+        onClose={() => setShowSettings(false)}
+      />
+    )}
+
+    <div style={{ display:"grid", gridTemplateColumns:`repeat(${pack.cols || 3}, 1fr)`, gap:8, marginBottom:14 }}>
+      {pack.items.map(it => (
+        <PackCell key={it.id} item={it} state={states[it.id]} accent={accent} onClick={() => onSelectItem(pack.id, it)} />
+      ))}
+    </div>
+
+    <button onClick={() => onStartQuiz(pack.id)} style={{
+      width:"100%", padding:"14px 0", fontSize:16, fontWeight:600,
+      background:accent, color:"#fff", border:"none", borderRadius:12,
+      boxShadow:`0 2px 8px ${accent}33`, marginBottom:14
+    }}>מבחן {pack.label}</button>
+
+    {almost.length > 0 && (
+      <div style={{ background:"#fff", borderRadius:14, padding:14, marginBottom:14, boxShadow:"0 1px 4px rgba(0,0,0,0.06)" }}>
+        <div style={{ fontSize:14, fontWeight:600, color:"#1c1c1e", marginBottom:10 }}>כמעט שם — {almost.length} מילים</div>
+        <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+          {almost.map(it => (
+            <div key={it.id} onClick={() => onSelectItem(pack.id, it)} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", background:"#f2f2f7", borderRadius:10, padding:"8px 12px", cursor:"pointer" }}>
+              <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                <span style={{ fontSize:16, fontWeight:700, color:"#1c1c1e", direction:"ltr" }}>{it.gr}</span>
+                <span style={{ fontSize:13, color:"#8e8e93" }}>{it.he}</span>
+              </div>
+              <div style={{ fontSize:13, fontWeight:700, color:accent, background:accent + "14", padding:"2px 8px", borderRadius:8 }}>{states[it.id]?.quizCorrect || 0}/10</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+  </>);
+}
+
 function NotebookScreen() {
   const [words] = useState(() => shuffle(READING_WORDS));
   const [wordIdx, setWordIdx] = useState(0);
@@ -1879,7 +2279,8 @@ function HomeScreen({
   letterStates, onSelectLetter, onStartQuiz, onStartReading, onStartFinal, challengeStart, numberStates,
   onSelectNumber, onStartNumberQuiz, numChallengeStart, onStartAlphaOrder, onStartDraw,
   letterChallengeDays, onSetLetterChallengeDays, onResetLetterChallenge,
-  numChallengeDays, onSetNumChallengeDays, onResetNumChallenge
+  numChallengeDays, onSetNumChallengeDays, onResetNumChallenge,
+  packData, onSelectPackItem, onStartPackQuiz, onSetPackDays, onResetPack
 }) {
   const [tab, setTab] = useState("letters");
   const [showAbcParagraph, setShowAbcParagraph] = useState(false);
@@ -1926,27 +2327,33 @@ function HomeScreen({
           αβγ
         </h1>
         <p style={{ margin: "4px 0 0", color: "#8e8e93", fontSize: 14, fontWeight: 400 }}>
-          האלפבית היווני ב-{letterChallengeDays} ימים <span style={{ fontSize: 11 }}>(v30)</span>
+          האלפבית היווני ב-{letterChallengeDays} ימים <span style={{ fontSize: 11 }}>(v31)</span>
         </p>
       </div>
 
       <div style={{
-        display: "flex", background: "#e5e5ea", borderRadius: 10, padding: 3, marginBottom: 16
+        display: "flex", background: "#e5e5ea", borderRadius: 10, padding: 3, marginBottom: 16,
+        overflowX: "auto", gap: 2, WebkitOverflowScrolling: "touch", scrollbarWidth: "none"
       }}>
         {[
-          {id:"letters",label:"אותיות",count:`${learnedCount}/24`},
-          {id:"numbers",label:"מספרים",count:`${numLearned}/${NUMBERS.length}`},
-          {id:"notebook",label:"מחברת",count:null}
+          {id:"letters",label:"אותיות",count:`${learnedCount}/24`,accent:"#007aff"},
+          {id:"numbers",label:"מספרים",count:`${numLearned}/${NUMBERS.length}`,accent:"#ff9f0a"},
+          ...WORD_PACKS.map(p => {
+            const st = packData[p.id].states;
+            const l = p.items.filter(it => st[it.id]?.learned).length;
+            return { id:p.id, label:p.label, count:`${l}/${p.items.length}`, accent:p.accent };
+          }),
+          {id:"notebook",label:"מחברת",count:null,accent:"#007aff"}
         ].map(t => (
           <button key={t.id} onClick={() => setTab(t.id)} style={{
-            flex: 1, padding: "8px 0", fontSize: 13, fontWeight: 600,
+            flex: "1 0 auto", minWidth: 62, padding: "8px 10px", fontSize: 13, fontWeight: 600,
             background: tab === t.id ? "#fff" : "transparent",
             color: tab === t.id ? "#1c1c1e" : "#8e8e93",
-            border: "none", borderRadius: 8,
+            border: "none", borderRadius: 8, whiteSpace: "nowrap",
             boxShadow: tab === t.id ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
             transition: "all 0.2s"
           }}>
-            {t.label}{t.count ? <span style={{ fontSize: 11, color: tab === t.id ? "#007aff" : "#aeaeb2" }}> {t.count}</span> : null}
+            {t.label}{t.count ? <span style={{ fontSize: 11, color: tab === t.id ? t.accent : "#aeaeb2" }}> {t.count}</span> : null}
           </button>
         ))}
       </div>
@@ -2394,6 +2801,12 @@ function HomeScreen({
       })()}
       </>)}
 
+      {WORD_PACKS.map(p => tab === p.id && (
+        <PackTab key={p.id} pack={p} data={packData[p.id]}
+          onSelectItem={onSelectPackItem} onStartQuiz={onStartPackQuiz}
+          onSetDays={onSetPackDays} onReset={onResetPack} />
+      ))}
+
       {tab === "notebook" && <NotebookScreen />}
 
     </div>
@@ -2565,9 +2978,13 @@ function App() {
   const [numChallengeStart, setNumChallengeStart] = useState(null);
   const [letterChallengeDays, setLetterChallengeDays] = useState(LETTER_CHALLENGE_DEFAULT_DAYS);
   const [numChallengeDays, setNumChallengeDays] = useState(NUM_CHALLENGE_DEFAULT_DAYS);
+  const [packData, setPackData] = useState(null);
+  const [selectedPackItem, setSelectedPackItem] = useState(null); // {packId, item}
+  const [activePack, setActivePack] = useState(null); // packId for quiz screen
 
   useEffect(() => {
     const saved = loadData();
+    setPackData(mergePacks(saved?.packs));
     if (saved?.letterStates) {
       const merged = initState();
       Object.keys(saved.letterStates).forEach(id => {
@@ -2595,13 +3012,13 @@ function App() {
 
   const saveTimer = useRef(null);
   useEffect(() => {
-    if (!letterStates || !numberStates) return;
+    if (!letterStates || !numberStates || !packData) return;
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
-      saveData({ letterStates, numberStates, challengeStart, numChallengeStart, letterChallengeDays, numChallengeDays, savedAt: new Date().toISOString() });
+      saveData({ letterStates, numberStates, challengeStart, numChallengeStart, letterChallengeDays, numChallengeDays, packs: packData, savedAt: new Date().toISOString() });
     }, 300);
     return () => clearTimeout(saveTimer.current);
-  }, [letterStates, numberStates, challengeStart, numChallengeStart, letterChallengeDays, numChallengeDays]);
+  }, [letterStates, numberStates, challengeStart, numChallengeStart, letterChallengeDays, numChallengeDays, packData]);
 
   function resetLetterChallenge() {
     if (!window.confirm("לאפס את אתגר האלפבית לגמרי? כל האותיות שלמדת יחזרו ל-0 והימים יתחילו מחדש.")) return;
@@ -2657,6 +3074,37 @@ function App() {
     }
   }
 
+  function handlePackQuizUpdate(packId, itemId, correct) {
+    setPackData(prev => {
+      const pd = prev[packId];
+      const cur = pd.states[itemId];
+      const newCorrect = correct ? cur.quizCorrect + 1 : Math.max(0, cur.quizCorrect - 3);
+      return {
+        ...prev,
+        [packId]: {
+          ...pd,
+          start: pd.start || new Date().toISOString(),
+          states: { ...pd.states, [itemId]: { ...cur, quizCorrect: newCorrect, quizTotal: cur.quizTotal + 1, learned: newCorrect >= 10 } }
+        }
+      };
+    });
+  }
+  function setPackDays(packId, days) {
+    setPackData(prev => ({ ...prev, [packId]: { ...prev[packId], days } }));
+  }
+  function resetPack(packId) {
+    const pack = PACK_MAP[packId];
+    if (!window.confirm(`לאפס את אתגר ${pack.label} לגמרי? כל המילים שלמדת יחזרו ל-0 והימים יתחילו מחדש.`)) return;
+    setPackData(prev => ({ ...prev, [packId]: { states: initPackState(pack), start: null, days: prev[packId].days } }));
+  }
+  function navigatePackItem(dir) {
+    if (!selectedPackItem) return;
+    const pack = PACK_MAP[selectedPackItem.packId];
+    const idx = pack.items.findIndex(it => it.id === selectedPackItem.item.id);
+    const next = idx + dir;
+    if (next >= 0 && next < pack.items.length) setSelectedPackItem({ packId: pack.id, item: pack.items[next] });
+  }
+
   function navigateLetter(dir) {
     if (!selectedLetter) return;
     const idx = LETTERS.findIndex(l => l.id === selectedLetter.id);
@@ -2671,7 +3119,7 @@ function App() {
     if (next >= 0 && next < NUMBERS.length) setSelectedNumber(NUMBERS[next]);
   }
 
-  if (screen === "loading" || !letterStates || !numberStates) {
+  if (screen === "loading" || !letterStates || !numberStates || !packData) {
     return (
       <div style={{
         minHeight: "100vh", display: "flex", alignItems: "center",
@@ -2710,6 +3158,20 @@ function App() {
           numChallengeDays={numChallengeDays}
           onSetNumChallengeDays={setNumChallengeDays}
           onResetNumChallenge={resetNumChallenge}
+          packData={packData}
+          onSelectPackItem={(packId, item) => setSelectedPackItem({ packId, item })}
+          onStartPackQuiz={packId => { setActivePack(packId); setScreen("packquiz"); }}
+          onSetPackDays={setPackDays}
+          onResetPack={resetPack}
+        />
+      )}
+      {screen === "packquiz" && activePack && (
+        <PackQuizScreen
+          pack={PACK_MAP[activePack]}
+          states={packData[activePack].states}
+          accent={PACK_MAP[activePack].accent}
+          onEnd={() => setScreen("home")}
+          onUpdate={(itemId, correct) => handlePackQuizUpdate(activePack, itemId, correct)}
         />
       )}
       {screen === "alphaorder" && <AlphaOrderScreen onEnd={() => setScreen("home")} />}
@@ -2766,6 +3228,16 @@ function App() {
           onPrev={() => navigateNumber(-1)}
         />
       )}
+      {selectedPackItem && (
+        <PackModal
+          item={selectedPackItem.item}
+          state={packData[selectedPackItem.packId].states[selectedPackItem.item.id]}
+          accent={PACK_MAP[selectedPackItem.packId].accent}
+          onClose={() => setSelectedPackItem(null)}
+          onNext={() => navigatePackItem(1)}
+          onPrev={() => navigatePackItem(-1)}
+        />
+      )}
     </div>
   );
 }
@@ -2774,7 +3246,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
 <script>
 (function(){
-  var APP_VER = 'abc_v30';
+  var APP_VER = 'abc_v31';
   if ('caches' in window && localStorage.getItem('abc_ver') !== APP_VER) {
     caches.keys().then(function(names) {
       return Promise.all(names.map(function(n){ return caches.delete(n); }));
