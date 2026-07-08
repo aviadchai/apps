@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1666c9"/>
+      <stop offset="1" stop-color="#0d4c9e"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <!-- location pin -->
+  <path d="M256 96c-70 0-126 54-126 122 0 92 126 198 126 198s126-106 126-198C382 150 326 96 256 96z" fill="#ffffff"/>
+  <!-- Greek letter Omega inside pin -->
+  <text x="256" y="268" text-anchor="middle" fill="#0d4c9e" font-family="Georgia, 'Times New Roman', serif" font-size="150" font-weight="bold">Ω</text>
+</svg>
