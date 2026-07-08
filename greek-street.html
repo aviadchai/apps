@@ -171,6 +171,32 @@ button:active{transform:scale(.97);}
 .empty .e{font-size:44px;margin-bottom:10px;}
 .fade{animation:fade .3s ease;}
 @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+/* challenges */
+.ch-intro{text-align:center;padding:26px;border-radius:20px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);margin-bottom:6px;}
+.ch-intro .ch-emoji{font-size:54px;}
+.ch-intro h2{font-size:22px;font-weight:800;margin-top:8px;}
+.ch-intro p{color:var(--muted);font-size:14px;margin-top:4px;}
+.dayopts{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:8px;}
+.dayopt{background:var(--card);border:1.5px solid var(--line);border-radius:13px;padding:14px 4px;font-size:15px;font-weight:700;}
+.dayopt.sel{border-color:var(--blue);background:#eaf2ff;color:var(--blue-d);}
+.ch-hint{font-size:12.5px;color:var(--muted);text-align:center;margin-top:14px;line-height:1.5;}
+.dstrip{display:flex;gap:7px;justify-content:center;flex-wrap:wrap;margin:2px 0 18px;}
+.dstep{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;background:var(--line);color:var(--muted);}
+.dstep.past{background:var(--cc);color:#fff;opacity:.5;}
+.dstep.cur{background:var(--cc);color:#fff;box-shadow:0 3px 10px rgba(0,0,0,.18);transform:scale(1.09);}
+.ch-card{background:var(--card);border-radius:18px;border:1px solid var(--line);box-shadow:var(--shadow);padding:22px 20px;text-align:center;margin-bottom:14px;}
+.ch-card .goal{font-size:18px;font-weight:800;margin-bottom:4px;}
+.ch-card .goalsub{font-size:13px;color:var(--muted);margin-bottom:16px;}
+.order-placed{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;min-height:46px;background:#eef2f8;border-radius:14px;padding:12px;margin-bottom:16px;}
+.order-placed .pchip{background:var(--blue);color:#fff;border-radius:10px;padding:8px 12px;font-weight:700;direction:ltr;font-size:14px;}
+.order-placed .ph{color:var(--muted);font-size:13px;align-self:center;}
+.order-tiles{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;}
+.otile{background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:13px 15px;box-shadow:var(--shadow);min-width:88px;text-align:center;}
+.otile .oel{font-size:17px;font-weight:800;direction:ltr;}
+.otile .ohe{font-size:12px;color:var(--muted);font-weight:600;margin-top:2px;}
+.otile.gone{opacity:.2;pointer-events:none;}
+.shake{animation:shake .35s;}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-7px)}40%,80%{transform:translateX(7px)}}
 .toast{position:fixed;bottom:calc(var(--safe-b) + 20px);left:50%;transform:translateX(-50%);
   background:rgba(18,32,58,.94);color:#fff;padding:11px 20px;border-radius:30px;font-size:14px;
   font-weight:600;z-index:100;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90%;}
@@ -346,6 +372,56 @@ const WORDS = [
 ];
 const WMAP = Object.fromEntries(WORDS.map(w=>[w.id,w]));
 
+/* ---------------- אתגרים (תוכניות רב-יומיות) ---------------- */
+// ordered=true → יש חשיבות לסדר (מפעיל את "אתגר הסדר").
+const CHALLENGES = [
+  {id:'days', title:'ימי השבוע', emoji:'📅', color:'#0d5eaf', ordered:true, defaultDays:7,
+   note:'7 ימי השבוע לפי הסדר היווני (מתחיל בשני)', items:[
+     {el:'Δευτέρα',tr:'דֶפטֶרָה',he:'יום שני'},
+     {el:'Τρίτη',tr:'טְריטי',he:'יום שלישי'},
+     {el:'Τετάρτη',tr:'טֶטָארטי',he:'יום רביעי'},
+     {el:'Πέμπτη',tr:'פֶּמפטי',he:'יום חמישי'},
+     {el:'Παρασκευή',tr:'פָּרָסקֶבי',he:'יום שישי'},
+     {el:'Σάββατο',tr:'סָאבָאטוֹ',he:'שבת'},
+     {el:'Κυριακή',tr:'קיריָאקי',he:'יום ראשון'},
+   ]},
+  {id:'colors', title:'צבעים', emoji:'🎨', color:'#7c3aed', ordered:false, defaultDays:5,
+   note:'11 צבעים בסיסיים', items:[
+     {el:'Άσπρο',tr:'אָספרוֹ',he:'לבן ⚪'},
+     {el:'Μαύρο',tr:'מָאברוֹ',he:'שחור ⚫'},
+     {el:'Κόκκινο',tr:'קוֹקינוֹ',he:'אדום 🔴'},
+     {el:'Μπλε',tr:'בְּלֶה',he:'כחול 🔵'},
+     {el:'Πράσινο',tr:'פְּרָאסינוֹ',he:'ירוק 🟢'},
+     {el:'Κίτρινο',tr:'קִיטרינוֹ',he:'צהוב 🟡'},
+     {el:'Πορτοκαλί',tr:'פּוֹרטוֹקָלי',he:'כתום 🟠'},
+     {el:'Ροζ',tr:'רוֹז',he:'ורוד 🩷'},
+     {el:'Μωβ',tr:'מוֹב',he:'סגול 🟣'},
+     {el:'Καφέ',tr:'קָאפֶה',he:'חום 🟤'},
+     {el:'Γκρι',tr:'גְרי',he:'אפור ⚪'},
+   ]},
+  {id:'numbers', title:'מספרים 1–20', emoji:'🔢', color:'#b45309', ordered:true, defaultDays:7,
+   note:'ספירה מ-1 עד 20 לפי הסדר', items:[
+     {el:'Ένα',tr:'אֶנָה',he:'1'},{el:'Δύο',tr:'דִיוֹ',he:'2'},{el:'Τρία',tr:'טְריָה',he:'3'},
+     {el:'Τέσσερα',tr:'טֶסֶרָה',he:'4'},{el:'Πέντε',tr:'פֶּנדֶה',he:'5'},{el:'Έξι',tr:'אֶקסי',he:'6'},
+     {el:'Εφτά',tr:'אֶפטָה',he:'7'},{el:'Οχτώ',tr:'אוֹכטוֹ',he:'8'},{el:'Εννιά',tr:'אֶניָה',he:'9'},
+     {el:'Δέκα',tr:'דֶקָה',he:'10'},{el:'Έντεκα',tr:'אֶנדֶקָה',he:'11'},{el:'Δώδεκα',tr:'דוֹדֶקָה',he:'12'},
+     {el:'Δεκατρία',tr:'דֶקָטריָה',he:'13'},{el:'Δεκατέσσερα',tr:'דֶקָטֶסֶרָה',he:'14'},
+     {el:'Δεκαπέντε',tr:'דֶקָפֶּנדֶה',he:'15'},{el:'Δεκάξι',tr:'דֶקָאקסי',he:'16'},
+     {el:'Δεκαεφτά',tr:'דֶקָאֶפטָה',he:'17'},{el:'Δεκαοχτώ',tr:'דֶקָאוֹכטוֹ',he:'18'},
+     {el:'Δεκαεννιά',tr:'דֶקָאֶניָה',he:'19'},{el:'Είκοσι',tr:'אִיקוֹסי',he:'20'},
+   ]},
+  {id:'months', title:'חודשים', emoji:'🗓️', color:'#0a7d5a', ordered:true, defaultDays:6,
+   note:'12 חודשי השנה לפי הסדר', items:[
+     {el:'Ιανουάριος',tr:'יָאנוּאָריוֹס',he:'ינואר'},{el:'Φεβρουάριος',tr:'פֶברוּאָריוֹס',he:'פברואר'},
+     {el:'Μάρτιος',tr:'מָארטיוֹס',he:'מרץ'},{el:'Απρίλιος',tr:'אָפּריליוֹס',he:'אפריל'},
+     {el:'Μάιος',tr:'מָאיוֹס',he:'מאי'},{el:'Ιούνιος',tr:'יוּניוֹס',he:'יוני'},
+     {el:'Ιούλιος',tr:'יוּליוֹס',he:'יולי'},{el:'Αύγουστος',tr:'אַבגוּסטוֹס',he:'אוגוסט'},
+     {el:'Σεπτέμβριος',tr:'סֶפטֶמבריוֹס',he:'ספטמבר'},{el:'Οκτώβριος',tr:'אוֹקטוֹבריוֹס',he:'אוקטובר'},
+     {el:'Νοέμβριος',tr:'נוֹאֶמבריוֹס',he:'נובמבר'},{el:'Δεκέμβριος',tr:'דֶקֶמבריוֹס',he:'דצמבר'},
+   ]},
+];
+const CHMAP = Object.fromEntries(CHALLENGES.map(c=>[c.id,c]));
+
 /* ---------------- Storage / SRS (Leitner) ---------------- */
 const KEY='gr_street_v1';
 const DAY=86400000;
@@ -359,6 +435,9 @@ DB.srs=DB.srs||{};            // {id:{box:1..5, due:ts}}
 DB.streak=DB.streak||0;
 DB.lastDay=DB.lastDay||null;
 DB.bestQuiz=DB.bestQuiz||0;
+DB.ch=DB.ch||{};              // אתגרים: {chId:{start,days,learned:{i:true},orderDone}}
+// בקשת אחסון קבוע — מפחית מחיקת נתונים ע"י הדפדפן (חשוב לתוכנית רב-יומית)
+if(navigator.storage&&navigator.storage.persist){navigator.storage.persist().catch(()=>{});}
 
 function todayKey(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()}
 function bumpStreak(){
@@ -393,6 +472,24 @@ function catProgress(cat){
 }
 function totalMastered(){return WORDS.filter(w=>isMastered(w.id)).length}
 function totalSeen(){return WORDS.filter(w=>isSeen(w.id)).length}
+
+/* ---- לוגיקת אתגרים ---- */
+function daysSince(ts){return Math.floor((Date.now()-ts)/DAY)}
+function chStart(id,days){DB.ch[id]={start:Date.now(),days,learned:{},orderDone:false};bumpStreak();save();}
+function chReset(id){delete DB.ch[id];save();}
+function chDayNum(id){const st=DB.ch[id];return st?Math.min(st.days,daysSince(st.start)+1):0;}
+function chTarget(id,day){const c=CHMAP[id],st=DB.ch[id];return Math.round(c.items.length*day/st.days);}
+function chLearnedCount(id){const st=DB.ch[id];return st?Object.keys(st.learned).length:0;}
+function chIsLearned(id,i){const st=DB.ch[id];return !!(st&&st.learned[i]);}
+function chMarkLearned(id,i){const st=DB.ch[id];if(!st)return;st.learned[i]=true;bumpStreak();save();}
+function chUnlearnedIdx(id){const c=CHMAP[id];return c.items.map((_,i)=>i).filter(i=>!chIsLearned(id,i));}
+function chTodayGoal(id){const day=chDayNum(id);return Math.max(0,chTarget(id,day)-chLearnedCount(id));}
+function chTodayItems(id){return chUnlearnedIdx(id).slice(0,chTodayGoal(id));}
+function chDone(id){const c=CHMAP[id],st=DB.ch[id];if(!st)return false;
+  return chLearnedCount(id)>=c.items.length && (!c.ordered||st.orderDone);}
+function chPct(id){const c=CHMAP[id];const total=c.items.length+(c.ordered?1:0);
+  let d=chLearnedCount(id)+(c.ordered&&DB.ch[id]&&DB.ch[id].orderDone?1:0);
+  return Math.round(d/total*100);}
 
 /* ---------------- Audio (Web Speech) ---------------- */
 let VOICES=[];
@@ -447,6 +544,18 @@ function renderHome(){
       <div class="cmeta"><b>${p.mastered}</b>/${p.total}</div>
       <div class="chev">‹</div>
     </button>`;}).join('');
+  const chCards=CHALLENGES.map(c=>{
+    const started=!!DB.ch[c.id];const pct=started?chPct(c.id):0;
+    const sub = !started ? `${c.items.length} מילים · ${c.defaultDays} ימים`
+      : chDone(c.id) ? 'הושלם! 🎉'
+      : `יום ${chDayNum(c.id)}/${DB.ch[c.id].days} · ${chLearnedCount(c.id)}/${c.items.length}`;
+    return `<button class="cat" data-act="chdetail" data-ch="${c.id}">
+      <div class="cemoji" style="background:${c.color}1a">${c.emoji}</div>
+      <div class="ctxt"><b>${c.title}</b>
+        <div class="cbar"><i style="width:${pct}%;background:${c.color}"></i></div></div>
+      <div class="cmeta" style="font-size:11.5px;font-weight:700;color:${started&&chDone(c.id)?c.color:'var(--muted)'}">${sub}</div>
+      <div class="chev">‹</div>
+    </button>`;}).join('');
   app.innerHTML=`
   <div class="hero fade">
     <div class="hero-top">
@@ -473,6 +582,8 @@ function renderHome(){
       <button class="mode" data-act="listen" data-scope="all"><div class="emoji">🎧</div><b>הקשבה</b><span>שומעים ומזהים את המילה</span></button>
       <button class="mode" data-act="phrase" data-scope="all"><div class="emoji">📖</div><b>שיחון</b><span>מדריך מהיר לרחוב עם הגייה</span></button>
     </div>
+    <div class="sec">🏆 אתגרים — לומדים לפי תוכנית</div>
+    <div class="cats">${chCards}</div>
     <div class="sec">לפי מצב ברחוב</div>
     <div class="cats">${cats}</div>
     <div style="margin-top:16px">
@@ -717,10 +828,151 @@ function renderStats(){
   </div>`;
 }
 
+/* ----- Challenge: detail ----- */
+function renderChDetail(){
+  const id=S.ch;const c=CHMAP[id];const st=DB.ch[id];
+  if(!st){
+    const sel=S.chDays||c.defaultDays;
+    const dayOpts=[5,7,10,14].map(d=>`<button class="dayopt${d===sel?' sel':''}" data-act="chdays" data-d="${d}" data-ch="${id}">${d} ימים</button>`).join('');
+    app.innerHTML=header(c.title,c.note)+`
+    <div class="wrap fade">
+      <div class="ch-intro"><div class="ch-emoji">${c.emoji}</div>
+        <h2>${c.title}</h2><p>${c.items.length} מילים${c.ordered?' · כולל אתגר סדר 🎯':''}</p></div>
+      <div class="sec">כמה ימים לאתגר?</div>
+      <div class="dayopts">${dayOpts}</div>
+      <button class="btn-primary" data-act="chstart" data-ch="${id}" style="background:${c.color}">🚀 התחל את האתגר</button>
+      <p class="ch-hint">בכל יום תלמד קבוצת מילים קטנה, והאפליקציה תזכור היכן עצרת.<br>בסוף — אתגר שבו מסדרים את המילים לפי הסדר הנכון.</p>
+    </div>`;
+    return;
+  }
+  const day=chDayNum(id),goal=chTodayGoal(id),learned=chLearnedCount(id),total=c.items.length,done=chDone(id);
+  const strip=Array.from({length:st.days},(_,k)=>{const dn=k+1;
+    const cls=dn<day?'past':dn===day?'cur':'fut';
+    return `<div class="dstep ${cls}" style="--cc:${c.color}">${dn<day?'✓':dn}</div>`;}).join('');
+  const daysLeft=Math.max(0,st.days-day);
+  const perDay=daysLeft>0?Math.ceil((total-learned)/daysLeft):(total-learned);
+  let cardHTML;
+  if(done){
+    cardHTML=`<div class="ch-card"><div style="font-size:52px">🏆</div>
+      <div class="goal">השלמת את האתגר!</div>
+      <div class="goalsub">ידעת את כל ${total} המילים${c.ordered?' וגם את הסדר':''}. כל הכבוד!</div>
+      <button class="btn-primary" data-act="chlearn" data-ch="${id}" style="background:${c.color}">🔁 חזרה על כל המילים</button></div>`;
+  }else if(goal>0){
+    cardHTML=`<div class="ch-card">
+      <div class="goal">📚 היום: ${goal} מילים חדשות</div>
+      <div class="goalsub">יום ${day} מתוך ${st.days} · למדת ${learned}/${total} עד כה</div>
+      <button class="btn-primary" data-act="chlearn" data-ch="${id}" style="background:${c.color}">▶︎ התחל את השיעור של היום</button></div>`;
+  }else{
+    const allLearned=learned>=total;
+    cardHTML=`<div class="ch-card">
+      <div style="font-size:44px">✅</div>
+      <div class="goal">סיימת את המשימה של היום!</div>
+      <div class="goalsub">${allLearned?'למדת את כל המילים':'חזור מחר ליום הבא — או המשך קדימה'} · ${learned}/${total}</div>
+      ${!allLearned?`<button class="btn-primary" data-act="chlearn" data-ch="${id}" style="background:${c.color}">➕ למד עוד מילים עכשיו</button>`:''}
+    </div>`;
+  }
+  let orderBtn='';
+  if(c.ordered){
+    if(st.orderDone) orderBtn=`<button class="btn-ghost" data-act="chorder" data-ch="${id}">🎯 אתגר הסדר — הושלם ✓ (שחק שוב)</button>`;
+    else if(learned>=total) orderBtn=`<button class="btn-primary" data-act="chorder" data-ch="${id}" style="background:${c.color}">🎯 אתגר הסדר — סדר את המילים!</button>`;
+    else orderBtn=`<button class="btn-ghost" data-act="chorderlock" style="opacity:.6">🔒 אתגר הסדר — נפתח אחרי שתלמד את כל המילים</button>`;
+  }
+  app.innerHTML=header(c.title,`יום ${day} מתוך ${st.days}`)+`
+  <div class="wrap fade">
+    <div class="dstrip">${strip}</div>
+    <div class="progress"><i style="width:${chPct(id)}%;background:${c.color}"></i></div>
+    ${cardHTML}
+    ${orderBtn}
+    <button class="btn-ghost" data-act="chlearn" data-ch="${id}">🃏 תרגול כרטיסיות (כל המילים)</button>
+    <div class="stat-grid" style="margin-top:14px">
+      <div class="stat-box"><b style="color:${c.color}">${Math.max(0,total-learned)}</b><span>מילים שנותרו</span></div>
+      <div class="stat-box"><b style="color:${c.color}">${daysLeft}</b><span>ימים בתוכנית</span></div>
+    </div>
+    <button class="btn-ghost" data-act="chreset" data-ch="${id}" style="color:var(--bad)">↺ אפס את האתגר</button>
+  </div>`;
+}
+
+/* ----- Challenge: flashcard learning ----- */
+function startChLearn(id){
+  const c=CHMAP[id];
+  let idxs=chTodayGoal(id)>0?chTodayItems(id):chUnlearnedIdx(id).slice(0,Math.ceil(c.items.length/DB.ch[id].days));
+  if(idxs.length===0) idxs=c.items.map((_,i)=>i); // הכל נלמד → חזרה על הכל
+  SESS={mode:'chlearn',ch:id,queue:idxs.slice(),idx:0,flip:false};
+  go('chlearn');
+}
+function renderChLearn(){
+  const s=SESS;const c=CHMAP[s.ch];
+  if(s.idx>=s.queue.length){toast('כל הכבוד! 🎉');return go('chdetail',{ch:s.ch});}
+  const i=s.queue[s.idx];const it=c.items[i];
+  const prog=Math.round(s.idx/s.queue.length*100);
+  app.innerHTML=header(c.title,`${c.emoji} כרטיסיות`)+`
+  <div class="wrap fade">
+    <div class="count-lbl">כרטיס ${s.idx+1} מתוך ${s.queue.length}</div>
+    <div class="progress"><i style="width:${prog}%;background:${c.color}"></i></div>
+    <div class="scene">
+      <div class="card ${s.flip?'flip':''}" data-act="flip">
+        <div class="face front">
+          <div class="catpill" style="background:${c.color}1a;color:${c.color}">${c.emoji} ${c.title}</div>
+          <div class="el">${esc(it.el)}</div><div class="tr">${esc(it.tr)}</div>
+          <button class="sound" data-act="say" data-el="${esc(it.el)}" style="background:${c.color}">🔊 השמע</button>
+          <div class="hint">הקש על הכרטיס כדי לראות תרגום</div>
+        </div>
+        <div class="face back">
+          <div class="he">${esc(it.he)}</div>
+          <div class="tr">${esc(it.el)} · ${esc(it.tr)}</div>
+          <button class="sound" data-act="say" data-el="${esc(it.el)}" style="background:${c.color}">🔊 השמע</button>
+        </div>
+      </div>
+    </div>
+    ${s.flip
+      ? `<div class="grade">
+           <button class="gbtn no" data-act="chgrade" data-knew="0">😕 עוד לא</button>
+           <button class="gbtn yes" data-act="chgrade" data-knew="1">😄 ידעתי</button></div>`
+      : `<div class="flip-hint">👆 הקש על הכרטיס כדי להפוך</div>`}
+  </div>`;
+}
+
+/* ----- Challenge: order game ----- */
+function startChOrder(id){
+  const c=CHMAP[id];
+  SESS={mode:'chorder',ch:id,tiles:shuffle(c.items.map((_,i)=>i)),next:0};
+  go('chorder');
+}
+function renderChOrder(){
+  const s=SESS;const c=CHMAP[s.ch];
+  if(s.next>=c.items.length){
+    DB.ch[s.ch].orderDone=true;bumpStreak();save();
+    app.innerHTML=header(c.title,'אתגר הסדר')+`
+    <div class="wrap fade"><div class="result">
+      <div class="big">🎯</div><h2>מושלם!</h2>
+      <p>סידרת את כל ${c.items.length} המילים בסדר הנכון.</p>
+      <button class="btn-primary" data-act="chdetail2" data-ch="${s.ch}" style="background:${c.color}">חזרה לאתגר</button>
+      <button class="btn-ghost" data-act="chorder" data-ch="${s.ch}">🔁 שחק שוב</button>
+    </div></div>`;
+    return;
+  }
+  const placed=Array.from({length:s.next},(_,k)=>`<div class="pchip">${esc(c.items[k].el)}</div>`).join('')
+    || `<div class="ph">כאן ייבנה הסדר הנכון…</div>`;
+  const tiles=s.tiles.map(i=>{
+    const gone=i<s.next?'':''; // gone determined by placed set
+    const isPlaced=i<s.next; // item i placed if its position already reached (items placed in order 0..next-1)
+    return `<button class="otile${isPlaced?' gone':''}" data-act="otile" data-i="${i}">
+      <div class="oel">${esc(c.items[i].el)}</div><div class="ohe">${esc(c.items[i].he)}</div></button>`;
+  }).join('');
+  app.innerHTML=header(c.title,`אתגר הסדר · ${s.next}/${c.items.length}`)+`
+  <div class="wrap fade">
+    <div class="q-prompt">הקש על המילים לפי הסדר הנכון (מהראשון לאחרון)</div>
+    <div class="order-placed">${placed}</div>
+    <div class="q-prompt" style="font-weight:800;color:var(--ink)">המילה הבאה: <span style="color:${c.color}">#${s.next+1}</span></div>
+    <div class="order-tiles">${tiles}</div>
+  </div>`;
+}
+
 /* ---------------- Router ---------------- */
 function render(){
   const r={home:renderHome,study:renderStudy,quiz:renderQuiz,listen:renderListen,
-    cat:renderCat,phrase:renderPhrase,stats:renderStats}[S.screen]||renderHome;
+    cat:renderCat,phrase:renderPhrase,stats:renderStats,
+    chdetail:renderChDetail,chlearn:renderChLearn,chorder:renderChOrder}[S.screen]||renderHome;
   r();
 }
 
@@ -772,9 +1024,35 @@ app.addEventListener('click',e=>{
       if(m==='study')startStudy(sc);else if(m==='quiz')startQuiz(sc);else startListen(sc);
       break;
     }
+    case 'chdetail': go('chdetail',{ch:t.dataset.ch,chDays:CHMAP[t.dataset.ch].defaultDays}); break;
+    case 'chdetail2': go('chdetail',{ch:t.dataset.ch}); break;
+    case 'chdays': S.chDays=+t.dataset.d; render(); break;
+    case 'chstart':{
+      const id=t.dataset.ch; chStart(id, S.chDays||CHMAP[id].defaultDays);
+      go('chdetail',{ch:id}); toast('בהצלחה! 💪'); break;
+    }
+    case 'chlearn': startChLearn(t.dataset.ch); break;
+    case 'chgrade':{
+      const s=SESS;const i=s.queue[s.idx];
+      if(t.dataset.knew==='1') chMarkLearned(s.ch,i);
+      s.idx++; s.flip=false; render(); break;
+    }
+    case 'chorder': startChOrder(t.dataset.ch); break;
+    case 'chorderlock': toast('למד קודם את כל המילים של האתגר 🔒'); break;
+    case 'otile':{
+      const i=+t.dataset.i;
+      if(i===SESS.next){SESS.next++;render();}
+      else{t.classList.add('shake');setTimeout(()=>t.classList.remove('shake'),400);toast('זה לא בסדר הנכון — נסה שוב');}
+      break;
+    }
+    case 'chreset':{
+      const id=t.dataset.ch;
+      if(confirm('לאפס את האתגר הזה ולהתחיל מחדש?')){chReset(id);toast('האתגר אופס');go('chdetail',{ch:id,chDays:CHMAP[id].defaultDays});}
+      break;
+    }
     case 'reset':
       if(confirm('לאפס את כל ההתקדמות? פעולה זו אינה הפיכה.')){
-        DB={srs:{},streak:0,lastDay:null,bestQuiz:0};save();toast('ההתקדמות אופסה');go('home');
+        DB={srs:{},streak:0,lastDay:null,bestQuiz:0,ch:{}};save();toast('ההתקדמות אופסה');go('home');
       }break;
   }
 });
