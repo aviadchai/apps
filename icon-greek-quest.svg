@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#26c6ff"/>
+      <stop offset="1" stop-color="#1cb0f6"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <!-- owl of Athena -->
+  <g>
+    <ellipse cx="256" cy="288" rx="132" ry="140" fill="#fff"/>
+    <ellipse cx="256" cy="300" rx="96" ry="104" fill="#eaf7ff"/>
+    <!-- ears -->
+    <path d="M150 190 q-14 -60 46 -70 q-6 42 -46 70z" fill="#fff"/>
+    <path d="M362 190 q14 -60 -46 -70 q6 42 46 70z" fill="#fff"/>
+    <!-- eyes -->
+    <circle cx="206" cy="262" r="52" fill="#fff" stroke="#ffc800" stroke-width="10"/>
+    <circle cx="306" cy="262" r="52" fill="#fff" stroke="#ffc800" stroke-width="10"/>
+    <circle cx="206" cy="266" r="24" fill="#3c3c3c"/>
+    <circle cx="306" cy="266" r="24" fill="#3c3c3c"/>
+    <circle cx="214" cy="258" r="8" fill="#fff"/>
+    <circle cx="314" cy="258" r="8" fill="#fff"/>
+    <!-- beak -->
+    <path d="M256 288 l-22 26 h44 z" fill="#ffc800"/>
+    <!-- little wing -->
+    <path d="M150 320 q-18 40 10 78 q22 -22 22 -58z" fill="#eaf7ff"/>
+    <path d="M362 320 q18 40 -10 78 q-22 -22 -22 -58z" fill="#eaf7ff"/>
+  </g>
+</svg>

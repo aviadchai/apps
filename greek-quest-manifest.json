@@ -1,0 +1,17 @@
+{
+  "name": "יאללה יוונית — GreekQuest",
+  "short_name": "יאללה יוונית",
+  "description": "לימוד יוונית בסגנון משחקי — מפת מסע, נקודות, רצף ואתגרים. אותיות, מספרים, מילים וסקשנים במקום אחד.",
+  "start_url": "./greek-quest.html",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1cb0f6",
+  "theme_color": "#1cb0f6",
+  "lang": "he",
+  "dir": "rtl",
+  "icons": [
+    { "src": "icon-greek-quest.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icon-greek-quest-180.png", "sizes": "180x180", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

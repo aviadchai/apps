@@ -1,5 +1,5 @@
-const CACHE = 'apps-v14';
-const SHELL = ['./index.html', './shopping-list.html', './greek.html', './greek-street.html', './greek-abc.html', './deal.html', './manifest.json', './greek-manifest.json', './greek-street-manifest.json', './greek-abc-manifest.json', './deal-manifest.json', './icon.svg', './icon-shopping.svg', './icon-greek.svg', './icon-greek-street.svg', './icon-fitness.svg', './icon-shopping-180.png', './icon-greek-180.png', './icon-greek-street-180.png', './icon-fitness-180.png'];
+const CACHE = 'apps-v15';
+const SHELL = ['./index.html', './shopping-list.html', './greek.html', './greek-street.html', './greek-quest.html', './greek-abc.html', './deal.html', './manifest.json', './greek-manifest.json', './greek-street-manifest.json', './greek-quest-manifest.json', './greek-abc-manifest.json', './deal-manifest.json', './icon.svg', './icon-shopping.svg', './icon-greek.svg', './icon-greek-street.svg', './icon-greek-quest.svg', './icon-fitness.svg', './icon-shopping-180.png', './icon-greek-180.png', './icon-greek-street-180.png', './icon-greek-quest-180.png', './icon-fitness-180.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)));
