@@ -178,19 +178,48 @@ img{display:block;}
 .prof-hero .lv{font-size:52px;font-weight:800;line-height:1;}
 .prof-hero .tt{font-size:16px;font-weight:800;margin-top:4px;}
 .prof-hero .sub{font-size:13px;opacity:.9;margin-top:2px;}
+/* words-learned counter */
+.wordcard{margin:16px;background:#fff;border:2px solid var(--line);border-bottom-width:4px;border-radius:20px;padding:18px;}
+.wordcard .wc-top{display:flex;align-items:baseline;gap:10px;}
+.wordcard .wc-num{font-size:46px;font-weight:800;color:var(--green);line-height:1;}
+.wordcard .wc-num span{font-size:20px;color:var(--muted);font-weight:800;}
+.wordcard .wc-lbl{font-size:15px;color:var(--ink);font-weight:800;}
+.wordcard .wc-bar{height:14px;background:var(--line);border-radius:8px;overflow:hidden;margin:14px 0 12px;}
+.wordcard .wc-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--green),#8ee34a);border-radius:8px;transition:width .6s;}
+.wordcard .wc-meta{display:flex;flex-direction:column;gap:7px;}
+.wordcard .wc-chip{align-self:flex-start;background:var(--green-bg);color:var(--green-d);padding:5px 14px;border-radius:20px;font-size:14px;font-weight:800;}
+.wordcard .wc-proj{font-size:13px;color:var(--muted);font-weight:700;}
+.wordcard .wc-note{font-size:12px;color:var(--muted);font-weight:600;margin-top:10px;padding-top:10px;border-top:1.5px solid var(--line);text-align:center;}
+.wordcard .wc-date{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1.5px solid var(--line);font-size:13px;font-weight:700;color:var(--muted);}
+.wordcard .wc-date input[type=date]{font-family:inherit;font-weight:800;font-size:14px;color:var(--ink);border:2px solid var(--line);border-radius:10px;padding:6px 10px;background:#fff;}
+.wordcard .wc-days{background:var(--blue-bg);color:var(--blue-d);padding:4px 11px;border-radius:20px;font-weight:800;margin-inline-start:auto;}
 .statgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 16px;}
 .statbox{background:#fff;border:2px solid var(--line);border-radius:16px;padding:16px;text-align:center;}
 .statbox .v{font-size:28px;font-weight:800;}
 .statbox .l{font-size:12px;color:var(--muted);font-weight:700;}
 /* review list */
-.rrow{display:flex;align-items:center;gap:12px;background:#fff;border:2px solid var(--line);border-bottom-width:3px;
-  border-radius:14px;padding:11px 14px;margin:0 16px 10px;}
-.rrow .rp{width:40px;height:40px;border-radius:11px;background:var(--blue-bg);color:var(--blue);font-size:19px;
+.rsum{margin:12px 16px 6px;background:var(--green-bg);border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:14px;}
+.rsum .rn{font-size:32px;font-weight:800;color:var(--green-d);line-height:1;}
+.rsum .rn span{font-size:16px;color:#7bbf4a;}
+.rsum .rd b{font-size:14px;color:var(--green-d);}
+.rsum .rd p{font-size:12px;color:#6ba83d;font-weight:600;margin-top:2px;}
+.cathead{display:flex;align-items:center;justify-content:space-between;margin:16px 16px 8px;}
+.cathead .ct{font-size:15px;font-weight:800;}
+.cathead .cc{font-size:12px;font-weight:800;color:#fff;background:var(--u,#58cc02);border-radius:20px;padding:2px 10px;}
+.rrow{display:flex;align-items:center;gap:10px;background:#fff;border:2px solid var(--line);border-bottom-width:3px;
+  border-radius:14px;padding:9px 12px;margin:0 16px 10px;transition:border-color .15s,background .15s;}
+.rrow.marked{border-color:var(--green);background:#f4fff0;}
+.rrow .mk{width:32px;height:32px;border-radius:50%;border:2.5px solid #d7d7d7;background:#fff;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:17px;color:transparent;transition:all .15s;}
+.rrow .mk.on{background:var(--green);border-color:var(--green);color:#fff;box-shadow:0 3px 0 var(--green-d);}
+.rrow .mk:active{transform:translateY(2px);}
+.rrow .rmain{flex:1;min-width:0;display:flex;align-items:center;gap:10px;text-align:start;}
+.rrow .rp{width:38px;height:38px;border-radius:11px;background:var(--blue-bg);color:var(--blue);font-size:18px;
   display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .rrow .rt{flex:1;min-width:0;}
 .rrow .rt .re{font-size:17px;font-weight:800;direction:ltr;}
 .rrow .rt .rr{font-size:12px;color:var(--blue);direction:ltr;}
-.rrow .rhe{font-size:15px;font-weight:800;}
+.rrow .rhe{font-size:15px;font-weight:800;flex-shrink:0;}
 .empty{text-align:center;color:var(--muted);padding:50px 24px;font-size:15px;line-height:1.6;}
 .empty .e{font-size:46px;margin-bottom:10px;}
 /* toast + confetti */
@@ -357,7 +386,11 @@ DB.dailyXP=DB.dailyXP||0; DB.dailyDate=DB.dailyDate||null; DB.dailyDone=DB.daily
 DB.lessons=DB.lessons||{};   // {lessonId: stars}
 DB.badges=DB.badges||{};     // {badgeId: date}
 DB.seen=DB.seen||{};         // {itemId:true}
+DB.marked=DB.marked||{};     // {itemId:true} — סומן ידנית כ"כבר יודע"
+DB.startedAt=DB.startedAt||null;
 function save(){try{localStorage.setItem(KEY,JSON.stringify(DB));}catch(e){}}
+// משתמש קיים עם התקדמות אך בלי תאריך התחלה — נקבע כדי שאפשר יהיה לחשב קצב
+if(!DB.startedAt && (DB.xp>0 || Object.keys(DB.lessons).length>0)){DB.startedAt=new Date().toISOString();save();}
 if(navigator.storage&&navigator.storage.persist){navigator.storage.persist().catch(()=>{});}
 
 function todayKey(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
@@ -373,6 +406,28 @@ function unitDone(uid){const u=UNITS.find(x=>x.id===uid);return unitLessons(u).e
 function perfectCount(){return Object.values(DB.lessons).filter(s=>s>=3).length;}
 function frontier(){let f=0;for(let i=0;i<LESSONS.length;i++){if(DB.lessons[LESSONS[i].id]!==undefined)f=i+1;else break;}return f;}
 function earnedBadges(){return BADGES.filter(b=>DB.badges[b.id]);}
+
+/* ---- קאונטר מילים שנלמדו + קצב ---- */
+const TOTAL_WORDS = ALL_ITEMS.filter(x=>!x.glyph).length;   // כלל המילים (ללא אותיות)
+const ITEM_BY_ID = Object.fromEntries(ALL_ITEMS.map(it=>[it.id,it]));
+// מילה "נלמדה" אם היא בשיעור שהושלם או שסומנה ידנית ע"י המשתמש.
+function learnedWordIds(){const set={};
+  LESSONS.forEach(l=>{ if(DB.lessons[l.id]!==undefined) l.items.forEach(it=>{ if(!it.glyph) set[it.id]=true; }); });
+  Object.keys(DB.marked).forEach(id=>{ const it=ITEM_BY_ID[id]; if(it&&!it.glyph) set[id]=true; });
+  return set;}
+function learnedWordsCount(){return Object.keys(learnedWordIds()).length;}
+function markedWordsCount(){return Object.keys(DB.marked).filter(id=>ITEM_BY_ID[id]&&!ITEM_BY_ID[id].glyph).length;}
+function learnedLetters(){const set={};const abc=UNITS.find(u=>u.id==='abc');
+  unitLessons(abc).forEach((items,li)=>{ if(DB.lessons['abc#'+li]!==undefined) items.forEach(it=>set[it.id]=true); });
+  abc.items.forEach(it=>{ if(DB.marked[it.id]) set[it.id]=true; });
+  return Object.keys(set).length;}
+function daysActive(){if(!DB.startedAt)return 1;
+  return Math.max(1, Math.floor((Date.now()-new Date(DB.startedAt).getTime())/DAY)+1);}
+function toDateInput(iso){const d=iso?new Date(iso):new Date();const p=n=>String(n).padStart(2,'0');
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());}
+function startDateLabel(){if(!DB.startedAt)return '';const d=new Date(DB.startedAt);
+  return d.getDate()+'.'+(d.getMonth()+1)+'.'+d.getFullYear();}
+function wordPace(){return Math.round(learnedWordsCount()/daysActive()*10)/10;}
 
 /* ---------- אודיו ---------- */
 let VOICES=[];function loadVoices(){VOICES=window.speechSynthesis?speechSynthesis.getVoices():[];}
@@ -427,7 +482,7 @@ function renderPath(){
   let html=topBar()+`
   <div class="hero">
     <div class="owl">${OWL}</div>
-    <div class="bubble"><b>${greeting()}</b><p>רמה ${lv.level} · ${lv.title} · ${lessonsDone()}/${LESSONS.length} שיעורים</p></div>
+    <div class="bubble"><b>${greeting()}</b><p>📚 ${learnedWordsCount()} מילים נלמדו · רמה ${lv.level} · ${lessonsDone()}/${LESSONS.length} שיעורים</p></div>
   </div>
   <div class="goalcard">
     <div class="ring">${ringSVG(goalPct,52,7,'#1cb0f6')}<div class="c">${DB.dailyDone?'✅':'🎯'}</div></div>
@@ -514,8 +569,8 @@ function renderMC(step){
   const u=SESS.lesson.unit, it=step.it, glyph=it.glyph;
   const showEl=step.dir==='el2he';
   const prompt=glyph?(showEl?'איזו אות זו?':'מצא את האות'):(showEl?'מה הפירוש?':'איך אומרים ביוונית?');
-  const opts=shuffle([it,...otherItems(u,it,3)]);
-  SESS._opts=opts; SESS._correct=it.id;
+  if(!step._opts) step._opts=shuffle([it,...otherItems(u,it,3)]);  // מגרילים פעם אחת בלבד
+  const opts=step._opts; SESS._correct=it.id;
   let stim;
   if(showEl){
     stim=`<div class="stim"><div class="${glyph?'glyph':'el'}">${esc(it.el)}</div>${!glyph?`<div class="tr">${esc(it.tr)}</div>`:''}
@@ -535,8 +590,8 @@ function renderMC(step){
 }
 function renderListen(step){
   const it=step.it, u=SESS.lesson.unit;
-  const opts=shuffle([it,...otherItems(u,it,3)]);
-  SESS._opts=opts; SESS._correct=it.id;
+  if(!step._opts) step._opts=shuffle([it,...otherItems(u,it,3)]);  // מגרילים פעם אחת בלבד
+  const opts=step._opts; SESS._correct=it.id;
   const optHtml=opts.map(o=>{
     let cls='opt';
     if(SESS.answered){ if(o.id===it.id)cls+=' good'; else if(o.id===SESS.picked)cls+=' bad'; }
@@ -600,6 +655,7 @@ function nextStep(){
   // requeue wrong mc/listen once
   if(!s.answeredCorrect && (step.type==='mc'||step.type==='listen') && !step._requeued){
     const clone=Object.assign({},step,{_requeued:true});
+    delete clone._opts;   // חזרה על השאלה תגריל סדר חדש
     s.steps.push(clone);
   }
   s.idx++; s.answered=false; s.picked=null; s.answeredCorrect=false;
@@ -608,6 +664,7 @@ function nextStep(){
 
 function finishLesson(){
   const s=SESS, lid=s.lesson.id;
+  if(!DB.startedAt) DB.startedAt=new Date().toISOString();
   const stars=s.mistakes===0?3:s.mistakes<=2?2:1;
   const prevStars=DB.lessons[lid];
   DB.lessons[lid]=Math.max(stars, prevStars||0);
@@ -658,6 +715,32 @@ function showNextBadgeOrPath(){
   }else{ go('path',{tab:'path'}); }
 }
 
+/* קלף קאונטר "מילים שלמדתי" + קצב */
+function wordsCounterCard(){
+  const w=learnedWordsCount(), pace=wordPace(), rem=TOTAL_WORDS-w, pct=Math.round(w/TOTAL_WORDS*100);
+  let proj;
+  if(w>=TOTAL_WORDS) proj='🏆 למדת את כל המילים באפליקציה!';
+  else if(w===0) proj='סיים שיעור ראשון כדי להתחיל למדוד קצב';
+  else if(pace>0) proj=`בקצב הזה תדע את כל ${TOTAL_WORDS} המילים בעוד ~${Math.ceil(rem/pace)} ימים`;
+  else proj='המשך לתרגל כדי לשמור על הקצב';
+  const paceLbl = w===0?'—':`${pace} מילים ליום`;
+  return `<div class="wordcard">
+    <div class="wc-top"><div class="wc-num">${w}<span>/${TOTAL_WORDS}</span></div>
+      <div class="wc-lbl">מילים שלמדת<br>ביוונית</div></div>
+    <div class="wc-bar"><i style="width:${pct}%"></i></div>
+    <div class="wc-meta">
+      <div class="wc-chip">📈 קצב: ${paceLbl}</div>
+      <div class="wc-proj">${proj}</div>
+    </div>
+    <div class="wc-note">${learnedLetters()}/24 אותיות אלפבית · נספרות רק מילים משיעורים שסיימת או שסימנת בעצמך</div>
+    <div class="wc-date">
+      <span>📅 לומד/ת יוונית מאז</span>
+      <input type="date" data-role="startdate" value="${toDateInput(DB.startedAt)}" max="${toDateInput(null)}">
+      <span class="wc-days">${daysActive()} ימים</span>
+    </div>
+  </div>`;
+}
+
 /* ==================== פרופיל / הישגים ==================== */
 function renderProfile(){
   const lv=levelOf(DB.xp);
@@ -669,6 +752,7 @@ function renderProfile(){
       <div class="lv">${lv.level}</div><div class="tt">${lv.title}</div>
       <div class="sub">${DB.xp} XP · עוד ${lv.need-lv.into} נקודות לרמה הבאה</div>
     </div>
+    ${wordsCounterCard()}
     <div class="statgrid">
       <div class="statbox"><div class="v" style="color:#ff9600">${DB.streak}🔥</div><div class="l">ימי רצף</div></div>
       <div class="statbox"><div class="v" style="color:#1cb0f6">${lessonsDone()}</div><div class="l">שיעורים שהושלמו</div></div>
@@ -681,20 +765,35 @@ function renderProfile(){
   </div>`+bottomNav();
 }
 
-/* ==================== שיחון (סקירה) ==================== */
+/* ==================== מילים לפי קטגוריות + סימון ידני ==================== */
 function renderReview(){
-  let html=topBar()+`<div class="fade"><div class="section-t">📖 שיחון — כל המילים</div>
-    <p style="font-size:12.5px;color:#afafaf;margin:-4px 16px 12px;font-weight:600">הקש על שורה כדי לשמוע את ההגייה ביוונית.</p>`;
+  const w=learnedWordsCount(), pct=Math.round(w/TOTAL_WORDS*100);
+  let html=topBar()+`<div class="fade">
+    <div class="section-t">📖 מילים לפי קטגוריות</div>
+    <div class="rsum">
+      <div class="rn">${w}<span>/${TOTAL_WORDS}</span></div>
+      <div class="rd"><b>מילים שאתה כבר יודע</b><p>הקש על ✓ לסמן מילה שאתה מכיר · הקש על השורה לשמיעה</p></div>
+    </div>`;
   UNITS.forEach(u=>{
-    html+=`<div style="font-size:14px;font-weight:800;color:${u.color};margin:14px 16px 8px">${u.emoji} ${u.title}</div>`;
+    const isLetters=u.kind==='letters';
+    const markedInU=u.items.filter(it=>DB.marked[it.id]).length;
+    html+=`<div class="cathead"><div class="ct" style="color:${u.color}">${u.emoji} ${u.title}</div>
+      <div class="cc" style="--u:${u.color}">${markedInU}/${u.items.length}</div></div>`;
     u.items.forEach(it=>{
-      html+=`<button class="rrow" data-act="say" data-t="${esc(it.say)}">
-        <div class="rp">🔊</div>
-        <div class="rt"><div class="re">${esc(it.el)}</div><div class="rr">${esc(it.tr)}</div></div>
-        <div class="rhe">${esc(it.he)}</div>
-      </button>`;
+      const on=DB.marked[it.id]?'on':'';
+      const rowM=DB.marked[it.id]?'marked':'';
+      html+=`<div class="rrow ${rowM}">
+        <button class="mk ${on}" data-act="mark" data-id="${it.id}">✓</button>
+        <button class="rmain" data-act="say" data-t="${esc(it.say)}">
+          <div class="rp">🔊</div>
+          <div class="rt"><div class="re">${esc(it.el)}</div><div class="rr">${esc(it.tr)}</div></div>
+          <div class="rhe">${esc(it.he)}</div>
+        </button>
+      </div>`;
     });
   });
+  html+=`<p style="text-align:center;font-size:12px;color:#afafaf;font-weight:600;margin:16px 24px 4px;line-height:1.5">
+    מילים שתסמן כאן נספרות ב"מילים שלמדת" יחד עם מילים משיעורים שסיימת.<br>💾 הכול נשמר אוטומטית במכשיר.</p>`;
   html+=`</div>`+bottomNav();
   app.innerHTML=html;
 }
@@ -714,6 +813,12 @@ document.addEventListener('click',e=>{
   switch(a){
     case 'tab':{const tb=t.dataset.t; if(tb==='path')go('path',{tab:'path'});else if(tb==='review')go('review',{tab:'review'});else go('profile',{tab:'profile'});break;}
     case 'say': speak(t.dataset.t); break;
+    case 'mark':{
+      const id=t.dataset.id;
+      if(DB.marked[id])delete DB.marked[id]; else{DB.marked[id]=true; if(!DB.startedAt)DB.startedAt=new Date().toISOString();}
+      save();
+      const y=window.scrollY; render(); window.scrollTo(0,y); break;
+    }
     case 'locked': toast('🔒 סיים את השיעור הקודם כדי לפתוח'); break;
     case 'lesson': startLesson(t.dataset.lid); break;
     case 'quit': if(confirm('לצאת מהשיעור? ההתקדמות בשיעור הזה לא תישמר.'))go('path',{tab:'path'}); break;
@@ -750,6 +855,17 @@ document.addEventListener('click',e=>{
     }
     case 'afterlesson': showNextBadgeOrPath(); break;
   }
+});
+
+/* בורר תאריך התחלה — נשמר מיד */
+document.addEventListener('change',e=>{
+  const inp=e.target.closest('[data-role="startdate"]');if(!inp||!inp.value)return;
+  let d=new Date(inp.value+'T00:00:00');const now=new Date();
+  if(isNaN(d.getTime()))return;
+  if(d.getTime()>now.getTime())d=now;      // לא מאפשרים תאריך עתידי
+  DB.startedAt=d.toISOString();save();
+  toast('📅 תאריך ההתחלה נשמר');
+  const y=window.scrollY;render();window.scrollTo(0,y);
 });
 
 /* SW */
