@@ -190,6 +190,9 @@ img{display:block;}
 .wordcard .wc-chip{align-self:flex-start;background:var(--green-bg);color:var(--green-d);padding:5px 14px;border-radius:20px;font-size:14px;font-weight:800;}
 .wordcard .wc-proj{font-size:13px;color:var(--muted);font-weight:700;}
 .wordcard .wc-note{font-size:12px;color:var(--muted);font-weight:600;margin-top:10px;padding-top:10px;border-top:1.5px solid var(--line);text-align:center;}
+.wordcard .wc-date{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1.5px solid var(--line);font-size:13px;font-weight:700;color:var(--muted);}
+.wordcard .wc-date input[type=date]{font-family:inherit;font-weight:800;font-size:14px;color:var(--ink);border:2px solid var(--line);border-radius:10px;padding:6px 10px;background:#fff;}
+.wordcard .wc-days{background:var(--blue-bg);color:var(--blue-d);padding:4px 11px;border-radius:20px;font-weight:800;margin-inline-start:auto;}
 .statgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 16px;}
 .statbox{background:#fff;border:2px solid var(--line);border-radius:16px;padding:16px;text-align:center;}
 .statbox .v{font-size:28px;font-weight:800;}
@@ -420,6 +423,10 @@ function learnedLetters(){const set={};const abc=UNITS.find(u=>u.id==='abc');
   return Object.keys(set).length;}
 function daysActive(){if(!DB.startedAt)return 1;
   return Math.max(1, Math.floor((Date.now()-new Date(DB.startedAt).getTime())/DAY)+1);}
+function toDateInput(iso){const d=iso?new Date(iso):new Date();const p=n=>String(n).padStart(2,'0');
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());}
+function startDateLabel(){if(!DB.startedAt)return '';const d=new Date(DB.startedAt);
+  return d.getDate()+'.'+(d.getMonth()+1)+'.'+d.getFullYear();}
 function wordPace(){return Math.round(learnedWordsCount()/daysActive()*10)/10;}
 
 /* ---------- אודיו ---------- */
@@ -724,7 +731,12 @@ function wordsCounterCard(){
       <div class="wc-chip">📈 קצב: ${paceLbl}</div>
       <div class="wc-proj">${proj}</div>
     </div>
-    <div class="wc-note">${learnedLetters()}/24 אותיות אלפבית · ${daysActive()} ימי למידה · נספרות רק מילים משיעורים שסיימת</div>
+    <div class="wc-note">${learnedLetters()}/24 אותיות אלפבית · נספרות רק מילים משיעורים שסיימת או שסימנת בעצמך</div>
+    <div class="wc-date">
+      <span>📅 לומד/ת יוונית מאז</span>
+      <input type="date" data-role="startdate" value="${toDateInput(DB.startedAt)}" max="${toDateInput(null)}">
+      <span class="wc-days">${daysActive()} ימים</span>
+    </div>
   </div>`;
 }
 
@@ -780,7 +792,7 @@ function renderReview(){
     });
   });
   html+=`<p style="text-align:center;font-size:12px;color:#afafaf;font-weight:600;margin:16px 24px 4px;line-height:1.5">
-    מילים שתסמן כאן נספרות ב"מילים שלמדת" יחד עם מילים משיעורים שסיימת.</p>`;
+    מילים שתסמן כאן נספרות ב"מילים שלמדת" יחד עם מילים משיעורים שסיימת.<br>💾 הכול נשמר אוטומטית במכשיר.</p>`;
   html+=`</div>`+bottomNav();
   app.innerHTML=html;
 }
@@ -842,6 +854,17 @@ document.addEventListener('click',e=>{
     }
     case 'afterlesson': showNextBadgeOrPath(); break;
   }
+});
+
+/* בורר תאריך התחלה — נשמר מיד */
+document.addEventListener('change',e=>{
+  const inp=e.target.closest('[data-role="startdate"]');if(!inp||!inp.value)return;
+  let d=new Date(inp.value+'T00:00:00');const now=new Date();
+  if(isNaN(d.getTime()))return;
+  if(d.getTime()>now.getTime())d=now;      // לא מאפשרים תאריך עתידי
+  DB.startedAt=d.toISOString();save();
+  toast('📅 תאריך ההתחלה נשמר');
+  const y=window.scrollY;render();window.scrollTo(0,y);
 });
 
 /* SW */
