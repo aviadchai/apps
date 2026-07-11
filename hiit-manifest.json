@@ -1,0 +1,17 @@
+{
+  "name": "אימון HIIT — מאמן קולי",
+  "short_name": "HIIT",
+  "description": "אימון HIIT בעברית עם הנחיה קולית, עצימות עולה, וסיכום קלוריות",
+  "start_url": "./hiit.html",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b0f1a",
+  "theme_color": "#0b0f1a",
+  "lang": "he",
+  "dir": "rtl",
+  "icons": [
+    { "src": "icon-hiit.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icon-hiit-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
