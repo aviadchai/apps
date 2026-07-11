@@ -195,14 +195,28 @@ img{display:block;}
 .statbox .v{font-size:28px;font-weight:800;}
 .statbox .l{font-size:12px;color:var(--muted);font-weight:700;}
 /* review list */
-.rrow{display:flex;align-items:center;gap:12px;background:#fff;border:2px solid var(--line);border-bottom-width:3px;
-  border-radius:14px;padding:11px 14px;margin:0 16px 10px;}
-.rrow .rp{width:40px;height:40px;border-radius:11px;background:var(--blue-bg);color:var(--blue);font-size:19px;
+.rsum{margin:12px 16px 6px;background:var(--green-bg);border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:14px;}
+.rsum .rn{font-size:32px;font-weight:800;color:var(--green-d);line-height:1;}
+.rsum .rn span{font-size:16px;color:#7bbf4a;}
+.rsum .rd b{font-size:14px;color:var(--green-d);}
+.rsum .rd p{font-size:12px;color:#6ba83d;font-weight:600;margin-top:2px;}
+.cathead{display:flex;align-items:center;justify-content:space-between;margin:16px 16px 8px;}
+.cathead .ct{font-size:15px;font-weight:800;}
+.cathead .cc{font-size:12px;font-weight:800;color:#fff;background:var(--u,#58cc02);border-radius:20px;padding:2px 10px;}
+.rrow{display:flex;align-items:center;gap:10px;background:#fff;border:2px solid var(--line);border-bottom-width:3px;
+  border-radius:14px;padding:9px 12px;margin:0 16px 10px;transition:border-color .15s,background .15s;}
+.rrow.marked{border-color:var(--green);background:#f4fff0;}
+.rrow .mk{width:32px;height:32px;border-radius:50%;border:2.5px solid #d7d7d7;background:#fff;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:17px;color:transparent;transition:all .15s;}
+.rrow .mk.on{background:var(--green);border-color:var(--green);color:#fff;box-shadow:0 3px 0 var(--green-d);}
+.rrow .mk:active{transform:translateY(2px);}
+.rrow .rmain{flex:1;min-width:0;display:flex;align-items:center;gap:10px;text-align:start;}
+.rrow .rp{width:38px;height:38px;border-radius:11px;background:var(--blue-bg);color:var(--blue);font-size:18px;
   display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .rrow .rt{flex:1;min-width:0;}
 .rrow .rt .re{font-size:17px;font-weight:800;direction:ltr;}
 .rrow .rt .rr{font-size:12px;color:var(--blue);direction:ltr;}
-.rrow .rhe{font-size:15px;font-weight:800;}
+.rrow .rhe{font-size:15px;font-weight:800;flex-shrink:0;}
 .empty{text-align:center;color:var(--muted);padding:50px 24px;font-size:15px;line-height:1.6;}
 .empty .e{font-size:46px;margin-bottom:10px;}
 /* toast + confetti */
@@ -369,6 +383,7 @@ DB.dailyXP=DB.dailyXP||0; DB.dailyDate=DB.dailyDate||null; DB.dailyDone=DB.daily
 DB.lessons=DB.lessons||{};   // {lessonId: stars}
 DB.badges=DB.badges||{};     // {badgeId: date}
 DB.seen=DB.seen||{};         // {itemId:true}
+DB.marked=DB.marked||{};     // {itemId:true} — סומן ידנית כ"כבר יודע"
 DB.startedAt=DB.startedAt||null;
 function save(){try{localStorage.setItem(KEY,JSON.stringify(DB));}catch(e){}}
 // משתמש קיים עם התקדמות אך בלי תאריך התחלה — נקבע כדי שאפשר יהיה לחשב קצב
@@ -391,12 +406,18 @@ function earnedBadges(){return BADGES.filter(b=>DB.badges[b.id]);}
 
 /* ---- קאונטר מילים שנלמדו + קצב ---- */
 const TOTAL_WORDS = ALL_ITEMS.filter(x=>!x.glyph).length;   // כלל המילים (ללא אותיות)
+const ITEM_BY_ID = Object.fromEntries(ALL_ITEMS.map(it=>[it.id,it]));
+// מילה "נלמדה" אם היא בשיעור שהושלם או שסומנה ידנית ע"י המשתמש.
 function learnedWordIds(){const set={};
   LESSONS.forEach(l=>{ if(DB.lessons[l.id]!==undefined) l.items.forEach(it=>{ if(!it.glyph) set[it.id]=true; }); });
+  Object.keys(DB.marked).forEach(id=>{ const it=ITEM_BY_ID[id]; if(it&&!it.glyph) set[id]=true; });
   return set;}
 function learnedWordsCount(){return Object.keys(learnedWordIds()).length;}
-function learnedLetters(){let n=0;const abc=UNITS.find(u=>u.id==='abc');
-  unitLessons(abc).forEach((items,li)=>{ if(DB.lessons['abc#'+li]!==undefined) n+=items.length; });return n;}
+function markedWordsCount(){return Object.keys(DB.marked).filter(id=>ITEM_BY_ID[id]&&!ITEM_BY_ID[id].glyph).length;}
+function learnedLetters(){const set={};const abc=UNITS.find(u=>u.id==='abc');
+  unitLessons(abc).forEach((items,li)=>{ if(DB.lessons['abc#'+li]!==undefined) items.forEach(it=>set[it.id]=true); });
+  abc.items.forEach(it=>{ if(DB.marked[it.id]) set[it.id]=true; });
+  return Object.keys(set).length;}
 function daysActive(){if(!DB.startedAt)return 1;
   return Math.max(1, Math.floor((Date.now()-new Date(DB.startedAt).getTime())/DAY)+1);}
 function wordPace(){return Math.round(learnedWordsCount()/daysActive()*10)/10;}
@@ -731,20 +752,35 @@ function renderProfile(){
   </div>`+bottomNav();
 }
 
-/* ==================== שיחון (סקירה) ==================== */
+/* ==================== מילים לפי קטגוריות + סימון ידני ==================== */
 function renderReview(){
-  let html=topBar()+`<div class="fade"><div class="section-t">📖 שיחון — כל המילים</div>
-    <p style="font-size:12.5px;color:#afafaf;margin:-4px 16px 12px;font-weight:600">הקש על שורה כדי לשמוע את ההגייה ביוונית.</p>`;
+  const w=learnedWordsCount(), pct=Math.round(w/TOTAL_WORDS*100);
+  let html=topBar()+`<div class="fade">
+    <div class="section-t">📖 מילים לפי קטגוריות</div>
+    <div class="rsum">
+      <div class="rn">${w}<span>/${TOTAL_WORDS}</span></div>
+      <div class="rd"><b>מילים שאתה כבר יודע</b><p>הקש על ✓ לסמן מילה שאתה מכיר · הקש על השורה לשמיעה</p></div>
+    </div>`;
   UNITS.forEach(u=>{
-    html+=`<div style="font-size:14px;font-weight:800;color:${u.color};margin:14px 16px 8px">${u.emoji} ${u.title}</div>`;
+    const isLetters=u.kind==='letters';
+    const markedInU=u.items.filter(it=>DB.marked[it.id]).length;
+    html+=`<div class="cathead"><div class="ct" style="color:${u.color}">${u.emoji} ${u.title}</div>
+      <div class="cc" style="--u:${u.color}">${markedInU}/${u.items.length}</div></div>`;
     u.items.forEach(it=>{
-      html+=`<button class="rrow" data-act="say" data-t="${esc(it.say)}">
-        <div class="rp">🔊</div>
-        <div class="rt"><div class="re">${esc(it.el)}</div><div class="rr">${esc(it.tr)}</div></div>
-        <div class="rhe">${esc(it.he)}</div>
-      </button>`;
+      const on=DB.marked[it.id]?'on':'';
+      const rowM=DB.marked[it.id]?'marked':'';
+      html+=`<div class="rrow ${rowM}">
+        <button class="mk ${on}" data-act="mark" data-id="${it.id}">✓</button>
+        <button class="rmain" data-act="say" data-t="${esc(it.say)}">
+          <div class="rp">🔊</div>
+          <div class="rt"><div class="re">${esc(it.el)}</div><div class="rr">${esc(it.tr)}</div></div>
+          <div class="rhe">${esc(it.he)}</div>
+        </button>
+      </div>`;
     });
   });
+  html+=`<p style="text-align:center;font-size:12px;color:#afafaf;font-weight:600;margin:16px 24px 4px;line-height:1.5">
+    מילים שתסמן כאן נספרות ב"מילים שלמדת" יחד עם מילים משיעורים שסיימת.</p>`;
   html+=`</div>`+bottomNav();
   app.innerHTML=html;
 }
@@ -764,6 +800,12 @@ document.addEventListener('click',e=>{
   switch(a){
     case 'tab':{const tb=t.dataset.t; if(tb==='path')go('path',{tab:'path'});else if(tb==='review')go('review',{tab:'review'});else go('profile',{tab:'profile'});break;}
     case 'say': speak(t.dataset.t); break;
+    case 'mark':{
+      const id=t.dataset.id;
+      if(DB.marked[id])delete DB.marked[id]; else{DB.marked[id]=true; if(!DB.startedAt)DB.startedAt=new Date().toISOString();}
+      save();
+      const y=window.scrollY; render(); window.scrollTo(0,y); break;
+    }
     case 'locked': toast('🔒 סיים את השיעור הקודם כדי לפתוח'); break;
     case 'lesson': startLesson(t.dataset.lid); break;
     case 'quit': if(confirm('לצאת מהשיעור? ההתקדמות בשיעור הזה לא תישמר.'))go('path',{tab:'path'}); break;
