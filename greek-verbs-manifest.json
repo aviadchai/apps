@@ -1,0 +1,17 @@
+{
+  "name": "יוונית — פרק 1: פעלים",
+  "short_name": "יוונית פרק 1",
+  "description": "קורס יוונית בשיטת הפרקים — גופים, פעלים, הרכבת משפטים ודיבור",
+  "start_url": "./greek-verbs.html",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fdfcf9",
+  "theme_color": "#3d3d6b",
+  "lang": "he",
+  "dir": "rtl",
+  "icons": [
+    { "src": "icon-greek.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icon-greek-180.png", "sizes": "180x180", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
