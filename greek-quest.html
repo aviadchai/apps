@@ -178,6 +178,18 @@ img{display:block;}
 .prof-hero .lv{font-size:52px;font-weight:800;line-height:1;}
 .prof-hero .tt{font-size:16px;font-weight:800;margin-top:4px;}
 .prof-hero .sub{font-size:13px;opacity:.9;margin-top:2px;}
+/* words-learned counter */
+.wordcard{margin:16px;background:#fff;border:2px solid var(--line);border-bottom-width:4px;border-radius:20px;padding:18px;}
+.wordcard .wc-top{display:flex;align-items:baseline;gap:10px;}
+.wordcard .wc-num{font-size:46px;font-weight:800;color:var(--green);line-height:1;}
+.wordcard .wc-num span{font-size:20px;color:var(--muted);font-weight:800;}
+.wordcard .wc-lbl{font-size:15px;color:var(--ink);font-weight:800;}
+.wordcard .wc-bar{height:14px;background:var(--line);border-radius:8px;overflow:hidden;margin:14px 0 12px;}
+.wordcard .wc-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--green),#8ee34a);border-radius:8px;transition:width .6s;}
+.wordcard .wc-meta{display:flex;flex-direction:column;gap:7px;}
+.wordcard .wc-chip{align-self:flex-start;background:var(--green-bg);color:var(--green-d);padding:5px 14px;border-radius:20px;font-size:14px;font-weight:800;}
+.wordcard .wc-proj{font-size:13px;color:var(--muted);font-weight:700;}
+.wordcard .wc-note{font-size:12px;color:var(--muted);font-weight:600;margin-top:10px;padding-top:10px;border-top:1.5px solid var(--line);text-align:center;}
 .statgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 16px;}
 .statbox{background:#fff;border:2px solid var(--line);border-radius:16px;padding:16px;text-align:center;}
 .statbox .v{font-size:28px;font-weight:800;}
@@ -357,7 +369,10 @@ DB.dailyXP=DB.dailyXP||0; DB.dailyDate=DB.dailyDate||null; DB.dailyDone=DB.daily
 DB.lessons=DB.lessons||{};   // {lessonId: stars}
 DB.badges=DB.badges||{};     // {badgeId: date}
 DB.seen=DB.seen||{};         // {itemId:true}
+DB.startedAt=DB.startedAt||null;
 function save(){try{localStorage.setItem(KEY,JSON.stringify(DB));}catch(e){}}
+// משתמש קיים עם התקדמות אך בלי תאריך התחלה — נקבע כדי שאפשר יהיה לחשב קצב
+if(!DB.startedAt && (DB.xp>0 || Object.keys(DB.lessons).length>0)){DB.startedAt=new Date().toISOString();save();}
 if(navigator.storage&&navigator.storage.persist){navigator.storage.persist().catch(()=>{});}
 
 function todayKey(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
@@ -373,6 +388,18 @@ function unitDone(uid){const u=UNITS.find(x=>x.id===uid);return unitLessons(u).e
 function perfectCount(){return Object.values(DB.lessons).filter(s=>s>=3).length;}
 function frontier(){let f=0;for(let i=0;i<LESSONS.length;i++){if(DB.lessons[LESSONS[i].id]!==undefined)f=i+1;else break;}return f;}
 function earnedBadges(){return BADGES.filter(b=>DB.badges[b.id]);}
+
+/* ---- קאונטר מילים שנלמדו + קצב ---- */
+const TOTAL_WORDS = ALL_ITEMS.filter(x=>!x.glyph).length;   // כלל המילים (ללא אותיות)
+function learnedWordIds(){const set={};
+  LESSONS.forEach(l=>{ if(DB.lessons[l.id]!==undefined) l.items.forEach(it=>{ if(!it.glyph) set[it.id]=true; }); });
+  return set;}
+function learnedWordsCount(){return Object.keys(learnedWordIds()).length;}
+function learnedLetters(){let n=0;const abc=UNITS.find(u=>u.id==='abc');
+  unitLessons(abc).forEach((items,li)=>{ if(DB.lessons['abc#'+li]!==undefined) n+=items.length; });return n;}
+function daysActive(){if(!DB.startedAt)return 1;
+  return Math.max(1, Math.floor((Date.now()-new Date(DB.startedAt).getTime())/DAY)+1);}
+function wordPace(){return Math.round(learnedWordsCount()/daysActive()*10)/10;}
 
 /* ---------- אודיו ---------- */
 let VOICES=[];function loadVoices(){VOICES=window.speechSynthesis?speechSynthesis.getVoices():[];}
@@ -427,7 +454,7 @@ function renderPath(){
   let html=topBar()+`
   <div class="hero">
     <div class="owl">${OWL}</div>
-    <div class="bubble"><b>${greeting()}</b><p>רמה ${lv.level} · ${lv.title} · ${lessonsDone()}/${LESSONS.length} שיעורים</p></div>
+    <div class="bubble"><b>${greeting()}</b><p>📚 ${learnedWordsCount()} מילים נלמדו · רמה ${lv.level} · ${lessonsDone()}/${LESSONS.length} שיעורים</p></div>
   </div>
   <div class="goalcard">
     <div class="ring">${ringSVG(goalPct,52,7,'#1cb0f6')}<div class="c">${DB.dailyDone?'✅':'🎯'}</div></div>
@@ -608,6 +635,7 @@ function nextStep(){
 
 function finishLesson(){
   const s=SESS, lid=s.lesson.id;
+  if(!DB.startedAt) DB.startedAt=new Date().toISOString();
   const stars=s.mistakes===0?3:s.mistakes<=2?2:1;
   const prevStars=DB.lessons[lid];
   DB.lessons[lid]=Math.max(stars, prevStars||0);
@@ -658,6 +686,27 @@ function showNextBadgeOrPath(){
   }else{ go('path',{tab:'path'}); }
 }
 
+/* קלף קאונטר "מילים שלמדתי" + קצב */
+function wordsCounterCard(){
+  const w=learnedWordsCount(), pace=wordPace(), rem=TOTAL_WORDS-w, pct=Math.round(w/TOTAL_WORDS*100);
+  let proj;
+  if(w>=TOTAL_WORDS) proj='🏆 למדת את כל המילים באפליקציה!';
+  else if(w===0) proj='סיים שיעור ראשון כדי להתחיל למדוד קצב';
+  else if(pace>0) proj=`בקצב הזה תדע את כל ${TOTAL_WORDS} המילים בעוד ~${Math.ceil(rem/pace)} ימים`;
+  else proj='המשך לתרגל כדי לשמור על הקצב';
+  const paceLbl = w===0?'—':`${pace} מילים ליום`;
+  return `<div class="wordcard">
+    <div class="wc-top"><div class="wc-num">${w}<span>/${TOTAL_WORDS}</span></div>
+      <div class="wc-lbl">מילים שלמדת<br>ביוונית</div></div>
+    <div class="wc-bar"><i style="width:${pct}%"></i></div>
+    <div class="wc-meta">
+      <div class="wc-chip">📈 קצב: ${paceLbl}</div>
+      <div class="wc-proj">${proj}</div>
+    </div>
+    <div class="wc-note">${learnedLetters()}/24 אותיות אלפבית · ${daysActive()} ימי למידה · נספרות רק מילים משיעורים שסיימת</div>
+  </div>`;
+}
+
 /* ==================== פרופיל / הישגים ==================== */
 function renderProfile(){
   const lv=levelOf(DB.xp);
@@ -669,6 +718,7 @@ function renderProfile(){
       <div class="lv">${lv.level}</div><div class="tt">${lv.title}</div>
       <div class="sub">${DB.xp} XP · עוד ${lv.need-lv.into} נקודות לרמה הבאה</div>
     </div>
+    ${wordsCounterCard()}
     <div class="statgrid">
       <div class="statbox"><div class="v" style="color:#ff9600">${DB.streak}🔥</div><div class="l">ימי רצף</div></div>
       <div class="statbox"><div class="v" style="color:#1cb0f6">${lessonsDone()}</div><div class="l">שיעורים שהושלמו</div></div>
