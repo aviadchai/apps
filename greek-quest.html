@@ -569,8 +569,8 @@ function renderMC(step){
   const u=SESS.lesson.unit, it=step.it, glyph=it.glyph;
   const showEl=step.dir==='el2he';
   const prompt=glyph?(showEl?'איזו אות זו?':'מצא את האות'):(showEl?'מה הפירוש?':'איך אומרים ביוונית?');
-  const opts=shuffle([it,...otherItems(u,it,3)]);
-  SESS._opts=opts; SESS._correct=it.id;
+  if(!step._opts) step._opts=shuffle([it,...otherItems(u,it,3)]);  // מגרילים פעם אחת בלבד
+  const opts=step._opts; SESS._correct=it.id;
   let stim;
   if(showEl){
     stim=`<div class="stim"><div class="${glyph?'glyph':'el'}">${esc(it.el)}</div>${!glyph?`<div class="tr">${esc(it.tr)}</div>`:''}
@@ -590,8 +590,8 @@ function renderMC(step){
 }
 function renderListen(step){
   const it=step.it, u=SESS.lesson.unit;
-  const opts=shuffle([it,...otherItems(u,it,3)]);
-  SESS._opts=opts; SESS._correct=it.id;
+  if(!step._opts) step._opts=shuffle([it,...otherItems(u,it,3)]);  // מגרילים פעם אחת בלבד
+  const opts=step._opts; SESS._correct=it.id;
   const optHtml=opts.map(o=>{
     let cls='opt';
     if(SESS.answered){ if(o.id===it.id)cls+=' good'; else if(o.id===SESS.picked)cls+=' bad'; }
@@ -655,6 +655,7 @@ function nextStep(){
   // requeue wrong mc/listen once
   if(!s.answeredCorrect && (step.type==='mc'||step.type==='listen') && !step._requeued){
     const clone=Object.assign({},step,{_requeued:true});
+    delete clone._opts;   // חזרה על השאלה תגריל סדר חדש
     s.steps.push(clone);
   }
   s.idx++; s.answered=false; s.picked=null; s.answeredCorrect=false;
