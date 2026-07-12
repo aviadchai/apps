@@ -837,10 +837,32 @@ DB.badges=DB.badges||{};     // {badgeId: date}
 DB.seen=DB.seen||{};         // {itemId:true}
 DB.marked=DB.marked||{};     // {itemId:true} — סומן ידנית כ"כבר יודע"
 DB.startedAt=DB.startedAt||null;
-function save(){try{localStorage.setItem(KEY,JSON.stringify(DB));}catch(e){}}
+// אחסון עמיד: כתיבה כפולה ל-localStorage + IndexedDB (עמיד למחיקה) + בקשת אחסון קבוע.
+const IDB_NAME='greekQuestDB', IDB_STORE='state';
+function openIDB(){return new Promise((res,rej)=>{try{const r=indexedDB.open(IDB_NAME,1);
+  r.onupgradeneeded=()=>r.result.createObjectStore(IDB_STORE);
+  r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);}catch(e){rej(e);}});}
+function idbSave(d){openIDB().then(db=>{const t=db.transaction(IDB_STORE,'readwrite');t.objectStore(IDB_STORE).put(d,KEY);}).catch(()=>{});}
+function idbLoad(){return openIDB().then(db=>new Promise(res=>{const t=db.transaction(IDB_STORE,'readonly');
+  const rq=t.objectStore(IDB_STORE).get(KEY);rq.onsuccess=()=>res(rq.result||null);rq.onerror=()=>res(null);})).catch(()=>null);}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(DB));}catch(e){} idbSave(DB);}
+if(navigator.storage&&navigator.storage.persist){navigator.storage.persist().catch(()=>{});}
 // משתמש קיים עם התקדמות אך בלי תאריך התחלה — נקבע כדי שאפשר יהיה לחשב קצב
 if(!DB.startedAt && (DB.xp>0 || Object.keys(DB.lessons).length>0)){DB.startedAt=new Date().toISOString();save();}
-if(navigator.storage&&navigator.storage.persist){navigator.storage.persist().catch(()=>{});}
+// שחזור אוטומטי: אם ה-localStorage נמחק (למשל ע"י iOS) אך יש גיבוי ב-IndexedDB — משחזרים.
+function progressEmpty(d){return (d.xp||0)===0 && Object.keys(d.lessons||{}).length===0 && Object.keys(d.marked||{}).length===0;}
+idbLoad().then(idb=>{
+  if(idb && progressEmpty(DB) && !progressEmpty(idb)){
+    Object.keys(idb).forEach(k=>{DB[k]=idb[k];});
+    try{localStorage.setItem(KEY,JSON.stringify(DB));}catch(e){}
+    try{toast('🔄 ההתקדמות שוחזרה מהגיבוי');}catch(e){}
+    render();
+  }
+});
+// שמירת חירום ביציאה/מעבר לרקע — הגנה נוספת מפני איבוד נתונים
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')save();});
+window.addEventListener('pagehide',save);
+window.addEventListener('beforeunload',save);
 
 function todayKey(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
 function rollDaily(){
