@@ -314,20 +314,44 @@ function addVocab(el){if(!state.vocabSeen[el]){state.vocabSeen[el]=1;state.stats
 function bump(k,n){state.stats[k]+=(n||1);save();renderStats();}
 
 /* ================= audio ================= */
-let VOICES=[];function loadVoices(){VOICES=window.speechSynthesis?speechSynthesis.getVoices():[];}
-if(window.speechSynthesis){loadVoices();speechSynthesis.onvoiceschanged=loadVoices;}
-function speak(t,rate,onend){
-  if(!('speechSynthesis'in window)||!t){if(onend)setTimeout(onend,600);return;}
+// Read voices live on every call — on iOS the list is empty right after load,
+// and if no Greek voice is bound the engine spells the letters instead of the word.
+function greekVoice(){
+  const list=(window.speechSynthesis?speechSynthesis.getVoices():[])||[];
+  return list.find(v=>/el[-_]?gr/i.test(v.lang))||list.find(v=>/^el/i.test(v.lang))||null;
+}
+// warm the voice list up as soon as it's available
+if(window.speechSynthesis){speechSynthesis.getVoices();speechSynthesis.onvoiceschanged=()=>{greekVoice();};}
+let noVoiceWarned=false;
+function utter(t,rate,onend){
   speechSynthesis.cancel();
   const u=new SpeechSynthesisUtterance(t.replace(/;/g,'?'));
-  const v=VOICES.find(v=>v.lang&&v.lang.startsWith('el'));
+  const v=greekVoice();
   u.lang='el-GR';if(v)u.voice=v;u.rate=rate||.8;u.pitch=1;
+  if(!v&&!noVoiceWarned){noVoiceWarned=true;
+    // no Greek voice on this device — it would read letter-by-letter; tell the user once
+    const b=document.createElement('div');
+    b.style.cssText='position:fixed;left:50%;bottom:calc(150px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#3d3d6b;color:#fff;padding:12px 16px;border-radius:14px;font-size:13px;max-width:88%;text-align:center;z-index:80;box-shadow:0 4px 14px rgba(0,0,0,.25);line-height:1.5;';
+    b.innerHTML='כדי לשמוע יוונית נכון, התקן קול יווני:<br>הגדרות ← נגישות ← תוכן מדובר ← קולות ← Ελληνικά';
+    document.body.appendChild(b);setTimeout(()=>b.remove(),6500);
+  }
   if(onend){
     let fired=false;const fin=()=>{if(fired)return;fired=true;clearTimeout(tm);onend();};
     const tm=setTimeout(fin,Math.max(2500,t.length*220));
     u.onend=fin;u.onerror=fin;
   }
   speechSynthesis.speak(u);
+}
+function speak(t,rate,onend){
+  if(!('speechSynthesis'in window)||!t){if(onend)setTimeout(onend,600);return;}
+  // if voices haven't loaded yet, wait briefly so a Greek voice can bind
+  if(!greekVoice()&&!(speechSynthesis.getVoices()||[]).length){
+    let done=false;const go=()=>{if(done)return;done=true;utter(t,rate,onend);};
+    speechSynthesis.addEventListener('voiceschanged',go,{once:true});
+    setTimeout(go,700);
+    return;
+  }
+  utter(t,rate,onend);
 }
 
 /* ================= helpers ================= */
