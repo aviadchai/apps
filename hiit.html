@@ -36,10 +36,12 @@ const { useState, useEffect, useRef, useCallback } = React;
 /* ============================================================
    רמות — קובעות את טווח מהירויות הקמ״ש
    ============================================================ */
+// קפיצות קטנות ותכופות: כל מקטע קצר (~30 שנ׳), והמהירות עולה מדרגה קטנה בכל פעם.
+// delta = הפרש בין התאוששות להגברה (הקפיצה המקסימלית). baseInc = כמה הבסיס מטפס בכל מחזור.
 const LEVELS = {
-  walk:    { name:'הליכה',        sub:'4–7 קמ״ש',  warmup:4.0, warmupDur:90,  recover:5.0, recoverDur:60, pushStart:6.0, pushInc:0.2, pushMax:7.0,  pushDur:45, cooldown:4.0, cooldownDur:60 },
-  walkrun: { name:'הליכה + ריצה', sub:'5–10 קמ״ש', warmup:5.0, warmupDur:120, recover:5.5, recoverDur:60, pushStart:7.0, pushInc:0.5, pushMax:10.0, pushDur:40, cooldown:4.5, cooldownDur:60 },
-  run:     { name:'ריצה',         sub:'7–13 קמ״ש', warmup:7.0, warmupDur:120, recover:7.0, recoverDur:45, pushStart:9.5, pushInc:0.7, pushMax:13.0, pushDur:30, cooldown:6.0, cooldownDur:75 },
+  walk:    { name:'הליכה',        sub:'3.5–7.5 קמ״ש', warmup:3.5, warmupDur:60, base:4.5, delta:0.7, baseInc:0.2,  segDur:35, max:7.5,  cooldown:3.5, cooldownDur:60 },
+  walkrun: { name:'הליכה + ריצה', sub:'4.5–10.5 קמ״ש', warmup:4.5, warmupDur:60, base:5.0, delta:1.0, baseInc:0.25, segDur:30, max:10.5, cooldown:4.0, cooldownDur:60 },
+  run:     { name:'ריצה',         sub:'6–13 קמ״ש',    warmup:6.0, warmupDur:60, base:7.0, delta:1.0, baseInc:0.3,  segDur:30, max:13.0, cooldown:5.5, cooldownDur:60 },
 };
 const COLORS = { warmup:'#0a84ff', push:'#ff375f', recover:'#34c759', cooldown:'#5e5ce6' };
 const LABELS = { warmup:'חימום', push:'הגברה', recover:'התאוששות', cooldown:'שחרור' };
@@ -51,18 +53,19 @@ function store(s){ try{ localStorage.setItem(LS_KEY, JSON.stringify(s)); }catch(
 
 const r1 = n => Math.round(n*10)/10;
 
-/* בניית מקטעי האימון — מהירות עולה מדרגה לאורך האימון */
+/* בניית מקטעי האימון — קפיצות קטנות ותכופות, המהירות מטפסת בהדרגה */
 function buildSegments(s){
   const L = LEVELS[s.level];
   const segs = [{ type:'warmup', speed:L.warmup, dur:L.warmupDur }];
-  const roundTime = L.pushDur + L.recoverDur;
-  const rounds = Math.max(3, Math.round((s.minutes*60 - L.warmupDur - L.cooldownDur) / roundTime));
-  for(let i=0;i<rounds;i++){
-    const sp = r1(Math.min(L.pushMax, L.pushStart + i*L.pushInc));
-    segs.push({ type:'push', speed:sp, dur:L.pushDur, round:i+1 });
-    segs.push({ type:'recover', speed:L.recover, dur:L.recoverDur });
+  const cycles = Math.max(3, Math.round((s.minutes*60 - L.warmupDur - L.cooldownDur) / (2*L.segDur)));
+  let base = L.base;
+  for(let i=0;i<cycles;i++){
+    const rec  = r1(Math.min(L.max - L.delta, base));
+    const work = r1(Math.min(L.max, base + L.delta));
+    segs.push({ type:'recover', speed:rec,  dur:L.segDur });
+    segs.push({ type:'push',    speed:work, dur:L.segDur, round:i+1 });
+    base = r1(base + L.baseInc);
   }
-  segs.pop(); // ההתאוששות האחרונה מתחלפת בשחרור
   segs.push({ type:'cooldown', speed:L.cooldown, dur:L.cooldownDur });
   return segs;
 }
@@ -76,26 +79,7 @@ function fmt(sec){ sec = Math.max(0, Math.ceil(sec)); const m = Math.floor(sec/6
 function speedText(sp){ return Number.isInteger(sp) ? String(sp) : sp.toFixed(1); }
 
 /* ============================================================
-   קול (TTS) בעברית — משפט קצר בלבד
-   ============================================================ */
-function heVoice(){ if(!window.speechSynthesis) return null; const v = window.speechSynthesis.getVoices(); return v.find(x=>x.lang==='he-IL') || v.find(x=>x.lang&&(x.lang.startsWith('he')||x.lang.startsWith('iw'))) || null; }
-function speak(text, on){
-  if(!on || !text || !window.speechSynthesis) return;
-  try{ window.speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang='he-IL'; u.rate=1.0; const v=heVoice(); if(v) u.voice=v; window.speechSynthesis.speak(u); }catch(e){}
-}
-if(window.speechSynthesis){ window.speechSynthesis.getVoices(); window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices(); }
-// טקסט קולי לכל מקטע
-function cueFor(seg){
-  const sp = speedText(seg.speed);
-  if(seg.type==='warmup') return 'מתחילים בחימום. ' + sp + ' קילומטר לשעה';
-  if(seg.type==='push') return 'הגבר ל' + sp + ' קילומטר לשעה';
-  if(seg.type==='recover') return 'האט ל' + sp + '. התאוששות';
-  if(seg.type==='cooldown') return 'שחרור. האט ל' + sp;
-  return '';
-}
-
-/* ============================================================
-   צלילי ספירה (WebAudio)
+   צלילי התרעה (WebAudio) — בלי קריינות, רק ביפים
    ============================================================ */
 let actx = null;
 function initAudio(){ if(!actx){ try{ actx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(actx && actx.state==='suspended') actx.resume(); }
@@ -103,6 +87,11 @@ function beep(freq, dur, on){
   if(!on || !actx) return;
   try{ const o=actx.createOscillator(), g=actx.createGain(); o.type='sine'; o.frequency.value=freq; o.connect(g); g.connect(actx.destination);
     const t=actx.currentTime; g.gain.setValueAtTime(0.001,t); g.gain.exponentialRampToValueAtTime(0.35,t+0.01); g.gain.exponentialRampToValueAtTime(0.001,t+dur); o.start(t); o.stop(t+dur+0.02); }catch(e){}
+}
+// צליל מעבר שונה לפי כיוון: הגברה = צליל עולה, האטה = צליל יורד
+function changeChime(type, on){
+  if(type==='push') { beep(1046, 0.14, on); setTimeout(()=>beep(1320, 0.18, on), 130); }
+  else { beep(880, 0.14, on); setTimeout(()=>beep(660, 0.18, on), 130); }
 }
 
 /* ============================================================
@@ -154,7 +143,7 @@ function Start({settings, setSettings, onStart}){
       </div>
 
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',background:'#141a2a',border:'1px solid #1e293b',borderRadius:16,padding:'12px 16px',marginBottom:22}}>
-        <div style={{fontSize:15,fontWeight:600}}>קול והתרעות <span style={{color:'#64748b',fontWeight:500,fontSize:12}}>(הכרזת מהירות)</span></div>
+        <div style={{fontSize:15,fontWeight:600}}>צלילי התרעה <span style={{color:'#64748b',fontWeight:500,fontSize:12}}>(ביפ לפני כל שינוי)</span></div>
         <button onClick={()=>upd('sound',!settings.sound)} style={{width:52,height:32,borderRadius:16,background:settings.sound?'#34c759':'#334155',position:'relative',transition:'background 0.2s'}}>
           <span style={{position:'absolute',top:3,left:settings.sound?3:23,width:26,height:26,borderRadius:13,background:'#fff',transition:'left 0.2s',boxShadow:'0 1px 3px rgba(0,0,0,0.3)'}}/>
         </button>
@@ -205,10 +194,8 @@ function Workout({settings, segments, onDone}){
     req();
     const onVis = () => { if(document.visibilityState==='visible') req(); };
     document.addEventListener('visibilitychange', onVis);
-    return () => { document.removeEventListener('visibilitychange', onVis); try{ wakeRef.current&&wakeRef.current.release(); }catch(e){} try{ window.speechSynthesis&&window.speechSynthesis.cancel(); }catch(e){} };
+    return () => { document.removeEventListener('visibilitychange', onVis); try{ wakeRef.current&&wakeRef.current.release(); }catch(e){} };
   }, []);
-
-  useEffect(() => { speak(cueFor(segments[0]), !mutedRef.current); }, []);
 
   const advance = useCallback((stop) => {
     const cur = segments[idxRef.current];
@@ -218,8 +205,6 @@ function Workout({settings, segments, onDone}){
     distRef.current += cur.speed * 1000 / 3600 * spent; // קמ״ש → מ׳
     const ni = idxRef.current + 1;
     if(stop || ni >= segments.length){
-      try{ window.speechSynthesis&&window.speechSynthesis.cancel(); }catch(e){}
-      speak('כל הכבוד, סיימת!', !mutedRef.current);
       beep(1320, 0.5, !mutedRef.current);
       onDone({ calories:Math.round(calRef.current), elapsed:Math.round(elapsedRef.current), km:r1(distRef.current/1000) });
       return;
@@ -228,8 +213,7 @@ function Workout({settings, segments, onDone}){
     idxRef.current = ni; remRef.current = np.dur; deadlineRef.current = Date.now() + np.dur*1000;
     beepRef.current = null; preRef.current = false;
     setPreCue(null); setIdx(ni); setRemaining(np.dur);
-    beep(1320, 0.35, !mutedRef.current);
-    speak(cueFor(np), !mutedRef.current);
+    changeChime(np.type, !mutedRef.current);
   }, [settings.weight, onDone]);
 
   // טיימר
@@ -242,22 +226,20 @@ function Workout({settings, segments, onDone}){
       // ספירת 3-2-1 לקראת מעבר
       const sc = Math.ceil(rem);
       if(sc !== beepRef.current && sc>=1 && sc<=3){ beepRef.current = sc; beep(880, 0.11, !mutedRef.current); }
-      // התרעה מקדימה ~5 שנ' לפני מעבר: אומר את המהירות הבאה
+      // התרעה מקדימה ~5 שנ' לפני מעבר: מציג על המסך את המהירות הבאה
       if(nx && !preRef.current && rem <= 5.2 && rem > 4){
         preRef.current = true;
         setPreCue(nx);
-        speak(cueFor(nx), !mutedRef.current);
       }
       if(rem <= 0.05){ advance(false); return; }
       setRemaining(Math.max(0, rem));
     }, 100);
-    const ka = setInterval(() => { try{ if(!mutedRef.current && window.speechSynthesis && window.speechSynthesis.speaking) window.speechSynthesis.resume(); }catch(e){} }, 5000);
-    return () => { clearInterval(id); clearInterval(ka); };
+    return () => clearInterval(id);
   }, [paused, advance]);
 
   const togglePause = () => {
-    if(paused){ deadlineRef.current = Date.now() + remRef.current*1000; setPaused(false); try{window.speechSynthesis&&window.speechSynthesis.resume();}catch(e){} }
-    else { setPaused(true); try{window.speechSynthesis&&window.speechSynthesis.pause();}catch(e){} }
+    if(paused){ deadlineRef.current = Date.now() + remRef.current*1000; setPaused(false); }
+    else setPaused(true);
   };
 
   const frac = Math.max(0, Math.min(1, remaining/seg.dur));
@@ -358,7 +340,7 @@ function App(){
   const [segments, setSegments] = useState([]);
   const [result, setResult] = useState(null);
 
-  const start = () => { initAudio(); speak('', settings.sound); setSegments(buildSegments(settings)); setScreen('run'); };
+  const start = () => { initAudio(); setSegments(buildSegments(settings)); setScreen('run'); };
   const done = (r) => { setResult(r); setScreen('done'); };
 
   if(screen==='start') return <Start settings={settings} setSettings={setSettings} onStart={start}/>;
