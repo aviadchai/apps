@@ -3,25 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>אימון HIIT — מאמן קולי</title>
+<title>אימון הליכון — אינטרוולים לשריפת שומן</title>
 <link rel="manifest" href="hiit-manifest.json">
 <link rel="icon" href="icon-hiit.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon-hiit-512.png">
 <meta name="theme-color" content="#0b0f1a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="HIIT">
+<meta name="apple-mobile-web-app-title" content="הליכון">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text','Segoe UI',sans-serif;background:#0b0f1a;color:#f1f5f9;overflow-x:hidden;}
 body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);}
 #root{min-height:100vh;min-height:100dvh;}
-input,button{font-family:inherit;}
-button{-webkit-appearance:none;border:none;cursor:pointer;transition:transform 0.12s ease,opacity 0.12s ease;}
+button{font-family:inherit;-webkit-appearance:none;border:none;cursor:pointer;transition:transform 0.12s ease,opacity 0.12s ease;}
 button:active{transform:scale(0.96);opacity:0.9;}
 @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-@keyframes pop{0%{transform:scale(0.8);opacity:0}60%{transform:scale(1.06)}100%{transform:scale(1);opacity:1}}
-@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+@keyframes pop{0%{transform:scale(0.7);opacity:0}60%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+@keyframes flash{0%,100%{opacity:1}50%{opacity:0.45}}
 ::-webkit-scrollbar{display:none;}
 </style>
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -34,364 +34,203 @@ button:active{transform:scale(0.96);opacity:0.9;}
 const { useState, useEffect, useRef, useCallback } = React;
 
 /* ============================================================
-   הגדרות ברירת מחדל + שמירה מקומית
+   רמות — קובעות את טווח מהירויות הקמ״ש
    ============================================================ */
-const DEFAULTS = {
-  weight: 75,      // ק"ג – לחישוב קלוריות
-  rounds: 8,       // מספר סבבים
-  warmup: 30,      // חימום (שנ')
-  workStart: 30,   // זמן עבודה בסבב הראשון (שנ')
-  workInc: 3,      // תוספת זמן עבודה בכל סבב (שנ')
-  rest: 20,        // מנוחה בין סבבים (שנ')
-  cooldown: 60,    // קירור / שחרור (שנ')
-  voice: true,     // הנחיה קולית
-  beeps: true,     // צלילי ספירה
+const LEVELS = {
+  walk:    { name:'הליכה',        sub:'4–7 קמ״ש',  warmup:4.0, warmupDur:90,  recover:5.0, recoverDur:60, pushStart:6.0, pushInc:0.2, pushMax:7.0,  pushDur:45, cooldown:4.0, cooldownDur:60 },
+  walkrun: { name:'הליכה + ריצה', sub:'5–10 קמ״ש', warmup:5.0, warmupDur:120, recover:5.5, recoverDur:60, pushStart:7.0, pushInc:0.5, pushMax:10.0, pushDur:40, cooldown:4.5, cooldownDur:60 },
+  run:     { name:'ריצה',         sub:'7–13 קמ״ש', warmup:7.0, warmupDur:120, recover:7.0, recoverDur:45, pushStart:9.5, pushInc:0.7, pushMax:13.0, pushDur:30, cooldown:6.0, cooldownDur:75 },
 };
-const LS_KEY = 'hiit_settings_v1';
-function loadSettings(){
-  try{ const s = JSON.parse(localStorage.getItem(LS_KEY)); if(s) return {...DEFAULTS, ...s}; }catch(e){}
-  return {...DEFAULTS};
+const COLORS = { warmup:'#0a84ff', push:'#ff375f', recover:'#34c759', cooldown:'#5e5ce6' };
+const LABELS = { warmup:'חימום', push:'הגברה', recover:'התאוששות', cooldown:'שחרור' };
+
+const DEFAULTS = { level:'walkrun', minutes:20, weight:75, sound:true };
+const LS_KEY = 'treadmill_v1';
+function load(){ try{ const s = JSON.parse(localStorage.getItem(LS_KEY)); if(s) return {...DEFAULTS, ...s}; }catch(e){} return {...DEFAULTS}; }
+function store(s){ try{ localStorage.setItem(LS_KEY, JSON.stringify(s)); }catch(e){} }
+
+const r1 = n => Math.round(n*10)/10;
+
+/* בניית מקטעי האימון — מהירות עולה מדרגה לאורך האימון */
+function buildSegments(s){
+  const L = LEVELS[s.level];
+  const segs = [{ type:'warmup', speed:L.warmup, dur:L.warmupDur }];
+  const roundTime = L.pushDur + L.recoverDur;
+  const rounds = Math.max(3, Math.round((s.minutes*60 - L.warmupDur - L.cooldownDur) / roundTime));
+  for(let i=0;i<rounds;i++){
+    const sp = r1(Math.min(L.pushMax, L.pushStart + i*L.pushInc));
+    segs.push({ type:'push', speed:sp, dur:L.pushDur, round:i+1 });
+    segs.push({ type:'recover', speed:L.recover, dur:L.recoverDur });
+  }
+  segs.pop(); // ההתאוששות האחרונה מתחלפת בשחרור
+  segs.push({ type:'cooldown', speed:L.cooldown, dur:L.cooldownDur });
+  return segs;
 }
-function saveSettings(s){ try{ localStorage.setItem(LS_KEY, JSON.stringify(s)); }catch(e){} }
+// הערכת MET לפי מהירות (הליכה/ריצה על הליכון)
+function metForSpeed(sp){
+  if(sp <= 6) return sp * 0.8;
+  if(sp <= 8) return sp * 1.0;
+  return sp * 1.05;
+}
+function fmt(sec){ sec = Math.max(0, Math.ceil(sec)); const m = Math.floor(sec/60), s = sec%60; return m + ':' + String(s).padStart(2,'0'); }
+function speedText(sp){ return Number.isInteger(sp) ? String(sp) : sp.toFixed(1); }
 
 /* ============================================================
-   רמות עצימות (מדרגות עולות לאורך האימון)
+   קול (TTS) בעברית — משפט קצר בלבד
    ============================================================ */
-const LEVELS = [
-  { name:'קל',      color:'#34c759', met:6  },
-  { name:'בינוני',  color:'#ffd60a', met:8  },
-  { name:'חזק',     color:'#ff9f0a', met:10 },
-  { name:'מקסימלי', color:'#ff375f', met:12 },
-];
-// ממפה סבב (0..rounds-1) לרמת עצימות – מדרגות עולות
-function levelForRound(i, rounds){
-  if(rounds <= 1) return 0;
-  const idx = Math.floor((i / rounds) * LEVELS.length);
-  return Math.min(LEVELS.length - 1, idx);
+function heVoice(){ if(!window.speechSynthesis) return null; const v = window.speechSynthesis.getVoices(); return v.find(x=>x.lang==='he-IL') || v.find(x=>x.lang&&(x.lang.startsWith('he')||x.lang.startsWith('iw'))) || null; }
+function speak(text, on){
+  if(!on || !text || !window.speechSynthesis) return;
+  try{ window.speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang='he-IL'; u.rate=1.0; const v=heVoice(); if(v) u.voice=v; window.speechSynthesis.speak(u); }catch(e){}
 }
-
-/* ============================================================
-   מאגר וריאציות להנחיות (כדי שלא יישמע רובוטי)
-   ============================================================ */
-const CUES = {
-  getready: [
-    'מתכוננים. עוד רגע מתחילים',
-    'קחו נשימה, יוצאים לדרך',
-    'תתמקמו, מתחילים בעוד רגע',
-  ],
-  warmup: [
-    'מתחילים בחימום. נעים במקום ומרגישים את הגוף מתעורר',
-    'חימום קל. תזרימו דם לשרירים, בלי לחץ',
-    'חימום. תניעו את הגוף בעדינות ותתכוננו למאמץ',
-    'זמן להתחמם. הגבירו קצב בהדרגה',
-  ],
-  work: {
-    0: [
-      'סבב {n}. יוצאים בקצב קליל ונעים',
-      'סבב {n}. קצב קל, מתחילים להזיע',
-      'סבב {n}. קליל וזורם, שומרים על תנועה',
-    ],
-    1: [
-      'סבב {n}. מעלים הילוך, קצב בינוני יציב',
-      'סבב {n}. עולים רמה, שומרים על קצב אחיד',
-      'סבב {n}. בינוני וחזק, מרגישים את הדופק עולה',
-    ],
-    2: [
-      'סבב {n}. עכשיו דוחפים חזק, תשקיעו!',
-      'סבב {n}. תעלו את העצימות, בלי לרדת!',
-      'סבב {n}. חזק ומהיר, תנו את המקסימום!',
-    ],
-    3: [
-      'סבב {n}. הכל על השולחן! מקסימום מאמץ!',
-      'סבב {n}. הסבב הכי חזק, תפוצצו את זה!',
-      'סבב {n}. אחרון ושיא כוח, אין ויתורים!',
-    ],
-  },
-  half: [
-    'חצי דרך, תחזיקו!',
-    'עברתם את האמצע, ממשיכים!',
-    'חצי מאחורינו, אל תרדו!',
-  ],
-  last: [
-    'עוד עשר שניות, לסחוט הכל!',
-    'עשר שניות אחרונות, תנו הכל!',
-    'הישורת האחרונה, תחזיקו חזק!',
-  ],
-  rest: [
-    'מנוחה. תנשמו עמוק ותתאוששו',
-    'כל הכבוד! קצת אוויר לפני הסבב הבא',
-    'מנוחה. שחררו את הכתפיים ותנשמו',
-    'הפסקה קצרה. תשתו לגימה ותתכוננו',
-  ],
-  restEnd: [
-    'מתכוננים לסבב הבא',
-    'עוד רגע חוזרים לעבודה',
-    'הסבב הבא מתקרב, תתמקמו',
-  ],
-  cooldown: [
-    'סיימנו את הסבבים! עוברים לשחרור. הורידו קצב ותנשמו',
-    'עבודה מצוינת! זמן לקרר את הגוף לאט',
-    'כמעט סיימנו. שחרור עדין ונשימות עמוקות',
-  ],
-  done: [
-    'סיימתם! עבודה מדהימה. תתגאו בעצמכם',
-    'זהו, סיימנו! אלופים, כל הכבוד על ההשקעה',
-    'אימון הושלם! נתתם הכל, ענק!',
-  ],
-};
-// בורר וריאציה בלי חזרה מיידית על אותו משפט
-const lastPick = {};
-function pick(list, key){
-  if(!list || !list.length) return '';
-  if(list.length === 1) return list[0];
-  let idx;
-  do{ idx = Math.floor(Math.random() * list.length); }while(idx === lastPick[key] && list.length > 1);
-  lastPick[key] = idx;
-  return list[idx];
-}
-
-/* ============================================================
-   קול (TTS) בעברית
-   ============================================================ */
-function pickHebrewVoice(){
-  if(!window.speechSynthesis) return null;
-  const voices = window.speechSynthesis.getVoices();
-  return voices.find(v => v.lang === 'he-IL') ||
-         voices.find(v => v.lang && (v.lang.startsWith('he') || v.lang.startsWith('iw'))) || null;
-}
-function speak(text, enabled){
-  if(!enabled || !text || !window.speechSynthesis) return;
-  try{
-    window.speechSynthesis.cancel();
-    const utt = new SpeechSynthesisUtterance(text);
-    utt.lang = 'he-IL';
-    utt.rate = 1.0;
-    utt.pitch = 1.0;
-    const v = pickHebrewVoice();
-    if(v) utt.voice = v;
-    window.speechSynthesis.speak(utt);
-  }catch(e){}
-}
-if(window.speechSynthesis){
-  window.speechSynthesis.getVoices();
-  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+if(window.speechSynthesis){ window.speechSynthesis.getVoices(); window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices(); }
+// טקסט קולי לכל מקטע
+function cueFor(seg){
+  const sp = speedText(seg.speed);
+  if(seg.type==='warmup') return 'מתחילים בחימום. ' + sp + ' קילומטר לשעה';
+  if(seg.type==='push') return 'הגבר ל' + sp + ' קילומטר לשעה';
+  if(seg.type==='recover') return 'האט ל' + sp + '. התאוששות';
+  if(seg.type==='cooldown') return 'שחרור. האט ל' + sp;
+  return '';
 }
 
 /* ============================================================
    צלילי ספירה (WebAudio)
    ============================================================ */
-let audioCtx = null;
-function initAudio(){
-  if(!audioCtx){
-    try{ audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){}
-  }
-  if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-}
-function beep(freq, dur, enabled){
-  if(!enabled || !audioCtx) return;
-  try{
-    const o = audioCtx.createOscillator();
-    const g = audioCtx.createGain();
-    o.type = 'sine';
-    o.frequency.value = freq;
-    o.connect(g); g.connect(audioCtx.destination);
-    const t = audioCtx.currentTime;
-    g.gain.setValueAtTime(0.001, t);
-    g.gain.exponentialRampToValueAtTime(0.35, t + 0.01);
-    g.gain.exponentialRampToValueAtTime(0.001, t + dur);
-    o.start(t); o.stop(t + dur + 0.02);
-  }catch(e){}
+let actx = null;
+function initAudio(){ if(!actx){ try{ actx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(actx && actx.state==='suspended') actx.resume(); }
+function beep(freq, dur, on){
+  if(!on || !actx) return;
+  try{ const o=actx.createOscillator(), g=actx.createGain(); o.type='sine'; o.frequency.value=freq; o.connect(g); g.connect(actx.destination);
+    const t=actx.currentTime; g.gain.setValueAtTime(0.001,t); g.gain.exponentialRampToValueAtTime(0.35,t+0.01); g.gain.exponentialRampToValueAtTime(0.001,t+dur); o.start(t); o.stop(t+dur+0.02); }catch(e){}
 }
 
 /* ============================================================
-   בניית רשימת השלבים לאימון
+   מסך פתיחה
    ============================================================ */
-function buildPhases(s){
-  const phases = [];
-  phases.push({ type:'getready', dur:5, label:'מתכוננים', color:'#64748b' });
-  if(s.warmup > 0) phases.push({ type:'warmup', dur:s.warmup, label:'חימום', color:'#0a84ff' });
-  for(let i=0; i<s.rounds; i++){
-    const lvl = levelForRound(i, s.rounds);
-    const dur = s.workStart + i * s.workInc;
-    phases.push({ type:'work', dur, round:i+1, level:lvl, label:'עבודה', color:LEVELS[lvl].color });
-    if(i < s.rounds - 1 && s.rest > 0){
-      phases.push({ type:'rest', dur:s.rest, nextRound:i+2, label:'מנוחה', color:'#30d0c7' });
-    }
-  }
-  if(s.cooldown > 0) phases.push({ type:'cooldown', dur:s.cooldown, label:'שחרור', color:'#5e5ce6' });
-  return phases;
-}
-function metForPhase(p){
-  if(p.type === 'work') return LEVELS[p.level].met;
-  if(p.type === 'warmup') return 4;
-  if(p.type === 'cooldown' || p.type === 'rest') return 3;
-  return 2;
-}
-function fmt(sec){
-  sec = Math.max(0, Math.ceil(sec));
-  const m = Math.floor(sec/60), s = sec%60;
-  return m + ':' + String(s).padStart(2,'0');
-}
-
-/* ============================================================
-   מסך הגדרות
-   ============================================================ */
-function Stepper({label, sub, value, set, min, max, step, unit}){
-  const dec = () => set(Math.max(min, value - step));
-  const inc = () => set(Math.min(max, value + step));
+function Chip({active, onClick, children, sub}){
   return (
-    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 4px',borderBottom:'1px solid #1e293b'}}>
-      <div style={{textAlign:'right'}}>
-        <div style={{fontSize:16,fontWeight:600}}>{label}</div>
-        {sub && <div style={{fontSize:12,color:'#64748b',marginTop:2}}>{sub}</div>}
+    <button onClick={onClick} style={{flex:1,padding:'14px 8px',borderRadius:16,background:active?'#ff375f':'#141a2a',border:active?'1px solid #ff375f':'1px solid #1e293b',color:active?'#fff':'#94a3b8',fontSize:15,fontWeight:700,lineHeight:1.35,transition:'all 0.15s'}}>
+      {children}{sub && <div style={{fontSize:11,fontWeight:500,opacity:0.85,marginTop:3}}>{sub}</div>}
+    </button>
+  );
+}
+function Start({settings, setSettings, onStart}){
+  const upd = (k,v) => setSettings(prev => { const n={...prev,[k]:v}; store(n); return n; });
+  const L = LEVELS[settings.level];
+  // תצוגה מקדימה
+  const segs = buildSegments(settings);
+  const total = segs.reduce((a,s)=>a+s.dur,0);
+  const pushMax = Math.max(...segs.filter(s=>s.type==='push').map(s=>s.speed));
+  return (
+    <div style={{maxWidth:460,margin:'0 auto',padding:'28px 20px 40px',animation:'fadeIn 0.3s ease'}}>
+      <div style={{textAlign:'center',marginBottom:26}}>
+        <div style={{fontSize:46,marginBottom:4}}>🔥</div>
+        <h1 style={{fontSize:26,fontWeight:800}}>אימון הליכון</h1>
+        <p style={{color:'#64748b',fontSize:14,marginTop:5}}>אינטרוולים לשריפת שומן · מהירות עולה</p>
       </div>
-      <div style={{display:'flex',alignItems:'center',gap:12}}>
-        <button onClick={dec} style={btnRound}>−</button>
-        <div style={{minWidth:64,textAlign:'center',fontSize:19,fontWeight:700,fontVariantNumeric:'tabular-nums'}}>
-          {value}<span style={{fontSize:12,color:'#64748b',fontWeight:500}}> {unit}</span>
+
+      <div style={{fontSize:13,color:'#64748b',marginBottom:8,fontWeight:600}}>רמה</div>
+      <div style={{display:'flex',gap:10,marginBottom:22}}>
+        {Object.keys(LEVELS).map(k=>(
+          <Chip key={k} active={settings.level===k} onClick={()=>upd('level',k)} sub={LEVELS[k].sub}>{LEVELS[k].name}</Chip>
+        ))}
+      </div>
+
+      <div style={{fontSize:13,color:'#64748b',marginBottom:8,fontWeight:600}}>משך</div>
+      <div style={{display:'flex',gap:10,marginBottom:22}}>
+        {[15,20,25].map(m=>(
+          <Chip key={m} active={settings.minutes===m} onClick={()=>upd('minutes',m)}>{m} דק׳</Chip>
+        ))}
+      </div>
+
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',background:'#141a2a',border:'1px solid #1e293b',borderRadius:16,padding:'12px 16px',marginBottom:12}}>
+        <div style={{fontSize:15,fontWeight:600}}>משקל גוף <span style={{color:'#64748b',fontWeight:500,fontSize:12}}>(לקלוריות)</span></div>
+        <div style={{display:'flex',alignItems:'center',gap:12}}>
+          <button onClick={()=>upd('weight',Math.max(30,settings.weight-1))} style={btnR}>−</button>
+          <div style={{minWidth:56,textAlign:'center',fontSize:18,fontWeight:700}}>{settings.weight}<span style={{fontSize:12,color:'#64748b'}}> ק״ג</span></div>
+          <button onClick={()=>upd('weight',Math.min(200,settings.weight+1))} style={btnR}>+</button>
         </div>
-        <button onClick={inc} style={btnRound}>+</button>
       </div>
-    </div>
-  );
-}
-const btnRound = {width:40,height:40,borderRadius:20,background:'#1e293b',color:'#f1f5f9',fontSize:22,fontWeight:600,display:'flex',alignItems:'center',justifyContent:'center',lineHeight:1};
 
-function Toggle({label, sub, value, set}){
-  return (
-    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 4px',borderBottom:'1px solid #1e293b'}}>
-      <div style={{textAlign:'right'}}>
-        <div style={{fontSize:16,fontWeight:600}}>{label}</div>
-        {sub && <div style={{fontSize:12,color:'#64748b',marginTop:2}}>{sub}</div>}
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',background:'#141a2a',border:'1px solid #1e293b',borderRadius:16,padding:'12px 16px',marginBottom:22}}>
+        <div style={{fontSize:15,fontWeight:600}}>קול והתרעות <span style={{color:'#64748b',fontWeight:500,fontSize:12}}>(הכרזת מהירות)</span></div>
+        <button onClick={()=>upd('sound',!settings.sound)} style={{width:52,height:32,borderRadius:16,background:settings.sound?'#34c759':'#334155',position:'relative',transition:'background 0.2s'}}>
+          <span style={{position:'absolute',top:3,left:settings.sound?3:23,width:26,height:26,borderRadius:13,background:'#fff',transition:'left 0.2s',boxShadow:'0 1px 3px rgba(0,0,0,0.3)'}}/>
+        </button>
       </div>
-      <button onClick={()=>set(!value)} style={{width:52,height:32,borderRadius:16,background:value?'#34c759':'#334155',position:'relative',transition:'background 0.2s'}}>
-        <span style={{position:'absolute',top:3,left:value?3:23,width:26,height:26,borderRadius:13,background:'#fff',transition:'left 0.2s',boxShadow:'0 1px 3px rgba(0,0,0,0.3)'}}/>
+
+      <div style={{display:'flex',justifyContent:'space-around',margin:'0 0 22px',color:'#94a3b8',fontSize:13,textAlign:'center'}}>
+        <div><div style={{fontSize:22,fontWeight:700,color:'#f1f5f9'}}>{fmt(total)}</div>משך כולל</div>
+        <div><div style={{fontSize:22,fontWeight:700,color:'#f1f5f9'}}>{L.warmup}</div>מהירות פתיחה</div>
+        <div><div style={{fontSize:22,fontWeight:700,color:'#ff375f'}}>{speedText(pushMax)}</div>שיא קמ״ש</div>
+      </div>
+
+      <button onClick={onStart} style={{width:'100%',padding:'20px',borderRadius:18,background:'linear-gradient(135deg,#ff375f,#ff9f0a)',color:'#fff',fontSize:22,fontWeight:800,boxShadow:'0 8px 24px rgba(255,55,95,0.35)'}}>
+        התחלה ▶
       </button>
     </div>
   );
 }
-
-function Setup({settings, setSettings, onStart}){
-  const upd = (k, v) => setSettings(prev => { const n = {...prev, [k]:v}; saveSettings(n); return n; });
-  // תצוגה מקדימה: זמן כולל וזמן עבודה
-  let totalWork = 0, total = 0;
-  for(let i=0;i<settings.rounds;i++){ totalWork += settings.workStart + i*settings.workInc; }
-  total = settings.warmup + totalWork + settings.rest*Math.max(0,settings.rounds-1) + settings.cooldown;
-  return (
-    <div style={{maxWidth:480,margin:'0 auto',padding:'24px 20px 40px',animation:'fadeIn 0.3s ease'}}>
-      <div style={{textAlign:'center',marginBottom:24}}>
-        <div style={{fontSize:44,marginBottom:4}}>🔥</div>
-        <h1 style={{fontSize:28,fontWeight:800}}>אימון HIIT</h1>
-        <p style={{color:'#64748b',fontSize:14,marginTop:4}}>מאמן קולי בעברית · עצימות עולה</p>
-      </div>
-
-      <div style={{background:'#111827',borderRadius:20,padding:'6px 16px',border:'1px solid #1e293b'}}>
-        <Stepper label="מספר סבבים" value={settings.rounds} set={v=>upd('rounds',v)} min={1} max={20} step={1} unit="סבבים"/>
-        <Stepper label="זמן עבודה (סבב ראשון)" sub="נקודת הפתיחה של העצימות" value={settings.workStart} set={v=>upd('workStart',v)} min={10} max={120} step={5} unit="שנ'"/>
-        <Stepper label="תוספת לכל סבב" sub="ככה משך העבודה עולה מדרגה" value={settings.workInc} set={v=>upd('workInc',v)} min={0} max={20} step={1} unit="שנ'"/>
-        <Stepper label="מנוחה בין סבבים" value={settings.rest} set={v=>upd('rest',v)} min={5} max={120} step={5} unit="שנ'"/>
-        <Stepper label="חימום" value={settings.warmup} set={v=>upd('warmup',v)} min={0} max={180} step={10} unit="שנ'"/>
-        <Stepper label="קירור / שחרור" value={settings.cooldown} set={v=>upd('cooldown',v)} min={0} max={300} step={10} unit="שנ'"/>
-        <Stepper label="משקל גוף" sub="לחישוב הקלוריות בסוף" value={settings.weight} set={v=>upd('weight',v)} min={30} max={200} step={1} unit="ק״ג"/>
-        <Toggle label="הנחיה קולית" sub="קול בעברית לאורך האימון" value={settings.voice} set={v=>upd('voice',v)}/>
-        <Toggle label="צלילי ספירה" sub="ביפ ב־3,2,1 ובמעבר שלב" value={settings.beeps} set={v=>upd('beeps',v)}/>
-      </div>
-
-      <div style={{display:'flex',justifyContent:'space-around',margin:'20px 0',color:'#94a3b8',fontSize:13,textAlign:'center'}}>
-        <div><div style={{fontSize:22,fontWeight:700,color:'#f1f5f9'}}>{settings.rounds}</div>סבבים</div>
-        <div><div style={{fontSize:22,fontWeight:700,color:'#f1f5f9'}}>{fmt(totalWork)}</div>עבודה</div>
-        <div><div style={{fontSize:22,fontWeight:700,color:'#f1f5f9'}}>{fmt(total)}</div>סה״כ</div>
-      </div>
-
-      <button onClick={onStart} style={{width:'100%',padding:'18px',borderRadius:18,background:'linear-gradient(135deg,#ff375f,#ff9f0a)',color:'#fff',fontSize:20,fontWeight:800,boxShadow:'0 8px 24px rgba(255,55,95,0.35)'}}>
-        התחלת אימון ▶
-      </button>
-    </div>
-  );
-}
+const btnR = {width:38,height:38,borderRadius:19,background:'#1e293b',color:'#f1f5f9',fontSize:22,fontWeight:600,display:'flex',alignItems:'center',justifyContent:'center',lineHeight:1};
 
 /* ============================================================
    מסך אימון
    ============================================================ */
-function dummy(){}
-function Workout({settings, phases, onDone}){
+function Workout({settings, segments, onDone}){
   const [idx, setIdx] = useState(0);
-  const [remaining, setRemaining] = useState(phases[0].dur);
+  const [remaining, setRemaining] = useState(segments[0].dur);
   const [paused, setPaused] = useState(false);
+  const [muted, setMuted] = useState(!settings.sound);
+  const [preCue, setPreCue] = useState(null); // התרעה מקדימה לפני מעבר
 
-  const deadlineRef = useRef(Date.now() + phases[0].dur*1000);
-  const remRef = useRef(phases[0].dur);
-  const lastBeepRef = useRef(null);
-  const halfSpokenRef = useRef(false);
-  const lastSpokenRef = useRef(false);
-  const calRef = useRef(0);          // קלוריות מצטברות
-  const roundsDoneRef = useRef(0);   // סבבי עבודה שהושלמו
-  const elapsedRef = useRef(0);      // זמן פעיל מצטבר (שנ')
-  const wakeRef = useRef(null);
+  const deadlineRef = useRef(Date.now() + segments[0].dur*1000);
+  const remRef = useRef(segments[0].dur);
   const idxRef = useRef(0);
+  const beepRef = useRef(null);
+  const preRef = useRef(false);
+  const calRef = useRef(0);
+  const elapsedRef = useRef(0);
+  const distRef = useRef(0); // מרחק במטרים
+  const wakeRef = useRef(null);
+  const mutedRef = useRef(!settings.sound);
+  mutedRef.current = muted;
 
-  const phase = phases[idx];
-  const s = settings;
+  const seg = segments[idx];
+  const next = segments[idx+1] || null;
 
-  // Wake Lock – שהמסך לא יכבה
-  const requestWake = useCallback(async () => {
-    try{
-      if('wakeLock' in navigator){ wakeRef.current = await navigator.wakeLock.request('screen'); }
-    }catch(e){}
-  }, []);
+  // Wake Lock
   useEffect(() => {
-    requestWake();
-    const onVis = () => { if(document.visibilityState === 'visible') requestWake(); };
+    const req = async () => { try{ if('wakeLock' in navigator) wakeRef.current = await navigator.wakeLock.request('screen'); }catch(e){} };
+    req();
+    const onVis = () => { if(document.visibilityState==='visible') req(); };
     document.addEventListener('visibilitychange', onVis);
-    return () => {
-      document.removeEventListener('visibilitychange', onVis);
-      try{ wakeRef.current && wakeRef.current.release(); }catch(e){}
-      try{ window.speechSynthesis && window.speechSynthesis.cancel(); }catch(e){}
-    };
+    return () => { document.removeEventListener('visibilitychange', onVis); try{ wakeRef.current&&wakeRef.current.release(); }catch(e){} try{ window.speechSynthesis&&window.speechSynthesis.cancel(); }catch(e){} };
   }, []);
 
-  // הנחיה קולית בתחילת כל שלב
-  const announce = useCallback((p) => {
-    let text = '';
-    if(p.type === 'getready') text = pick(CUES.getready,'getready');
-    else if(p.type === 'warmup') text = pick(CUES.warmup,'warmup');
-    else if(p.type === 'work'){ text = pick(CUES.work[p.level],'work'+p.level).replace('{n}', p.round); }
-    else if(p.type === 'rest') text = pick(CUES.rest,'rest');
-    else if(p.type === 'cooldown') text = pick(CUES.cooldown,'cooldown');
-    speak(text, s.voice);
-  }, [s.voice]);
+  useEffect(() => { speak(cueFor(segments[0]), !mutedRef.current); }, []);
 
-  useEffect(() => { announce(phases[0]); }, []);
-
-  // מעבר לשלב הבא (או סיום)
-  const advance = useCallback((manualStop) => {
-    const cur = phases[idxRef.current];
-    const spent = manualStop ? (cur.dur - Math.max(0, remRef.current)) : cur.dur;
-    calRef.current += metForPhase(cur) * 3.5 * s.weight / 200 * (spent/60);
+  const advance = useCallback((stop) => {
+    const cur = segments[idxRef.current];
+    const spent = stop ? (cur.dur - Math.max(0, remRef.current)) : cur.dur;
+    calRef.current += metForSpeed(cur.speed) * 3.5 * settings.weight / 200 * (spent/60);
     elapsedRef.current += spent;
-    if(cur.type === 'work' && !manualStop) roundsDoneRef.current += 1;
-    if(cur.type === 'work' && manualStop && spent >= cur.dur*0.5) roundsDoneRef.current += 1;
-
-    const next = idxRef.current + 1;
-    if(manualStop || next >= phases.length){
-      try{ window.speechSynthesis && window.speechSynthesis.cancel(); }catch(e){}
-      speak(pick(CUES.done,'done'), s.voice);
-      beep(1320, 0.5, s.beeps);
-      onDone({ calories: Math.round(calRef.current), rounds: roundsDoneRef.current, elapsed: Math.round(elapsedRef.current) });
+    distRef.current += cur.speed * 1000 / 3600 * spent; // קמ״ש → מ׳
+    const ni = idxRef.current + 1;
+    if(stop || ni >= segments.length){
+      try{ window.speechSynthesis&&window.speechSynthesis.cancel(); }catch(e){}
+      speak('כל הכבוד, סיימת!', !mutedRef.current);
+      beep(1320, 0.5, !mutedRef.current);
+      onDone({ calories:Math.round(calRef.current), elapsed:Math.round(elapsedRef.current), km:r1(distRef.current/1000) });
       return;
     }
-    const np = phases[next];
-    idxRef.current = next;
-    remRef.current = np.dur;
-    deadlineRef.current = Date.now() + np.dur*1000;
-    lastBeepRef.current = null;
-    halfSpokenRef.current = false;
-    lastSpokenRef.current = false;
-    setIdx(next);
-    setRemaining(np.dur);
-    beep(1320, 0.35, s.beeps);  // צליל מעבר
-    announce(np);
-  }, [s.voice, s.weight, s.beeps, onDone, announce]);
+    const np = segments[ni];
+    idxRef.current = ni; remRef.current = np.dur; deadlineRef.current = Date.now() + np.dur*1000;
+    beepRef.current = null; preRef.current = false;
+    setPreCue(null); setIdx(ni); setRemaining(np.dur);
+    beep(1320, 0.35, !mutedRef.current);
+    speak(cueFor(np), !mutedRef.current);
+  }, [settings.weight, onDone]);
 
   // טיימר
   useEffect(() => {
@@ -399,102 +238,81 @@ function Workout({settings, phases, onDone}){
     const id = setInterval(() => {
       const rem = (deadlineRef.current - Date.now())/1000;
       remRef.current = rem;
-      const cur = phases[idxRef.current];
-
-      // ספירת 3,2,1
-      const sec = Math.ceil(rem);
-      if(sec !== lastBeepRef.current && sec >= 1 && sec <= 3){
-        lastBeepRef.current = sec;
-        beep(880, 0.12, s.beeps);
+      const nx = segments[idxRef.current+1];
+      // ספירת 3-2-1 לקראת מעבר
+      const sc = Math.ceil(rem);
+      if(sc !== beepRef.current && sc>=1 && sc<=3){ beepRef.current = sc; beep(880, 0.11, !mutedRef.current); }
+      // התרעה מקדימה ~5 שנ' לפני מעבר: אומר את המהירות הבאה
+      if(nx && !preRef.current && rem <= 5.2 && rem > 4){
+        preRef.current = true;
+        setPreCue(nx);
+        speak(cueFor(nx), !mutedRef.current);
       }
-      // הנחיית אמצע לשלבי עבודה ארוכים
-      if(cur.type === 'work' && !halfSpokenRef.current && cur.dur >= 25 && rem <= cur.dur/2){
-        halfSpokenRef.current = true;
-        speak(pick(CUES.half,'half'), s.voice);
-      }
-      // 10 שניות אחרונות בעבודה
-      if(cur.type === 'work' && !lastSpokenRef.current && cur.dur >= 22 && rem <= 10.5 && rem > 9){
-        lastSpokenRef.current = true;
-        speak(pick(CUES.last,'last'), s.voice);
-      }
-      // הנחיית סיום מנוחה
-      if(cur.type === 'rest' && !lastSpokenRef.current && cur.dur >= 12 && rem <= 5.5 && rem > 4){
-        lastSpokenRef.current = true;
-        speak(pick(CUES.restEnd,'restEnd'), s.voice);
-      }
-
       if(rem <= 0.05){ advance(false); return; }
       setRemaining(Math.max(0, rem));
     }, 100);
-    // keep-alive ל-TTS ב-iOS
-    const ka = setInterval(() => { try{ if(s.voice && window.speechSynthesis && window.speechSynthesis.speaking) window.speechSynthesis.resume(); }catch(e){} }, 5000);
+    const ka = setInterval(() => { try{ if(!mutedRef.current && window.speechSynthesis && window.speechSynthesis.speaking) window.speechSynthesis.resume(); }catch(e){} }, 5000);
     return () => { clearInterval(id); clearInterval(ka); };
-  }, [paused, advance, s.beeps, s.voice]);
+  }, [paused, advance]);
 
   const togglePause = () => {
-    if(paused){
-      deadlineRef.current = Date.now() + remRef.current*1000;
-      setPaused(false);
-      try{ window.speechSynthesis && window.speechSynthesis.resume(); }catch(e){}
-    }else{
-      setPaused(true);
-      try{ window.speechSynthesis && window.speechSynthesis.pause(); }catch(e){}
-    }
+    if(paused){ deadlineRef.current = Date.now() + remRef.current*1000; setPaused(false); try{window.speechSynthesis&&window.speechSynthesis.resume();}catch(e){} }
+    else { setPaused(true); try{window.speechSynthesis&&window.speechSynthesis.pause();}catch(e){} }
   };
 
-  // תצוגה
-  const total = phase.dur;
-  const frac = Math.max(0, Math.min(1, remaining/total));
-  const R = 130, C = 2*Math.PI*R;
-  const workRounds = phases.filter(p => p.type === 'work').length;
-  const curRound = phase.type === 'work' ? phase.round : (phase.type === 'rest' ? phase.nextRound - 1 : 0);
-
-  let headline = phase.label, sub = '';
-  if(phase.type === 'getready'){ headline = 'מתכוננים'; sub = 'עוד רגע מתחילים'; }
-  else if(phase.type === 'warmup'){ headline = 'חימום'; sub = 'מתחממים לקראת המאמץ'; }
-  else if(phase.type === 'work'){ headline = 'עבודה'; sub = 'סבב ' + phase.round + ' · עצימות ' + LEVELS[phase.level].name; }
-  else if(phase.type === 'rest'){ headline = 'מנוחה'; sub = 'הסבב הבא: ' + phase.nextRound; }
-  else if(phase.type === 'cooldown'){ headline = 'שחרור'; sub = 'מקררים את הגוף'; }
+  const frac = Math.max(0, Math.min(1, remaining/seg.dur));
+  const R=130, C=2*Math.PI*R;
+  const col = COLORS[seg.type];
+  const overall = elapsedRef.current + (seg.dur - remaining);
+  const totalDur = segments.reduce((a,s)=>a+s.dur,0);
+  const showPre = preCue && remaining <= 5.2;
 
   return (
-    <div style={{minHeight:'100dvh',display:'flex',flexDirection:'column',background:`radial-gradient(circle at 50% 30%, ${phase.color}22, #0b0f1a 60%)`,transition:'background 0.5s'}}>
-      {/* נקודות סבבים */}
-      <div style={{display:'flex',justifyContent:'center',gap:7,flexWrap:'wrap',padding:'16px 20px 4px'}}>
-        {Array.from({length:workRounds}).map((_,i)=>(
-          <span key={i} style={{width:9,height:9,borderRadius:5,background: i < roundsDoneRef.current ? '#34c759' : (i+1===curRound ? phase.color : '#334155'), transition:'background 0.3s'}}/>
-        ))}
+    <div style={{minHeight:'100dvh',display:'flex',flexDirection:'column',background:`radial-gradient(circle at 50% 32%, ${col}26, #0b0f1a 62%)`,transition:'background 0.5s'}}>
+      {/* פס התקדמות כולל */}
+      <div style={{padding:'16px 20px 6px'}}>
+        <div style={{height:6,borderRadius:3,background:'#1e293b',overflow:'hidden'}}>
+          <div style={{height:'100%',width:(100*overall/totalDur)+'%',background:col,borderRadius:3,transition:'width 0.2s linear'}}/>
+        </div>
       </div>
 
-      <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'10px 20px'}}>
-        <div style={{fontSize:22,fontWeight:800,color:phase.color,letterSpacing:0.5,marginBottom:2}}>{headline}</div>
-        <div style={{fontSize:15,color:'#94a3b8',marginBottom:18,minHeight:20}}>{sub}</div>
+      <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'6px 20px'}}>
+        <div style={{fontSize:20,fontWeight:800,color:col,letterSpacing:0.5}}>{LABELS[seg.type]}</div>
+        <div style={{fontSize:14,color:'#94a3b8',marginBottom:14,minHeight:18}}>{fmt(remaining)} בקטע זה</div>
 
         <div style={{position:'relative',width:290,height:290,display:'flex',alignItems:'center',justifyContent:'center'}}>
           <svg width="290" height="290" style={{transform:'rotate(-90deg)',filter:paused?'grayscale(0.5)':'none'}}>
             <circle cx="145" cy="145" r={R} fill="none" stroke="#1e293b" strokeWidth="14"/>
-            <circle cx="145" cy="145" r={R} fill="none" stroke={phase.color} strokeWidth="14" strokeLinecap="round"
-              strokeDasharray={C} strokeDashoffset={C*(1-frac)} style={{transition:'stroke-dashoffset 0.15s linear, stroke 0.5s'}}/>
+            <circle cx="145" cy="145" r={R} fill="none" stroke={col} strokeWidth="14" strokeLinecap="round" strokeDasharray={C} strokeDashoffset={C*(1-frac)} style={{transition:'stroke-dashoffset 0.15s linear, stroke 0.5s'}}/>
           </svg>
           <div style={{position:'absolute',textAlign:'center'}}>
-            <div style={{fontSize:76,fontWeight:800,fontVariantNumeric:'tabular-nums',lineHeight:1,color:'#fff',animation: remaining<=3 && phase.type!=='getready' ? 'pulse 1s infinite':'none'}}>
-              {Math.ceil(remaining)}
-            </div>
-            <div style={{fontSize:14,color:'#64748b',marginTop:6}}>{paused?'מושהה':'שניות'}</div>
+            <div style={{fontSize:14,color:'#64748b',marginBottom:-2}}>כוון ל</div>
+            <div style={{fontSize:92,fontWeight:800,lineHeight:1,color:'#fff',fontVariantNumeric:'tabular-nums',animation:remaining<=3?'pulse 1s infinite':'none'}}>{speedText(seg.speed)}</div>
+            <div style={{fontSize:18,color:'#94a3b8',fontWeight:600,marginTop:2}}>קמ״ש</div>
           </div>
         </div>
 
-        {phase.type === 'work' && (
-          <div style={{marginTop:20,padding:'8px 18px',borderRadius:14,background:phase.color+'22',color:phase.color,fontSize:16,fontWeight:700,animation:'pop 0.4s ease'}}>
-            עצימות: {LEVELS[phase.level].name}
-          </div>
-        )}
+        {/* התרעה מקדימה למעבר הקרוב */}
+        <div style={{marginTop:20,minHeight:52}}>
+          {showPre ? (
+            <div style={{padding:'10px 20px',borderRadius:14,background:COLORS[preCue.type]+'26',color:COLORS[preCue.type],fontSize:18,fontWeight:800,animation:'flash 0.6s infinite'}}>
+              {preCue.type==='push'?'⬆ הגבר ל':(preCue.type==='recover'?'⬇ האט ל':'⬇ האט ל')} {speedText(preCue.speed)} קמ״ש
+            </div>
+          ) : next ? (
+            <div style={{padding:'8px 16px',borderRadius:12,background:'#141a2a',color:'#64748b',fontSize:14,fontWeight:600}}>
+              הבא: {LABELS[next.type]} · {speedText(next.speed)} קמ״ש
+            </div>
+          ) : (
+            <div style={{padding:'8px 16px',color:'#64748b',fontSize:14,fontWeight:600}}>המקטע האחרון 💪</div>
+          )}
+        </div>
       </div>
 
       {/* כפתורים */}
-      <div style={{display:'flex',gap:12,padding:'8px 20px calc(24px + env(safe-area-inset-bottom))',maxWidth:480,margin:'0 auto',width:'100%'}}>
-        <button onClick={()=>advance(true)} style={{flex:1,padding:'16px',borderRadius:16,background:'#1e293b',color:'#f87171',fontSize:16,fontWeight:700}}>סיום ⏹</button>
-        <button onClick={togglePause} style={{flex:1.4,padding:'16px',borderRadius:16,background:paused?'#34c759':'#334155',color:'#fff',fontSize:16,fontWeight:700}}>{paused?'המשך ▶':'השהיה ⏸'}</button>
-        <button onClick={()=>advance(false)} style={{flex:1,padding:'16px',borderRadius:16,background:'#1e293b',color:'#94a3b8',fontSize:16,fontWeight:700}}>דלג ⏭</button>
+      <div style={{display:'flex',gap:12,padding:'8px 20px calc(24px + env(safe-area-inset-bottom))',maxWidth:460,margin:'0 auto',width:'100%'}}>
+        <button onClick={()=>advance(true)} style={{flex:1,padding:'16px',borderRadius:16,background:'#141a2a',color:'#f87171',fontSize:16,fontWeight:700}}>סיום ⏹</button>
+        <button onClick={togglePause} style={{flex:1.5,padding:'16px',borderRadius:16,background:paused?'#34c759':'#334155',color:'#fff',fontSize:16,fontWeight:700}}>{paused?'המשך ▶':'השהיה ⏸'}</button>
+        <button onClick={()=>setMuted(m=>!m)} style={{flex:0.8,padding:'16px',borderRadius:16,background:'#141a2a',color:muted?'#64748b':'#f1f5f9',fontSize:20,fontWeight:700}}>{muted?'🔇':'🔊'}</button>
       </div>
     </div>
   );
@@ -503,30 +321,29 @@ function Workout({settings, phases, onDone}){
 /* ============================================================
    מסך סיכום
    ============================================================ */
-function Summary({result, onRestart, onSettings}){
-  const [line] = useState(() => pick(CUES.done,'done'));
+function Summary({result, onRestart, onHome}){
   return (
-    <div style={{maxWidth:480,margin:'0 auto',padding:'40px 20px',minHeight:'100dvh',display:'flex',flexDirection:'column',justifyContent:'center',animation:'fadeIn 0.4s ease'}}>
+    <div style={{maxWidth:460,margin:'0 auto',padding:'40px 20px',minHeight:'100dvh',display:'flex',flexDirection:'column',justifyContent:'center',animation:'fadeIn 0.4s ease'}}>
       <div style={{textAlign:'center',marginBottom:28}}>
         <div style={{fontSize:64,animation:'pop 0.5s ease'}}>🏆</div>
-        <h1 style={{fontSize:30,fontWeight:800,marginTop:8}}>אימון הושלם!</h1>
-        <p style={{color:'#94a3b8',fontSize:15,marginTop:6}}>{line}</p>
+        <h1 style={{fontSize:30,fontWeight:800,marginTop:8}}>סיימת!</h1>
+        <p style={{color:'#94a3b8',fontSize:15,marginTop:6}}>כל הכבוד על ההשקעה 🔥</p>
       </div>
-      <div style={{display:'flex',gap:12,marginBottom:12}}>
-        <Stat val={fmt(result.elapsed)} label="זמן פעיל" color="#0a84ff"/>
-        <Stat val={result.rounds} label="סבבים" color="#34c759"/>
+      <div style={{display:'flex',gap:10,marginBottom:12}}>
+        <Stat val={fmt(result.elapsed)} label="זמן" color="#0a84ff"/>
+        <Stat val={result.km} label="ק״מ" color="#34c759"/>
         <Stat val={result.calories} label="קלוריות" color="#ff375f"/>
       </div>
-      <p style={{textAlign:'center',color:'#475569',fontSize:12,marginBottom:28}}>הערכת הקלוריות מבוססת על נוסחת MET לפי משקל הגוף והעצימות</p>
+      <p style={{textAlign:'center',color:'#475569',fontSize:12,marginBottom:28}}>הערכת קלוריות ומרחק לפי המהירויות והמשקל שהוגדרו</p>
       <button onClick={onRestart} style={{width:'100%',padding:'18px',borderRadius:18,background:'linear-gradient(135deg,#ff375f,#ff9f0a)',color:'#fff',fontSize:19,fontWeight:800,marginBottom:12,boxShadow:'0 8px 24px rgba(255,55,95,0.3)'}}>אימון נוסף ▶</button>
-      <button onClick={onSettings} style={{width:'100%',padding:'16px',borderRadius:16,background:'#1e293b',color:'#f1f5f9',fontSize:16,fontWeight:700}}>שינוי הגדרות ⚙</button>
+      <button onClick={onHome} style={{width:'100%',padding:'16px',borderRadius:16,background:'#141a2a',color:'#f1f5f9',fontSize:16,fontWeight:700}}>שינוי הגדרות ⚙</button>
     </div>
   );
 }
 function Stat({val, label, color}){
   return (
-    <div style={{flex:1,background:'#111827',border:'1px solid #1e293b',borderRadius:18,padding:'18px 8px',textAlign:'center'}}>
-      <div style={{fontSize:26,fontWeight:800,color,fontVariantNumeric:'tabular-nums'}}>{val}</div>
+    <div style={{flex:1,background:'#111827',border:'1px solid #1e293b',borderRadius:18,padding:'18px 6px',textAlign:'center'}}>
+      <div style={{fontSize:24,fontWeight:800,color,fontVariantNumeric:'tabular-nums'}}>{val}</div>
       <div style={{fontSize:12,color:'#64748b',marginTop:4}}>{label}</div>
     </div>
   );
@@ -536,22 +353,17 @@ function Stat({val, label, color}){
    אפליקציה
    ============================================================ */
 function App(){
-  const [screen, setScreen] = useState('setup'); // setup | run | done
-  const [settings, setSettings] = useState(loadSettings);
-  const [phases, setPhases] = useState([]);
+  const [screen, setScreen] = useState('start');
+  const [settings, setSettings] = useState(load);
+  const [segments, setSegments] = useState([]);
   const [result, setResult] = useState(null);
 
-  const start = () => {
-    initAudio();
-    speak('', settings.voice); // "מפשיר" את ה-TTS בתוך מחוות המשתמש
-    setPhases(buildPhases(settings));
-    setScreen('run');
-  };
+  const start = () => { initAudio(); speak('', settings.sound); setSegments(buildSegments(settings)); setScreen('run'); };
   const done = (r) => { setResult(r); setScreen('done'); };
 
-  if(screen === 'setup') return <Setup settings={settings} setSettings={setSettings} onStart={start}/>;
-  if(screen === 'run') return <Workout settings={settings} phases={phases} onDone={done}/>;
-  return <Summary result={result} onRestart={start} onSettings={()=>setScreen('setup')}/>;
+  if(screen==='start') return <Start settings={settings} setSettings={setSettings} onStart={start}/>;
+  if(screen==='run') return <Workout settings={settings} segments={segments} onDone={done}/>;
+  return <Summary result={result} onRestart={start} onHome={()=>setScreen('start')}/>;
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
