@@ -120,7 +120,7 @@
 
   .panel{ position:fixed; inset:0; background:rgba(62,44,86,0.35); display:flex; align-items:flex-end; justify-content:center; z-index:30; }
   .panel.hidden{ display:none; }
-  .panel-inner{ background:#fff; width:100%; max-width:480px; max-height:78vh; overflow-y:auto; border-radius:24px 24px 0 0; padding:20px 20px 30px; }
+  .panel-inner{ background:#fff; width:100%; max-width:480px; max-height:88vh; overflow-y:auto; border-radius:24px 24px 0 0; padding:20px 20px 30px; }
   .panel-inner h2{ font-size:1.05rem; margin:0 0 4px; }
   .panel-sub{ font-size:0.82rem; color:rgba(62,44,86,0.5); margin-bottom:14px; }
   .panel-close{ display:block; margin:0 auto 14px; background:rgba(62,44,86,0.08); border:none; border-radius:12px; padding:8px 18px; font-size:0.85rem; color:var(--plum); cursor:pointer; }
@@ -139,7 +139,9 @@
   .prog-stat{ flex:1; background:rgba(15,185,167,0.08); border-radius:14px; padding:10px 8px; text-align:center; }
   .prog-stat b{ display:block; font-size:1.2rem; color:var(--teal-dark); }
   .prog-stat span{ font-size:0.68rem; color:rgba(62,44,86,0.55); }
-  .prog-chart{ background:rgba(62,44,86,0.03); border-radius:14px; padding:8px 6px 4px; margin-bottom:18px; }
+  #progChart{ margin-top:20px; padding-top:16px; border-top:1px solid rgba(62,44,86,0.08); }
+  .prog-chart-title{ font-size:0.8rem; font-weight:700; color:rgba(62,44,86,0.55); margin-bottom:8px; }
+  .prog-chart{ background:rgba(62,44,86,0.03); border-radius:14px; padding:8px 6px 4px; margin-bottom:6px; }
   .prog-chart svg{ display:block; width:100%; height:auto; }
   .prog-axis{ display:flex; justify-content:space-between; font-size:0.68rem; color:rgba(62,44,86,0.45); padding:2px 6px 0; direction:ltr; }
 </style>
@@ -163,8 +165,9 @@
     <h2>מילים שלמדתי</h2>
     <div class="panel-sub" id="panelCount"></div>
     <label class="startdate-row">תחילת הלימודים<input type="date" id="startDate"></label>
-    <div id="progress"></div>
+    <div id="progStats"></div>
     <div id="learnedList"></div>
+    <div id="progChart"></div>
   </div>
 </div>
 
@@ -1087,10 +1090,12 @@ document.getElementById('coinBtn').onclick = () => {
 
 // Cumulative progress chart: how many words known over the days since you started
 function renderProgress(){
-  const box=document.getElementById('progress');
-  if(!box) return;
+  const statsBox=document.getElementById('progStats');
+  const chartBox=document.getElementById('progChart');
+  if(!statsBox || !chartBox) return;
   if(!state.log || !state.log.length){
-    box.innerHTML='<div class="prog-empty">עדיין אין נתונים — סמן מילה ראשונה כדי לראות את קצב ההתקדמות.</div>';
+    statsBox.innerHTML='<div class="prog-empty">עדיין אין נתונים — סמן מילה ראשונה כדי לראות את קצב ההתקדמות.</div>';
+    chartBox.innerHTML='';
     return;
   }
   const byDay={};
@@ -1119,12 +1124,14 @@ function renderProgress(){
     '<path d="'+dLine+'" fill="none" stroke="#0A8577" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>'+
     '</svg>';
 
-  box.innerHTML =
+  statsBox.innerHTML =
     '<div class="prog-stats">'+
       '<div class="prog-stat"><b>'+total+'</b><span>מילים שאני יודע</span></div>'+
       '<div class="prog-stat"><b>'+spanDays+'</b><span>ימים מההתחלה</span></div>'+
       '<div class="prog-stat"><b>'+paceNum+'</b><span>'+paceSub+'</span></div>'+
-    '</div>'+
+    '</div>';
+  chartBox.innerHTML =
+    '<div class="prog-chart-title">קצב ההתקדמות</div>'+
     '<div class="prog-chart">'+svg+
       '<div class="prog-axis"><span>'+dayLabel(first.getTime())+'</span><span>היום</span></div>'+
     '</div>';
@@ -1152,7 +1159,8 @@ const startInput = document.getElementById('startDate');
 function openPanel(){
   document.getElementById('panel').classList.remove('hidden');
   startInput.value = dayStr(startDayTs());
-  renderProgress(); renderList();
+  renderList(); renderProgress();
+  document.querySelector('.panel-inner').scrollTop = 0;
 }
 document.getElementById('menuBtn').onclick = openPanel;
 document.getElementById('panelClose').onclick = () => document.getElementById('panel').classList.add('hidden');
