@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Δύο λέξεις · שתי מילים ביום</title>
+<style>
+  :root{
+    --teal:#0FB9A7; --teal-dark:#0A8577;
+    --coral:#FF6B6B; --sun:#FFC93C; --plum:#3E2C56;
+    --bg1:#EAFBF5; --bg2:#FDF3E4;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:linear-gradient(160deg,var(--bg1) 0%,var(--bg2) 100%);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
+    color:var(--plum); min-height:100vh;
+    display:flex; flex-direction:column; align-items:center;
+    padding:7vh 20px 50px; overflow-x:hidden;
+  }
+  .menu-btn{
+    position:fixed; top:16px; left:16px; width:42px; height:42px;
+    border-radius:50%; background:rgba(255,255,255,0.75); border:none;
+    font-size:1.15rem; display:flex; align-items:center; justify-content:center;
+    cursor:pointer; box-shadow:0 2px 10px rgba(62,44,86,0.12); z-index:20;
+  }
+  .stat{ font-size:0.85rem; color:rgba(62,44,86,0.5); margin-bottom:30px; font-weight:600; }
+  .stat b{ color:var(--teal-dark); font-size:1rem; }
+
+  .coin-wrap{ position:relative; width:220px; height:220px; margin-bottom:28px; }
+  .coin{
+    width:220px; height:220px; border-radius:50%; border:none;
+    background:radial-gradient(circle at 32% 28%,#2FE0C9,var(--teal) 55%,var(--teal-dark) 100%);
+    box-shadow:0 12px 32px rgba(15,185,167,0.35), inset 0 -8px 18px rgba(0,0,0,0.12), inset 0 6px 14px rgba(255,255,255,0.25);
+    color:#fff; font-size:1.15rem; font-weight:700; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; text-align:center;
+    padding:20px; line-height:1.45; transition:transform .15s ease;
+  }
+  .coin:active{ transform:scale(0.96); }
+  .coin.pulse{ animation:pulse 2.4s ease-in-out infinite; }
+  @keyframes pulse{
+    0%,100%{ box-shadow:0 12px 32px rgba(15,185,167,0.35), inset 0 -8px 18px rgba(0,0,0,0.12), inset 0 6px 14px rgba(255,255,255,0.25); }
+    50%{ box-shadow:0 16px 44px rgba(15,185,167,0.55), inset 0 -8px 18px rgba(0,0,0,0.12), inset 0 6px 14px rgba(255,255,255,0.25); }
+  }
+  .coin.done{
+    background:radial-gradient(circle at 32% 28%,#FFD873,var(--sun) 55%,#E0A200 100%);
+    box-shadow:0 12px 32px rgba(255,201,60,0.4), inset 0 -8px 18px rgba(0,0,0,0.1);
+    cursor:default;
+  }
+  .confetti{ position:absolute; inset:0; pointer-events:none; }
+  .confetti span{ position:absolute; top:50%; left:50%; width:9px; height:9px; border-radius:2px; }
+  @keyframes burst{ to{ transform:translate(var(--dx),var(--dy)) scale(.4); opacity:0; } }
+
+  .cards{ width:100%; max-width:380px; display:flex; flex-direction:column; gap:14px; }
+  .card{
+    background:#fff; border-radius:22px; padding:22px 20px; text-align:center;
+    box-shadow:0 10px 30px rgba(62,44,86,0.10);
+    opacity:0; transform:translateY(14px); animation:rise .35s ease forwards;
+  }
+  @keyframes rise{ to{ opacity:1; transform:translateY(0); } }
+  .card.marked{ background:rgba(255,255,255,0.55); box-shadow:none; }
+  .card .greek{ font-size:1.8rem; font-weight:800; margin-bottom:2px; }
+  .card .translit{ font-size:0.78rem; color:rgba(62,44,86,0.45); direction:ltr; margin-bottom:8px; }
+  .card .hebrew{ font-size:1.02rem; color:var(--teal-dark); font-weight:600; margin-bottom:16px; }
+  .row{ display:flex; gap:9px; }
+  button.action{ border:none; border-radius:14px; padding:11px 12px; font-size:0.82rem; font-weight:700; cursor:pointer; flex:1; }
+  .btn-speak{ background:rgba(15,185,167,0.12); color:var(--teal-dark); flex:0 0 58px; }
+  .btn-swap{ background:rgba(255,107,107,0.12); color:var(--coral); }
+  .btn-learned{ background:var(--teal); color:#fff; }
+  .badge{ font-size:0.85rem; font-weight:700; color:var(--teal-dark); }
+
+  .done-msg{ text-align:center; font-size:0.9rem; color:rgba(62,44,86,0.55); margin-top:6px; }
+
+  .panel{ position:fixed; inset:0; background:rgba(62,44,86,0.35); display:flex; align-items:flex-end; justify-content:center; z-index:30; }
+  .panel.hidden{ display:none; }
+  .panel-inner{ background:#fff; width:100%; max-width:480px; max-height:78vh; overflow-y:auto; border-radius:24px 24px 0 0; padding:20px 20px 30px; }
+  .panel-inner h2{ font-size:1.05rem; margin:0 0 4px; }
+  .panel-sub{ font-size:0.82rem; color:rgba(62,44,86,0.5); margin-bottom:14px; }
+  .panel-close{ display:block; margin:0 auto 14px; background:rgba(62,44,86,0.08); border:none; border-radius:12px; padding:8px 18px; font-size:0.85rem; color:var(--plum); cursor:pointer; }
+  .learned-item{ display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid rgba(62,44,86,0.08); font-size:0.9rem; }
+  .learned-item .g{ color:var(--teal-dark); font-weight:700; }
+  .learned-item .h{ color:rgba(62,44,86,0.6); }
+  .empty-note{ color:rgba(62,44,86,0.45); font-size:0.85rem; }
+  .reset-row{ margin-top:18px; text-align:center; }
+  .reset-row button{ background:none; border:none; color:rgba(255,107,107,0.85); font-size:0.8rem; text-decoration:underline; cursor:pointer; }
+</style>
+</head>
+<body>
+
+<button class="menu-btn" id="menuBtn">📖</button>
+<div class="stat" id="statText"></div>
+
+<div class="coin-wrap">
+  <div class="confetti" id="confetti"></div>
+  <button class="coin pulse" id="coinBtn"><span id="coinLabel">לחץ<br>ל־2 המילים של היום 🎲</span></button>
+</div>
+
+<div class="cards" id="cards"></div>
+
+<div class="panel hidden" id="panel">
+  <div class="panel-inner">
+    <button class="panel-close" id="panelClose">סגור ✕</button>
+    <h2>המילים שאני יודע</h2>
+    <div class="panel-sub" id="panelCount"></div>
+    <div id="learnedList"></div>
+    <div class="reset-row"><button id="resetBtn">איפוס כל ההתקדמות</button></div>
+  </div>
+</div>
+
+<script>
+// Ordered by real-world usefulness: greetings, core verbs, question words first.
+const WORDS = [
+["γεια","ya","היי / שלום (לא רשמי)"],
+["ναι","ne","כן"],
+["όχι","óchi","לא"],
+["ευχαριστώ","efcharistó","תודה"],
+["παρακαλώ","parakaló","בבקשה / על לא דבר"],
+["συγγνώμη","signómi","סליחה"],
+["καλημέρα","kaliméra","בוקר טוב"],
+["καλησπέρα","kalispéra","ערב טוב"],
+["καληνύχτα","kaliníchta","לילה טוב"],
+["εντάξει","endáxi","בסדר / אוקיי"],
+["είμαι","íme","אני נמצא / אני"],
+["έχω","écho","יש לי"],
+["θέλω","thélo","אני רוצה"],
+["μπορώ","boró","אני יכול"],
+["ξέρω","kséro","אני יודע"],
+["κάνω","káno","אני עושה"],
+["πάω","páo","אני הולך"],
+["έρχομαι","érchome","אני בא"],
+["βλέπω","vlépo","אני רואה"],
+["ακούω","akúo","אני שומע"],
+["τι","ti","מה"],
+["πού","pu","איפה"],
+["πότε","póte","מתי"],
+["γιατί","yatí","למה"],
+["πώς","pos","איך"],
+["πόσο","póso","כמה"],
+["ποιος","pios","מי (זכר)"],
+["ποιο","pio","איזה"],
+["εγώ","egó","אני"],
+["εσύ","esí","אתה/את"],
+["αυτός","aftós","הוא"],
+["αυτή","aftí","היא"],
+["αυτό","aftó","זה"],
+["εμείς","emís","אנחנו"],
+["εσείς","esís","אתם"],
+["αυτοί","aftí","הם"],
+["μου","mu","שלי"],
+["σου","su","שלך"],
+["μας","mas","שלנו"],
+["σας","sas","שלכם"],
+["και","ke","ו-"],
+["ή","í","או"],
+["αλλά","alá","אבל"],
+["επειδή","epidí","כי"],
+["αν","an","אם"],
+["με","me","עם"],
+["χωρίς","chorís","בלי"],
+["πολύ","polý","מאוד"],
+["λίγο","lígo","קצת"],
+["μόνο","móno","רק"],
+["επίσης","epísis","גם כן"],
+["ήδη","ídi","כבר"],
+["ακόμα","akóma","עדיין"],
+["όλα","óla","הכל"],
+["τίποτα","típota","כלום"],
+["κάτι","káti","משהו"],
+["κανείς","kanís","אף אחד"],
+["εδώ","edó","כאן"],
+["εκεί","ekí","שם"],
+["τώρα","tóra","עכשיו"],
+["μετά","metá","אחר כך"],
+["πριν","prin","לפני"],
+["πάντα","pánta","תמיד"],
+["ποτέ","poté","אף פעם"],
+["σήμερα","símera","היום"],
+["αύριο","ávrio","מחר"],
+["χθες","chthes","אתמול"],
+["καλός","kalós","טוב"],
+["κακός","kakós","רע"],
+["μεγάλος","megálos","גדול"],
+["μικρός","mikrós","קטן"],
+["νέος","néos","צעיר / חדש"],
+["παλιός","paliós","ישן"],
+["εύκολος","éfkolos","קל"],
+["δύσκολος","dískolos","קשה"],
+["μιλάω","miláo","אני מדבר"],
+["λέω","léo","אני אומר"],
+["καταλαβαίνω","katalavéno","אני מבין"],
+["μαθαίνω","mathéno","אני לומד"],
+["τρώω","tróo","אני אוכל"],
+["πίνω","píno","אני שותה"],
+["δίνω","díno","אני נותן"],
+["παίρνω","pérno","אני לוקח"],
+["περιμένω","periméno","אני מחכה"],
+["χρειάζομαι","chriázome","אני צריך"],
+["πρέπει","prépi","צריך / חייב"],
+["νομίζω","nomízo","אני חושב"],
+["μου αρέσει","mu arési","אני אוהב (מוצא חן)"],
+["αγαπώ","agapó","אני אוהב"],
+["πληρώνω","pliróno","אני משלם"],
+["αγοράζω","agorázo","אני קונה"],
+["ανοίγω","aníyo","אני פותח"],
+["κλείνω","klíno","אני סוגר"],
+["βρίσκω","vrísko","אני מוצא"],
+["δουλεύω","dulévo","אני עובד"],
+["μένω","méno","אני גר / נשאר"],
+["ζω","zo","אני חי"],
+["φεύγω","févgo","אני עוזב"],
+["φτάνω","ftáno","אני מגיע"],
+["νερό","neró","מים"],
+["φαγητό","fayitó","אוכל"],
+["ψωμί","psomí","לחם"],
+["καφές","kafés","קפה"],
+["σπίτι","spíti","בית"],
+["δρόμος","drómos","רחוב"],
+["πόλη","póli","עיר"],
+["χρόνος","chrónos","זמן / שנה"],
+["νύχτα","níchta","לילה"],
+["ώρα","óra","שעה"],
+["εβδομάδα","evdomáda","שבוע"],
+["μήνας","mínas","חודש"],
+["φίλος","fílos","חבר"],
+["οικογένεια","ikoyénia","משפחה"],
+["δουλειά","dulyá","עבודה"],
+["ένα","éna","אחד"],
+["δύο","dío","שתיים"],
+["τρία","tría","שלוש"],
+["τέσσερα","tésera","ארבע"],
+["πέντε","pénde","חמש"],
+["δέκα","déka","עשר"],
+["εκατό","ekató","מאה"],
+["πόσο κάνει;","póso káni?","כמה זה עולה?"],
+["πού είναι;","pu íne?","איפה זה?"],
+["τι ώρα είναι;","ti óra íne?","מה השעה?"],
+["δεν καταλαβαίνω","den katalavéno","אני לא מבין"],
+["μιλάς αγγλικά;","milás angliká?","אתה מדבר אנגלית?"],
+["βοήθεια","voíthia","עזרה"],
+["δεν πειράζει","den pirázi","זה בסדר, לא נורא"],
+["τα λέμε","ta léme","נדבר / להתראות"],
+["γεια σου","ya su","שלום לך (יחיד)"],
+["γεια σας","ya sas","שלום לכם (רבים/נימוס)"],
+["κοντά","kondá","קרוב"],
+["μακριά","makriá","רחוק"],
+["αριστερά","aristerá","שמאלה"],
+["δεξιά","deksiá","ימינה"],
+["ευθεία","efthía","ישר"],
+["μέσα","mésa","בפנים"],
+["έξω","ékso","בחוץ"],
+["πάνω","páno","למעלה"],
+["κάτω","káto","למטה"],
+["δίπλα","dípla","ליד"],
+["μαζί","mazí","ביחד"],
+["γρήγορα","grígora","מהר"],
+["σιγά","sigá","לאט"],
+["πάλι","páli","שוב"],
+["ίσως","ísos","אולי"],
+["φυσικά","fisiká","בטח / כמובן"],
+["λοιπόν","lipón","אז / ובכן"],
+["σχεδόν","schedón","כמעט"],
+["περίπου","perípu","בערך"],
+["αντίο","adío","להתראות"],
+["ευχαριστώ πολύ","efcharistó polý","תודה רבה"],
+["με συγχωρείτε","me sinchoríte","סלח לי (נימוס)"],
+["καλώς ήρθες","kalós írthes","ברוך הבא (יחיד)"],
+["καλώς ήρθατε","kalós írthate","ברוכים הבאים"],
+["χαίρομαι","chérome","נעים לי"],
+["χαίρω πολύ","chéro polý","נעים מאוד להכיר"],
+["τι κάνεις;","ti kánis?","מה שלומך?"],
+["καλά είμαι","kalá íme","אני בסדר"],
+["πώς σε λένε;","pos se léne?","איך קוראים לך?"],
+["με λένε...","me léne...","קוראים לי..."],
+["καλή όρεξη","kalí órexi","בתאבון"],
+["στην υγειά μας","stin igiá mas","לחיים"],
+["ποια","pia","מי (נקבה)"],
+["πόσα","pósa","כמה (ריבוי)"],
+["του","tu","שלו"],
+["της","tis","שלה"],
+["τους","tus","שלהם"],
+["κοιμάμαι","kimáme","אני ישן"],
+["ξυπνάω","ksipnáo","אני מתעורר"],
+["παίζω","pézo","אני משחק"],
+["διαβάζω","diavázo","אני קורא"],
+["γράφω","gráfo","אני כותב"],
+["θυμάμαι","thimáme","אני זוכר"],
+["ξεχνάω","ksechnáo","אני שוכח"],
+["μισώ","misó","אני שונא"],
+["χάνω","cháno","אני מפסיד/מאבד"],
+["πουλάω","puláo","אני מוכר"],
+["γελάω","geláo","אני צוחק"],
+["κλαίω","kléo","אני בוכה"],
+["τρέχω","trécho","אני רץ"],
+["περπατάω","perpatáo","אני הולך ברגל"],
+["οδηγώ","odigó","אני נוהג"],
+["πετάω","petáo","אני טס / זורק"],
+["κολυμπάω","kolimbáo","אני שוחה"],
+["χορεύω","chorévo","אני רוקד"],
+["τραγουδάω","tragudáo","אני שר"],
+["μαγειρεύω","mayirévo","אני מבשל"],
+["καθαρίζω","katharízo","אני מנקה"],
+["πλένω","pléno","אני שוטף/מכבס"],
+["ντύνομαι","díneme","אני מתלבש"],
+["βοηθάω","voitháo","אני עוזר"],
+["ρωτάω","rotáo","אני שואל"],
+["απαντάω","apantáo","אני עונה"],
+["εξηγώ","eksigó","אני מסביר"],
+["νιώθω","niótho","אני מרגיש"],
+["ζητάω","zitáo","אני מבקש"],
+["στέλνω","stélno","אני שולח"],
+["ξεκινάω","ksekináo","אני מתחיל"],
+["τελειώνω","telióno","אני מסיים"],
+["σκέφτομαι","sképtome","אני חושב (מהרהר)"],
+["προσπαθώ","prospathó","אני מנסה"],
+["καταφέρνω","kataférno","אני מצליח"],
+["συναντάω","sinandáo","אני פוגש"],
+["γνωρίζω","gnorízo","אני מכיר"],
+["επιστρέφω","epistréfo","אני חוזר"],
+["σταματάω","stamatáo","אני עוצר"],
+["συνεχίζω","sinechízo","אני ממשיך"],
+["αλλάζω","alázo","אני משנה"],
+["πιστεύω","pistévo","אני מאמין"],
+["ελπίζω","elpízo","אני מקווה"],
+["φοβάμαι","fováme","אני מפחד"],
+["λυπάμαι","lipáme","אני מצטער"],
+["λεπτό","leptó","דקה"],
+["δευτερόλεπτο","defterólepto","שנייה"],
+["μεθαύριο","methávrio","מחרתיים"],
+["προχθές","prochthés","שלשום"],
+["μερικές φορές","merikés forés","לפעמים"],
+["πρωί","proí","בוקר"],
+["μεσημέρι","mesiméri","צהריים"],
+["απόγευμα","apógevma","אחר הצהריים"],
+["βράδυ","vrádi","ערב"],
+["Δευτέρα","Deftéra","יום שני"],
+["Τρίτη","Tríti","יום שלישי"],
+["Τετάρτη","Tetárti","יום רביעי"],
+["Πέμπτη","Pémpti","יום חמישי"],
+["Παρασκευή","Paraskeví","יום שישי"],
+["Σάββατο","Sávato","שבת"],
+["Κυριακή","Kiriakí","יום ראשון"],
+["άνοιξη","ánixi","אביב"],
+["καλοκαίρι","kalokéri","קיץ"],
+["φθινόπωρο","fthinóporo","סתיו"],
+["χειμώνας","chimónas","חורף"],
+["έξι","éksi","שש"],
+["εφτά","eftá","שבע"],
+["οκτώ","októ","שמונה"],
+["εννιά","eniá","תשע"],
+["έντεκα","éndeka","אחת עשרה"],
+["δώδεκα","dódeka","שתים עשרה"],
+["είκοσι","íkosi","עשרים"],
+["τριάντα","triánda","שלושים"],
+["πρώτος","prótos","ראשון"],
+["δεύτερος","défteros","שני"],
+["τρίτος","trítos","שלישי"],
+["τελευταίος","teleftéos","אחרון"],
+["μισός","misós","חצי"],
+["ζευγάρι","zevgári","זוג"],
+["πολλά","polá","הרבה"],
+["λίγα","líga","מעט"],
+["μηδέν","midén","אפס"],
+["πατέρας","patéras","אבא"],
+["μητέρα","mitéra","אמא"],
+["γιος","yios","בן"],
+["κόρη","kóri","בת"],
+["αδελφός","adelfós","אח"],
+["αδελφή","adelfí","אחות"],
+["παππούς","papús","סבא"],
+["γιαγιά","yayá","סבתא"],
+["θείος","thíos","דוד"],
+["θεία","thía","דודה"],
+["ξάδερφος","ksáderfos","בן דוד"],
+["ξαδέρφη","ksadérfi","בת דודה"],
+["σύζυγος","sízigos","בעל/אישה (בן/בת זוג)"],
+["εγγόνι","engóni","נכד/ה"],
+["μωρό","moró","תינוק"],
+["φίλη","fíli","חברה"],
+["γείτονας","yítonas","שכן"],
+["αγόρι","agóri","ילד / בחור"],
+["σώμα","sóma","גוף"],
+["κεφάλι","kefáli","ראש"],
+["μάτι","máti","עין"],
+["μύτη","míti","אף"],
+["στόμα","stóma","פה"],
+["αυτί","aftí","אוזן"],
+["χέρι","chéri","יד"],
+["πόδι","pódi","רגל"],
+["στομάχι","stomáchi","בטן"],
+["καρδιά","kardiá","לב"],
+["δόντι","dónti","שן"],
+["μαλλιά","maliá","שיער"],
+["πρόσωπο","prósopo","פנים"],
+["φωνή","foní","קול"],
+["χαμόγελο","chamóyelo","חיוך"],
+["χρώμα","chróma","צבע"],
+["κόκκινο","kókino","אדום"],
+["μπλε","ble","כחול"],
+["πράσινο","prásino","ירוק"],
+["κίτρινο","kítrino","צהוב"],
+["μαύρο","mávro","שחור"],
+["άσπρο","áspro","לבן"],
+["καφέ","kafé","חום (צבע)"],
+["κρασί","krasí","יין"],
+["μπύρα","bíra","בירה"],
+["γάλα","gála","חלב"],
+["τυρί","tirí","גבינה"],
+["αυγό","avgó","ביצה"],
+["κρέας","kréas","בשר"],
+["κοτόπουλο","kotópulo","עוף"],
+["ψάρι","psári","דג"],
+["λαχανικό","lachanikó","ירק"],
+["φρούτο","frúto","פרי"],
+["μήλο","mílo","תפוח"],
+["πορτοκάλι","portokáli","תפוז"],
+["μπανάνα","banána","בננה"],
+["ντομάτα","domáta","עגבנייה"],
+["πατάτα","patáta","תפוח אדמה"],
+["κρεμμύδι","kremídi","בצל"],
+["σκόρδο","skórdo","שום"],
+["λάδι","ládi","שמן"],
+["αλάτι","aláti","מלח"],
+["πιπέρι","pipéri","פלפל"],
+["ζάχαρη","záchari","סוכר"],
+["μέλι","méli","דבש"],
+["σούπα","súpa","מרק"],
+["σαλάτα","saláta","סלט"],
+["ρύζι","rízi","אורז"],
+["ζυμαρικά","zimariká","פסטה"],
+["γλυκό","glikó","מתוק / קינוח"],
+["πρωινό","proinó","ארוחת בוקר"],
+["μεσημεριανό","mesimerianó","ארוחת צהריים"],
+["βραδινό","vradinó","ארוחת ערב"],
+["εστιατόριο","estiatório","מסעדה"],
+["μενού","menú","תפריט"],
+["λογαριασμός","logariasmós","חשבון (בתשלום)"],
+["τσάι","tsái","תה"],
+["χυμός","chimós","מיץ"],
+["πάγος","págos","קרח"],
+["κέικ","kéik","עוגה"],
+["σοκολάτα","sokoláta","שוקולד"],
+["παγωτό","pagotó","גלידה"],
+["ελιά","eliá","זית"],
+["λεμόνι","lemóni","לימון"],
+["δωμάτιο","domátio","חדר"],
+["κουζίνα","kuzína","מטבח"],
+["μπάνιο","bánio","חדר אמבטיה"],
+["κρεβάτι","kreváti","מיטה"],
+["τραπέζι","trapézi","שולחן"],
+["καρέκλα","karékla","כיסא"],
+["πόρτα","pórta","דלת"],
+["παράθυρο","paráthiro","חלון"],
+["τοίχος","tíchos","קיר"],
+["όροφος","órofos","קומה"],
+["κλειδί","klidí","מפתח"],
+["τηλέφωνο","tiléfono","טלפון"],
+["υπολογιστής","ipoloyistís","מחשב"],
+["τηλεόραση","tileórasi","טלוויזיה"],
+["ρολόι","rolói","שעון"],
+["βιβλίο","vivlío","ספר"],
+["στυλό","stiló","עט"],
+["χαρτί","chartí","נייר"],
+["τσάντα","tsánda","תיק"],
+["παπούτσια","papútsia","נעליים"],
+["ρούχα","rúcha","בגדים"],
+["καπέλο","kapélo","כובע"],
+["φως","fos","אור"],
+["κήπος","kípos","גינה"],
+["παντελόνι","pandelóni","מכנסיים"],
+["μπλούζα","blúza","חולצה"],
+["γυαλιά","yaliá","משקפיים"],
+["ζώο","zóo","חיה"],
+["σκύλος","skílos","כלב"],
+["γάτα","gáta","חתול"],
+["άλογο","álogo","סוס"],
+["πουλί","pulí","ציפור"],
+["φύση","físi","טבע"],
+["ήλιος","ílios","שמש"],
+["φεγγάρι","fengári","ירח"],
+["αστέρι","astéri","כוכב"],
+["ουρανός","uranós","שמיים"],
+["σύννεφο","sínefo","ענן"],
+["βροχή","vrochí","גשם"],
+["χιόνι","chióni","שלג"],
+["άνεμος","ánemos","רוח"],
+["καταιγίδα","kateyída","סופה"],
+["δάσος","dásos","יער"],
+["δέντρο","déndro","עץ"],
+["λουλούδι","lulúdi","פרח"],
+["ποτάμι","potámi","נהר"],
+["λίμνη","límni","אגם"],
+["θάλασσα","thálasa","ים"],
+["βουνό","vunó","הר"],
+["νησί","nisí","אי"],
+["παραλία","paralía","חוף ים"],
+["άμμος","ámos","חול"],
+["βράχος","vráchos","סלע"],
+["ζέστη","zésti","חום (מזג אוויר)"],
+["κρύο","krío","קור"],
+["φύλλο","fílo","עלה"],
+["χώμα","chóma","אדמה"],
+["ψηλός","psilós","גבוה"],
+["κοντός","kondós","נמוך / קצר"],
+["χοντρός","chondrós","שמן"],
+["αδύνατος","adínatos","רזה"],
+["όμορφος","ómorfos","יפה"],
+["άσχημος","áschimos","מכוער"],
+["γέρος","yéros","זקן"],
+["γρήγορος","grígoros","מהיר"],
+["αργός","argós","איטי"],
+["ζεστός","zestós","חם"],
+["κρύος","kríos","קר"],
+["καθαρός","katharós","נקי"],
+["βρόμικος","vrómikos","מלוכלך"],
+["γεμάτος","gemátos","מלא"],
+["άδειος","ádios","ריק"],
+["φτηνός","ftinós","זול"],
+["ακριβός","akrivós","יקר"],
+["δυνατός","dinatós","חזק"],
+["αδύναμος","adínamos","חלש"],
+["ευτυχισμένος","eftichisménos","מאושר"],
+["λυπημένος","lipiménos","עצוב"],
+["θυμωμένος","thimoménos","כועס"],
+["κουρασμένος","kurasménos","עייף"],
+["πεινασμένος","pinasménos","רעב"],
+["διψασμένος","dipsasménos","צמא"],
+["άρρωστος","árostos","חולה"],
+["υγιής","iyiís","בריא"],
+["έξυπνος","éksipnos","חכם"],
+["φτωχός","ftochós","עני"],
+["πλούσιος","plúsios","עשיר"],
+["ελεύθερος","eléftheros","חופשי"],
+["απασχολημένος","apascholiménos","עסוק"],
+["όμοιος","ómios","דומה"],
+["διαφορετικός","diaforetikós","שונה"],
+["σωστός","sostós","נכון"],
+["λάθος","láthos","טעות / לא נכון"],
+["καινούριος","kenúrios","חדש (מוצר)"],
+["ανοιχτός","anichtós","פתוח"],
+["κλειστός","klistós","סגור"],
+["ήσυχος","ísichos","שקט"],
+["ελαφρύς","elafrís","קל (משקל)"],
+["βαρύς","varís","כבד"],
+["χαρά","chará","שמחה"],
+["λύπη","lípi","עצב"],
+["φόβος","fóvos","פחד"],
+["θυμός","thimós","כעס"],
+["αγάπη","agápi","אהבה"],
+["άγχος","ánchos","חרדה / לחץ"],
+["ηρεμία","iremía","רוגע"],
+["ελπίδα","elpída","תקווה"],
+["οδηγός","odigós","נהג"],
+["ταξίδι","taksídi","טיול / נסיעה"],
+["αεροδρόμιο","aerodrómio","שדה תעופה"],
+["αεροπλάνο","aeropláno","מטוס"],
+["τρένο","tréno","רכבת"],
+["λεωφορείο","leoforío","אוטובוס"],
+["ταξί","taksí","מונית"],
+["εισιτήριο","isitírio","כרטיס נסיעה"],
+["διαβατήριο","diavatírio","דרכון"],
+["βαλίτσα","valítsa","מזוודה"],
+["ξενοδοχείο","ksenodochío","מלון"],
+["κράτηση","krátisi","הזמנה (מקום)"],
+["χάρτης","chártis","מפה"],
+["διεύθυνση","diéfthinsi","כתובת"],
+["στάση","stási","תחנה"],
+["σταθμός","stathmós","תחנה מרכזית"],
+["γέφυρα","yéfira","גשר"],
+["χωριό","chorió","כפר"],
+["χώρα","chóra","מדינה"],
+["σύνορα","sínora","גבול"],
+["επίσκεψη","epískepsi","ביקור"],
+["φωτογραφία","fotografía","תמונה"],
+["μουσείο","musío","מוזיאון"],
+["εκκλησία","eklisía","כנסייה"],
+["πλατεία","platía","כיכר"],
+["αγορά","agorá","שוק"],
+["όχημα","óchima","כלי רכב"],
+["κατά","katá","נגד / כלפי"],
+["υπέρ","ipér","בעד"],
+["μπορείς να με βοηθήσεις;","borís na me voithísis?","אתה יכול לעזור לי?"],
+["πόσο μακριά είναι;","póso makriá íne?","כמה זה רחוק?"],
+["τι σημαίνει αυτό;","ti siméni aftó?","מה זה אומר?"],
+["καλή διασκέδαση","kalí diaskédasi","תיהנה"],
+["καλό ταξίδι","kaló taksídi","נסיעה טובה"],
+["περαστικά","perastiká","החלמה מהירה"],
+["χρόνια πολλά","chrónia polá","מזל טוב / יום הולדת שמח"],
+["καλή τύχη","kalí tíchi","בהצלחה"],
+["σε παρακαλώ","se parakaló","בבקשה ממך"],
+["Ιανουάριος","Ianuários","ינואר"],
+["Φεβρουάριος","Fevruários","פברואר"],
+["Μάρτιος","Mártios","מרץ"],
+["Απρίλιος","Aprílios","אפריל"],
+["Μάιος","Máios","מאי"],
+["Ιούνιος","Iúnios","יוני"],
+["Ιούλιος","Iúlios","יולי"],
+["Αύγουστος","Ávgustos","אוגוסט"],
+["Σεπτέμβριος","Septémvrios","ספטמבר"],
+["Οκτώβριος","Októvrios","אוקטובר"],
+["Νοέμβριος","Noémvrios","נובמבר"],
+["Δεκέμβριος","Dekémvrios","דצמבר"],
+["δεκατρία","dekatría","שלוש עשרה"],
+["δεκατέσσερα","dekatésera","ארבע עשרה"],
+["δεκαπέντε","dekapénde","חמש עשרה"],
+["σαράντα","saránda","ארבעים"],
+["πενήντα","penínda","חמישים"],
+["εξήντα","eksínda","שישים"],
+["εβδομήντα","evdomínda","שבעים"],
+["ογδόντα","ogdónda","שמונים"],
+["ενενήντα","enenínda","תשעים"],
+["διακόσια","diakósia","מאתיים"],
+["πεντακόσια","pendakósia","חמש מאות"],
+["χίλια","chília","אלף"],
+["δάχτυλο","dáchtilo","אצבע"],
+["πλάτη","pláti","גב"],
+["λαιμός","lemós","צוואר"],
+["ώμος","ómos","כתף"],
+["γόνατο","gónato","ברך"],
+["χείλος","chílos","שפה (פה)"],
+["φρύδι","frídi","גבה"],
+["δέρμα","dérma","עור"],
+["αίμα","éma","דם"],
+["γροθιά","grothiá","אגרוף"],
+["ροζ","roz","ורוד"],
+["πορτοκαλί","portokalí","כתום"],
+["μοβ","mov","סגול"],
+["γκρι","gri","אפור"],
+["χρυσό","chrisó","זהוב"],
+["ασημί","asimí","כסוף"],
+["γιαούρτι","yaúrti","יוגורט"],
+["φέτα","féta","גבינת פטה"],
+["σουβλάκι","suvláki","סובלאקי"],
+["σταφύλι","stafíli","ענב"],
+["καρπούζι","karpúzi","אבטיח"],
+["αχλάδι","achládi","אגס"],
+["κεράσι","kerási","דובדבן"],
+["φράουλα","fráula","תות"],
+["αγγούρι","angúri","מלפפון"],
+["καρότο","karóto","גזר"],
+["μανιτάρι","manitári","פטרייה"],
+["φασόλια","fasólia","שעועית"],
+["καθρέφτης","kathréftis","מראה"],
+["πετσέτα","petséta","מגבת"],
+["σαπούνι","sapúni","סבון"],
+["σκάλα","skála","מדרגות"],
+["αυλή","avlí","חצר"],
+["ντουλάπα","dulápa","ארון"],
+["φούρνος","fúrnos","תנור"],
+["ψυγείο","psiyío","מקרר"],
+["κουβέρτα","kubérta","שמיכה"],
+["μαξιλάρι","maksilári","כרית"],
+["πουκάμισο","pukámiso","חולצה מכופתרת"],
+["φούστα","fústa","חצאית"],
+["φόρεμα","fórema","שמלה"],
+["ζακέτα","zakéta","סווצ'ר"],
+["παλτό","paltó","מעיל"],
+["κάλτσες","káltses","גרביים"],
+["γάντια","gándia","כפפות"],
+["κασκόλ","kaskól","צעיף"],
+["ζώνη","zóni","חגורה"],
+["αγελάδα","ageláda","פרה"],
+["πρόβατο","próvato","כבשה"],
+["κατσίκα","katsíka","עז"],
+["χοίρος","chíros","חזיר"],
+["λιοντάρι","liondári","אריה"],
+["ελέφαντας","eléfandas","פיל"],
+["αρκούδα","arkúda","דוב"],
+["λύκος","líkos","זאב"],
+["αλεπού","alepú","שועל"],
+["ποντίκι","pondíki","עכבר"],
+["φίδι","fídi","נחש"],
+["πεταλούδα","petalúda","פרפר"],
+["μέλισσα","mélisa","דבורה"],
+["αράχνη","aráchni","עכביש"],
+["καρχαρίας","karcharías","כריש"],
+["δελφίνι","delfíni","דולפין"],
+["κουνέλι","kunéli","ארנב"],
+["πίθηκος","píthikos","קוף"],
+["τίγρη","tígri","נמר"],
+["κότα","kóta","תרנגולת"],
+["πάπια","pápia","ברווז"],
+["χελώνα","chelóna","צב"],
+["γαϊδούρι","gaïdúri","חמור"],
+["έκπληξη","ékplixi","הפתעה"],
+["ντροπή","dropí","בושה"],
+["ζήλια","zília","קנאה"],
+["ανακούφιση","anakúfisi","הקלה"],
+["ενθουσιασμός","enthusiasmós","התלהבות"],
+["περηφάνια","perifánia","גאווה"],
+["μοναξιά","monaksiá","בדידות"],
+["γιατρός","yatrós","רופא"],
+["δάσκαλος","dáskalos","מורה"],
+["μηχανικός","michanikós","מהנדס"],
+["δικηγόρος","dikigóros","עורך דין"],
+["αστυνομικός","astinomikós","שוטר"],
+["μάγειρας","máyiras","טבח"],
+["καλλιτέχνης","kalitéchnis","אמן"],
+["μουσικός","musikós","מוזיקאי"],
+["συγγραφέας","sigraféas","סופר"],
+["αγρότης","agrótis","חקלאי"],
+["ψαράς","psarás","דייג"],
+["πωλητής","politís","מוכר"],
+["φοιτητής","fititís","סטודנט"],
+["μαθητής","mathitís","תלמיד"],
+["νοσοκόμα","nosokóma","אחות (רפואה)"],
+["πιλότος","pilótos","טייס"],
+["σεφ","sef","שף"],
+["επιχειρηματίας","epicherimatías","איש עסקים"]
+];
+
+const KEY = "greekDaily_v3";
+const todayKey = () => { const d=new Date(); return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate(); };
+
+function load(){
+  try{
+    const p = JSON.parse(localStorage.getItem(KEY));
+    if(!p || !Array.isArray(p.known)) throw 0;
+    if(!p.day) p.day = { date:"", slots:[], opened:false };
+    return p;
+  }catch(e){ return { known: [], day: { date:"", slots:[], opened:false } }; }
+}
+function save(){ localStorage.setItem(KEY, JSON.stringify(state)); }
+
+let state = load();
+if(state.day.date !== todayKey()){
+  state.day = { date: todayKey(), slots: [], opened: false };
+  save();
+}
+
+const entryOf = g => WORDS.find(w => w[0] === g);
+
+function speak(t){
+  if(!('speechSynthesis' in window)) return;
+  const u = new SpeechSynthesisUtterance(t);
+  u.lang='el-GR'; u.rate=0.85;
+  speechSynthesis.cancel(); speechSynthesis.speak(u);
+}
+
+// Next word = first word in the list not yet known and not already on screen today
+function nextWord(){
+  const onScreen = state.day.slots.map(s => s.word);
+  return (WORDS.find(w => !state.known.includes(w[0]) && !onScreen.includes(w[0])) || [null])[0];
+}
+
+function markKnown(g){ if(!state.known.includes(g)) state.known.push(g); }
+
+function dayFinished(){
+  return state.day.opened && state.day.slots.length > 0 && state.day.slots.every(s => s.done);
+}
+
+function confetti(){
+  const el = document.getElementById('confetti');
+  const colors = ['#0FB9A7','#FF6B6B','#FFC93C','#3E2C56'];
+  for(let i=0;i<18;i++){
+    const s=document.createElement('span');
+    const a=Math.random()*Math.PI*2, d=70+Math.random()*70;
+    s.style.background=colors[i%colors.length];
+    s.style.setProperty('--dx',(Math.cos(a)*d)+'px');
+    s.style.setProperty('--dy',(Math.sin(a)*d)+'px');
+    s.style.animation='burst .75s ease-out forwards';
+    s.style.animationDelay=(Math.random()*0.06)+'s';
+    el.appendChild(s);
+    setTimeout(()=>s.remove(),850);
+  }
+}
+
+function renderStat(){
+  document.getElementById('statText').innerHTML =
+    "<b>"+state.known.length+"</b> / "+WORDS.length+" מילים שאני יודע";
+}
+
+function render(){
+  const coin=document.getElementById('coinBtn');
+  const label=document.getElementById('coinLabel');
+  const cards=document.getElementById('cards');
+  cards.innerHTML='';
+  renderStat();
+
+  if(dayFinished()){
+    coin.classList.remove('pulse'); coin.classList.add('done');
+    label.innerHTML='✓ סיימת<br>להיום';
+    const m=document.createElement('div');
+    m.className='done-msg'; m.textContent='יפה. חזור מחר ל־2 מילים חדשות 🌙';
+    cards.appendChild(m);
+    return;
+  }
+
+  coin.classList.add('pulse'); coin.classList.remove('done');
+
+  if(!state.day.opened){
+    label.innerHTML='לחץ<br>ל־2 המילים של היום 🎲';
+    return;
+  }
+
+  label.innerHTML='2 מילים<br>של היום';
+
+  state.day.slots.forEach((slot, i) => {
+    const e = entryOf(slot.word);
+    if(!e) return;
+    const card=document.createElement('div');
+    card.className='card'+(slot.done?' marked':'');
+    if(slot.done){
+      card.innerHTML='<div class="greek">'+e[0]+'</div><div class="translit">'+e[1]+'</div>'+
+        '<div class="hebrew">'+e[2]+'</div><div class="badge">✓ ברשימה שלי</div>';
+    } else {
+      card.innerHTML='<div class="greek">'+e[0]+'</div><div class="translit">'+e[1]+'</div>'+
+        '<div class="hebrew">'+e[2]+'</div>'+
+        '<div class="row">'+
+          '<button class="action btn-speak" data-a="speak">🔊</button>'+
+          '<button class="action btn-swap" data-a="swap">🔄 כבר ידעתי</button>'+
+          '<button class="action btn-learned" data-a="learn">✅ למדתי</button>'+
+        '</div>';
+      card.querySelector('[data-a=speak]').onclick = () => speak(e[0]);
+      card.querySelector('[data-a=swap]').onclick = () => {
+        markKnown(slot.word);           // counts as known
+        const nw = nextWord();          // and pulls a fresh word into this slot
+        if(nw){ state.day.slots[i] = { word: nw, done:false }; }
+        else  { state.day.slots[i].done = true; }
+        save(); render();
+      };
+      card.querySelector('[data-a=learn]').onclick = () => {
+        markKnown(slot.word);
+        state.day.slots[i].done = true;
+        save();
+        if(dayFinished()) confetti();
+        render();
+      };
+    }
+    cards.appendChild(card);
+  });
+}
+
+document.getElementById('coinBtn').onclick = () => {
+  if(state.day.opened || dayFinished()) return;
+  const slots=[];
+  for(let i=0;i<2;i++){
+    const onScreen=slots.map(s=>s.word);
+    const w=(WORDS.find(x=>!state.known.includes(x[0]) && !onScreen.includes(x[0]))||[null])[0];
+    if(w) slots.push({ word:w, done:false });
+  }
+  state.day.slots=slots;
+  state.day.opened=true;
+  save(); render();
+};
+
+function renderList(){
+  const el=document.getElementById('learnedList');
+  document.getElementById('panelCount').textContent = state.known.length + " מתוך " + WORDS.length;
+  if(!state.known.length){ el.innerHTML='<div class="empty-note">עדיין לא סימנת מילים.</div>'; return; }
+  el.innerHTML = state.known.slice().reverse().map(g=>{
+    const e=entryOf(g);
+    return '<div class="learned-item"><span class="g">'+g+'</span><span class="h">'+(e?e[2]:'')+'</span></div>';
+  }).join('');
+}
+document.getElementById('menuBtn').onclick = () => { document.getElementById('panel').classList.remove('hidden'); renderList(); };
+document.getElementById('panelClose').onclick = () => document.getElementById('panel').classList.add('hidden');
+document.getElementById('resetBtn').onclick = () => {
+  if(confirm('לאפס את כל ההתקדמות?')){
+    state = { known: [], day: { date: todayKey(), slots: [], opened:false } };
+    save(); render(); renderList();
+  }
+};
+
+render();
+</script>
+</body>
+</html>
