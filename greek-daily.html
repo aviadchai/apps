@@ -25,8 +25,10 @@
     font-size:1.15rem; display:flex; align-items:center; justify-content:center;
     cursor:pointer; box-shadow:0 2px 10px rgba(62,44,86,0.12); z-index:20;
   }
-  .stat{ font-size:0.85rem; color:rgba(62,44,86,0.5); margin-bottom:30px; font-weight:600; }
+  .stat{ font-size:0.85rem; color:rgba(62,44,86,0.5); margin-bottom:10px; font-weight:600; }
   .stat b{ color:var(--teal-dark); font-size:1rem; }
+  .progress-track{ width:100%; max-width:320px; height:9px; border-radius:99px; background:rgba(62,44,86,0.08); overflow:hidden; margin-bottom:30px; }
+  .progress-fill{ height:100%; width:0; background:linear-gradient(90deg,var(--teal),var(--sun)); border-radius:99px; transition:width .5s ease; }
 
   .coin-wrap{ position:relative; width:220px; height:220px; margin-bottom:28px; }
   .coin{
@@ -80,19 +82,28 @@
   .btn-extra:active{ transform:scale(0.96); }
   .btn-study{ background:var(--teal); color:#fff; }
 
-  .study-screen{ width:100%; display:flex; flex-direction:column; gap:14px; }
-  .btn-back{ align-self:flex-start; background:rgba(62,44,86,0.08); color:var(--plum); border:none; border-radius:12px; padding:9px 16px; font-size:0.82rem; font-weight:700; cursor:pointer; }
-  .study-timer{ text-align:center; font-size:1rem; font-weight:700; color:var(--teal-dark); background:rgba(15,185,167,0.10); border-radius:16px; padding:12px; }
-  .study-timer b{ font-size:1.35rem; }
-  .study-timer.zero{ color:var(--coral); background:rgba(255,107,107,0.12); }
-  .study-word{ background:#fff; border-radius:22px; padding:20px; text-align:center; box-shadow:0 10px 30px rgba(62,44,86,0.10); }
-  .study-word .greek{ font-size:1.8rem; font-weight:800; }
-  .study-word .translit{ font-size:0.78rem; color:rgba(62,44,86,0.45); direction:ltr; margin:2px 0 6px; }
-  .study-word .hebrew{ font-size:1.02rem; color:var(--teal-dark); font-weight:600; margin-bottom:12px; }
+  /* Study mode takes over the screen: hide the coin, counter and menu. */
+  body.study-mode{ justify-content:center; padding-top:5vh; }
+  body.study-mode .coin-wrap, body.study-mode .stat, body.study-mode .progress-track, body.study-mode .menu-btn{ display:none; }
+
+  .study-screen{ width:100%; max-width:400px; display:flex; flex-direction:column; gap:16px; }
+  .study-head{ text-align:center; margin-bottom:2px; }
+  .study-title{ font-size:1.5rem; font-weight:800; color:var(--teal-dark); }
+  .study-sub{ font-size:0.85rem; color:rgba(62,44,86,0.5); margin-top:3px; }
+  .study-timer{ background:#fff; border-radius:20px; padding:16px 18px; text-align:center; box-shadow:0 10px 30px rgba(62,44,86,0.08); }
+  .study-timer-label{ font-size:0.8rem; color:rgba(62,44,86,0.5); margin-bottom:4px; }
+  .study-timer-val{ font-size:1.9rem; font-weight:800; color:var(--teal-dark); direction:ltr; letter-spacing:1px; }
+  .study-track{ height:6px; border-radius:99px; background:rgba(15,185,167,0.12); margin-top:12px; overflow:hidden; }
+  .study-track-fill{ height:100%; background:linear-gradient(90deg,var(--teal),var(--teal-dark)); border-radius:99px; transition:width 1s linear; }
+  .study-timer.zero .study-timer-val{ color:var(--coral); }
+  .study-timer.zero .study-track-fill{ background:var(--coral); }
+  .study-word{ background:#fff; border-radius:22px; padding:22px 20px; text-align:center; box-shadow:0 10px 30px rgba(62,44,86,0.10); }
+  .study-word .greek{ font-size:2rem; font-weight:800; }
+  .study-word .translit{ font-size:0.8rem; color:rgba(62,44,86,0.45); direction:ltr; margin:2px 0 7px; }
+  .study-word .hebrew{ font-size:1.1rem; color:var(--teal-dark); font-weight:600; margin-bottom:14px; }
   .study-speak{ background:rgba(15,185,167,0.12); color:var(--teal-dark); border:none; border-radius:12px; padding:9px 22px; font-size:0.9rem; font-weight:700; cursor:pointer; }
-  .btn-learned-big{ border:none; border-radius:16px; padding:15px; font-size:1.02rem; font-weight:800; color:#fff; background:var(--teal); box-shadow:0 8px 22px rgba(15,185,167,0.35); cursor:pointer; }
+  .btn-learned-big{ border:none; border-radius:16px; padding:16px; font-size:1.05rem; font-weight:800; color:#fff; background:var(--teal); box-shadow:0 8px 22px rgba(15,185,167,0.35); cursor:pointer; margin-top:4px; }
   .btn-learned-big:active{ transform:scale(0.97); }
-  .btn-tostudy{ border:none; border-radius:16px; padding:12px; font-size:0.9rem; font-weight:700; color:var(--teal-dark); background:rgba(15,185,167,0.14); cursor:pointer; }
   .card.studying{ background:rgba(255,255,255,0.55); box-shadow:none; }
 
   .panel{ position:fixed; inset:0; background:rgba(62,44,86,0.35); display:flex; align-items:flex-end; justify-content:center; z-index:30; }
@@ -121,6 +132,7 @@
 
 <button class="menu-btn" id="menuBtn">📖</button>
 <div class="stat" id="statText"></div>
+<div class="progress-track"><div class="progress-fill" id="progFill"></div></div>
 
 <div class="coin-wrap">
   <div class="confetti" id="confetti"></div>
@@ -766,10 +778,14 @@ const entryOf = g => WORDS.find(w => w[0] === g);
 
 // Study phase: after tapping "ללמוד" a word moves to a study screen with a countdown.
 const STUDY_SECONDS = 24 * 60 * 60;   // 24 hours from the moment "ללמוד" is tapped
-let view = 'main';   // 'main' | 'study' — not persisted; recomputed from state each load
 let timerId = null;
 
 const studyingSlots = () => state.day.slots.filter(s => s.studying && !s.done);
+// The study screen opens only once every remaining word has been sent to study.
+function inStudy(){
+  const rest = state.day.slots.filter(s => !s.done);
+  return state.day.opened && rest.length > 0 && rest.every(s => s.studying);
+}
 function studyRemaining(){
   if(!state.day.studyStart) return STUDY_SECONDS;
   return Math.max(0, STUDY_SECONDS - Math.floor((Date.now() - state.day.studyStart)/1000));
@@ -819,7 +835,6 @@ function extraRound(){
   if(!slots.length) return;
   state.day.slots=slots;
   state.day.studyStart=0;
-  view='main';
   save(); render();
 }
 
@@ -846,6 +861,11 @@ function confetti(){
 function renderStat(){
   document.getElementById('statText').innerHTML =
     "<b>"+state.known.length+"</b> / "+WORDS.length+" מילים שאני יודע";
+  const f=document.getElementById('progFill');
+  if(f){
+    const pct = state.known.length/WORDS.length*100;
+    f.style.width = state.known.length ? Math.max(pct,2).toFixed(2)+'%' : '0%';  // keep a visible sliver
+  }
 }
 
 function render(){
@@ -857,6 +877,7 @@ function render(){
   renderStat();
 
   if(dayFinished()){
+    document.body.classList.remove('study-mode');
     coin.classList.remove('pulse'); coin.classList.add('done');
     label.innerHTML='✓ סיימת<br>להיום';
     const m=document.createElement('div');
@@ -872,22 +893,20 @@ function render(){
   coin.classList.add('pulse'); coin.classList.remove('done');
 
   if(!state.day.opened){
+    document.body.classList.remove('study-mode');
     label.innerHTML='לחץ<br>ל־2 המילים של היום 🎲';
     return;
   }
 
-  label.innerHTML='2 מילים<br>של היום';
-
-  if(view==='study' && studyingSlots().length){ renderStudy(cards); return; }
-
-  // Main view: word cards. A word tapped "ללמוד" waits on the study screen.
-  if(studyingSlots().length){
-    const b=document.createElement('button');
-    b.className='btn-tostudy';
-    b.textContent='📚 חזרה למסך הלימוד ('+studyingSlots().length+')';
-    b.onclick=()=>{ view='study'; render(); };
-    cards.appendChild(b);
+  // Study screen: a full, calm view — no coin, just the words and the timer.
+  if(inStudy()){
+    document.body.classList.add('study-mode');
+    renderStudy(cards);
+    return;
   }
+
+  document.body.classList.remove('study-mode');
+  label.innerHTML='2 מילים<br>של היום';
 
   state.day.slots.forEach((slot, i) => {
     const e = entryOf(slot.word);
@@ -923,9 +942,8 @@ function render(){
         save(); render();
       };
       card.querySelector('[data-a=study]').onclick = () => {
-        state.day.slots[i].studying = true;         // move to the study screen
+        state.day.slots[i].studying = true;         // queue for study; screen opens once both are queued
         if(!state.day.studyStart) state.day.studyStart = Date.now();
-        view='study';
         save(); render();
       };
     }
@@ -933,15 +951,15 @@ function render(){
   });
 }
 
-// Study screen: the words you chose to learn, a countdown, and a "למדתי" button.
+// Study screen: a calm full view — the words you chose to learn, a countdown, and "למדתי".
 function renderStudy(cards){
   const wrap=document.createElement('div');
   wrap.className='study-screen';
 
-  const back=document.createElement('button');
-  back.className='btn-back'; back.textContent='← חזרה לכרטיסים';
-  back.onclick=()=>{ view='main'; render(); };
-  wrap.appendChild(back);
+  const head=document.createElement('div');
+  head.className='study-head';
+  head.innerHTML='<div class="study-title">🌿 זמן ללמוד</div><div class="study-sub">שנן את שתי המילים, בלי לחץ</div>';
+  wrap.appendChild(head);
 
   const timer=document.createElement('div');
   timer.className='study-timer';
@@ -962,10 +980,9 @@ function renderStudy(cards){
   done.className='btn-learned-big'; done.textContent='✅ למדתי';
   done.onclick=()=>{
     studyingSlots().forEach(slot=>{ markKnown(slot.word); slot.done=true; });
-    view='main';
     save();
-    if(dayFinished()) confetti();
     render();
+    if(dayFinished()) confetti();
   };
   wrap.appendChild(done);
 
@@ -973,7 +990,10 @@ function renderStudy(cards){
 
   const upd=()=>{
     const r=studyRemaining();
-    timer.innerHTML='⏳ נשאר ללמוד: <b>'+fmtTime(r)+'</b>';
+    const frac=Math.max(0, Math.min(1, r/STUDY_SECONDS));
+    timer.innerHTML='<div class="study-timer-label">⏳ נשאר זמן ללמוד</div>'+
+      '<div class="study-timer-val">'+fmtTime(r)+'</div>'+
+      '<div class="study-track"><div class="study-track-fill" style="width:'+(frac*100).toFixed(1)+'%"></div></div>';
     timer.classList.toggle('zero', r<=0);
   };
   upd();
@@ -985,7 +1005,6 @@ document.getElementById('coinBtn').onclick = () => {
   state.day.slots=pickSlots();
   state.day.opened=true;
   state.day.studyStart=0;
-  view='main';
   save(); render();
 };
 
