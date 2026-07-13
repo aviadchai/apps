@@ -91,7 +91,7 @@
 
   /* Study mode takes over the screen: hide the coin, counter and menu. */
   body.study-mode{ justify-content:center; padding-top:5vh; }
-  body.study-mode .coin-wrap, body.study-mode .stat, body.study-mode .progress-track, body.study-mode .menu-btn{ display:none; }
+  body.study-mode .coin-wrap, body.study-mode .stat, body.study-mode .progress-track{ display:none; }
 
   .study-screen{ width:100%; max-width:400px; display:flex; flex-direction:column; gap:16px; }
   .study-head{ text-align:center; margin-bottom:2px; }
@@ -123,7 +123,15 @@
   .panel-inner{ background:#fff; width:100%; max-width:480px; max-height:88vh; overflow-y:auto; border-radius:24px 24px 0 0; padding:20px 20px 30px; }
   .panel-inner h2{ font-size:1.05rem; margin:0 0 4px; }
   .panel-sub{ font-size:0.82rem; color:rgba(62,44,86,0.5); margin-bottom:14px; }
-  .panel-close{ display:block; margin:0 auto 14px; background:rgba(62,44,86,0.08); border:none; border-radius:12px; padding:8px 18px; font-size:0.85rem; color:var(--plum); cursor:pointer; }
+  .panel-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+  .panel-head h2{ margin:0; }
+  .panel-ic{ width:36px; height:36px; border-radius:50%; background:rgba(62,44,86,0.06); border:none; color:var(--plum); display:inline-flex; align-items:center; justify-content:center; cursor:pointer; flex:0 0 auto; }
+  .settings-box{ margin-bottom:12px; }
+  .settings-box.hidden{ display:none; }
+  .pace-hero{ text-align:center; margin:8px 0 16px; }
+  .pace-big{ font-size:2.7rem; font-weight:800; color:var(--teal-dark); line-height:1; }
+  .pace-cap{ font-size:0.92rem; font-weight:600; color:var(--plum); margin-top:5px; }
+  .pace-sub{ font-size:0.76rem; color:rgba(62,44,86,0.5); margin-top:7px; }
   .startdate-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; background:rgba(15,185,167,0.06); border-radius:14px; padding:10px 14px; margin-bottom:14px; font-size:0.85rem; font-weight:600; color:rgba(62,44,86,0.7); }
   .startdate-row input{ border:1px solid rgba(62,44,86,0.15); border-radius:10px; padding:6px 10px; font-size:0.85rem; color:var(--teal-dark); background:#fff; font-family:inherit; }
   .learned-item{ display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid rgba(62,44,86,0.08); font-size:0.9rem; }
@@ -134,14 +142,9 @@
   .li-speak{ flex:0 0 auto; background:rgba(15,185,167,0.12); color:var(--teal-dark); border:none; border-radius:10px; padding:6px 12px; font-size:0.95rem; cursor:pointer; }
   .card-speak{ margin-top:10px; background:rgba(15,185,167,0.12); color:var(--teal-dark); border:none; border-radius:12px; padding:8px 20px; font-size:0.85rem; font-weight:700; cursor:pointer; }
   .empty-note{ color:rgba(62,44,86,0.45); font-size:0.85rem; }
-  .prog-empty{ font-size:0.82rem; color:rgba(62,44,86,0.45); margin-bottom:14px; }
-  .prog-stats{ display:flex; gap:8px; margin-bottom:12px; }
-  .prog-stat{ flex:1; background:rgba(15,185,167,0.08); border-radius:14px; padding:10px 8px; text-align:center; }
-  .prog-stat b{ display:block; font-size:1.2rem; color:var(--teal-dark); }
-  .prog-stat span{ font-size:0.68rem; color:rgba(62,44,86,0.55); }
-  #progChart{ margin-top:20px; padding-top:16px; border-top:1px solid rgba(62,44,86,0.08); }
-  .prog-chart-title{ font-size:0.8rem; font-weight:700; color:rgba(62,44,86,0.55); margin-bottom:8px; }
-  .prog-chart{ background:rgba(62,44,86,0.03); border-radius:14px; padding:8px 6px 4px; margin-bottom:6px; }
+  .prog-empty{ font-size:0.82rem; color:rgba(62,44,86,0.45); margin-bottom:14px; text-align:center; }
+  #progChart{ margin-bottom:20px; }
+  .prog-chart{ background:rgba(62,44,86,0.03); border-radius:14px; padding:8px 6px 4px; }
   .prog-chart svg{ display:block; width:100%; height:auto; }
   .prog-axis{ display:flex; justify-content:space-between; font-size:0.68rem; color:rgba(62,44,86,0.45); padding:2px 6px 0; direction:ltr; }
 </style>
@@ -161,13 +164,17 @@
 
 <div class="panel hidden" id="panel">
   <div class="panel-inner">
-    <button class="panel-close" id="panelClose">סגור</button>
-    <h2>מילים שלמדתי</h2>
-    <div class="panel-sub" id="panelCount"></div>
-    <label class="startdate-row">תחילת הלימודים<input type="date" id="startDate"></label>
-    <div id="progStats"></div>
-    <div id="learnedList"></div>
+    <div class="panel-head">
+      <button class="panel-ic" id="panelSettings" aria-label="הגדרות"></button>
+      <h2>מילים שלמדתי</h2>
+      <button class="panel-ic" id="panelClose" aria-label="סגור"></button>
+    </div>
+    <div class="settings-box hidden" id="settingsBox">
+      <label class="startdate-row">תחילת הלימודים<input type="date" id="startDate"></label>
+    </div>
+    <div id="progHero"></div>
     <div id="progChart"></div>
+    <div id="learnedList"></div>
   </div>
 </div>
 
@@ -810,7 +817,8 @@ const IC = {
   moon:'<path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/>',
   cap:'<path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v4.5c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5V12"/>',
   list:'<line x1="8" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="20" y2="12"/><line x1="8" y1="18" x2="20" y2="18"/><circle cx="4" cy="6" r="1.1"/><circle cx="4" cy="12" r="1.1"/><circle cx="4" cy="18" r="1.1"/>',
-  x:'<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>'
+  x:'<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+  gear:'<circle cx="12" cy="12" r="3.2"/><path d="M19.1 13.6a7.6 7.6 0 0 0 0-3.2l1.9-1.5-1.9-3.3-2.3.9a7.5 7.5 0 0 0-2.7-1.6L13.7 2h-3.4l-.4 2.5a7.5 7.5 0 0 0-2.7 1.6l-2.3-.9L3 8.5l1.9 1.5a7.6 7.6 0 0 0 0 3.2L3 15.2l1.9 3.3 2.3-.9a7.5 7.5 0 0 0 2.7 1.6l.4 2.5h3.4l.4-2.5a7.5 7.5 0 0 0 2.7-1.6l2.3.9 1.9-3.3z"/>'
 };
 function ic(name,size){ size=size||20; return '<svg class="ic" viewBox="0 0 24 24" width="'+size+'" height="'+size+'" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(IC[name]||'')+'</svg>'; }
 
@@ -1088,13 +1096,13 @@ document.getElementById('coinBtn').onclick = () => {
   save(); render();
 };
 
-// Cumulative progress chart: how many words known over the days since you started
+// Simple headline (average words/day) + a timeline of words known over time.
 function renderProgress(){
-  const statsBox=document.getElementById('progStats');
+  const hero=document.getElementById('progHero');
   const chartBox=document.getElementById('progChart');
-  if(!statsBox || !chartBox) return;
+  if(!hero || !chartBox) return;
   if(!state.log || !state.log.length){
-    statsBox.innerHTML='<div class="prog-empty">עדיין אין נתונים — סמן מילה ראשונה כדי לראות את קצב ההתקדמות.</div>';
+    hero.innerHTML='<div class="prog-empty">עדיין אין נתונים — סמנו מילה ראשונה כדי לראות את הקצב.</div>';
     chartBox.innerHTML='';
     return;
   }
@@ -1110,11 +1118,18 @@ function renderProgress(){
     pts.push(cum);
   }
   const total=state.log.length, spanDays=Math.max(pts.length,1), per=total/spanDays;
-  let paceNum, paceSub;
-  if(per>=1){ paceNum=Math.round(per*10)/10; paceSub='מילים ביום'; }
-  else { paceNum=Math.round((spanDays/total)*10)/10; paceSub='ימים למילה'; }
+  let paceNum, paceCap;
+  if(per>=1){ paceNum=Math.round(per*10)/10; paceCap='מילים ביום בממוצע'; }
+  else { paceNum=Math.round((spanDays/total)*10)/10; paceCap='ימים למילה בממוצע'; }
 
-  const W=300,H=120,pad=8,padB=6,padT=10, n=pts.length, maxY=Math.max(total,1);
+  hero.innerHTML =
+    '<div class="pace-hero">'+
+      '<div class="pace-big">'+paceNum+'</div>'+
+      '<div class="pace-cap">'+paceCap+'</div>'+
+      '<div class="pace-sub">'+total+' מילים למדתי · מאז '+dayLabel(first.getTime())+'</div>'+
+    '</div>';
+
+  const W=300,H=110,pad=8,padB=6,padT=10, n=pts.length, maxY=Math.max(total,1);
   const X=i=> n<=1 ? W-pad : pad + i*(W-2*pad)/(n-1);
   const Y=v=> padT + (H-padT-padB)*(1 - v/maxY);
   let dLine=''; pts.forEach((v,i)=>{ dLine += (i?'L':'M')+X(i).toFixed(1)+' '+Y(v).toFixed(1)+' '; });
@@ -1123,15 +1138,7 @@ function renderProgress(){
     '<path d="'+dArea+'" fill="rgba(15,185,167,0.15)"/>'+
     '<path d="'+dLine+'" fill="none" stroke="#0A8577" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>'+
     '</svg>';
-
-  statsBox.innerHTML =
-    '<div class="prog-stats">'+
-      '<div class="prog-stat"><b>'+total+'</b><span>מילים שאני יודע</span></div>'+
-      '<div class="prog-stat"><b>'+spanDays+'</b><span>ימים מההתחלה</span></div>'+
-      '<div class="prog-stat"><b>'+paceNum+'</b><span>'+paceSub+'</span></div>'+
-    '</div>';
   chartBox.innerHTML =
-    '<div class="prog-chart-title">קצב ההתקדמות</div>'+
     '<div class="prog-chart">'+svg+
       '<div class="prog-axis"><span>'+dayLabel(first.getTime())+'</span><span>היום</span></div>'+
     '</div>';
@@ -1139,7 +1146,6 @@ function renderProgress(){
 
 function renderList(){
   const el=document.getElementById('learnedList');
-  document.getElementById('panelCount').textContent = state.known.length + " מתוך " + WORDS.length;
   el.innerHTML='';
   if(!state.known.length){ el.innerHTML='<div class="empty-note">עדיין לא סימנת מילים.</div>'; return; }
   const dateOf={}; state.log.forEach(e=>{ dateOf[e.w]=e.t; });
@@ -1156,19 +1162,23 @@ function renderList(){
   });
 }
 const startInput = document.getElementById('startDate');
+const settingsBox = document.getElementById('settingsBox');
 function openPanel(){
   document.getElementById('panel').classList.remove('hidden');
+  settingsBox.classList.add('hidden');
   startInput.value = dayStr(startDayTs());
-  renderList(); renderProgress();
+  renderProgress(); renderList();
   document.querySelector('.panel-inner').scrollTop = 0;
 }
 document.getElementById('menuBtn').onclick = openPanel;
 document.getElementById('panelClose').onclick = () => document.getElementById('panel').classList.add('hidden');
+document.getElementById('panelSettings').onclick = () => settingsBox.classList.toggle('hidden');
 startInput.max = dayStr(Date.now());
 startInput.onchange = () => { if(startInput.value){ state.startDate = startInput.value; save(); renderProgress(); } };
 
 document.getElementById('menuBtn').innerHTML = ic('list',18)+'<span>מילים שלמדתי</span>';
-document.getElementById('panelClose').innerHTML = ic('x',15)+' סגור';
+document.getElementById('panelSettings').innerHTML = ic('gear',19);
+document.getElementById('panelClose').innerHTML = ic('x',18);
 
 render();
 </script>
