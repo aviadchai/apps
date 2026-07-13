@@ -20,9 +20,10 @@
     padding:7vh 20px 50px; overflow-x:hidden;
   }
   .menu-btn{
-    position:fixed; top:16px; left:16px; width:42px; height:42px;
-    border-radius:50%; background:rgba(255,255,255,0.75); border:none;
-    font-size:1.15rem; display:flex; align-items:center; justify-content:center;
+    position:fixed; top:16px; left:16px; height:38px; padding:0 15px;
+    border-radius:99px; background:rgba(255,255,255,0.85); border:none;
+    color:var(--teal-dark); font-size:0.82rem; font-weight:700;
+    display:inline-flex; align-items:center; gap:6px;
     cursor:pointer; box-shadow:0 2px 10px rgba(62,44,86,0.12); z-index:20;
   }
   .stat{ font-size:0.85rem; color:rgba(62,44,86,0.5); margin-bottom:10px; font-weight:600; }
@@ -31,6 +32,10 @@
   .progress-fill{ height:100%; width:0; background:linear-gradient(90deg,var(--teal),var(--sun)); border-radius:99px; transition:width .5s ease; }
   .ic{ vertical-align:middle; flex:0 0 auto; }
   .action, .study-speak, .card-speak, .li-speak, .badge, .btn-learned-big, .btn-extra{ display:inline-flex; align-items:center; justify-content:center; gap:7px; }
+  /* Speaker button stays lit while the word is being spoken */
+  .btn-speak.speaking, .study-speak.speaking, .card-speak.speaking, .li-speak.speaking{ background:var(--teal); color:#fff; }
+  .speaking{ animation:speakpulse 1s ease-in-out infinite; }
+  @keyframes speakpulse{ 0%,100%{ opacity:1; } 50%{ opacity:0.72; } }
 
   .coin-wrap{ position:relative; width:220px; height:220px; margin-bottom:28px; }
   .coin{
@@ -107,6 +112,11 @@
   .btn-learned-big{ border:none; border-radius:16px; padding:16px; font-size:1.05rem; font-weight:800; color:#fff; background:var(--teal); box-shadow:0 8px 22px rgba(15,185,167,0.35); cursor:pointer; margin-top:4px; }
   .btn-learned-big:active{ transform:scale(0.97); }
   .card.studying{ background:rgba(255,255,255,0.55); box-shadow:none; }
+  .sw-actions{ display:flex; gap:9px; margin-top:14px; }
+  .sw-actions button{ flex:1; border:none; border-radius:14px; padding:12px 10px; font-size:0.9rem; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; }
+  .sw-actions button:active{ transform:scale(0.97); }
+  .sw-miss{ background:rgba(255,107,107,0.12); color:var(--coral); }
+  .sw-got{ background:var(--teal); color:#fff; }
 
   .panel{ position:fixed; inset:0; background:rgba(62,44,86,0.35); display:flex; align-items:flex-end; justify-content:center; z-index:30; }
   .panel.hidden{ display:none; }
@@ -114,9 +124,13 @@
   .panel-inner h2{ font-size:1.05rem; margin:0 0 4px; }
   .panel-sub{ font-size:0.82rem; color:rgba(62,44,86,0.5); margin-bottom:14px; }
   .panel-close{ display:block; margin:0 auto 14px; background:rgba(62,44,86,0.08); border:none; border-radius:12px; padding:8px 18px; font-size:0.85rem; color:var(--plum); cursor:pointer; }
+  .startdate-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; background:rgba(15,185,167,0.06); border-radius:14px; padding:10px 14px; margin-bottom:14px; font-size:0.85rem; font-weight:600; color:rgba(62,44,86,0.7); }
+  .startdate-row input{ border:1px solid rgba(62,44,86,0.15); border-radius:10px; padding:6px 10px; font-size:0.85rem; color:var(--teal-dark); background:#fff; font-family:inherit; }
   .learned-item{ display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid rgba(62,44,86,0.08); font-size:0.9rem; }
   .learned-item .g{ color:var(--teal-dark); font-weight:700; }
-  .learned-item .h{ color:rgba(62,44,86,0.6); margin-inline-start:auto; text-align:start; }
+  .li-meta{ margin-inline-start:auto; display:flex; flex-direction:column; align-items:flex-start; }
+  .learned-item .h{ color:rgba(62,44,86,0.6); text-align:start; }
+  .learned-item .ld{ font-size:0.66rem; color:rgba(62,44,86,0.38); direction:ltr; }
   .li-speak{ flex:0 0 auto; background:rgba(15,185,167,0.12); color:var(--teal-dark); border:none; border-radius:10px; padding:6px 12px; font-size:0.95rem; cursor:pointer; }
   .card-speak{ margin-top:10px; background:rgba(15,185,167,0.12); color:var(--teal-dark); border:none; border-radius:12px; padding:8px 20px; font-size:0.85rem; font-weight:700; cursor:pointer; }
   .empty-note{ color:rgba(62,44,86,0.45); font-size:0.85rem; }
@@ -146,8 +160,9 @@
 <div class="panel hidden" id="panel">
   <div class="panel-inner">
     <button class="panel-close" id="panelClose">סגור</button>
-    <h2>המילים שאני יודע</h2>
+    <h2>מילים שלמדתי</h2>
     <div class="panel-sub" id="panelCount"></div>
+    <label class="startdate-row">תחילת הלימודים<input type="date" id="startDate"></label>
     <div id="progress"></div>
     <div id="learnedList"></div>
   </div>
@@ -763,10 +778,11 @@ function load(){
     if(!p || !Array.isArray(p.known)) throw 0;
     if(!p.day) p.day = { date:"", slots:[], opened:false };
     if(!Array.isArray(p.log)) p.log = [];
+    if(!Array.isArray(p.review)) p.review = [];   // missed words waiting to resurface
     const logged = new Set(p.log.map(e=>e.w));   // backfill dates for pre-existing known words
     p.known.forEach(g=>{ if(!logged.has(g)) p.log.push({ w:g, t:Date.now() }); });
     return p;
-  }catch(e){ return { known: [], log: [], day: { date:"", slots:[], opened:false } }; }
+  }catch(e){ return { known: [], log: [], review: [], day: { date:"", slots:[], opened:false } }; }
 }
 function save(){ localStorage.setItem(KEY, JSON.stringify(state)); }
 
@@ -818,31 +834,67 @@ function fmtTime(s){
 const dayStr = ts => { const d=new Date(ts); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); };
 const dayLabel = ts => { const d=new Date(ts); return d.getDate()+'.'+(d.getMonth()+1); };
 
-function speak(t){
-  if(!('speechSynthesis' in window)) return;
-  const u = new SpeechSynthesisUtterance(t);
-  u.lang='el-GR'; u.rate=0.85;
-  speechSynthesis.cancel(); speechSynthesis.speak(u);
+const REVIEW_DAYS = 3;   // a missed word comes back after this many days
+function startDayTs(){
+  if(state.startDate){ const a=state.startDate.split('-').map(Number); return new Date(a[0],a[1]-1,a[2]).getTime(); }
+  if(state.log.length){ const d=new Date(Math.min(...state.log.map(e=>e.t))); d.setHours(0,0,0,0); return d.getTime(); }
+  const n=new Date(); n.setHours(0,0,0,0); return n.getTime();
 }
 
-// Next word = first word in the list not yet known and not already on screen today
-function nextWord(){
-  const onScreen = state.day.slots.map(s => s.word);
-  return (WORDS.find(w => !state.known.includes(w[0]) && !onScreen.includes(w[0])) || [null])[0];
+// Prefer a real, non-robotic Greek voice when the device offers one.
+function bestGreekVoice(){
+  try{
+    const vs=speechSynthesis.getVoices()||[];
+    const el=vs.filter(v=>/^el(\b|-|_)/i.test(v.lang));
+    if(!el.length) return null;
+    return el.find(v=>/(enhanced|premium|natural|neural|siri|google|microsoft)/i.test(v.name)) || el.find(v=>v.default) || el[0];
+  }catch(e){ return null; }
 }
+let speakingBtn=null;
+function speak(t, btn){
+  if(!('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  if(speakingBtn){ speakingBtn.classList.remove('speaking'); speakingBtn=null; }
+  const u = new SpeechSynthesisUtterance(t);
+  u.lang='el-GR'; u.rate=0.85;
+  try{ const v=bestGreekVoice(); if(v) u.voice=v; }catch(e){}
+  if(btn){
+    speakingBtn=btn; btn.classList.add('speaking');
+    const clear=()=>{ btn.classList.remove('speaking'); if(speakingBtn===btn) speakingBtn=null; };
+    u.onend=clear; u.onerror=clear;
+  }
+  speechSynthesis.speak(u);
+}
+if('speechSynthesis' in window){ try{ speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged=()=>{}; }catch(e){} }
+
+// Pick the next word: a due "missed" word first, otherwise a fresh one not yet seen.
+function pickOne(onScreen){
+  const now=Date.now();
+  const due=state.review.find(r=> r.due<=now && !onScreen.includes(r.w));
+  if(due) return due.w;
+  const inReview=new Set(state.review.map(r=>r.w));
+  const w=WORDS.find(x=> !state.known.includes(x[0]) && !inReview.has(x[0]) && !onScreen.includes(x[0]));
+  return w ? w[0] : null;
+}
+function nextWord(){ return pickOne(state.day.slots.map(s => s.word)); }
 
 function markKnown(g){
   if(!state.known.includes(g)){
     state.known.push(g);
     state.log.push({ w:g, t:Date.now() });   // record the date this word was learned
   }
+  state.review = state.review.filter(r=>r.w!==g);   // learned for good — drop from review
+}
+function scheduleReview(g){   // missed — bring it back in the future
+  const due=Date.now()+REVIEW_DAYS*24*60*60*1000;
+  const ex=state.review.find(r=>r.w===g);
+  if(ex) ex.due=due; else state.review.push({ w:g, due });
 }
 
 function pickSlots(){
   const slots=[];
   for(let i=0;i<2;i++){
-    const onScreen=slots.map(s=>s.word);
-    const w=(WORDS.find(x=>!state.known.includes(x[0]) && !onScreen.includes(x[0]))||[null])[0];
+    const w=pickOne(slots.map(s=>s.word));
     if(w) slots.push({ word:w, done:false, studying:false });
   }
   return slots;
@@ -936,13 +988,13 @@ function render(){
       card.innerHTML='<div class="greek">'+e[0]+'</div><div class="translit">'+e[1]+'</div>'+
         '<div class="hebrew">'+e[2]+'</div><button class="card-speak">'+ic('speaker',18)+'השמעה</button>'+
         '<div class="badge">'+ic('checkCircle',16)+'ברשימה שלי</div>';
-      card.querySelector('.card-speak').onclick=()=>speak(e[0]);
+      card.querySelector('.card-speak').onclick=(ev)=>speak(e[0], ev.currentTarget);
     } else if(slot.studying){
       card.className='card studying';
       card.innerHTML='<div class="greek">'+e[0]+'</div><div class="translit">'+e[1]+'</div>'+
         '<div class="hebrew">'+e[2]+'</div><button class="card-speak">'+ic('speaker',18)+'השמעה</button>'+
         '<div class="badge">'+ic('book',16)+'במסך הלימוד</div>';
-      card.querySelector('.card-speak').onclick=()=>speak(e[0]);
+      card.querySelector('.card-speak').onclick=(ev)=>speak(e[0], ev.currentTarget);
     } else {
       card.className='card';
       card.innerHTML='<div class="greek">'+e[0]+'</div><div class="translit">'+e[1]+'</div>'+
@@ -952,7 +1004,7 @@ function render(){
           '<button class="action btn-swap" data-a="swap">'+ic('refresh',18)+'כבר ידעתי</button>'+
           '<button class="action btn-study" data-a="study">'+ic('book',18)+'ללמוד</button>'+
         '</div>';
-      card.querySelector('[data-a=speak]').onclick = () => speak(e[0]);
+      card.querySelector('[data-a=speak]').onclick = (ev) => speak(e[0], ev.currentTarget);
       card.querySelector('[data-a=swap]').onclick = () => {
         markKnown(slot.word);           // counts as known
         const nw = nextWord();          // and pulls a fresh word into this slot
@@ -970,14 +1022,24 @@ function render(){
   });
 }
 
-// Study screen: a calm full view — the words you chose to learn, a countdown, and "למדתי".
+// Resolve one studied word: success -> known; miss -> comes back in a few days.
+function resolveWord(slot, success){
+  if(success) markKnown(slot.word); else scheduleReview(slot.word);
+  slot.done=true; slot.learned=!!success;
+  save();
+  const finished=dayFinished();
+  render();
+  if(finished && state.day.slots.some(s=>s.learned)) confetti();   // celebrate only if something stuck
+}
+
+// Study screen: a calm full view — the words, a countdown, and a per-word success/miss choice.
 function renderStudy(cards){
   const wrap=document.createElement('div');
   wrap.className='study-screen';
 
   const head=document.createElement('div');
   head.className='study-head';
-  head.innerHTML='<div class="study-title">'+ic('cap',26)+'<span>זמן ללמוד</span></div><div class="study-sub">שנן את שתי המילים, בלי לחץ</div>';
+  head.innerHTML='<div class="study-title">'+ic('cap',26)+'<span>זמן ללמוד</span></div><div class="study-sub">כשאתם מוכנים — סמנו לכל מילה אם זכרתם</div>';
   wrap.appendChild(head);
 
   const timer=document.createElement('div');
@@ -990,20 +1052,16 @@ function renderStudy(cards){
     const w=document.createElement('div');
     w.className='study-word';
     w.innerHTML='<div class="greek">'+e[0]+'</div><div class="translit">'+e[1]+'</div>'+
-      '<div class="hebrew">'+e[2]+'</div><button class="study-speak">'+ic('speaker',18)+'השמעה</button>';
-    w.querySelector('.study-speak').onclick=()=>speak(e[0]);
+      '<div class="hebrew">'+e[2]+'</div><button class="study-speak">'+ic('speaker',18)+'השמעה</button>'+
+      '<div class="sw-actions">'+
+        '<button class="sw-miss">'+ic('x',18)+'לא הצלחתי</button>'+
+        '<button class="sw-got">'+ic('check',18)+'למדתי</button>'+
+      '</div>';
+    w.querySelector('.study-speak').onclick=(ev)=>speak(e[0], ev.currentTarget);
+    w.querySelector('.sw-got').onclick=()=>resolveWord(slot,true);
+    w.querySelector('.sw-miss').onclick=()=>resolveWord(slot,false);
     wrap.appendChild(w);
   });
-
-  const done=document.createElement('button');
-  done.className='btn-learned-big'; done.innerHTML=ic('check',20)+'למדתי';
-  done.onclick=()=>{
-    studyingSlots().forEach(slot=>{ markKnown(slot.word); slot.done=true; });
-    save();
-    render();
-    if(dayFinished()) confetti();
-  };
-  wrap.appendChild(done);
 
   cards.appendChild(wrap);
 
@@ -1037,14 +1095,16 @@ function renderProgress(){
   }
   const byDay={};
   state.log.forEach(e=>{ const k=dayStr(e.t); byDay[k]=(byDay[k]||0)+1; });
-  const first=new Date(Math.min(...state.log.map(e=>e.t))); first.setHours(0,0,0,0);
   const today=new Date(); today.setHours(0,0,0,0);
-  const pts=[]; let cum=0;
+  let first=new Date(startDayTs()); first.setHours(0,0,0,0);
+  if(first>today) first=new Date(today);
+  const startISO=dayStr(first.getTime());
+  const pts=[]; let cum=state.log.filter(e=>dayStr(e.t) < startISO).length;   // words learned before the chosen start
   for(let d=new Date(first); d<=today; d.setDate(d.getDate()+1)){
     cum += (byDay[dayStr(d.getTime())]||0);
     pts.push(cum);
   }
-  const total=state.log.length, spanDays=pts.length, per=total/spanDays;
+  const total=state.log.length, spanDays=Math.max(pts.length,1), per=total/spanDays;
   let paceNum, paceSub;
   if(per>=1){ paceNum=Math.round(per*10)/10; paceSub='מילים ביום'; }
   else { paceNum=Math.round((spanDays/total)*10)/10; paceSub='ימים למילה'; }
@@ -1075,21 +1135,31 @@ function renderList(){
   document.getElementById('panelCount').textContent = state.known.length + " מתוך " + WORDS.length;
   el.innerHTML='';
   if(!state.known.length){ el.innerHTML='<div class="empty-note">עדיין לא סימנת מילים.</div>'; return; }
+  const dateOf={}; state.log.forEach(e=>{ dateOf[e.w]=e.t; });
   state.known.slice().reverse().forEach(g=>{
     const e=entryOf(g);
     const row=document.createElement('div');
     row.className='learned-item';
     row.innerHTML='<button class="li-speak" title="השמעה">'+ic('speaker',18)+'</button>'+
       '<span class="g">'+g+'</span>'+
-      '<span class="h">'+(e?e[2]:'')+'</span>';
-    row.querySelector('.li-speak').onclick=()=>speak(g);
+      '<div class="li-meta"><span class="h">'+(e?e[2]:'')+'</span>'+
+        '<span class="ld">'+(dateOf[g]?dayLabel(dateOf[g]):'')+'</span></div>';
+    row.querySelector('.li-speak').onclick=(ev)=>speak(g, ev.currentTarget);
     el.appendChild(row);
   });
 }
-document.getElementById('menuBtn').onclick = () => { document.getElementById('panel').classList.remove('hidden'); renderProgress(); renderList(); };
+const startInput = document.getElementById('startDate');
+function openPanel(){
+  document.getElementById('panel').classList.remove('hidden');
+  startInput.value = dayStr(startDayTs());
+  renderProgress(); renderList();
+}
+document.getElementById('menuBtn').onclick = openPanel;
 document.getElementById('panelClose').onclick = () => document.getElementById('panel').classList.add('hidden');
+startInput.max = dayStr(Date.now());
+startInput.onchange = () => { if(startInput.value){ state.startDate = startInput.value; save(); renderProgress(); } };
 
-document.getElementById('menuBtn').innerHTML = ic('list',22);
+document.getElementById('menuBtn').innerHTML = ic('list',18)+'<span>מילים שלמדתי</span>';
 document.getElementById('panelClose').innerHTML = ic('x',15)+' סגור';
 
 render();

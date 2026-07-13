@@ -1,29 +1,34 @@
 <!DOCTYPE html>
-<html>
+<html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Redirecting...</title>
-<script>
-if ('caches' in window) {
-  caches.keys().then(function(names) {
-    return Promise.all(names.map(function(n){ return caches.delete(n); }));
-  });
-}
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then(function(regs) {
-    regs.forEach(function(r){ r.unregister(); });
-  });
-}
-setTimeout(function(){
-  window.location.replace('greek-daily.html?r=' + Date.now());
-}, 1000);
-</script>
+<title>שתי מילים ביום</title>
+<style>
+  html,body{margin:0;height:100%;}
+  body{
+    display:flex;align-items:center;justify-content:center;min-height:100vh;
+    background:linear-gradient(160deg,#EAFBF5 0%,#FDF3E4 100%);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
+  }
+  .loader{display:flex;flex-direction:column;align-items:center;gap:18px;}
+  .dot{
+    width:56px;height:56px;border-radius:50%;
+    background:radial-gradient(circle at 32% 28%,#2FE0C9,#0FB9A7 55%,#0A8577 100%);
+    box-shadow:0 12px 32px rgba(15,185,167,0.35);
+    animation:breathe 1.2s ease-in-out infinite;
+  }
+  @keyframes breathe{ 0%,100%{transform:scale(1);opacity:1;} 50%{transform:scale(0.82);opacity:0.7;} }
+  .txt{color:#0A8577;font-weight:700;font-size:0.95rem;letter-spacing:0.2px;}
+</style>
 </head>
-<body style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;background:#EAFBF5;">
-<div style="text-align:center;">
-<div style="font-size:48px;margin-bottom:16px;">🔄</div>
-<div style="color:#6b7280;">מנקה קאש ומעדכן...</div>
+<body>
+<div class="loader">
+  <div class="dot"></div>
+  <div class="txt">שתי מילים ביום</div>
 </div>
+<script>
+  setTimeout(function(){ window.location.replace('greek-daily.html?r=' + Date.now()); }, 350);
+</script>
 </body>
 </html>
