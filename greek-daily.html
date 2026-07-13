@@ -78,6 +78,22 @@
     box-shadow:0 8px 22px rgba(255,107,107,0.35);
   }
   .btn-extra:active{ transform:scale(0.96); }
+  .btn-study{ background:var(--teal); color:#fff; }
+
+  .study-screen{ width:100%; display:flex; flex-direction:column; gap:14px; }
+  .btn-back{ align-self:flex-start; background:rgba(62,44,86,0.08); color:var(--plum); border:none; border-radius:12px; padding:9px 16px; font-size:0.82rem; font-weight:700; cursor:pointer; }
+  .study-timer{ text-align:center; font-size:1rem; font-weight:700; color:var(--teal-dark); background:rgba(15,185,167,0.10); border-radius:16px; padding:12px; }
+  .study-timer b{ font-size:1.35rem; }
+  .study-timer.zero{ color:var(--coral); background:rgba(255,107,107,0.12); }
+  .study-word{ background:#fff; border-radius:22px; padding:20px; text-align:center; box-shadow:0 10px 30px rgba(62,44,86,0.10); }
+  .study-word .greek{ font-size:1.8rem; font-weight:800; }
+  .study-word .translit{ font-size:0.78rem; color:rgba(62,44,86,0.45); direction:ltr; margin:2px 0 6px; }
+  .study-word .hebrew{ font-size:1.02rem; color:var(--teal-dark); font-weight:600; margin-bottom:12px; }
+  .study-speak{ background:rgba(15,185,167,0.12); color:var(--teal-dark); border:none; border-radius:12px; padding:9px 22px; font-size:0.9rem; font-weight:700; cursor:pointer; }
+  .btn-learned-big{ border:none; border-radius:16px; padding:15px; font-size:1.02rem; font-weight:800; color:#fff; background:var(--teal); box-shadow:0 8px 22px rgba(15,185,167,0.35); cursor:pointer; }
+  .btn-learned-big:active{ transform:scale(0.97); }
+  .btn-tostudy{ border:none; border-radius:16px; padding:12px; font-size:0.9rem; font-weight:700; color:var(--teal-dark); background:rgba(15,185,167,0.14); cursor:pointer; }
+  .card.studying{ background:rgba(255,255,255,0.55); box-shadow:none; }
 
   .panel{ position:fixed; inset:0; background:rgba(62,44,86,0.35); display:flex; align-items:flex-end; justify-content:center; z-index:30; }
   .panel.hidden{ display:none; }
@@ -737,6 +753,18 @@ if(state.day.date !== todayKey()){
 
 const entryOf = g => WORDS.find(w => w[0] === g);
 
+// Study phase: after tapping "ללמוד" a word moves to a study screen with a countdown.
+const STUDY_SECONDS = 60;
+let view = 'main';   // 'main' | 'study' — not persisted; recomputed from state each load
+let timerId = null;
+
+const studyingSlots = () => state.day.slots.filter(s => s.studying && !s.done);
+function studyRemaining(){
+  if(!state.day.studyStart) return STUDY_SECONDS;
+  return Math.max(0, STUDY_SECONDS - Math.floor((Date.now() - state.day.studyStart)/1000));
+}
+const fmtTime = s => Math.floor(s/60) + ':' + String(s%60).padStart(2,'0');
+
 function speak(t){
   if(!('speechSynthesis' in window)) return;
   const u = new SpeechSynthesisUtterance(t);
@@ -757,7 +785,7 @@ function pickSlots(){
   for(let i=0;i<2;i++){
     const onScreen=slots.map(s=>s.word);
     const w=(WORDS.find(x=>!state.known.includes(x[0]) && !onScreen.includes(x[0]))||[null])[0];
-    if(w) slots.push({ word:w, done:false });
+    if(w) slots.push({ word:w, done:false, studying:false });
   }
   return slots;
 }
@@ -767,6 +795,8 @@ function extraRound(){
   const slots=pickSlots();
   if(!slots.length) return;
   state.day.slots=slots;
+  state.day.studyStart=0;
+  view='main';
   save(); render();
 }
 
@@ -799,6 +829,7 @@ function render(){
   const coin=document.getElementById('coinBtn');
   const label=document.getElementById('coinLabel');
   const cards=document.getElementById('cards');
+  if(timerId){ clearInterval(timerId); timerId=null; }
   cards.innerHTML='';
   renderStat();
 
@@ -824,46 +855,110 @@ function render(){
 
   label.innerHTML='2 מילים<br>של היום';
 
+  if(view==='study' && studyingSlots().length){ renderStudy(cards); return; }
+
+  // Main view: word cards. A word tapped "ללמוד" waits on the study screen.
+  if(studyingSlots().length){
+    const b=document.createElement('button');
+    b.className='btn-tostudy';
+    b.textContent='📚 חזרה למסך הלימוד ('+studyingSlots().length+')';
+    b.onclick=()=>{ view='study'; render(); };
+    cards.appendChild(b);
+  }
+
   state.day.slots.forEach((slot, i) => {
     const e = entryOf(slot.word);
     if(!e) return;
     const card=document.createElement('div');
-    card.className='card'+(slot.done?' marked':'');
     if(slot.done){
+      card.className='card marked';
       card.innerHTML='<div class="greek">'+e[0]+'</div><div class="translit">'+e[1]+'</div>'+
         '<div class="hebrew">'+e[2]+'</div><div class="badge">✓ ברשימה שלי</div>';
+    } else if(slot.studying){
+      card.className='card studying';
+      card.innerHTML='<div class="greek">'+e[0]+'</div><div class="translit">'+e[1]+'</div>'+
+        '<div class="hebrew">'+e[2]+'</div><div class="badge">📚 במסך הלימוד</div>';
     } else {
+      card.className='card';
       card.innerHTML='<div class="greek">'+e[0]+'</div><div class="translit">'+e[1]+'</div>'+
         '<div class="hebrew">'+e[2]+'</div>'+
         '<div class="row">'+
           '<button class="action btn-speak" data-a="speak">🔊</button>'+
           '<button class="action btn-swap" data-a="swap">🔄 כבר ידעתי</button>'+
-          '<button class="action btn-learned" data-a="learn">✅ למדתי</button>'+
+          '<button class="action btn-study" data-a="study">📚 ללמוד</button>'+
         '</div>';
       card.querySelector('[data-a=speak]').onclick = () => speak(e[0]);
       card.querySelector('[data-a=swap]').onclick = () => {
         markKnown(slot.word);           // counts as known
         const nw = nextWord();          // and pulls a fresh word into this slot
-        if(nw){ state.day.slots[i] = { word: nw, done:false }; }
+        if(nw){ state.day.slots[i] = { word: nw, done:false, studying:false }; }
         else  { state.day.slots[i].done = true; }
         save(); render();
       };
-      card.querySelector('[data-a=learn]').onclick = () => {
-        markKnown(slot.word);
-        state.day.slots[i].done = true;
-        save();
-        if(dayFinished()) confetti();
-        render();
+      card.querySelector('[data-a=study]').onclick = () => {
+        state.day.slots[i].studying = true;         // move to the study screen
+        if(!state.day.studyStart) state.day.studyStart = Date.now();
+        view='study';
+        save(); render();
       };
     }
     cards.appendChild(card);
   });
 }
 
+// Study screen: the words you chose to learn, a countdown, and a "למדתי" button.
+function renderStudy(cards){
+  const wrap=document.createElement('div');
+  wrap.className='study-screen';
+
+  const back=document.createElement('button');
+  back.className='btn-back'; back.textContent='← חזרה לכרטיסים';
+  back.onclick=()=>{ view='main'; render(); };
+  wrap.appendChild(back);
+
+  const timer=document.createElement('div');
+  timer.className='study-timer';
+  wrap.appendChild(timer);
+
+  studyingSlots().forEach(slot=>{
+    const e=entryOf(slot.word);
+    if(!e) return;
+    const w=document.createElement('div');
+    w.className='study-word';
+    w.innerHTML='<div class="greek">'+e[0]+'</div><div class="translit">'+e[1]+'</div>'+
+      '<div class="hebrew">'+e[2]+'</div><button class="study-speak">🔊 השמעה</button>';
+    w.querySelector('.study-speak').onclick=()=>speak(e[0]);
+    wrap.appendChild(w);
+  });
+
+  const done=document.createElement('button');
+  done.className='btn-learned-big'; done.textContent='✅ למדתי';
+  done.onclick=()=>{
+    studyingSlots().forEach(slot=>{ markKnown(slot.word); slot.done=true; });
+    view='main';
+    save();
+    if(dayFinished()) confetti();
+    render();
+  };
+  wrap.appendChild(done);
+
+  cards.appendChild(wrap);
+
+  const upd=()=>{
+    const r=studyRemaining();
+    timer.innerHTML='⏳ נשאר ללמוד: <b>'+fmtTime(r)+'</b>';
+    timer.classList.toggle('zero', r<=0);
+  };
+  upd();
+  timerId=setInterval(upd,1000);
+}
+
 document.getElementById('coinBtn').onclick = () => {
   if(state.day.opened || dayFinished()) return;
   state.day.slots=pickSlots();
   state.day.opened=true;
+  state.day.studyStart=0;
+  view='main';
   save(); render();
 };
 
