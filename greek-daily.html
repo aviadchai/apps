@@ -71,6 +71,13 @@
   .badge{ font-size:0.85rem; font-weight:700; color:var(--teal-dark); }
 
   .done-msg{ text-align:center; font-size:0.9rem; color:rgba(62,44,86,0.55); margin-top:6px; }
+  .btn-extra{
+    display:block; margin:16px auto 0; border:none; border-radius:16px;
+    padding:13px 24px; font-size:0.92rem; font-weight:700; cursor:pointer;
+    color:#fff; background:linear-gradient(135deg,var(--coral),#FF9364);
+    box-shadow:0 8px 22px rgba(255,107,107,0.35);
+  }
+  .btn-extra:active{ transform:scale(0.96); }
 
   .panel{ position:fixed; inset:0; background:rgba(62,44,86,0.35); display:flex; align-items:flex-end; justify-content:center; z-index:30; }
   .panel.hidden{ display:none; }
@@ -745,6 +752,24 @@ function nextWord(){
 
 function markKnown(g){ if(!state.known.includes(g)) state.known.push(g); }
 
+function pickSlots(){
+  const slots=[];
+  for(let i=0;i<2;i++){
+    const onScreen=slots.map(s=>s.word);
+    const w=(WORDS.find(x=>!state.known.includes(x[0]) && !onScreen.includes(x[0]))||[null])[0];
+    if(w) slots.push({ word:w, done:false });
+  }
+  return slots;
+}
+
+// Bonus round: after finishing the daily 2, deal 2 more on demand
+function extraRound(){
+  const slots=pickSlots();
+  if(!slots.length) return;
+  state.day.slots=slots;
+  save(); render();
+}
+
 function dayFinished(){
   return state.day.opened && state.day.slots.length > 0 && state.day.slots.every(s => s.done);
 }
@@ -783,6 +808,10 @@ function render(){
     const m=document.createElement('div');
     m.className='done-msg'; m.textContent='יפה. חזור מחר ל־2 מילים חדשות 🌙';
     cards.appendChild(m);
+    const x=document.createElement('button');
+    x.className='btn-extra'; x.textContent='🎁 בא לי עוד 2 מילים';
+    x.onclick=extraRound;
+    cards.appendChild(x);
     return;
   }
 
@@ -833,13 +862,7 @@ function render(){
 
 document.getElementById('coinBtn').onclick = () => {
   if(state.day.opened || dayFinished()) return;
-  const slots=[];
-  for(let i=0;i<2;i++){
-    const onScreen=slots.map(s=>s.word);
-    const w=(WORDS.find(x=>!state.known.includes(x[0]) && !onScreen.includes(x[0]))||[null])[0];
-    if(w) slots.push({ word:w, done:false });
-  }
-  state.day.slots=slots;
+  state.day.slots=pickSlots();
   state.day.opened=true;
   save(); render();
 };
