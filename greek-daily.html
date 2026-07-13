@@ -105,6 +105,14 @@
   .learned-item .g{ color:var(--teal-dark); font-weight:700; }
   .learned-item .h{ color:rgba(62,44,86,0.6); }
   .empty-note{ color:rgba(62,44,86,0.45); font-size:0.85rem; }
+  .prog-empty{ font-size:0.82rem; color:rgba(62,44,86,0.45); margin-bottom:14px; }
+  .prog-stats{ display:flex; gap:8px; margin-bottom:12px; }
+  .prog-stat{ flex:1; background:rgba(15,185,167,0.08); border-radius:14px; padding:10px 8px; text-align:center; }
+  .prog-stat b{ display:block; font-size:1.2rem; color:var(--teal-dark); }
+  .prog-stat span{ font-size:0.68rem; color:rgba(62,44,86,0.55); }
+  .prog-chart{ background:rgba(62,44,86,0.03); border-radius:14px; padding:8px 6px 4px; margin-bottom:18px; }
+  .prog-chart svg{ display:block; width:100%; height:auto; }
+  .prog-axis{ display:flex; justify-content:space-between; font-size:0.68rem; color:rgba(62,44,86,0.45); padding:2px 6px 0; direction:ltr; }
   .reset-row{ margin-top:18px; text-align:center; }
   .reset-row button{ background:none; border:none; color:rgba(255,107,107,0.85); font-size:0.8rem; text-decoration:underline; cursor:pointer; }
 </style>
@@ -126,6 +134,7 @@
     <button class="panel-close" id="panelClose">סגור ✕</button>
     <h2>המילים שאני יודע</h2>
     <div class="panel-sub" id="panelCount"></div>
+    <div id="progress"></div>
     <div id="learnedList"></div>
     <div class="reset-row"><button id="resetBtn">איפוס כל ההתקדמות</button></div>
   </div>
@@ -740,8 +749,11 @@ function load(){
     const p = JSON.parse(localStorage.getItem(KEY));
     if(!p || !Array.isArray(p.known)) throw 0;
     if(!p.day) p.day = { date:"", slots:[], opened:false };
+    if(!Array.isArray(p.log)) p.log = [];
+    const logged = new Set(p.log.map(e=>e.w));   // backfill dates for pre-existing known words
+    p.known.forEach(g=>{ if(!logged.has(g)) p.log.push({ w:g, t:Date.now() }); });
     return p;
-  }catch(e){ return { known: [], day: { date:"", slots:[], opened:false } }; }
+  }catch(e){ return { known: [], log: [], day: { date:"", slots:[], opened:false } }; }
 }
 function save(){ localStorage.setItem(KEY, JSON.stringify(state)); }
 
@@ -754,7 +766,7 @@ if(state.day.date !== todayKey()){
 const entryOf = g => WORDS.find(w => w[0] === g);
 
 // Study phase: after tapping "ללמוד" a word moves to a study screen with a countdown.
-const STUDY_SECONDS = 60;
+const STUDY_SECONDS = 24 * 60 * 60;   // 24 hours from the moment "ללמוד" is tapped
 let view = 'main';   // 'main' | 'study' — not persisted; recomputed from state each load
 let timerId = null;
 
@@ -763,7 +775,14 @@ function studyRemaining(){
   if(!state.day.studyStart) return STUDY_SECONDS;
   return Math.max(0, STUDY_SECONDS - Math.floor((Date.now() - state.day.studyStart)/1000));
 }
-const fmtTime = s => Math.floor(s/60) + ':' + String(s%60).padStart(2,'0');
+function fmtTime(s){
+  const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), ss=s%60, p=x=>String(x).padStart(2,'0');
+  return h>0 ? h+':'+p(m)+':'+p(ss) : m+':'+p(ss);
+}
+
+// --- Progress tracking: each known word is logged with its date ---
+const dayStr = ts => { const d=new Date(ts); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); };
+const dayLabel = ts => { const d=new Date(ts); return d.getDate()+'.'+(d.getMonth()+1); };
 
 function speak(t){
   if(!('speechSynthesis' in window)) return;
@@ -778,7 +797,12 @@ function nextWord(){
   return (WORDS.find(w => !state.known.includes(w[0]) && !onScreen.includes(w[0])) || [null])[0];
 }
 
-function markKnown(g){ if(!state.known.includes(g)) state.known.push(g); }
+function markKnown(g){
+  if(!state.known.includes(g)){
+    state.known.push(g);
+    state.log.push({ w:g, t:Date.now() });   // record the date this word was learned
+  }
+}
 
 function pickSlots(){
   const slots=[];
@@ -962,6 +986,49 @@ document.getElementById('coinBtn').onclick = () => {
   save(); render();
 };
 
+// Cumulative progress chart: how many words known over the days since you started
+function renderProgress(){
+  const box=document.getElementById('progress');
+  if(!box) return;
+  if(!state.log || !state.log.length){
+    box.innerHTML='<div class="prog-empty">עדיין אין נתונים — סמן מילה ראשונה כדי לראות את קצב ההתקדמות.</div>';
+    return;
+  }
+  const byDay={};
+  state.log.forEach(e=>{ const k=dayStr(e.t); byDay[k]=(byDay[k]||0)+1; });
+  const first=new Date(Math.min(...state.log.map(e=>e.t))); first.setHours(0,0,0,0);
+  const today=new Date(); today.setHours(0,0,0,0);
+  const pts=[]; let cum=0;
+  for(let d=new Date(first); d<=today; d.setDate(d.getDate()+1)){
+    cum += (byDay[dayStr(d.getTime())]||0);
+    pts.push(cum);
+  }
+  const total=state.log.length, spanDays=pts.length, per=total/spanDays;
+  let paceNum, paceSub;
+  if(per>=1){ paceNum=Math.round(per*10)/10; paceSub='מילים ביום'; }
+  else { paceNum=Math.round((spanDays/total)*10)/10; paceSub='ימים למילה'; }
+
+  const W=300,H=120,pad=8,padB=6,padT=10, n=pts.length, maxY=Math.max(total,1);
+  const X=i=> n<=1 ? W-pad : pad + i*(W-2*pad)/(n-1);
+  const Y=v=> padT + (H-padT-padB)*(1 - v/maxY);
+  let dLine=''; pts.forEach((v,i)=>{ dLine += (i?'L':'M')+X(i).toFixed(1)+' '+Y(v).toFixed(1)+' '; });
+  const dArea = dLine + 'L'+X(n-1).toFixed(1)+' '+(H-padB)+' L'+X(0).toFixed(1)+' '+(H-padB)+' Z';
+  const svg='<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg">'+
+    '<path d="'+dArea+'" fill="rgba(15,185,167,0.15)"/>'+
+    '<path d="'+dLine+'" fill="none" stroke="#0A8577" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>'+
+    '</svg>';
+
+  box.innerHTML =
+    '<div class="prog-stats">'+
+      '<div class="prog-stat"><b>'+total+'</b><span>מילים שאני יודע</span></div>'+
+      '<div class="prog-stat"><b>'+spanDays+'</b><span>ימים מההתחלה</span></div>'+
+      '<div class="prog-stat"><b>'+paceNum+'</b><span>'+paceSub+'</span></div>'+
+    '</div>'+
+    '<div class="prog-chart">'+svg+
+      '<div class="prog-axis"><span>'+dayLabel(first.getTime())+'</span><span>היום</span></div>'+
+    '</div>';
+}
+
 function renderList(){
   const el=document.getElementById('learnedList');
   document.getElementById('panelCount').textContent = state.known.length + " מתוך " + WORDS.length;
@@ -971,12 +1038,12 @@ function renderList(){
     return '<div class="learned-item"><span class="g">'+g+'</span><span class="h">'+(e?e[2]:'')+'</span></div>';
   }).join('');
 }
-document.getElementById('menuBtn').onclick = () => { document.getElementById('panel').classList.remove('hidden'); renderList(); };
+document.getElementById('menuBtn').onclick = () => { document.getElementById('panel').classList.remove('hidden'); renderProgress(); renderList(); };
 document.getElementById('panelClose').onclick = () => document.getElementById('panel').classList.add('hidden');
 document.getElementById('resetBtn').onclick = () => {
   if(confirm('לאפס את כל ההתקדמות?')){
-    state = { known: [], day: { date: todayKey(), slots: [], opened:false } };
-    save(); render(); renderList();
+    state = { known: [], log: [], day: { date: todayKey(), slots: [], opened:false } };
+    save(); render(); renderProgress(); renderList();
   }
 };
 
