@@ -1,0 +1,18 @@
+{
+  "name": "שתי מילים ביום · יוונית",
+  "short_name": "שתי מילים",
+  "description": "2 מילים יווניות חדשות בכל יום — לימוד קצר, פשוט ויומיומי.",
+  "start_url": "./greek-daily.html",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#EAFBF5",
+  "theme_color": "#0FB9A7",
+  "lang": "he",
+  "dir": "rtl",
+  "icons": [
+    { "src": "icon-greek-daily.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icon-greek-daily-180.png", "sizes": "180x180", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-greek-daily-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
