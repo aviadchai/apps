@@ -143,10 +143,11 @@
   .card-speak{ margin-top:10px; background:rgba(15,185,167,0.12); color:var(--teal-dark); border:none; border-radius:12px; padding:8px 20px; font-size:0.85rem; font-weight:700; cursor:pointer; }
   .empty-note{ color:rgba(62,44,86,0.45); font-size:0.85rem; }
   .prog-empty{ font-size:0.82rem; color:rgba(62,44,86,0.45); margin-bottom:14px; text-align:center; }
-  #progChart{ margin-bottom:20px; }
-  .prog-chart{ background:rgba(62,44,86,0.03); border-radius:14px; padding:8px 6px 4px; }
-  .prog-chart svg{ display:block; width:100%; height:auto; }
-  .prog-axis{ display:flex; justify-content:space-between; font-size:0.68rem; color:rgba(62,44,86,0.45); padding:2px 6px 0; direction:ltr; }
+  #progChart{ margin-bottom:22px; }
+  .prog-bar-label{ text-align:center; font-size:0.9rem; color:var(--plum); font-weight:600; margin-bottom:10px; }
+  .prog-bar-label b{ color:var(--teal-dark); font-size:1.1rem; }
+  .prog-bar-track{ height:14px; border-radius:99px; background:rgba(62,44,86,0.08); overflow:hidden; }
+  .prog-bar-fill{ height:100%; background:linear-gradient(90deg,var(--teal),var(--sun)); border-radius:99px; transition:width .6s ease; }
 </style>
 </head>
 <body>
@@ -1096,28 +1097,29 @@ document.getElementById('coinBtn').onclick = () => {
   save(); render();
 };
 
-// Simple headline (average words/day) + a timeline of words known over time.
+// Simple headline (average words/day) + a filling bar of overall progress.
 function renderProgress(){
   const hero=document.getElementById('progHero');
   const chartBox=document.getElementById('progChart');
   if(!hero || !chartBox) return;
+  const known=state.known.length, all=WORDS.length;
+  const pct=known/all*100, w=known?Math.max(pct,2).toFixed(2):0;
+  chartBox.innerHTML =
+    '<div class="prog-bar">'+
+      '<div class="prog-bar-label"><b>'+known+'</b> מתוך '+all+' מילים</div>'+
+      '<div class="prog-bar-track"><div class="prog-bar-fill" style="width:'+w+'%"></div></div>'+
+    '</div>';
+
   if(!state.log || !state.log.length){
     hero.innerHTML='<div class="prog-empty">עדיין אין נתונים — סמנו מילה ראשונה כדי לראות את הקצב.</div>';
-    chartBox.innerHTML='';
     return;
   }
-  const byDay={};
-  state.log.forEach(e=>{ const k=dayStr(e.t); byDay[k]=(byDay[k]||0)+1; });
   const today=new Date(); today.setHours(0,0,0,0);
   let first=new Date(startDayTs()); first.setHours(0,0,0,0);
   if(first>today) first=new Date(today);
-  const startISO=dayStr(first.getTime());
-  const pts=[]; let cum=state.log.filter(e=>dayStr(e.t) < startISO).length;   // words learned before the chosen start
-  for(let d=new Date(first); d<=today; d.setDate(d.getDate()+1)){
-    cum += (byDay[dayStr(d.getTime())]||0);
-    pts.push(cum);
-  }
-  const total=state.log.length, spanDays=Math.max(pts.length,1), per=total/spanDays;
+  const total=state.log.length;
+  const spanDays=Math.max(1, Math.round((today.getTime()-first.getTime())/86400000)+1);
+  const per=total/spanDays;
   let paceNum, paceCap;
   if(per>=1){ paceNum=Math.round(per*10)/10; paceCap='מילים ביום בממוצע'; }
   else { paceNum=Math.round((spanDays/total)*10)/10; paceCap='ימים למילה בממוצע'; }
@@ -1126,21 +1128,7 @@ function renderProgress(){
     '<div class="pace-hero">'+
       '<div class="pace-big">'+paceNum+'</div>'+
       '<div class="pace-cap">'+paceCap+'</div>'+
-      '<div class="pace-sub">'+total+' מילים למדתי · מאז '+dayLabel(first.getTime())+'</div>'+
-    '</div>';
-
-  const W=300,H=110,pad=8,padB=6,padT=10, n=pts.length, maxY=Math.max(total,1);
-  const X=i=> n<=1 ? W-pad : pad + i*(W-2*pad)/(n-1);
-  const Y=v=> padT + (H-padT-padB)*(1 - v/maxY);
-  let dLine=''; pts.forEach((v,i)=>{ dLine += (i?'L':'M')+X(i).toFixed(1)+' '+Y(v).toFixed(1)+' '; });
-  const dArea = dLine + 'L'+X(n-1).toFixed(1)+' '+(H-padB)+' L'+X(0).toFixed(1)+' '+(H-padB)+' Z';
-  const svg='<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg">'+
-    '<path d="'+dArea+'" fill="rgba(15,185,167,0.15)"/>'+
-    '<path d="'+dLine+'" fill="none" stroke="#0A8577" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>'+
-    '</svg>';
-  chartBox.innerHTML =
-    '<div class="prog-chart">'+svg+
-      '<div class="prog-axis"><span>'+dayLabel(first.getTime())+'</span><span>היום</span></div>'+
+      '<div class="pace-sub">מאז '+dayLabel(first.getTime())+'</div>'+
     '</div>';
 }
 
