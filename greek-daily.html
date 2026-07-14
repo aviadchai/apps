@@ -146,8 +146,12 @@
   #progChart{ margin-bottom:22px; }
   .prog-bar-label{ text-align:center; font-size:0.9rem; color:var(--plum); font-weight:600; margin-bottom:10px; }
   .prog-bar-label b{ color:var(--teal-dark); font-size:1.1rem; }
-  .prog-bar-track{ height:14px; border-radius:99px; background:rgba(62,44,86,0.08); overflow:hidden; }
+  .prog-bar-track{ position:relative; height:14px; border-radius:99px; background:rgba(62,44,86,0.08); overflow:hidden; }
   .prog-bar-fill{ height:100%; background:linear-gradient(90deg,var(--teal),var(--sun)); border-radius:99px; transition:width .6s ease; }
+  .prog-tick{ position:absolute; top:0; bottom:0; width:2px; background:rgba(255,255,255,0.65); }
+  .prog-tick.hit{ background:rgba(255,255,255,0.9); }
+  .stage-now{ text-align:center; margin-top:14px; font-size:1rem; font-weight:800; color:var(--teal-dark); }
+  .stage-next{ text-align:center; margin-top:3px; font-size:0.78rem; color:rgba(62,44,86,0.5); }
 </style>
 </head>
 <body>
@@ -1104,10 +1108,27 @@ function renderProgress(){
   if(!hero || !chartBox) return;
   const known=state.known.length, all=WORDS.length;
   const pct=known/all*100, w=known?Math.max(pct,2).toFixed(2):0;
+  // Milestones — words are ordered by usefulness, so each threshold is a real jump in ability.
+  const STAGES=[
+    {min:0,   name:'הצעד הראשון'},
+    {min:15,  name:'מדברים קצת יוונית'},
+    {min:50,  name:'מסתדרים במשפטים'},
+    {min:120, name:'שיחה יומיומית זורמת'},
+    {min:250, name:'שולטים יפה בשפה'},
+    {min:420, name:'כמעט שוטפים'},
+    {min:all, name:'שוטפים — סיימת הכול! 🏆'}
+  ];
+  let ci=0; STAGES.forEach((s,i)=>{ if(known>=s.min) ci=i; });
+  const cur=STAGES[ci], nxt=STAGES[ci+1];
+  const ticks=STAGES.filter(s=>s.min>0 && s.min<all)
+    .map(s=>'<span class="prog-tick'+(known>=s.min?' hit':'')+'" style="right:'+(s.min/all*100).toFixed(2)+'%"></span>').join('');
   chartBox.innerHTML =
     '<div class="prog-bar">'+
       '<div class="prog-bar-label"><b>'+known+'</b> מתוך '+all+' מילים</div>'+
-      '<div class="prog-bar-track"><div class="prog-bar-fill" style="width:'+w+'%"></div></div>'+
+      '<div class="prog-bar-track"><div class="prog-bar-fill" style="width:'+w+'%"></div>'+ticks+'</div>'+
+      '<div class="stage-now">'+cur.name+'</div>'+
+      (nxt ? '<div class="stage-next">עוד '+(nxt.min-known)+' מילים ל־'+nxt.name+'</div>'
+           : '<div class="stage-next">כל הכבוד! 🎉</div>')+
     '</div>';
 
   if(!state.log || !state.log.length){
