@@ -1120,9 +1120,8 @@ function renderProgress(){
   const total=state.log.length;
   const spanDays=Math.max(1, Math.round((today.getTime()-first.getTime())/86400000)+1);
   const per=total/spanDays;
-  let paceNum, paceCap;
-  if(per>=1){ paceNum=Math.round(per*10)/10; paceCap='מילים ביום בממוצע'; }
-  else { paceNum=Math.round((spanDays/total)*10)/10; paceCap='ימים למילה בממוצע'; }
+  const paceNum = per>=1 ? Math.round(per*10)/10 : Math.round(per*100)/100;   // always words/day
+  const paceCap = 'מילים ביום בממוצע';
 
   hero.innerHTML =
     '<div class="pace-hero">'+
