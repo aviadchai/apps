@@ -62,10 +62,13 @@
   .coin.done{
     background:radial-gradient(circle at 32% 28%,#2FE0C9,var(--teal) 55%,var(--teal-dark) 100%);
     box-shadow:0 12px 32px rgba(15,185,167,0.35), inset 0 -8px 18px rgba(0,0,0,0.12), inset 0 6px 14px rgba(255,255,255,0.25);
-    cursor:default;
+    cursor:default; transition:box-shadow .5s ease;
+  }
+  .coin.done:active{ transform:none;
+    box-shadow:0 0 0 10px rgba(15,185,167,0.16), 0 16px 40px rgba(15,185,167,0.5), inset 0 -8px 18px rgba(0,0,0,0.12), inset 0 6px 14px rgba(255,255,255,0.25);
   }
   /* countdown ring around the coin (shown while waiting for tomorrow) */
-  .ring{ position:absolute; top:-14px; left:-14px; width:248px; height:248px; transform:rotate(-90deg); pointer-events:none; opacity:0; transition:opacity .5s ease; }
+  .ring{ position:absolute; top:-14px; left:-14px; width:248px; height:248px; transform:rotate(-90deg) scaleX(-1); pointer-events:none; opacity:0; transition:opacity .5s ease; }
   .ring.on{ opacity:1; }
   .ring circle{ fill:none; stroke-width:6; stroke-linecap:round; }
   .ring-bg{ stroke:rgba(15,185,167,0.14); }
@@ -103,17 +106,18 @@
   .ambient .g{ font-size:1.35rem; font-weight:800; color:var(--teal-dark); }
   .ambient .t{ font-size:0.72rem; color:rgba(62,44,86,0.4); direction:ltr; margin-top:1px; }
   .ambient .h{ font-size:0.92rem; color:rgba(62,44,86,0.55); font-weight:600; margin-top:3px; }
-  @keyframes fadeUp{ from{ opacity:0; transform:translateY(8px); } to{ opacity:1; transform:translateY(0); } }
-  @keyframes popIn{ 0%{ opacity:0; transform:scale(.7); } 60%{ opacity:1; transform:scale(1.08); } 100%{ transform:scale(1); } }
-  /* Apple-style micro-interactions */
-  button{ transition:transform .13s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes fadeUp{ from{ opacity:0; transform:translateY(7px); } to{ opacity:1; transform:translateY(0); } }
+  @keyframes popIn{ 0%{ opacity:0; transform:scale(.94); } 100%{ opacity:1; transform:scale(1); } }
+  /* Subtle micro-interactions (gentle easing, no bounce) */
+  button{ transition:transform .16s ease, box-shadow .3s ease, opacity .2s ease; }
   .action:active, .study-speak:active, .card-speak:active, .li-speak:active,
-  .sw-actions button:active, .menu-btn:active, .panel-ic:active, .btn-learned-big:active{ transform:scale(.93); }
-  .coin.done #coinLabel{ animation:popIn .5s ease both; }
+  .sw-actions button:active, .menu-btn:active, .panel-ic:active, .btn-learned-big:active,
+  .btn-extra:active, .quiz-opt:active, .quiz-btn:active{ transform:scale(.97); opacity:.9; }
+  .coin.done #coinLabel{ animation:popIn .4s ease both; }
   .study-word{ animation:fadeUp .42s ease both; }
   .prog-bar-fill, .progress-fill{ transition:width .8s cubic-bezier(.22,1,.36,1); }
-  .panel:not(.hidden) .panel-inner{ animation:sheetUp .34s cubic-bezier(.22,1,.36,1) both; }
-  @keyframes sheetUp{ from{ transform:translateY(34px); opacity:.5; } to{ transform:translateY(0); opacity:1; } }
+  .panel:not(.hidden) .panel-inner{ animation:sheetUp .36s cubic-bezier(.22,1,.36,1) both; }
+  @keyframes sheetUp{ from{ transform:translateY(30px); opacity:.4; } to{ transform:translateY(0); opacity:1; } }
   .btn-extra{
     display:block; margin:16px auto 0; border:none; border-radius:16px;
     padding:13px 24px; font-size:0.92rem; font-weight:700; cursor:pointer;
@@ -160,8 +164,10 @@
   .panel-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
   .panel-head h2{ margin:0; }
   .panel-ic{ width:36px; height:36px; border-radius:50%; background:rgba(62,44,86,0.06); border:none; color:var(--plum); display:inline-flex; align-items:center; justify-content:center; cursor:pointer; flex:0 0 auto; }
-  .settings-box{ margin-bottom:12px; }
-  .settings-box.hidden{ display:none; }
+  .settings-box{ max-height:0; opacity:0; overflow:hidden; margin-bottom:0; transition:max-height .34s cubic-bezier(.22,1,.36,1), opacity .26s ease, margin-bottom .3s ease; }
+  .settings-box.open{ max-height:120px; opacity:1; margin-bottom:12px; }
+  .panel-ic svg{ transition:transform .34s cubic-bezier(.22,1,.36,1); }
+  #panelSettings.on svg{ transform:rotate(65deg); }
   .pace-hero{ text-align:center; margin:8px 0 16px; }
   .pace-big{ font-size:2.7rem; font-weight:800; color:var(--teal-dark); line-height:1; }
   .pace-cap{ font-size:0.92rem; font-weight:600; color:var(--plum); margin-top:5px; }
@@ -242,7 +248,7 @@
       <h2>מילים שלמדתי</h2>
       <button class="panel-ic" id="panelClose" aria-label="סגור"></button>
     </div>
-    <div class="settings-box hidden" id="settingsBox">
+    <div class="settings-box" id="settingsBox">
       <label class="startdate-row">תחילת הלימודים<input type="date" id="startDate"></label>
     </div>
     <div id="progHero"></div>
@@ -1312,14 +1318,18 @@ const startInput = document.getElementById('startDate');
 const settingsBox = document.getElementById('settingsBox');
 function openPanel(){
   document.getElementById('panel').classList.remove('hidden');
-  settingsBox.classList.add('hidden');
+  settingsBox.classList.remove('open');
+  document.getElementById('panelSettings').classList.remove('on');
   startInput.value = dayStr(startDayTs());
   renderProgress(); renderList(); refreshQuizBtn();
   document.querySelector('.panel-inner').scrollTop = 0;
 }
 document.getElementById('menuBtn').onclick = openPanel;
 document.getElementById('panelClose').onclick = () => document.getElementById('panel').classList.add('hidden');
-document.getElementById('panelSettings').onclick = () => settingsBox.classList.toggle('hidden');
+document.getElementById('panelSettings').onclick = (e) => {
+  const open = settingsBox.classList.toggle('open');
+  e.currentTarget.classList.toggle('on', open);
+};
 startInput.max = dayStr(Date.now());
 startInput.onchange = () => { if(startInput.value){ state.startDate = startInput.value; save(); renderProgress(); } };
 
