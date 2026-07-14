@@ -168,11 +168,15 @@
   .pace-sub{ font-size:0.76rem; color:rgba(62,44,86,0.5); margin-top:7px; }
   .startdate-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; background:rgba(15,185,167,0.06); border-radius:14px; padding:10px 14px; margin-bottom:14px; font-size:0.85rem; font-weight:600; color:rgba(62,44,86,0.7); }
   .startdate-row input{ border:1px solid rgba(62,44,86,0.15); border-radius:10px; padding:6px 10px; font-size:0.85rem; color:var(--teal-dark); background:#fff; font-family:inherit; }
-  .learned-item{ display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid rgba(62,44,86,0.08); font-size:0.9rem; }
+  .list-hint{ font-size:0.72rem; color:rgba(62,44,86,0.4); text-align:center; margin:2px 0 10px; }
+  .learned-item{ position:relative; overflow:hidden; border-bottom:1px solid rgba(62,44,86,0.08); }
+  .li-front{ position:relative; z-index:1; display:flex; align-items:center; gap:10px; padding:9px 4px; background:#fff; font-size:0.9rem; transition:transform .22s cubic-bezier(.22,1,.36,1); }
   .learned-item .g{ color:var(--teal-dark); font-weight:700; }
   .li-meta{ margin-inline-start:auto; display:flex; flex-direction:column; align-items:flex-start; }
   .learned-item .h{ color:rgba(62,44,86,0.6); text-align:start; }
   .learned-item .ld{ font-size:0.66rem; color:rgba(62,44,86,0.38); direction:ltr; }
+  .li-del{ position:absolute; top:0; bottom:0; width:88px; border:none; background:var(--coral); color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  .li-del-l{ left:0; } .li-del-r{ right:0; }
   .li-speak{ flex:0 0 auto; background:rgba(15,185,167,0.12); color:var(--teal-dark); border:none; border-radius:10px; padding:6px 12px; font-size:0.95rem; cursor:pointer; }
   .card-speak{ margin-top:10px; background:rgba(15,185,167,0.12); color:var(--teal-dark); border:none; border-radius:12px; padding:8px 20px; font-size:0.85rem; font-weight:700; cursor:pointer; }
   .empty-note{ color:rgba(62,44,86,0.45); font-size:0.85rem; }
@@ -186,6 +190,29 @@
   .prog-tick.hit{ background:rgba(255,255,255,0.9); }
   .stage-now{ text-align:center; margin-top:14px; font-size:1rem; font-weight:800; color:var(--teal-dark); }
   .stage-next{ text-align:center; margin-top:3px; font-size:0.78rem; color:rgba(62,44,86,0.5); }
+
+  .quiz-btn{ width:100%; margin:2px 0 6px; border:none; border-radius:16px; padding:13px; font-size:0.95rem; font-weight:700; color:#fff; background:linear-gradient(135deg,var(--teal),var(--teal-dark)); box-shadow:0 8px 22px rgba(15,185,167,.3); cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:8px; }
+  .quiz-btn:disabled{ background:rgba(62,44,86,0.08); color:rgba(62,44,86,0.4); box-shadow:none; cursor:default; }
+  .quiz{ position:fixed; inset:0; z-index:40; background:linear-gradient(160deg,var(--bg1),var(--bg2)); display:flex; flex-direction:column; align-items:center; padding:6vh 20px 30px; overflow-y:auto; animation:fadeUp .3s ease both; }
+  .quiz.hidden{ display:none; }
+  .quiz-top{ width:100%; max-width:400px; display:flex; align-items:center; justify-content:space-between; margin-bottom:22px; }
+  .quiz-prog{ font-size:0.85rem; font-weight:700; color:var(--plum); }
+  .quiz-pts{ font-size:0.8rem; font-weight:700; color:var(--teal-dark); }
+  .quiz .quiz-close{ width:36px; height:36px; border-radius:50%; background:rgba(62,44,86,0.06); border:none; color:var(--plum); display:inline-flex; align-items:center; justify-content:center; cursor:pointer; }
+  .quiz-card{ width:100%; max-width:400px; background:#fff; border-radius:24px; padding:30px 20px; text-align:center; box-shadow:0 12px 34px rgba(62,44,86,.1); margin-bottom:18px; animation:popIn .35s ease both; }
+  .quiz-greek{ font-size:2.4rem; font-weight:800; color:var(--plum); }
+  .quiz-translit{ font-size:0.85rem; color:rgba(62,44,86,.45); direction:ltr; margin:4px 0 14px; }
+  .quiz-speak{ background:rgba(15,185,167,0.12); color:var(--teal-dark); border:none; border-radius:12px; padding:9px 22px; font-size:0.9rem; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:6px; }
+  .quiz-opts{ width:100%; max-width:400px; display:flex; flex-direction:column; gap:11px; }
+  .quiz-opt{ border:none; border-radius:16px; padding:15px; font-size:1rem; font-weight:600; color:var(--plum); background:#fff; box-shadow:0 6px 18px rgba(62,44,86,.08); cursor:pointer; transition:transform .12s ease, background .2s ease; }
+  .quiz-opt:active{ transform:scale(.98); }
+  .quiz-opt.correct{ background:var(--teal); color:#fff; box-shadow:0 8px 20px rgba(15,185,167,.35); }
+  .quiz-opt.wrong{ background:rgba(255,107,107,.14); color:var(--coral); }
+  .quiz-end{ display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .quiz-score{ font-size:3.2rem; font-weight:800; color:var(--teal-dark); }
+  .quiz-score-cap{ font-size:1.05rem; color:var(--plum); font-weight:600; margin-bottom:10px; }
+  .quiz-again{ border:none; border-radius:14px; padding:13px 44px; font-weight:800; color:#fff; background:var(--teal); box-shadow:0 8px 22px rgba(15,185,167,.3); cursor:pointer; }
+  .quiz-end .quiz-close{ width:auto; height:auto; border-radius:14px; padding:10px 26px; background:rgba(62,44,86,.06); font-weight:600; font-size:0.9rem; }
 </style>
 </head>
 <body>
@@ -220,9 +247,13 @@
     </div>
     <div id="progHero"></div>
     <div id="progChart"></div>
+    <button class="quiz-btn" id="quizBtn"></button>
+    <div class="list-hint" id="listHint"></div>
     <div id="learnedList"></div>
   </div>
 </div>
+
+<div class="quiz hidden" id="quiz"></div>
 
 <script>
 // Ordered by real-world usefulness: greetings, core verbs, question words first.
@@ -864,6 +895,8 @@ const IC = {
   cap:'<path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v4.5c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5V12"/>',
   list:'<line x1="8" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="20" y2="12"/><line x1="8" y1="18" x2="20" y2="18"/><circle cx="4" cy="6" r="1.1"/><circle cx="4" cy="12" r="1.1"/><circle cx="4" cy="18" r="1.1"/>',
   x:'<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+  trash:'<path d="M4 7h16"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/><path d="M6.5 7l1 12.5a2 2 0 0 0 2 1.9h5a2 2 0 0 0 2-1.9L18.5 7"/><path d="M10 11v6M14 11v6"/>',
+  quiz:'<rect x="5" y="4" width="14" height="17" rx="2.5"/><path d="M9 4.5A1.5 1.5 0 0 1 10.5 3h3A1.5 1.5 0 0 1 15 4.5V6H9z"/><path d="M8.5 13l2 2 4-4.5"/>',
   gear:'<circle cx="12" cy="12" r="3.2"/><path d="M19.1 13.6a7.6 7.6 0 0 0 0-3.2l1.9-1.5-1.9-3.3-2.3.9a7.5 7.5 0 0 0-2.7-1.6L13.7 2h-3.4l-.4 2.5a7.5 7.5 0 0 0-2.7 1.6l-2.3-.9L3 8.5l1.9 1.5a7.6 7.6 0 0 0 0 3.2L3 15.2l1.9 3.3 2.3-.9a7.5 7.5 0 0 0 2.7 1.6l.4 2.5h3.4l.4-2.5a7.5 7.5 0 0 0 2.7-1.6l2.3.9 1.9-3.3z"/>'
 };
 function ic(name,size){ size=size||20; return '<svg class="ic" viewBox="0 0 24 24" width="'+size+'" height="'+size+'" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(IC[name]||'')+'</svg>'; }
@@ -1230,20 +1263,48 @@ function renderProgress(){
     '</div>';
 }
 
+// Remove a word from "known" so it returns to the learning rotation.
+function returnToLearning(g){
+  state.known = state.known.filter(x=>x!==g);
+  state.log   = state.log.filter(e=>e.w!==g);
+  state.review= state.review.filter(r=>r.w!==g);
+  save(); renderProgress(); renderList(); renderStat();
+}
+
+// Swipe a row left/right to reveal a delete action.
+function attachSwipe(front, onDel){
+  let sx=0, dx=0, drag=false, open=0; const W=88;
+  front.style.touchAction='pan-y';
+  front.addEventListener('pointerdown', e=>{ drag=true; sx=e.clientX; front.style.transition='none'; try{front.setPointerCapture(e.pointerId);}catch(_){} });
+  front.addEventListener('pointermove', e=>{ if(!drag) return; dx=e.clientX-sx; let t=Math.max(-W,Math.min(W, open*W+dx)); front.style.transform='translateX('+t+'px)'; });
+  const end=()=>{ if(!drag) return; drag=false; front.style.transition=''; const t=open*W+dx; open = t>W/2?1 : t<-W/2?-1 : 0; front.style.transform='translateX('+(open*W)+'px)'; dx=0; };
+  front.addEventListener('pointerup', end);
+  front.addEventListener('pointercancel', end);
+}
+
 function renderList(){
   const el=document.getElementById('learnedList');
+  const hint=document.getElementById('listHint');
   el.innerHTML='';
-  if(!state.known.length){ el.innerHTML='<div class="empty-note">עדיין לא סימנת מילים.</div>'; return; }
+  if(!state.known.length){ if(hint) hint.textContent=''; el.innerHTML='<div class="empty-note">עדיין לא סימנת מילים.</div>'; return; }
+  if(hint) hint.textContent='החליקו מילה הצידה כדי להחזיר אותה ללמידה';
   const dateOf={}; state.log.forEach(e=>{ dateOf[e.w]=e.t; });
   state.known.slice().reverse().forEach(g=>{
     const e=entryOf(g);
     const row=document.createElement('div');
     row.className='learned-item';
-    row.innerHTML='<button class="li-speak" title="השמעה">'+ic('speaker',18)+'</button>'+
-      '<span class="g">'+g+'</span>'+
-      '<div class="li-meta"><span class="h">'+(e?e[2]:'')+'</span>'+
-        '<span class="ld">'+(dateOf[g]?dayLabel(dateOf[g]):'')+'</span></div>';
-    row.querySelector('.li-speak').onclick=(ev)=>speak(g, ev.currentTarget);
+    row.innerHTML=
+      '<button class="li-del li-del-l" aria-label="החזרה ללמידה">'+ic('trash',20)+'</button>'+
+      '<button class="li-del li-del-r" aria-label="החזרה ללמידה">'+ic('trash',20)+'</button>'+
+      '<div class="li-front">'+
+        '<button class="li-speak" title="השמעה">'+ic('speaker',18)+'</button>'+
+        '<span class="g">'+g+'</span>'+
+        '<div class="li-meta"><span class="h">'+(e?e[2]:'')+'</span>'+
+          '<span class="ld">'+(dateOf[g]?dayLabel(dateOf[g]):'')+'</span></div>'+
+      '</div>';
+    row.querySelector('.li-speak').onclick=(ev)=>{ ev.stopPropagation(); speak(g, ev.currentTarget); };
+    row.querySelectorAll('.li-del').forEach(b=>b.onclick=()=>returnToLearning(g));
+    attachSwipe(row.querySelector('.li-front'), ()=>returnToLearning(g));
     el.appendChild(row);
   });
 }
@@ -1253,7 +1314,7 @@ function openPanel(){
   document.getElementById('panel').classList.remove('hidden');
   settingsBox.classList.add('hidden');
   startInput.value = dayStr(startDayTs());
-  renderProgress(); renderList();
+  renderProgress(); renderList(); refreshQuizBtn();
   document.querySelector('.panel-inner').scrollTop = 0;
 }
 document.getElementById('menuBtn').onclick = openPanel;
@@ -1265,6 +1326,70 @@ startInput.onchange = () => { if(startInput.value){ state.startDate = startInput
 document.getElementById('menuBtn').innerHTML = ic('list',18)+'<span>מילים שלמדתי</span>';
 document.getElementById('panelSettings').innerHTML = ic('gear',19);
 document.getElementById('panelClose').innerHTML = ic('x',18);
+
+// ---------------- Quiz: test yourself on words you've learned ----------------
+const quizBtn = document.getElementById('quizBtn');
+const quizEl = document.getElementById('quiz');
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+let quiz=null;
+function startQuiz(){
+  const pool = state.known.map(entryOf).filter(Boolean);
+  if(pool.length < 4){ return; }
+  const qs = shuffle(pool.slice()).slice(0, Math.min(10, pool.length));
+  quiz = { qs, i:0, score:0 };
+  quizEl.classList.remove('hidden');
+  renderQuiz();
+}
+function closeQuiz(){ quizEl.classList.add('hidden'); quizEl.innerHTML=''; quiz=null; }
+function renderQuiz(){
+  if(!quiz) return;
+  if(quiz.i >= quiz.qs.length){
+    const perfect = quiz.score===quiz.qs.length;
+    quizEl.innerHTML =
+      '<div class="quiz-card quiz-end">'+
+        '<div class="quiz-score">'+quiz.score+'/'+quiz.qs.length+'</div>'+
+        '<div class="quiz-score-cap">'+(perfect?'מושלם! 🎉':'כל הכבוד')+'</div>'+
+        '<button class="quiz-again">שוב</button>'+
+        '<button class="quiz-close">סגירה</button>'+
+      '</div>';
+    quizEl.querySelector('.quiz-again').onclick=startQuiz;
+    quizEl.querySelector('.quiz-close').onclick=closeQuiz;
+    return;
+  }
+  const q = quiz.qs[quiz.i];
+  const wrongs = shuffle(WORDS.filter(w=>w[2]!==q[2])).slice(0,3).map(w=>w[2]);
+  const opts = shuffle([q[2], ...wrongs]);
+  quizEl.innerHTML =
+    '<div class="quiz-top">'+
+      '<button class="quiz-close" aria-label="סגירה">'+ic('x',18)+'</button>'+
+      '<div class="quiz-prog">שאלה '+(quiz.i+1)+' מתוך '+quiz.qs.length+'</div>'+
+      '<div class="quiz-pts">'+quiz.score+' נכון</div>'+
+    '</div>'+
+    '<div class="quiz-card">'+
+      '<div class="quiz-greek">'+q[0]+'</div>'+
+      '<div class="quiz-translit">'+q[1]+'</div>'+
+      '<button class="quiz-speak">'+ic('speaker',18)+'השמעה</button>'+
+    '</div>'+
+    '<div class="quiz-opts">'+opts.map(o=>'<button class="quiz-opt">'+o+'</button>').join('')+'</div>';
+  quizEl.querySelector('.quiz-close').onclick=closeQuiz;
+  quizEl.querySelector('.quiz-speak').onclick=(ev)=>speak(q[0], ev.currentTarget);
+  quizEl.querySelectorAll('.quiz-opt').forEach(btn=>{
+    btn.onclick=()=>{
+      if(quizEl.querySelector('.quiz-opt.correct, .quiz-opt.wrong')) return; // already answered
+      const ok = btn.textContent===q[2];
+      if(ok){ btn.classList.add('correct'); quiz.score++; }
+      else { btn.classList.add('wrong'); quizEl.querySelectorAll('.quiz-opt').forEach(b=>{ if(b.textContent===q[2]) b.classList.add('correct'); }); }
+      quizEl.querySelectorAll('.quiz-opt').forEach(b=>b.classList.add('done'));
+      setTimeout(()=>{ quiz.i++; renderQuiz(); }, ok?650:1150);
+    };
+  });
+}
+function refreshQuizBtn(){
+  const enough = state.known.length>=4;
+  quizBtn.disabled = !enough;
+  quizBtn.innerHTML = ic('quiz',18)+(enough?'מבחן על מה שלמדתי':'מבחן — צריך 4 מילים לפחות');
+}
+quizBtn.onclick = ()=>{ if(state.known.length>=4) startQuiz(); };
 
 render();
 </script>
