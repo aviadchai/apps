@@ -11,8 +11,8 @@
   "lang": "he",
   "dir": "rtl",
   "icons": [
-    { "src": "icon-greek-daily-v2.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
-    { "src": "icon-greek-daily-180-v2.png", "sizes": "180x180", "type": "image/png", "purpose": "any maskable" },
-    { "src": "icon-greek-daily-512-v2.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    { "src": "icon-greek-daily-v3.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icon-greek-daily-180-v3.png", "sizes": "180x180", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-greek-daily-512-v3.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ]
 }

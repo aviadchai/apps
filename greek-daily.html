@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Δύο λέξεις · שתי מילים ביום</title>
 <link rel="manifest" href="greek-daily-manifest.json">
-<link rel="icon" href="icon-greek-daily-v2.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" sizes="180x180" href="icon-greek-daily-180-v2.png">
+<link rel="icon" href="icon-greek-daily-v3.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-greek-daily-180-v3.png">
 <meta name="theme-color" content="#0FB9A7">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -89,10 +89,10 @@
   .card .translit{ font-size:0.78rem; color:rgba(62,44,86,0.45); direction:ltr; margin-bottom:8px; }
   .card .hebrew{ font-size:1.02rem; color:var(--teal-dark); font-weight:600; margin-bottom:16px; }
   .row{ display:flex; gap:9px; }
-  button.action{ border:none; border-radius:14px; padding:11px 12px; font-size:0.82rem; font-weight:700; cursor:pointer; flex:1; }
-  .btn-speak{ background:rgba(15,185,167,0.12); color:var(--teal-dark); flex:0 0 58px; }
-  .btn-swap{ background:rgba(255,107,107,0.12); color:var(--coral); }
-  .btn-learned{ background:var(--teal); color:#fff; }
+  button.action{ border:none; border-radius:14px; padding:11px 8px; font-size:0.8rem; font-weight:700; cursor:pointer; flex:1; gap:5px; }
+  .btn-speak{ background:rgba(15,185,167,0.12); color:var(--teal-dark); flex:0 0 44px; }
+  .btn-refresh{ background:rgba(255,107,107,0.12); color:var(--coral); flex:0 0 44px; }
+  .btn-learned{ background:rgba(15,185,167,0.12); color:var(--teal-dark); }
   .badge{ font-size:0.85rem; font-weight:700; color:var(--teal-dark); }
 
   .done-msg{ text-align:center; font-size:0.9rem; color:rgba(62,44,86,0.55); margin-top:6px; animation:fadeUp .5s ease both; }
@@ -966,12 +966,14 @@ function speak(t, btn){
 if('speechSynthesis' in window){ try{ speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged=()=>{}; }catch(e){} }
 
 // Pick the next word: a due "missed" word first, otherwise a fresh one not yet seen.
+// "skip" holds words the user asked to swap out today, so they don't come straight back.
 function pickOne(onScreen){
   const now=Date.now();
-  const due=state.review.find(r=> r.due<=now && !onScreen.includes(r.w));
+  const skip = state.day.skipped || [];
+  const due=state.review.find(r=> r.due<=now && !onScreen.includes(r.w) && !skip.includes(r.w));
   if(due) return due.w;
   const inReview=new Set(state.review.map(r=>r.w));
-  const w=WORDS.find(x=> !state.known.includes(x[0]) && !inReview.has(x[0]) && !onScreen.includes(x[0]));
+  const w=WORDS.find(x=> !state.known.includes(x[0]) && !inReview.has(x[0]) && !onScreen.includes(x[0]) && !skip.includes(x[0]));
   return w ? w[0] : null;
 }
 function nextWord(){ return pickOne(state.day.slots.map(s => s.word)); }
@@ -1135,14 +1137,16 @@ function render(){
       card.innerHTML='<div class="greek">'+e[0]+'</div><div class="translit">'+e[1]+'</div>'+
         '<div class="hebrew">'+e[2]+'</div>'+
         '<div class="row">'+
-          '<button class="action btn-speak" data-a="speak">'+ic('speaker',20)+'</button>'+
-          '<button class="action btn-swap" data-a="swap">'+ic('refresh',18)+'כבר ידעתי</button>'+
-          '<button class="action btn-study" data-a="study">'+ic('book',18)+'ללמוד</button>'+
+          '<button class="action btn-speak" data-a="speak" aria-label="האזנה">'+ic('speaker',20)+'</button>'+
+          '<button class="action btn-refresh" data-a="refresh" aria-label="מילה אחרת">'+ic('refresh',20)+'</button>'+
+          '<button class="action btn-study" data-a="study">'+ic('book',16)+'ללמוד</button>'+
+          '<button class="action btn-learned" data-a="learn">'+ic('check',16)+'למדתי</button>'+
         '</div>';
       card.querySelector('[data-a=speak]').onclick = (ev) => speak(e[0], ev.currentTarget);
-      card.querySelector('[data-a=swap]').onclick = () => {
-        markKnown(slot.word);           // counts as known
-        const nw = nextWord();          // and pulls a fresh word into this slot
+      card.querySelector('[data-a=refresh]').onclick = () => {   // skip this word, show a different one
+        if(!state.day.skipped) state.day.skipped = [];
+        state.day.skipped.push(slot.word);
+        const nw = nextWord();
         if(nw){ state.day.slots[i] = { word: nw, done:false, studying:false }; }
         else  { state.day.slots[i].done = true; }
         save(); render();
@@ -1151,6 +1155,14 @@ function render(){
         state.day.slots[i].studying = true;         // queue for study; screen opens once both are queued
         if(!state.day.studyStart) state.day.studyStart = Date.now();
         save(); render();
+      };
+      card.querySelector('[data-a=learn]').onclick = () => {   // "I already know it" -> counts as learned
+        markKnown(slot.word);
+        state.day.slots[i].done = true; state.day.slots[i].learned = true;
+        save();
+        const fin = dayFinished();
+        render();
+        if(fin && state.day.slots.some(s=>s.learned)) confetti();
       };
     }
     cards.appendChild(card);
