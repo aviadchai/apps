@@ -1156,13 +1156,12 @@ function render(){
         if(!state.day.studyStart) state.day.studyStart = Date.now();
         save(); render();
       };
-      card.querySelector('[data-a=learn]').onclick = () => {   // "I already know it" -> counts as learned
+      card.querySelector('[data-a=learn]').onclick = () => {   // save to "learned" and bring a different word
         markKnown(slot.word);
-        state.day.slots[i].done = true; state.day.slots[i].learned = true;
-        save();
-        const fin = dayFinished();
-        render();
-        if(fin && state.day.slots.some(s=>s.learned)) confetti();
+        const nw = nextWord();
+        if(nw){ state.day.slots[i] = { word: nw, done:false, studying:false }; }
+        else  { state.day.slots[i].done = true; }
+        save(); render();
       };
     }
     cards.appendChild(card);
