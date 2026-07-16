@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>אוצר המילים שלי — יוונית</title>
+<link rel="manifest" href="greek-vocab-manifest.json">
+<link rel="icon" href="icon-greek-vocab.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-greek-vocab-180.png">
+<meta name="theme-color" content="#B45309">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="אוצר מילים">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fffbf5;color:#1e293b;}
+body{min-height:100vh;padding:env(safe-area-inset-top) 0 calc(env(safe-area-inset-bottom) + 20px);}
+.container{max-width:480px;margin:0 auto;padding:20px 16px;}
+
+/* header */
+header{text-align:center;margin-bottom:16px;}
+header h1{font-size:22px;font-weight:800;color:#7c2d12;}
+header .sub{font-size:13px;color:#a16207;margin-top:2px;}
+.hero{margin:14px auto 0;width:150px;height:150px;border-radius:50%;background:#fff;border:1px solid #fde9c8;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 4px 18px rgba(180,83,9,0.10);}
+.hero .num{font-size:52px;font-weight:800;color:#b45309;line-height:1;transition:transform .2s;}
+.hero .num.bump{transform:scale(1.25);}
+.hero .lbl{font-size:13px;color:#78716c;margin-top:4px;font-weight:600;}
+.hero .days{font-size:11px;color:#a8a29e;margin-top:2px;}
+
+/* tabs */
+.tabs{display:flex;gap:8px;background:#f5efe4;border-radius:14px;padding:4px;margin:18px 0 16px;}
+.tabs button{flex:1;padding:10px 0;border:none;border-radius:11px;background:transparent;font-size:15px;font-weight:700;color:#78716c;font-family:inherit;cursor:pointer;}
+.tabs button.on{background:#fff;color:#7c2d12;box-shadow:0 1px 4px rgba(0,0,0,0.08);}
+
+.card{background:#fff;border:1px solid #f1e7d6;border-radius:16px;padding:16px;margin-bottom:14px;}
+.card h2{font-size:15px;font-weight:800;color:#7c2d12;margin-bottom:10px;}
+
+/* add form */
+.field{margin-bottom:10px;}
+.field label{display:block;font-size:12px;font-weight:700;color:#a16207;margin-bottom:4px;}
+.field input{width:100%;padding:12px 14px;border:1.5px solid #e7dcc8;border-radius:12px;font-size:17px;font-family:inherit;background:#fffdf9;color:#1e293b;outline:none;}
+.field input:focus{border-color:#d97706;}
+.field input[dir=ltr]{text-align:left;}
+.hint{font-size:11px;color:#a8a29e;margin-top:3px;}
+.btn{width:100%;padding:13px;border:none;border-radius:12px;font-size:16px;font-weight:800;font-family:inherit;cursor:pointer;}
+.btn-main{background:#b45309;color:#fff;}
+.btn-main:active{background:#92400e;}
+.btn-main:disabled{background:#e7dcc8;color:#a8a29e;}
+.btn-ghost{background:#f5efe4;color:#7c2d12;}
+.btn-row{display:flex;gap:8px;margin-top:10px;}
+.btn-row .btn{width:auto;flex:1;padding:11px;font-size:14px;}
+
+/* verdict panel */
+.verdict{border-radius:14px;padding:14px;margin-bottom:14px;font-size:14px;line-height:1.6;display:none;}
+.verdict.show{display:block;animation:pop .25s;}
+@keyframes pop{from{transform:scale(.96);opacity:0;}to{transform:scale(1);opacity:1;}}
+.verdict.ok{background:#f0fdf4;border:1.5px solid #bbf7d0;color:#166534;}
+.verdict.warn{background:#fffbeb;border:1.5px solid #fde68a;color:#92400e;}
+.verdict.bad{background:#fef2f2;border:1.5px solid #fecaca;color:#991b1b;}
+.verdict .big-el{font-size:22px;font-weight:800;direction:ltr;display:inline-block;}
+.verdict .tr{font-size:13px;opacity:.75;direction:ltr;display:inline-block;}
+
+/* word list */
+.search{width:100%;padding:10px 14px;border:1.5px solid #e7dcc8;border-radius:12px;font-size:15px;font-family:inherit;background:#fff;outline:none;margin-bottom:12px;}
+.word{background:#fff;border:1px solid #f1e7d6;border-radius:14px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;}
+.word .info{flex:1;min-width:0;}
+.word .el{font-size:19px;font-weight:800;color:#7c2d12;direction:ltr;text-align:right;unicode-bidi:isolate;}
+.word .el .wtr{font-size:12px;font-weight:500;color:#a8a29e;margin-inline-start:6px;}
+.word .he{font-size:14px;color:#57534e;margin-top:1px;}
+.word .meta{font-size:11px;color:#a8a29e;margin-top:3px;}
+.word .meta .unv{color:#d97706;}
+.icon-btn{width:42px;height:42px;border-radius:12px;border:none;font-size:19px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:inherit;}
+.play{background:#fef3e2;}
+.play.speaking{background:#b45309;}
+.del{background:transparent;color:#d6d3d1;font-size:16px;width:34px;}
+.del.arm{background:#fef2f2;color:#dc2626;font-size:12px;font-weight:800;width:auto;padding:0 10px;}
+.empty{text-align:center;color:#a8a29e;font-size:14px;padding:30px 10px;line-height:1.7;}
+.empty .e{font-size:40px;}
+
+/* stats */
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.tile{background:#fff;border:1px solid #f1e7d6;border-radius:16px;padding:14px;text-align:center;}
+.tile .v{font-size:30px;font-weight:800;color:#b45309;line-height:1.15;}
+.tile .k{font-size:12px;color:#78716c;margin-top:3px;font-weight:600;}
+.date-row{display:flex;align-items:center;gap:10px;}
+.date-row label{font-size:13px;font-weight:700;color:#57534e;flex:1;}
+.date-row input{padding:9px 12px;border:1.5px solid #e7dcc8;border-radius:10px;font-size:15px;font-family:inherit;background:#fffdf9;color:#1e293b;}
+
+/* chart */
+.chart-wrap{position:relative;}
+.chart{display:flex;align-items:flex-end;gap:2px;height:120px;padding-top:18px;direction:ltr;}
+.cxl{direction:ltr;}
+.cbar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%;cursor:pointer;position:relative;}
+.cbar .fill{background:#d97706;border-radius:4px 4px 0 0;min-height:0;width:100%;transition:height .3s;}
+.cbar.zero .fill{height:2px !important;background:#ede5d3;border-radius:1px;}
+.cbar.today .fill{background:#92400e;}
+.cxl{display:flex;gap:2px;margin-top:6px;}
+.cxl span{flex:1;text-align:center;font-size:9px;color:#a8a29e;}
+.ttip{position:absolute;background:#292524;color:#fff;font-size:12px;padding:6px 10px;border-radius:8px;pointer-events:none;white-space:nowrap;transform:translate(50%,-100%);display:none;z-index:5;line-height:1.5;}
+.ttip.show{display:block;}
+.gline{position:absolute;left:0;right:0;border-top:1px dashed #ede5d3;font-size:9px;color:#c8bfa9;}
+.gline span{position:absolute;top:-13px;right:0;background:#fff;padding:0 3px;}
+
+.toast{position:fixed;bottom:calc(env(safe-area-inset-bottom) + 24px);left:50%;transform:translateX(-50%) translateY(80px);background:#292524;color:#fff;padding:11px 20px;border-radius:24px;font-size:14px;font-weight:600;opacity:0;transition:all .3s;z-index:50;max-width:88vw;text-align:center;}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+.hidden{display:none !important;}
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>📒 אוצר המילים שלי</h1>
+    <div class="sub">כמה מילים ביוונית כבר למדת?</div>
+    <div class="hero">
+      <div class="num" id="heroNum">0</div>
+      <div class="lbl">מילים למדתי</div>
+      <div class="days" id="heroDays"></div>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button id="tabWords" class="on">✏️ מילים</button>
+    <button id="tabStats">📊 סטטיסטיקה</button>
+  </div>
+
+  <!-- ============ WORDS SCREEN ============ -->
+  <section id="scrWords">
+    <div class="card">
+      <h2>הוספת מילה חדשה</h2>
+      <div class="field">
+        <label>המילה ביוונית (אותיות יווניות או לטיניות)</label>
+        <input id="inEl" dir="ltr" placeholder="Kalimera / Καλημέρα" autocomplete="off" autocapitalize="off">
+      </div>
+      <div class="field">
+        <label>הפירוש בעברית</label>
+        <input id="inHe" placeholder="בוקר טוב" autocomplete="off">
+      </div>
+      <button class="btn btn-main" id="btnCheck">בדוק והוסף ✓</button>
+      <div class="hint">אני אבדוק את המילה מול מילון של 596 מילים נפוצות ואתקן שגיאות קטנות</div>
+    </div>
+
+    <div class="verdict" id="verdict"></div>
+
+    <input class="search hidden" id="search" placeholder="🔍 חיפוש ברשימה...">
+    <div id="list"></div>
+  </section>
+
+  <!-- ============ STATS SCREEN ============ -->
+  <section id="scrStats" class="hidden">
+    <div class="card">
+      <div class="date-row">
+        <label>📅 תאריך תחילת הלימודים</label>
+        <input type="date" id="startDate">
+      </div>
+    </div>
+
+    <div class="tiles">
+      <div class="tile"><div class="v" id="stTotal">0</div><div class="k">מילים בסך הכל</div></div>
+      <div class="tile"><div class="v" id="stDays">0</div><div class="k">ימי לימוד</div></div>
+      <div class="tile"><div class="v" id="stAvg">0</div><div class="k">מילים ליום בממוצע</div></div>
+      <div class="tile"><div class="v" id="stWeek">0</div><div class="k">מילים בשבוע האחרון</div></div>
+    </div>
+
+    <div class="card">
+      <h2>מילים חדשות — 14 הימים האחרונים</h2>
+      <div class="chart-wrap" id="chartWrap">
+        <div class="chart" id="chart"></div>
+        <div class="cxl" id="chartX"></div>
+        <div class="ttip" id="ttip"></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= dictionary: [greek, transliteration, hebrew] ================= */
+const DICT = [["γεια","ya","היי / שלום (לא רשמי)"],["ναι","ne","כן"],["όχι","óchi","לא"],["ευχαριστώ","efcharistó","תודה"],["παρακαλώ","parakaló","בבקשה / על לא דבר"],["συγγνώμη","signómi","סליחה"],["καλημέρα","kaliméra","בוקר טוב"],["καλησπέρα","kalispéra","ערב טוב"],["καληνύχτα","kaliníchta","לילה טוב"],["εντάξει","endáxi","בסדר / אוקיי"],["είμαι","íme","אני נמצא / אני"],["έχω","écho","יש לי"],["θέλω","thélo","אני רוצה"],["μπορώ","boró","אני יכול"],["ξέρω","kséro","אני יודע"],["κάνω","káno","אני עושה"],["πάω","páo","אני הולך"],["έρχομαι","érchome","אני בא"],["βλέπω","vlépo","אני רואה"],["ακούω","akúo","אני שומע"],["τι","ti","מה"],["πού","pu","איפה"],["πότε","póte","מתי"],["γιατί","yatí","למה"],["πώς","pos","איך"],["πόσο","póso","כמה"],["ποιος","pios","מי (זכר)"],["ποιο","pio","איזה"],["εγώ","egó","אני"],["εσύ","esí","אתה/את"],["αυτός","aftós","הוא"],["αυτή","aftí","היא"],["αυτό","aftó","זה"],["εμείς","emís","אנחנו"],["εσείς","esís","אתם"],["αυτοί","aftí","הם"],["μου","mu","שלי"],["σου","su","שלך"],["μας","mas","שלנו"],["σας","sas","שלכם"],["και","ke","ו-"],["ή","í","או"],["αλλά","alá","אבל"],["επειδή","epidí","כי"],["αν","an","אם"],["με","me","עם"],["χωρίς","chorís","בלי"],["πολύ","polý","מאוד"],["λίγο","lígo","קצת"],["μόνο","móno","רק"],["επίσης","epísis","גם כן"],["ήδη","ídi","כבר"],["ακόμα","akóma","עדיין"],["όλα","óla","הכל"],["τίποτα","típota","כלום"],["κάτι","káti","משהו"],["κανείς","kanís","אף אחד"],["εδώ","edó","כאן"],["εκεί","ekí","שם"],["τώρα","tóra","עכשיו"],["μετά","metá","אחר כך"],["πριν","prin","לפני"],["πάντα","pánta","תמיד"],["ποτέ","poté","אף פעם"],["σήμερα","símera","היום"],["αύριο","ávrio","מחר"],["χθες","chthes","אתמול"],["καλός","kalós","טוב"],["κακός","kakós","רע"],["μεγάλος","megálos","גדול"],["μικρός","mikrós","קטן"],["νέος","néos","צעיר / חדש"],["παλιός","paliós","ישן"],["εύκολος","éfkolos","קל"],["δύσκολος","dískolos","קשה"],["μιλάω","miláo","אני מדבר"],["λέω","léo","אני אומר"],["καταλαβαίνω","katalavéno","אני מבין"],["μαθαίνω","mathéno","אני לומד"],["τρώω","tróo","אני אוכל"],["πίνω","píno","אני שותה"],["δίνω","díno","אני נותן"],["παίρνω","pérno","אני לוקח"],["περιμένω","periméno","אני מחכה"],["χρειάζομαι","chriázome","אני צריך"],["πρέπει","prépi","צריך / חייב"],["νομίζω","nomízo","אני חושב"],["μου αρέσει","mu arési","אני אוהב (מוצא חן)"],["αγαπώ","agapó","אני אוהב"],["πληρώνω","pliróno","אני משלם"],["αγοράζω","agorázo","אני קונה"],["ανοίγω","aníyo","אני פותח"],["κλείνω","klíno","אני סוגר"],["βρίσκω","vrísko","אני מוצא"],["δουλεύω","dulévo","אני עובד"],["μένω","méno","אני גר / נשאר"],["ζω","zo","אני חי"],["φεύγω","févgo","אני עוזב"],["φτάνω","ftáno","אני מגיע"],["νερό","neró","מים"],["φαγητό","fayitó","אוכל"],["ψωμί","psomí","לחם"],["καφές","kafés","קפה"],["σπίτι","spíti","בית"],["δρόμος","drómos","רחוב"],["πόλη","póli","עיר"],["χρόνος","chrónos","זמן / שנה"],["νύχτα","níchta","לילה"],["ώρα","óra","שעה"],["εβδομάδα","evdomáda","שבוע"],["μήνας","mínas","חודש"],["φίλος","fílos","חבר"],["οικογένεια","ikoyénia","משפחה"],["δουλειά","dulyá","עבודה"],["ένα","éna","אחד"],["δύο","dío","שתיים"],["τρία","tría","שלוש"],["τέσσερα","tésera","ארבע"],["πέντε","pénde","חמש"],["δέκα","déka","עשר"],["εκατό","ekató","מאה"],["πόσο κάνει;","póso káni?","כמה זה עולה?"],["πού είναι;","pu íne?","איפה זה?"],["τι ώρα είναι;","ti óra íne?","מה השעה?"],["δεν καταλαβαίνω","den katalavéno","אני לא מבין"],["μιλάς αγγλικά;","milás angliká?","אתה מדבר אנגלית?"],["βοήθεια","voíthia","עזרה"],["δεν πειράζει","den pirázi","זה בסדר, לא נורא"],["τα λέμε","ta léme","נדבר / להתראות"],["γεια σου","ya su","שלום לך (יחיד)"],["γεια σας","ya sas","שלום לכם (רבים/נימוס)"],["κοντά","kondá","קרוב"],["μακριά","makriá","רחוק"],["αριστερά","aristerá","שמאלה"],["δεξιά","deksiá","ימינה"],["ευθεία","efthía","ישר"],["μέσα","mésa","בפנים"],["έξω","ékso","בחוץ"],["πάνω","páno","למעלה"],["κάτω","káto","למטה"],["δίπλα","dípla","ליד"],["μαζί","mazí","ביחד"],["γρήγορα","grígora","מהר"],["σιγά","sigá","לאט"],["πάλι","páli","שוב"],["ίσως","ísos","אולי"],["φυσικά","fisiká","בטח / כמובן"],["λοιπόν","lipón","אז / ובכן"],["σχεδόν","schedón","כמעט"],["περίπου","perípu","בערך"],["αντίο","adío","להתראות"],["ευχαριστώ πολύ","efcharistó polý","תודה רבה"],["με συγχωρείτε","me sinchoríte","סלח לי (נימוס)"],["καλώς ήρθες","kalós írthes","ברוך הבא (יחיד)"],["καλώς ήρθατε","kalós írthate","ברוכים הבאים"],["χαίρομαι","chérome","נעים לי"],["χαίρω πολύ","chéro polý","נעים מאוד להכיר"],["τι κάνεις;","ti kánis?","מה שלומך?"],["καλά είμαι","kalá íme","אני בסדר"],["πώς σε λένε;","pos se léne?","איך קוראים לך?"],["με λένε...","me léne...","קוראים לי..."],["καλή όρεξη","kalí órexi","בתאבון"],["στην υγειά μας","stin igiá mas","לחיים"],["ποια","pia","מי (נקבה)"],["πόσα","pósa","כמה (ריבוי)"],["του","tu","שלו"],["της","tis","שלה"],["τους","tus","שלהם"],["κοιμάμαι","kimáme","אני ישן"],["ξυπνάω","ksipnáo","אני מתעורר"],["παίζω","pézo","אני משחק"],["διαβάζω","diavázo","אני קורא"],["γράφω","gráfo","אני כותב"],["θυμάμαι","thimáme","אני זוכר"],["ξεχνάω","ksechnáo","אני שוכח"],["μισώ","misó","אני שונא"],["χάνω","cháno","אני מפסיד/מאבד"],["πουλάω","puláo","אני מוכר"],["γελάω","geláo","אני צוחק"],["κλαίω","kléo","אני בוכה"],["τρέχω","trécho","אני רץ"],["περπατάω","perpatáo","אני הולך ברגל"],["οδηγώ","odigó","אני נוהג"],["πετάω","petáo","אני טס / זורק"],["κολυμπάω","kolimbáo","אני שוחה"],["χορεύω","chorévo","אני רוקד"],["τραγουδάω","tragudáo","אני שר"],["μαγειρεύω","mayirévo","אני מבשל"],["καθαρίζω","katharízo","אני מנקה"],["πλένω","pléno","אני שוטף/מכבס"],["ντύνομαι","díneme","אני מתלבש"],["βοηθάω","voitháo","אני עוזר"],["ρωτάω","rotáo","אני שואל"],["απαντάω","apantáo","אני עונה"],["εξηγώ","eksigó","אני מסביר"],["νιώθω","niótho","אני מרגיש"],["ζητάω","zitáo","אני מבקש"],["στέλνω","stélno","אני שולח"],["ξεκινάω","ksekináo","אני מתחיל"],["τελειώνω","telióno","אני מסיים"],["σκέφτομαι","sképtome","אני חושב (מהרהר)"],["προσπαθώ","prospathó","אני מנסה"],["καταφέρνω","kataférno","אני מצליח"],["συναντάω","sinandáo","אני פוגש"],["γνωρίζω","gnorízo","אני מכיר"],["επιστρέφω","epistréfo","אני חוזר"],["σταματάω","stamatáo","אני עוצר"],["συνεχίζω","sinechízo","אני ממשיך"],["αλλάζω","alázo","אני משנה"],["πιστεύω","pistévo","אני מאמין"],["ελπίζω","elpízo","אני מקווה"],["φοβάμαι","fováme","אני מפחד"],["λυπάμαι","lipáme","אני מצטער"],["λεπτό","leptó","דקה"],["δευτερόλεπτο","defterólepto","שנייה"],["μεθαύριο","methávrio","מחרתיים"],["προχθές","prochthés","שלשום"],["μερικές φορές","merikés forés","לפעמים"],["πρωί","proí","בוקר"],["μεσημέρι","mesiméri","צהריים"],["απόγευμα","apógevma","אחר הצהריים"],["βράδυ","vrádi","ערב"],["Δευτέρα","Deftéra","יום שני"],["Τρίτη","Tríti","יום שלישי"],["Τετάρτη","Tetárti","יום רביעי"],["Πέμπτη","Pémpti","יום חמישי"],["Παρασκευή","Paraskeví","יום שישי"],["Σάββατο","Sávato","שבת"],["Κυριακή","Kiriakí","יום ראשון"],["άνοιξη","ánixi","אביב"],["καλοκαίρι","kalokéri","קיץ"],["φθινόπωρο","fthinóporo","סתיו"],["χειμώνας","chimónas","חורף"],["έξι","éksi","שש"],["εφτά","eftá","שבע"],["οκτώ","októ","שמונה"],["εννιά","eniá","תשע"],["έντεκα","éndeka","אחת עשרה"],["δώδεκα","dódeka","שתים עשרה"],["είκοσι","íkosi","עשרים"],["τριάντα","triánda","שלושים"],["πρώτος","prótos","ראשון"],["δεύτερος","défteros","שני"],["τρίτος","trítos","שלישי"],["τελευταίος","teleftéos","אחרון"],["μισός","misós","חצי"],["ζευγάρι","zevgári","זוג"],["πολλά","polá","הרבה"],["λίγα","líga","מעט"],["μηδέν","midén","אפס"],["πατέρας","patéras","אבא"],["μητέρα","mitéra","אמא"],["γιος","yios","בן"],["κόρη","kóri","בת"],["αδελφός","adelfós","אח"],["αδελφή","adelfí","אחות"],["παππούς","papús","סבא"],["γιαγιά","yayá","סבתא"],["θείος","thíos","דוד"],["θεία","thía","דודה"],["ξάδερφος","ksáderfos","בן דוד"],["ξαδέρφη","ksadérfi","בת דודה"],["σύζυγος","sízigos","בעל/אישה (בן/בת זוג)"],["εγγόνι","engóni","נכד/ה"],["μωρό","moró","תינוק"],["φίλη","fíli","חברה"],["γείτονας","yítonas","שכן"],["αγόρι","agóri","ילד / בחור"],["σώμα","sóma","גוף"],["κεφάλι","kefáli","ראש"],["μάτι","máti","עין"],["μύτη","míti","אף"],["στόμα","stóma","פה"],["αυτί","aftí","אוזן"],["χέρι","chéri","יד"],["πόδι","pódi","רגל"],["στομάχι","stomáchi","בטן"],["καρδιά","kardiá","לב"],["δόντι","dónti","שן"],["μαλλιά","maliá","שיער"],["πρόσωπο","prósopo","פנים"],["φωνή","foní","קול"],["χαμόγελο","chamóyelo","חיוך"],["χρώμα","chróma","צבע"],["κόκκινο","kókino","אדום"],["μπλε","ble","כחול"],["πράσινο","prásino","ירוק"],["κίτρινο","kítrino","צהוב"],["μαύρο","mávro","שחור"],["άσπρο","áspro","לבן"],["καφέ","kafé","חום (צבע)"],["κρασί","krasí","יין"],["μπύρα","bíra","בירה"],["γάλα","gála","חלב"],["τυρί","tirí","גבינה"],["αυγό","avgó","ביצה"],["κρέας","kréas","בשר"],["κοτόπουλο","kotópulo","עוף"],["ψάρι","psári","דג"],["λαχανικό","lachanikó","ירק"],["φρούτο","frúto","פרי"],["μήλο","mílo","תפוח"],["πορτοκάλι","portokáli","תפוז"],["μπανάνα","banána","בננה"],["ντομάτα","domáta","עגבנייה"],["πατάτα","patáta","תפוח אדמה"],["κρεμμύδι","kremídi","בצל"],["σκόρδο","skórdo","שום"],["λάδι","ládi","שמן"],["αλάτι","aláti","מלח"],["πιπέρι","pipéri","פלפל"],["ζάχαρη","záchari","סוכר"],["μέλι","méli","דבש"],["σούπα","súpa","מרק"],["σαλάτα","saláta","סלט"],["ρύζι","rízi","אורז"],["ζυμαρικά","zimariká","פסטה"],["γλυκό","glikó","מתוק / קינוח"],["πρωινό","proinó","ארוחת בוקר"],["μεσημεριανό","mesimerianó","ארוחת צהריים"],["βραδινό","vradinó","ארוחת ערב"],["εστιατόριο","estiatório","מסעדה"],["μενού","menú","תפריט"],["λογαριασμός","logariasmós","חשבון (בתשלום)"],["τσάι","tsái","תה"],["χυμός","chimós","מיץ"],["πάγος","págos","קרח"],["κέικ","kéik","עוגה"],["σοκολάτα","sokoláta","שוקולד"],["παγωτό","pagotó","גלידה"],["ελιά","eliá","זית"],["λεμόνι","lemóni","לימון"],["δωμάτιο","domátio","חדר"],["κουζίνα","kuzína","מטבח"],["μπάνιο","bánio","חדר אמבטיה"],["κρεβάτι","kreváti","מיטה"],["τραπέζι","trapézi","שולחן"],["καρέκλα","karékla","כיסא"],["πόρτα","pórta","דלת"],["παράθυρο","paráthiro","חלון"],["τοίχος","tíchos","קיר"],["όροφος","órofos","קומה"],["κλειδί","klidí","מפתח"],["τηλέφωνο","tiléfono","טלפון"],["υπολογιστής","ipoloyistís","מחשב"],["τηλεόραση","tileórasi","טלוויזיה"],["ρολόι","rolói","שעון"],["βιβλίο","vivlío","ספר"],["στυλό","stiló","עט"],["χαρτί","chartí","נייר"],["τσάντα","tsánda","תיק"],["παπούτσια","papútsia","נעליים"],["ρούχα","rúcha","בגדים"],["καπέλο","kapélo","כובע"],["φως","fos","אור"],["κήπος","kípos","גינה"],["παντελόνι","pandelóni","מכנסיים"],["μπλούζα","blúza","חולצה"],["γυαλιά","yaliá","משקפיים"],["ζώο","zóo","חיה"],["σκύλος","skílos","כלב"],["γάτα","gáta","חתול"],["άλογο","álogo","סוס"],["πουλί","pulí","ציפור"],["φύση","físi","טבע"],["ήλιος","ílios","שמש"],["φεγγάρι","fengári","ירח"],["αστέρι","astéri","כוכב"],["ουρανός","uranós","שמיים"],["σύννεφο","sínefo","ענן"],["βροχή","vrochí","גשם"],["χιόνι","chióni","שלג"],["άνεμος","ánemos","רוח"],["καταιγίδα","kateyída","סופה"],["δάσος","dásos","יער"],["δέντρο","déndro","עץ"],["λουλούδι","lulúdi","פרח"],["ποτάμι","potámi","נהר"],["λίμνη","límni","אגם"],["θάλασσα","thálasa","ים"],["βουνό","vunó","הר"],["νησί","nisí","אי"],["παραλία","paralía","חוף ים"],["άμμος","ámos","חול"],["βράχος","vráchos","סלע"],["ζέστη","zésti","חום (מזג אוויר)"],["κρύο","krío","קור"],["φύλλο","fílo","עלה"],["χώμα","chóma","אדמה"],["ψηλός","psilós","גבוה"],["κοντός","kondós","נמוך / קצר"],["χοντρός","chondrós","שמן"],["αδύνατος","adínatos","רזה"],["όμορφος","ómorfos","יפה"],["άσχημος","áschimos","מכוער"],["γέρος","yéros","זקן"],["γρήγορος","grígoros","מהיר"],["αργός","argós","איטי"],["ζεστός","zestós","חם"],["κρύος","kríos","קר"],["καθαρός","katharós","נקי"],["βρόμικος","vrómikos","מלוכלך"],["γεμάτος","gemátos","מלא"],["άδειος","ádios","ריק"],["φτηνός","ftinós","זול"],["ακριβός","akrivós","יקר"],["δυνατός","dinatós","חזק"],["αδύναμος","adínamos","חלש"],["ευτυχισμένος","eftichisménos","מאושר"],["λυπημένος","lipiménos","עצוב"],["θυμωμένος","thimoménos","כועס"],["κουρασμένος","kurasménos","עייף"],["πεινασμένος","pinasménos","רעב"],["διψασμένος","dipsasménos","צמא"],["άρρωστος","árostos","חולה"],["υγιής","iyiís","בריא"],["έξυπνος","éksipnos","חכם"],["φτωχός","ftochós","עני"],["πλούσιος","plúsios","עשיר"],["ελεύθερος","eléftheros","חופשי"],["απασχολημένος","apascholiménos","עסוק"],["όμοιος","ómios","דומה"],["διαφορετικός","diaforetikós","שונה"],["σωστός","sostós","נכון"],["λάθος","láthos","טעות / לא נכון"],["καινούριος","kenúrios","חדש (מוצר)"],["ανοιχτός","anichtós","פתוח"],["κλειστός","klistós","סגור"],["ήσυχος","ísichos","שקט"],["ελαφρύς","elafrís","קל (משקל)"],["βαρύς","varís","כבד"],["χαρά","chará","שמחה"],["λύπη","lípi","עצב"],["φόβος","fóvos","פחד"],["θυμός","thimós","כעס"],["αγάπη","agápi","אהבה"],["άγχος","ánchos","חרדה / לחץ"],["ηρεμία","iremía","רוגע"],["ελπίδα","elpída","תקווה"],["οδηγός","odigós","נהג"],["ταξίδι","taksídi","טיול / נסיעה"],["αεροδρόμιο","aerodrómio","שדה תעופה"],["αεροπλάνο","aeropláno","מטוס"],["τρένο","tréno","רכבת"],["λεωφορείο","leoforío","אוטובוס"],["ταξί","taksí","מונית"],["εισιτήριο","isitírio","כרטיס נסיעה"],["διαβατήριο","diavatírio","דרכון"],["βαλίτσα","valítsa","מזוודה"],["ξενοδοχείο","ksenodochío","מלון"],["κράτηση","krátisi","הזמנה (מקום)"],["χάρτης","chártis","מפה"],["διεύθυνση","diéfthinsi","כתובת"],["στάση","stási","תחנה"],["σταθμός","stathmós","תחנה מרכזית"],["γέφυρα","yéfira","גשר"],["χωριό","chorió","כפר"],["χώρα","chóra","מדינה"],["σύνορα","sínora","גבול"],["επίσκεψη","epískepsi","ביקור"],["φωτογραφία","fotografía","תמונה"],["μουσείο","musío","מוזיאון"],["εκκλησία","eklisía","כנסייה"],["πλατεία","platía","כיכר"],["αγορά","agorá","שוק"],["όχημα","óchima","כלי רכב"],["κατά","katá","נגד / כלפי"],["υπέρ","ipér","בעד"],["μπορείς να με βοηθήσεις;","borís na me voithísis?","אתה יכול לעזור לי?"],["πόσο μακριά είναι;","póso makriá íne?","כמה זה רחוק?"],["τι σημαίνει αυτό;","ti siméni aftó?","מה זה אומר?"],["καλή διασκέδαση","kalí diaskédasi","תיהנה"],["καλό ταξίδι","kaló taksídi","נסיעה טובה"],["περαστικά","perastiká","החלמה מהירה"],["χρόνια πολλά","chrónia polá","מזל טוב / יום הולדת שמח"],["καλή τύχη","kalí tíchi","בהצלחה"],["σε παρακαλώ","se parakaló","בבקשה ממך"],["Ιανουάριος","Ianuários","ינואר"],["Φεβρουάριος","Fevruários","פברואר"],["Μάρτιος","Mártios","מרץ"],["Απρίλιος","Aprílios","אפריל"],["Μάιος","Máios","מאי"],["Ιούνιος","Iúnios","יוני"],["Ιούλιος","Iúlios","יולי"],["Αύγουστος","Ávgustos","אוגוסט"],["Σεπτέμβριος","Septémvrios","ספטמבר"],["Οκτώβριος","Októvrios","אוקטובר"],["Νοέμβριος","Noémvrios","נובמבר"],["Δεκέμβριος","Dekémvrios","דצמבר"],["δεκατρία","dekatría","שלוש עשרה"],["δεκατέσσερα","dekatésera","ארבע עשרה"],["δεκαπέντε","dekapénde","חמש עשרה"],["σαράντα","saránda","ארבעים"],["πενήντα","penínda","חמישים"],["εξήντα","eksínda","שישים"],["εβδομήντα","evdomínda","שבעים"],["ογδόντα","ogdónda","שמונים"],["ενενήντα","enenínda","תשעים"],["διακόσια","diakósia","מאתיים"],["πεντακόσια","pendakósia","חמש מאות"],["χίλια","chília","אלף"],["δάχτυλο","dáchtilo","אצבע"],["πλάτη","pláti","גב"],["λαιμός","lemós","צוואר"],["ώμος","ómos","כתף"],["γόνατο","gónato","ברך"],["χείλος","chílos","שפה (פה)"],["φρύδι","frídi","גבה"],["δέρμα","dérma","עור"],["αίμα","éma","דם"],["γροθιά","grothiá","אגרוף"],["ροζ","roz","ורוד"],["πορτοκαλί","portokalí","כתום"],["μοβ","mov","סגול"],["γκρι","gri","אפור"],["χρυσό","chrisó","זהוב"],["ασημί","asimí","כסוף"],["γιαούρτι","yaúrti","יוגורט"],["φέτα","féta","גבינת פטה"],["σουβλάκι","suvláki","סובלאקי"],["σταφύλι","stafíli","ענב"],["καρπούζι","karpúzi","אבטיח"],["αχλάδι","achládi","אגס"],["κεράσι","kerási","דובדבן"],["φράουλα","fráula","תות"],["αγγούρι","angúri","מלפפון"],["καρότο","karóto","גזר"],["μανιτάρι","manitári","פטרייה"],["φασόλια","fasólia","שעועית"],["καθρέφτης","kathréftis","מראה"],["πετσέτα","petséta","מגבת"],["σαπούνι","sapúni","סבון"],["σκάλα","skála","מדרגות"],["αυλή","avlí","חצר"],["ντουλάπα","dulápa","ארון"],["φούρνος","fúrnos","תנור"],["ψυγείο","psiyío","מקרר"],["κουβέρτα","kubérta","שמיכה"],["μαξιλάρι","maksilári","כרית"],["πουκάμισο","pukámiso","חולצה מכופתרת"],["φούστα","fústa","חצאית"],["φόρεμα","fórema","שמלה"],["ζακέτα","zakéta","סווצ'ר"],["παλτό","paltó","מעיל"],["κάλτσες","káltses","גרביים"],["γάντια","gándia","כפפות"],["κασκόλ","kaskól","צעיף"],["ζώνη","zóni","חגורה"],["αγελάδα","ageláda","פרה"],["πρόβατο","próvato","כבשה"],["κατσίκα","katsíka","עז"],["χοίρος","chíros","חזיר"],["λιοντάρι","liondári","אריה"],["ελέφαντας","eléfandas","פיל"],["αρκούδα","arkúda","דוב"],["λύκος","líkos","זאב"],["αλεπού","alepú","שועל"],["ποντίκι","pondíki","עכבר"],["φίδι","fídi","נחש"],["πεταλούδα","petalúda","פרפר"],["μέλισσα","mélisa","דבורה"],["αράχνη","aráchni","עכביש"],["καρχαρίας","karcharías","כריש"],["δελφίνι","delfíni","דולפין"],["κουνέλι","kunéli","ארנב"],["πίθηκος","píthikos","קוף"],["τίγρη","tígri","נמר"],["κότα","kóta","תרנגולת"],["πάπια","pápia","ברווז"],["χελώνα","chelóna","צב"],["γαϊδούρι","gaïdúri","חמור"],["έκπληξη","ékplixi","הפתעה"],["ντροπή","dropí","בושה"],["ζήλια","zília","קנאה"],["ανακούφιση","anakúfisi","הקלה"],["ενθουσιασμός","enthusiasmós","התלהבות"],["περηφάνια","perifánia","גאווה"],["μοναξιά","monaksiá","בדידות"],["γιατρός","yatrós","רופא"],["δάσκαλος","dáskalos","מורה"],["μηχανικός","michanikós","מהנדס"],["δικηγόρος","dikigóros","עורך דין"],["αστυνομικός","astinomikós","שוטר"],["μάγειρας","máyiras","טבח"],["καλλιτέχνης","kalitéchnis","אמן"],["μουσικός","musikós","מוזיקאי"],["συγγραφέας","sigraféas","סופר"],["αγρότης","agrótis","חקלאי"],["ψαράς","psarás","דייג"],["πωλητής","politís","מוכר"],["φοιτητής","fititís","סטודנט"],["μαθητής","mathitís","תלמיד"],["νοσοκόμα","nosokóma","אחות (רפואה)"],["πιλότος","pilótos","טייס"],["σεφ","sef","שף"],["επιχειρηματίας","epicherimatías","איש עסקים"]];
+
+/* ================= state ================= */
+const LS = 'greekVocab_v1';
+let S = { words: [], startDate: null };
+try { const raw = localStorage.getItem(LS); if (raw) S = Object.assign(S, JSON.parse(raw)); } catch(e){}
+const save = () => localStorage.setItem(LS, JSON.stringify(S));
+const $ = id => document.getElementById(id);
+const todayKey = (d) => { const x = d ? new Date(d) : new Date(); return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0'); };
+
+/* ================= text normalization & matching ================= */
+const stripGr = s => s.normalize('NFD').replace(/[\u0300-\u036f\u0342\u0345]/g,'').toLowerCase().replace(/\u03c2/g,'\u03c3').replace(/\s+/g,' ').trim();
+const stripLat = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z ]/g,'').replace(/\s+/g,' ').trim();
+const hasGreek = s => /[\u0370-\u03ff\u1f00-\u1fff]/.test(s);
+const hasHebrew = s => /[\u0590-\u05ff]/.test(s);
+
+function lev(a,b){
+  if(a===b) return 0;
+  const m=a.length,n=b.length;
+  if(!m) return n; if(!n) return m;
+  let prev=Array.from({length:n+1},(_,i)=>i), cur=new Array(n+1);
+  for(let i=1;i<=m;i++){
+    cur[0]=i;
+    for(let j=1;j<=n;j++)
+      cur[j]=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));
+    [prev,cur]=[cur,prev];
+  }
+  return prev[n];
+}
+
+/* romanize greek so latin input can be compared against dict words too */
+const ROM=[['ου','ou'],['αι','e'],['ει','i'],['οι','i'],['υι','i'],['αυ','av'],['ευ','ev'],['γγ','ng'],['γκ','g'],['μπ','b'],['ντ','d'],['τσ','ts'],['τζ','tz'],['θ','th'],['χ','ch'],['ψ','ps'],['ξ','x'],['φ','f'],['β','v'],['γ','g'],['δ','d'],['ζ','z'],['κ','k'],['λ','l'],['μ','m'],['ν','n'],['π','p'],['ρ','r'],['σ','s'],['τ','t'],['α','a'],['ε','e'],['η','i'],['ι','i'],['ο','o'],['υ','i'],['ω','o'],[' ',' ']];
+function romanize(g){
+  let s = stripGr(g), out='';
+  outer: while(s.length){
+    for(const [k,v] of ROM){ if(s.startsWith(k)){ out+=v; s=s.slice(k.length); continue outer; } }
+    s=s.slice(1);
+  }
+  return out;
+}
+/* loosen latin: b/mp d/nt u/ou h/ch variants collapse so kalimera==kalimera, boro==mporo */
+const loose = s => s.replace(/ou/g,'u').replace(/mp/g,'b').replace(/nt/g,'d').replace(/gh/g,'g').replace(/kh|ch/g,'h').replace(/y/g,'i').replace(/w/g,'o').replace(/(.)\1+/g,'$1');
+
+function typoBudget(len){ return len<=3 ? 0 : len<=5 ? 1 : len<=9 ? 2 : 3; }
+
+/* find best dictionary match for the greek/latin input */
+function matchGreek(input){
+  const isGr = hasGreek(input);
+  const qGr = stripGr(input), qLat = loose(stripLat(input));
+  let best=null, bestD=Infinity;
+  for(const [el,tr,he] of DICT){
+    let d;
+    if(isGr){ d = lev(qGr, stripGr(el)); }
+    else{
+      d = Math.min(lev(qLat, loose(stripLat(tr))), lev(qLat, loose(romanize(el))));
+    }
+    if(d<bestD){ bestD=d; best=[el,tr,he]; if(!d) break; }
+  }
+  if(!best) return null;
+  const refLen = isGr ? stripGr(best[0]).length : loose(stripLat(best[1])).length;
+  if(bestD===0) return {entry:best, kind:'exact'};
+  if(bestD<=typoBudget(refLen)) return {entry:best, kind:'typo', d:bestD};
+  return null;
+}
+
+/* does user's hebrew meaning match the dict gloss? */
+function glossVariants(he){
+  const out=[];
+  he.split('/').forEach(p=>{
+    const clean=p.replace(/\(.*?\)/g,'').replace(/[^\u0590-\u05ff ]/g,' ').replace(/\s+/g,' ').trim();
+    if(clean) out.push(clean);
+  });
+  const whole=he.replace(/[^\u0590-\u05ff ]/g,' ').replace(/\s+/g,' ').trim();
+  if(whole) out.push(whole);
+  return out;
+}
+function heWords(s){ return s.replace(/[^\u0590-\u05ff ]/g,' ').split(/\s+/).filter(Boolean); }
+function heMatch(userHe, gloss){
+  const u = userHe.replace(/[^\u0590-\u05ff ]/g,' ').replace(/\s+/g,' ').trim();
+  if(!u) return false;
+  for(const v of glossVariants(gloss)){
+    if(v===u) return true;
+    if(lev(v,u)<=typoBudget(v.length)) return true;
+    // word-level: every user word appears (fuzzily, incl. dropped ה prefix) in the variant
+    const vw = heWords(v);
+    const uw = heWords(u);
+    if(uw.length && uw.every(w=>{
+      const w2 = w.startsWith('ה')&&w.length>2 ? w.slice(1) : w;
+      return vw.some(x=>{
+        const x2 = x.startsWith('ה')&&x.length>2 ? x.slice(1) : x;
+        return x===w||x2===w2||lev(x2,w2)<=(w2.length<=3?0:1);
+      });
+    })) return true;
+  }
+  return false;
+}
+/* reverse lookup: find dict entry by hebrew meaning */
+function matchHebrew(userHe){
+  for(const e of DICT){ if(heMatch(userHe, e[2])) return e; }
+  return null;
+}
+
+/* ================= speech ================= */
+let grVoice=null;
+function pickVoice(){
+  const vs = (window.speechSynthesis ? speechSynthesis.getVoices() : []) || [];
+  grVoice = vs.find(v=>v.lang==='el-GR') || vs.find(v=>v.lang&&v.lang.startsWith('el')) || null;
+}
+if('speechSynthesis' in window){ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+function speak(t, btn){
+  if(!('speechSynthesis' in window)){ toast('אין תמיכה בהשמעה במכשיר זה'); return; }
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(t);
+  u.lang='el-GR'; if(grVoice) u.voice=grVoice; u.rate=0.85; u.pitch=1;
+  if(btn){ btn.classList.add('speaking'); u.onend=u.onerror=()=>btn.classList.remove('speaking'); }
+  speechSynthesis.speak(u);
+}
+
+/* ================= toast ================= */
+let toastT=null;
+function toast(msg){
+  const t=$('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2600);
+}
+
+/* ================= add & validate flow ================= */
+const verdict = $('verdict');
+function showVerdict(cls, html){ verdict.className='verdict show '+cls; verdict.innerHTML=html; }
+function hideVerdict(){ verdict.className='verdict'; verdict.innerHTML=''; }
+
+function elBlock(el,tr){ return `<span class="big-el">${el}</span> <span class="tr">(${tr})</span>`; }
+
+function isDup(el){
+  const k=stripGr(el);
+  return S.words.some(w=>stripGr(w.el)===k);
+}
+
+function addWord(el,tr,he,verified){
+  S.words.unshift({el,tr,he,ts:Date.now(),v:!!verified});
+  if(!S.startDate) S.startDate = todayKey();
+  save(); render();
+  $('inEl').value=''; $('inHe').value='';
+  const n=$('heroNum'); n.classList.add('bump'); setTimeout(()=>n.classList.remove('bump'),250);
+  toast(`🎉 נוספה! זו המילה ה־${S.words.length} שלך`);
+}
+
+function check(){
+  const rawEl = $('inEl').value.trim();
+  const rawHe = $('inHe').value.trim();
+  hideVerdict();
+  if(!rawEl && !rawHe){ toast('כתוב מילה קודם 🙂'); return; }
+  if(!rawEl){
+    // only hebrew given — try reverse lookup and suggest the greek
+    const rev = matchHebrew(rawHe);
+    if(rev){
+      showVerdict('warn', `לפי המילון, <b>"${rawHe}"</b> ביוונית זה ${elBlock(rev[0],rev[1])}.<div class="btn-row"><button class="btn btn-main" onclick="acceptFix('${esc(rev[0])}','${esc(rev[1])}','${esc(rev[2])}')">הוסף את המילה ✓</button><button class="btn btn-ghost" onclick="hideVerdict()">ביטול</button></div>`);
+    } else toast('כתוב גם את המילה ביוונית');
+    return;
+  }
+  if(hasHebrew(rawEl)){ toast('בשדה הזה כותבים את המילה ביוונית 🙂'); return; }
+
+  const m = matchGreek(rawEl);
+
+  if(m){
+    const [el,tr,he] = m.entry;
+    if(isDup(el)){ showVerdict('warn', `המילה ${elBlock(el,tr)} כבר נמצאת ברשימה שלך! 🎉 כבר למדת אותה.`); return; }
+    const meaningOk = rawHe ? heMatch(rawHe, he) : false;
+
+    if(m.kind==='exact' && meaningOk){
+      addWord(el,tr,rawHe,true);
+      showVerdict('ok', `✓ מעולה! ${elBlock(el,tr)} = <b>${rawHe}</b> — נכון!`);
+      return;
+    }
+    if(!rawHe){
+      showVerdict('warn', `מצאתי את ${elBlock(el,tr)} — הפירוש הוא <b>"${he}"</b>. להוסיף?<div class="btn-row"><button class="btn btn-main" onclick="acceptFix('${esc(el)}','${esc(tr)}','${esc(he)}')">כן, הוסף ✓</button><button class="btn btn-ghost" onclick="hideVerdict()">ביטול</button></div>`);
+      return;
+    }
+    if(m.kind==='typo' && meaningOk){
+      showVerdict('warn', `כמעט מדויק! כתבת <b>"${rawEl}"</b> — הצורה הנכונה היא ${elBlock(el,tr)}. הפירוש "<b>${rawHe}</b>" נכון ✓<div class="btn-row"><button class="btn btn-main" onclick="acceptFix('${esc(el)}','${esc(tr)}','${esc(rawHe)}')">הוסף עם התיקון ✓</button><button class="btn btn-ghost" onclick="hideVerdict()">ביטול</button></div>`);
+      return;
+    }
+    // meaning mismatch
+    showVerdict('bad', `רגע! ${elBlock(el,tr)} פירושו <b>"${he}"</b>, לא "<b>${rawHe}</b>".<div class="btn-row"><button class="btn btn-main" onclick="acceptFix('${esc(el)}','${esc(tr)}','${esc(he)}')">הוסף עם הפירוש הנכון</button><button class="btn btn-ghost" onclick="forceAdd('${esc(rawEl)}','${esc(rawHe)}')">אני בטוח — כמו שכתבתי</button></div>`);
+    return;
+  }
+
+  // greek word not found — maybe the hebrew leads us to the right word
+  const rev = rawHe ? matchHebrew(rawHe) : null;
+  if(rev && !isDup(rev[0])){
+    showVerdict('bad', `לא זיהיתי את "<b>${rawEl}</b>", אבל לפי המילון "<b>${rawHe}</b>" ביוונית זה ${elBlock(rev[0],rev[1])}. אולי לזה התכוונת?<div class="btn-row"><button class="btn btn-main" onclick="acceptFix('${esc(rev[0])}','${esc(rev[1])}','${esc(rawHe)}')">כן! הוסף ✓</button><button class="btn btn-ghost" onclick="forceAdd('${esc(rawEl)}','${esc(rawHe)}')">לא, כמו שכתבתי</button></div>`);
+    return;
+  }
+  if(isDup(rawEl)){ showVerdict('warn','המילה הזאת כבר נמצאת ברשימה שלך! 🎉'); return; }
+  showVerdict('warn', `לא מצאתי את "<b>${rawEl}</b>" במילון המובנה (596 מילים), אז אני לא יכול לאמת אותה.${rawHe?'':'<br>הוסף גם פירוש בעברית.'}<div class="btn-row"><button class="btn btn-main" ${rawHe?'':'disabled'} onclick="forceAdd('${esc(rawEl)}','${esc(rawHe)}')">הוסף בכל זאת</button><button class="btn btn-ghost" onclick="hideVerdict()">ביטול</button></div>`);
+}
+
+const esc = s => s.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;');
+window.acceptFix = (el,tr,he) => { hideVerdict(); if(isDup(el)){toast('כבר ברשימה 🎉');return;} addWord(el,tr,he,true); };
+window.forceAdd  = (el,he)    => { hideVerdict(); if(isDup(el)){toast('כבר ברשימה 🎉');return;} addWord(el, hasGreek(el)?romanize(el):'', he, false); };
+window.hideVerdict = hideVerdict;
+
+/* ================= render list ================= */
+const fmtDate = ts => new Date(ts).toLocaleDateString('he-IL',{day:'numeric',month:'numeric',year:'2-digit'});
+let armT=null;
+function renderList(){
+  const q = $('search').value.trim().toLowerCase();
+  const list = $('list');
+  $('search').classList.toggle('hidden', S.words.length<6);
+  if(!S.words.length){
+    list.innerHTML = `<div class="empty"><div class="e">🇬🇷</div>עדיין אין מילים ברשימה.<br>הוסף את המילה הראשונה שלמדת!</div>`;
+    return;
+  }
+  const items = S.words.filter(w=>!q || w.el.toLowerCase().includes(q)||w.tr.toLowerCase().includes(q)||w.he.includes(q));
+  list.innerHTML = items.map((w,i)=>{
+    const idx = S.words.indexOf(w);
+    return `<div class="word">
+      <button class="icon-btn play" data-say="${w.el.replace(/"/g,'&quot;')}">🔊</button>
+      <div class="info">
+        <div class="el">${w.el}${w.tr?`<span class="wtr">${w.tr}</span>`:''}</div>
+        <div class="he">${w.he}</div>
+        <div class="meta">${fmtDate(w.ts)} · ${w.v?'✓ אומת מול המילון':'<span class="unv">לא אומת</span>'}</div>
+      </div>
+      <button class="icon-btn del" data-del="${idx}">✕</button>
+    </div>`;
+  }).join('') || `<div class="empty">לא נמצאו מילים לחיפוש הזה</div>`;
+
+  list.querySelectorAll('[data-say]').forEach(b=>b.onclick=()=>speak(b.dataset.say,b));
+  list.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{
+    if(!b.classList.contains('arm')){
+      list.querySelectorAll('.del.arm').forEach(x=>{x.classList.remove('arm');x.textContent='✕';});
+      b.classList.add('arm'); b.textContent='למחוק?';
+      clearTimeout(armT); armT=setTimeout(()=>{b.classList.remove('arm');b.textContent='✕';},2500);
+    } else {
+      S.words.splice(+b.dataset.del,1); save(); render(); toast('המילה נמחקה');
+    }
+  });
+}
+
+/* ================= stats ================= */
+function daysLearning(){
+  if(!S.startDate) return 0;
+  const start = new Date(S.startDate+'T00:00:00');
+  const diff = Math.floor((new Date() - start)/86400000);
+  return Math.max(1, diff+1);
+}
+function renderStats(){
+  const total=S.words.length, days=daysLearning();
+  $('stTotal').textContent=total;
+  $('stDays').textContent=S.startDate?days:'—';
+  $('stAvg').textContent=S.startDate&&total? (total/days).toFixed(1).replace(/\.0$/,'') : '0';
+  const weekAgo=Date.now()-7*86400000;
+  $('stWeek').textContent=S.words.filter(w=>w.ts>=weekAgo).length;
+  $('startDate').value=S.startDate||'';
+  $('heroDays').textContent = S.startDate ? `ב־${days} ימי לימוד` : '';
+
+  // chart: last 14 days
+  const byDay={};
+  S.words.forEach(w=>{const k=todayKey(w.ts);byDay[k]=(byDay[k]||0)+1;});
+  const daysArr=[];
+  for(let i=13;i>=0;i--){
+    const d=new Date(Date.now()-i*86400000);
+    daysArr.push({k:todayKey(d),d,c:byDay[todayKey(d)]||0});
+  }
+  const max=Math.max(1,...daysArr.map(x=>x.c));
+  $('chart').innerHTML = daysArr.map((x,i)=>
+    `<div class="cbar ${x.c?'':'zero'} ${i===13?'today':''}" data-i="${i}"><div class="fill" style="height:${x.c/max*100}%"></div></div>`).join('');
+  $('chartX').innerHTML = daysArr.map((x,i)=>`<span>${i%2?x.d.getDate()+'.'+(x.d.getMonth()+1):''}</span>`).join('');
+
+  const tt=$('ttip');
+  $('chart').querySelectorAll('.cbar').forEach(b=>{
+    const show=()=>{
+      const x=daysArr[+b.dataset.i];
+      tt.innerHTML=`<b>${x.d.toLocaleDateString('he-IL',{day:'numeric',month:'long'})}</b><br>${x.c===1?'מילה אחת':x.c+' מילים'}`;
+      const wrap=$('chartWrap').getBoundingClientRect(), r=b.getBoundingClientRect();
+      tt.style.right=(wrap.right-r.right+r.width/2)+'px'; tt.style.top=(r.top-wrap.top)+'px';
+      tt.classList.add('show');
+      clearTimeout(tt._t); tt._t=setTimeout(()=>tt.classList.remove('show'),2200);
+    };
+    b.onclick=show; b.onmouseenter=show; b.onmouseleave=()=>tt.classList.remove('show');
+  });
+}
+
+function render(){
+  $('heroNum').textContent=S.words.length;
+  renderList(); renderStats();
+}
+
+/* ================= wire up ================= */
+$('btnCheck').onclick=check;
+$('inHe').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();check();}});
+$('inEl').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('inHe').focus();}});
+$('search').addEventListener('input',renderList);
+$('startDate').addEventListener('change',e=>{
+  const v=e.target.value;
+  if(v && new Date(v)>new Date()){ toast('התאריך לא יכול להיות בעתיד'); e.target.value=S.startDate||''; return; }
+  S.startDate=v||null; save(); renderStats(); toast('תאריך ההתחלה נשמר');
+});
+$('tabWords').onclick=()=>{$('tabWords').classList.add('on');$('tabStats').classList.remove('on');$('scrWords').classList.remove('hidden');$('scrStats').classList.add('hidden');};
+$('tabStats').onclick=()=>{$('tabStats').classList.add('on');$('tabWords').classList.remove('on');$('scrStats').classList.remove('hidden');$('scrWords').classList.add('hidden');renderStats();};
+
+render();
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
