@@ -115,6 +115,8 @@
 
   .toast{position:fixed;left:50%;bottom:34px;transform:translate(-50%,16px);z-index:60;background:var(--plum);color:#fff;font-size:0.85rem;font-weight:700;padding:11px 20px;border-radius:99px;box-shadow:0 10px 28px rgba(62,44,86,0.3);opacity:0;pointer-events:none;transition:opacity .28s ease, transform .28s cubic-bezier(.22,1,.36,1);max-width:88vw;text-align:center;display:inline-flex;align-items:center;gap:7px;}
   .toast.show{opacity:1;transform:translate(-50%,0);}
+  .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,0.35);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;}
+  @keyframes spin{to{transform:rotate(360deg);}}
 
   /* stroke icons (same set/style as "שתי מילים ביום") */
   .ic{vertical-align:-0.15em;flex:0 0 auto;}
@@ -154,7 +156,7 @@
         <input id="inHe" placeholder="בוקר טוב" autocomplete="off">
       </div>
       <button class="btn btn-main" id="btnCheck"></button>
-      <div class="hint">אני אבדוק את המילה מול מילון של 596 מילים נפוצות ואתקן שגיאות קטנות</div>
+      <div class="hint">אני מאמת את המילה בתרגום חי מהרשת (וללא רשת — מול מילון מובנה)</div>
     </div>
 
     <div class="verdict" id="verdict"></div>
@@ -434,11 +436,115 @@ function addWord(el,tr,he,verified){
   toast(ic('sparkles',16)+`נוספה! זו המילה ה־${S.words.length} שלך`);
 }
 
-function check(){
+/* ---------- online verification via Google Translate (CORS-enabled gtx endpoint) ---------- */
+const TR_CACHE='greekVocab_tr';
+let trCache={}; try{ trCache=JSON.parse(localStorage.getItem(TR_CACHE))||{}; }catch(e){ trCache={}; }
+async function apiTranslate(sl,tl,text){
+  text=(text||'').trim(); if(!text) return '';
+  const key=sl+'>'+tl+':'+text.toLowerCase();
+  if(trCache[key]!==undefined) return trCache[key];
+  const ctrl=new AbortController(); const to=setTimeout(()=>ctrl.abort(),7000);
+  try{
+    const url='https://translate.googleapis.com/translate_a/single?client=gtx&sl='+sl+'&tl='+tl+'&dt=t&q='+encodeURIComponent(text);
+    const r=await fetch(url,{signal:ctrl.signal});
+    if(!r.ok) throw new Error('http'+r.status);
+    const j=await r.json();
+    let out=((j&&j[0])||[]).map(s=>(s&&s[0])||'').join('').replace(/\s+/g,' ').replace(/[.!?;·]+$/,'').trim();
+    if(!out) throw new Error('empty');
+    trCache[key]=out; try{ localStorage.setItem(TR_CACHE, JSON.stringify(trCache)); }catch(e){}
+    return out;
+  } finally { clearTimeout(to); }
+}
+/* script-agnostic closeness of a user's greek/latin input to a reference greek word */
+function grDist(input, greek){
+  if(hasGreek(input)) return lev(stripGr(input), stripGr(greek));
+  return lev(loose(stripLat(input)), loose(romanize(greek)));
+}
+function grSimilar(input, greek){
+  if(!input||!greek) return false;
+  const ref = hasGreek(input) ? stripGr(greek).length : loose(romanize(greek)).length;
+  return grDist(input, greek) <= typoBudget(ref);
+}
+/* lenient hebrew-meaning agreement, but a change of grammatical person is never a match */
+function heNorm(s){ return (s||'').replace(/[^֐-׿ ]/g,' ').replace(/\s+/g,' ').trim(); }
+function heSimilar(a,b){
+  a=heNorm(a); b=heNorm(b); if(!a||!b) return false;
+  if(a===b) return true;
+  const pa=leadPron(a), pb=leadPron(b);
+  if(pa&&pb&&pa!==pb) return false;
+  if(lev(a,b)<=Math.max(1,Math.floor(Math.min(a.length,b.length)/4))) return true;
+  const aw=heWords(a), bw=heWords(b);
+  const nrm=w=> (w.length>2 && 'הבלכמו'.indexOf(w[0])>=0) ? w.slice(1) : w;
+  return aw.length>0 && aw.every(w=>bw.some(x=>{const w2=nrm(w),x2=nrm(x);return x===w||w2===x2||lev(w2,x2)<=(w2.length<=3?0:1);}));
+}
+function dupMsg(el){ return `המילה ${elBlock(el,romanize(el))} כבר נמצאת ברשימה שלך! 🎉 כבר למדת אותה.`; }
+function okMsg(el,tr,he){ return `${ic('checkCircle',18)} מעולה! ${elBlock(el,tr)} = <b>${he}</b> — נכון!`; }
+function rowAdd(label, el, tr, he){ return `<div class="btn-row"><button class="btn btn-main" onclick="acceptFix('${esc(el)}','${esc(tr)}','${esc(he)}')">${label}</button><button class="btn btn-ghost" onclick="hideVerdict()">ביטול</button></div>`; }
+function rowFix(fixEl, fixTr, fixHe, rawEl, rawHe){ return `<div class="btn-row"><button class="btn btn-main" onclick="acceptFix('${esc(fixEl)}','${esc(fixTr)}','${esc(fixHe)}')">הוסף את הנכון ✓</button><button class="btn btn-ghost" onclick="forceAdd('${esc(rawEl)}','${esc(rawHe)}')">כמו שכתבתי</button></div>`; }
+
+async function onlineCheck(rawEl, rawHe){
+  const greekScript = hasGreek(rawEl) ? rawEl.trim() : null;
+  const latin = (rawEl && !greekScript) ? rawEl.trim() : null;
+  if(!rawHe && !greekScript) throw new Error('LOCAL');   // latin-only: nothing to anchor on — use dict
+
+  const apiGreek = rawHe ? await apiTranslate('iw','el', rawHe) : null;             // correct Greek for the meaning
+  const apiHe    = greekScript ? await apiTranslate('el','iw', greekScript) : null; // meaning of the user's Greek
+
+  // A) user typed Greek letters → verify meaning by translating it back
+  if(greekScript){
+    if(isDup(greekScript)){ showVerdict('warn', dupMsg(greekScript)); return; }
+    const trg = romanize(greekScript);
+    if(!rawHe){
+      showVerdict('warn', `מצאתי: ${elBlock(greekScript,trg)} — הפירוש הוא <b>"${apiHe||'?'}"</b>. להוסיף?`+rowAdd('כן, הוסף ✓', greekScript, trg, apiHe||''));
+      return;
+    }
+    if(apiHe && heSimilar(rawHe, apiHe)){ addWord(greekScript, trg, rawHe, true); showVerdict('ok', okMsg(greekScript, trg, rawHe)); return; }
+    showVerdict('bad', `לפי Google, ${elBlock(greekScript,trg)} פירושו <b>"${apiHe||'?'}"</b>, לא "<b>${rawHe}</b>".`+rowFix(greekScript, trg, apiHe||rawHe, rawEl, rawHe));
+    return;
+  }
+
+  // B) user typed Hebrew (+ maybe a Latin attempt) → anchor on the correct Greek for that meaning
+  if(apiGreek){
+    if(isDup(apiGreek)){ showVerdict('warn', dupMsg(apiGreek)); return; }
+    const trg = romanize(apiGreek);
+    if(!latin){
+      showVerdict('warn', `לפי Google, "<b>${rawHe}</b>" ביוונית זה ${elBlock(apiGreek,trg)}. להוסיף?`+rowAdd('כן, הוסף ✓', apiGreek, trg, rawHe));
+      return;
+    }
+    if(grSimilar(latin, apiGreek)){ addWord(apiGreek, trg, rawHe, true); showVerdict('ok', okMsg(apiGreek, trg, rawHe)); return; }
+    showVerdict('bad', `לא בדיוק זיהיתי את "<b>${latin}</b>". לפי Google, "<b>${rawHe}</b>" ביוונית זה ${elBlock(apiGreek,trg)}.`+rowFix(apiGreek, trg, rawHe, rawEl, rawHe));
+    return;
+  }
+  throw new Error('LOCAL');
+}
+
+function setBtnLoading(on){
+  const b=$('btnCheck');
+  if(on){ b.disabled=true; b.innerHTML='<span class="spinner"></span><span>בודק ברשת…</span>'; }
+  else { b.disabled=false; b.innerHTML=ic('checkCircle',19)+'<span>בדוק והוסף</span>'; }
+}
+
+let checking=false;
+async function check(){
+  if(checking) return;
   const rawEl = $('inEl').value.trim();
   const rawHe = $('inHe').value.trim();
   hideVerdict();
   if(!rawEl && !rawHe){ toast('כתוב מילה קודם 🙂'); return; }
+  if(rawEl && hasHebrew(rawEl)){ toast('בשדה הזה כותבים את המילה ביוונית 🙂'); return; }
+  checking=true; setBtnLoading(true);
+  try{
+    await onlineCheck(rawEl, rawHe);
+  }catch(err){
+    if(!(err && err.message==='LOCAL')) toast('אין חיבור יציב — בדקתי מול המילון המובנה');
+    checkLocal(rawEl, rawHe);
+  }finally{
+    checking=false; setBtnLoading(false);
+  }
+}
+
+/* ---------- offline fallback: the built-in dictionary ---------- */
+function checkLocal(rawEl, rawHe){
   if(!rawEl){
     // only hebrew given — try reverse lookup and suggest the greek
     const rev = matchHebrew(rawHe);
@@ -447,7 +553,6 @@ function check(){
     } else toast('כתוב גם את המילה ביוונית');
     return;
   }
-  if(hasHebrew(rawEl)){ toast('בשדה הזה כותבים את המילה ביוונית 🙂'); return; }
 
   const m = matchGreek(rawEl);
 
@@ -508,7 +613,7 @@ function renderList(){
       <div class="info">
         <div class="el">${w.el}${w.tr?`<span class="wtr">${w.tr}</span>`:''}</div>
         <div class="he">${w.he}</div>
-        <div class="meta">${fmtDate(w.ts)} · ${w.v?ic('check',12)+' אומת מול המילון':'<span class="unv">לא אומת</span>'}</div>
+        <div class="meta">${fmtDate(w.ts)} · ${w.v?ic('check',12)+' אומת':'<span class="unv">לא אומת</span>'}</div>
       </div>
       <button class="icon-btn del" data-del="${idx}">${ic('trash',18)}</button>
     </div>`;
