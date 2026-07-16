@@ -22,7 +22,7 @@ jobs:
           git fetch origin master
           git checkout -B master origin/master
           git fetch origin ${{ inputs.branch }}
-          git checkout origin/${{ inputs.branch }} -- greek-vocab.html greek-vocab-manifest.json icon-greek-vocab-v2.svg icon-greek-vocab-180-v2.png icon-greek-vocab-512-v2.png index.html sw.js
-          git add greek-vocab.html greek-vocab-manifest.json icon-greek-vocab-v2.svg icon-greek-vocab-180-v2.png icon-greek-vocab-512-v2.png index.html sw.js
+          git checkout origin/${{ inputs.branch }} -- greek-vocab.html greek-vocab-manifest.json icon-greek-vocab-v3.svg icon-greek-vocab-180-v3.png icon-greek-vocab-512-v3.png index.html sw.js
+          git add greek-vocab.html greek-vocab-manifest.json icon-greek-vocab-v3.svg icon-greek-vocab-180-v3.png icon-greek-vocab-512-v3.png index.html sw.js
           git diff --cached --quiet && echo "No changes" || git commit -m "Deploy ${{ inputs.branch }}"
           git push origin master
