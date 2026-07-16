@@ -2,7 +2,7 @@
   "name": "אוצר המילים שלי · יוונית",
   "short_name": "אוצר מילים",
   "description": "סופר המילים שלמדת ביוונית — הוספה עם אימות מול מילון, השמעה וסטטיסטיקות.",
-  "start_url": "./greek-vocab.html",
+  "start_url": "./greek-vocab",
   "scope": ".",
   "display": "standalone",
   "orientation": "portrait",
