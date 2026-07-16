@@ -19,6 +19,8 @@ jobs:
         run: |
           git config user.email "action@github.com"
           git config user.name "GitHub Action"
+          git fetch origin master
+          git checkout -B master origin/master
           git fetch origin ${{ inputs.branch }}
           git checkout origin/${{ inputs.branch }} -- greek-vocab.html greek-vocab-manifest.json icon-greek-vocab.svg icon-greek-vocab-180.png icon-greek-vocab-512.png index.html sw.js
           git add greek-vocab.html greek-vocab-manifest.json icon-greek-vocab.svg icon-greek-vocab-180.png icon-greek-vocab-512.png index.html sw.js
