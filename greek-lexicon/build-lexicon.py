@@ -39,6 +39,11 @@ EN_JSONL_URL    = "https://kaikki.org/dictionary/English/kaikki.org-dictionary-E
 
 GREEK_RE = re.compile(r"[Ͱ-Ͽἀ-῿]")
 NIQQUD_RE = re.compile(r"[֑-ׇ]")
+# glosses that mean "this is not a real lemma, see the other spelling"
+REDIRECT_RE = re.compile(
+    r"^(misspelling|alternative (spelling|form)|obsolete (spelling|form)|"
+    r"dated (spelling|form)|rare (spelling|form)|superseded (spelling|form)|"
+    r"informal (spelling|form)|abbreviation|initialism|contraction) of ", re.I)
 
 # ------------------------------------------------------------- normalization --
 def strip_accents_gr(s: str) -> str:
@@ -90,21 +95,23 @@ def load_greek():
                 continue
             n += 1
             pos = e.get("pos")
-            glosses = []
-            is_form = False
+            real_glosses = []
             for s in (e.get("senses") or []):
-                for g in (s.get("glosses") or []):
-                    glosses.append(g)
-                if s.get("form_of") or ("form-of" in (s.get("tags") or [])):
-                    is_form = True
-                    for fo in (s.get("form_of") or []):
-                        tgt = fo.get("word")
-                        if tgt:
-                            form2lemma.setdefault(strip_accents_gr(w), tgt)
-            if is_form:
-                continue  # this entry is an inflected form, not a lemma
+                gl = s.get("glosses") or []
+                # inflected form OR alternative/misspelling entry -> map to its lemma, don't treat as lemma
+                redirect = bool(s.get("form_of") or s.get("alt_of")
+                                or REDIRECT_RE.match(" ".join(gl))
+                                or ({"form-of", "alt-of", "misspelling"} & set(s.get("tags") or [])))
+                for fo in (s.get("form_of") or []) + (s.get("alt_of") or []):
+                    tgt = fo.get("word")
+                    if tgt:
+                        form2lemma.setdefault(w.lower(), tgt)
+                if not redirect:
+                    real_glosses.extend(gl)
+            if not real_glosses:
+                continue  # purely a form / alternative / misspelling — not a lemma
             rec = lemmas.setdefault(w, {"pos": pos, "glosses": [], "forms": []})
-            for g in glosses:
+            for g in real_glosses:
                 if g not in rec["glosses"]:
                     rec["glosses"].append(g)
             for f in (e.get("forms") or []):
@@ -116,30 +123,43 @@ def load_greek():
                     continue
                 if fv not in rec["forms"]:
                     rec["forms"].append(fv)
-                form2lemma.setdefault(strip_accents_gr(fv), w)
+                form2lemma.setdefault(fv.lower(), w)   # accented key (accent-aware resolution)
     print(f"  parsed {n} Greek entries -> {len(lemmas)} lemmas, {len(form2lemma)} form mappings")
     return lemmas, form2lemma
 
 # ------------------------------------------------ step B: frequency ranking ---
 def load_freq():
-    freq = {}
+    freq = {}   # accented wordform -> count (keep accents: πότε ≠ ποτέ)
     with open(FREQ_TXT, encoding="utf-8") as fh:
         for line in fh:
             parts = line.split()
             if len(parts) == 2 and parts[1].isdigit():
-                freq[strip_accents_gr(parts[0])] = int(parts[1])
+                freq[parts[0].lower()] = int(parts[1])
     return freq
 
 def pick_top_lemmas(lemmas, form2lemma, freq, top_n):
-    """Aggregate wordform frequency onto lemmas, return top_n (lemma, total_count)."""
+    """Aggregate wordform frequency onto lemmas, return top_n (lemma, total_count).
+    Resolution priority: a form that IS a lemma headword counts to itself (accent-exact
+    first, so νερό→νερό and πότε≠ποτέ), then the inflection map, then accent-stripped."""
+    self_exact = {}
+    self_norm = {}
+    for w in lemmas:
+        self_exact.setdefault(w.lower(), w)
+        self_norm.setdefault(strip_accents_gr(w), w)
+    f2l_norm = {}
+    for k, v in form2lemma.items():
+        f2l_norm.setdefault(strip_accents_gr(k), v)
+
+    def resolve(form):
+        fl = form.lower()
+        return (self_exact.get(fl) or form2lemma.get(fl)
+                or self_norm.get(strip_accents_gr(fl)) or f2l_norm.get(strip_accents_gr(fl)))
+
     agg = {}
-    for form_norm, count in freq.items():
-        lemma = form2lemma.get(form_norm)
-        if not lemma and form_norm in {strip_accents_gr(k): k for k in lemmas}:
-            lemma = form_norm
+    for form, count in freq.items():
+        lemma = resolve(form)
         if lemma and lemma in lemmas:
             agg[lemma] = agg.get(lemma, 0) + count
-    # lemmas that never matched a frequency form still count with 0 (kept only if room)
     ranked = sorted(agg.items(), key=lambda kv: kv[1], reverse=True)
     return ranked[:top_n]
 
@@ -190,8 +210,14 @@ def build_greek2heb(target_norm):
                         {"word": strip_niqqud(w), "niqqud": w, "roman": t.get("roman")})
         if not by_el:
             continue
+        all_he = [h for hl in by_he.values() for h in hl]
         for sense, gns in by_el.items():
-            hebs = by_he.get(sense) or []
+            # sense-matched Hebrew, plus Hebrew tagged with no sense (applies broadly);
+            # if the Greek itself had no sense tag, consider all Hebrew in the entry.
+            if sense is None:
+                hebs = all_he
+            else:
+                hebs = list(by_he.get(sense) or []) + list(by_he.get(None) or [])
             if not hebs:
                 continue
             for gn in gns:
