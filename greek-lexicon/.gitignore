@@ -1,0 +1,5 @@
+# large open-source source dumps (downloaded by build-lexicon.py, not committed)
+kaikki-greek.jsonl
+kaikki-english.jsonl
+el_50k.txt
+el_full.txt
