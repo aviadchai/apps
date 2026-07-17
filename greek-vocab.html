@@ -27,6 +27,7 @@
   header{text-align:center;margin-bottom:4px;}
   header h1{font-size:1.35rem;font-weight:800;color:var(--plum);display:flex;align-items:center;justify-content:center;gap:9px;}
   header .sub{font-size:0.85rem;color:rgba(62,44,86,0.5);margin-top:3px;font-weight:600;}
+  .appver{display:inline-block;margin-top:6px;font-size:0.66rem;font-weight:700;color:var(--teal-dark);background:rgba(15,185,167,0.12);border-radius:999px;padding:2px 10px;letter-spacing:.3px;}
   .hero{margin:20px auto 0;width:185px;height:185px;border-radius:50%;
     background:radial-gradient(circle at 32% 28%,#2FE0C9,var(--teal) 55%,var(--teal-dark) 100%);
     box-shadow:0 12px 32px rgba(15,185,167,0.35), inset 0 -8px 18px rgba(0,0,0,0.12), inset 0 6px 14px rgba(255,255,255,0.25);
@@ -141,6 +142,7 @@
   <header>
     <h1 id="pageTitle">אוצר המילים שלי</h1>
     <div class="sub">כמה מילים ביוונית כבר למדת?</div>
+    <div class="appver" id="appVer"></div>
     <div class="hero">
       <div class="num" id="heroNum">0</div>
       <div class="lbl">מילים למדתי</div>
@@ -790,6 +792,8 @@ $('tabWords').onclick=()=>{$('tabWords').classList.add('on');$('tabStats').class
 $('tabStats').onclick=()=>{$('tabStats').classList.add('on');$('tabWords').classList.remove('on');$('scrStats').classList.remove('hidden');$('scrWords').classList.add('hidden');renderStats();};
 
 /* static UI icons */
+const APP_VERSION = 'v35';
+$('appVer').textContent = APP_VERSION;
 $('pageTitle').innerHTML = ic('book',24)+'<span>אוצר המילים שלי</span>';
 $('tabWords').innerHTML = ic('pencil',18)+'<span>מילים</span>';
 $('tabStats').innerHTML = ic('chart',18)+'<span>סטטיסטיקה</span>';
