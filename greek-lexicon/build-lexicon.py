@@ -35,7 +35,7 @@ USE_CURL    = os.environ.get("USE_CURL") == "1"       # shell out to curl (proxy
 
 GREEK_JSONL_URL = "https://kaikki.org/dictionary/Greek/kaikki.org-dictionary-Greek.jsonl"
 FREQ_URL        = "https://raw.githubusercontent.com/hermitdave/FrequencyWords/master/content/2018/el/el_50k.txt"
-EN_WORD_URL     = "https://kaikki.org/dictionary/English/meaning/{a}/{ab}/{w}.jsonl"
+EN_JSONL_URL    = "https://kaikki.org/dictionary/English/kaikki.org-dictionary-English.jsonl"
 
 GREEK_RE = re.compile(r"[Ͱ-Ͽἀ-῿]")
 NIQQUD_RE = re.compile(r"[֑-ׇ]")
@@ -144,68 +144,64 @@ def pick_top_lemmas(lemmas, form2lemma, freq, top_n):
     return ranked[:top_n]
 
 # ------------------------------------- step C: Hebrew via English pivot -------
-_en_cache = {}
-def fetch_english(word):
-    key = word.lower()
-    if key in _en_cache:
-        return _en_cache[key]
-    w = key
-    a = urllib.parse.quote(w[0]); ab = urllib.parse.quote(w[:2]); wq = urllib.parse.quote(w)
-    url = EN_WORD_URL.format(a=a, ab=ab, w=wq)
-    rows = []
-    try:
-        raw = http_get(url)
-        for line in raw.splitlines():
-            line = line.strip()
-            if line:
-                try: rows.append(json.loads(line))
-                except json.JSONDecodeError: pass
-    except Exception:
-        rows = []
-    _en_cache[key] = rows
-    return rows
+# One streaming pass over the English extraction (per-word fetching does not scale:
+# ~1.6 s/word × thousands of lemmas). For each English entry we look at its
+# translation table; when a sense lists BOTH one of our target Greek lemmas and a
+# Hebrew word, that Hebrew is a verified translation of the Greek (co-occurrence).
+def english_stream():
+    if USE_CURL:
+        p = subprocess.Popen(["curl", "-sSL", EN_JSONL_URL], stdout=subprocess.PIPE)
+        for raw in p.stdout:
+            yield raw.decode("utf-8", "replace")
+        p.wait()
+    else:
+        with urllib.request.urlopen(EN_JSONL_URL, timeout=900) as r:
+            for raw in r:
+                yield raw.decode("utf-8", "replace")
 
-def english_headwords(glosses):
-    """Turn Greek->English glosses into candidate English headwords to look up."""
-    cands = []
-    for g in glosses[:4]:
-        g = re.sub(r"\(.*?\)", "", g).strip()          # drop parentheticals
-        g = re.sub(r"^(to|a|an|the)\s+", "", g, flags=re.I).strip()
-        if not g:
+def build_greek2heb(target_norm):
+    g2h = {}
+    n = 0
+    for line in english_stream():
+        line = line.strip()
+        if not line:
             continue
-        if g.lower() not in [c.lower() for c in cands]:
-            cands.append(g)                             # full phrase, e.g. "good morning"
-        first = g.split(",")[0].split(";")[0].split()  # and its first content word
-        if first and first[0].lower() not in [c.lower() for c in cands]:
-            cands.append(first[0])
-    return cands[:4]
-
-def hebrew_for(lemma, glosses):
-    """PIVOT: find an English entry whose translation table lists our Greek lemma,
-    and take the Hebrew translation(s) from the same sense (co-occurrence = verified)."""
-    lemma_norm = strip_accents_gr(lemma)
-    for hw in english_headwords(glosses):
-        for e in fetch_english(hw):
-            trans = e.get("translations") or []
-            # senses that contain our Greek lemma
-            greek_senses = {t.get("sense") for t in trans
-                            if (t.get("code") == "el" or (t.get("lang") or "").lower() in ("greek", "modern greek"))
-                            and strip_accents_gr(t.get("word") or "") == lemma_norm}
-            if not greek_senses:
+        n += 1
+        if n % 200000 == 0:
+            print(f"   …scanned {n} English entries; {len(g2h)}/{len(target_norm)} target lemmas have Hebrew")
+        try:
+            e = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        trans = e.get("translations")
+        if not trans:
+            continue
+        by_el, by_he = {}, {}
+        for t in trans:
+            code = t.get("code"); lang = (t.get("lang") or "").lower()
+            if code == "el" or lang in ("greek", "modern greek"):
+                gn = strip_accents_gr(t.get("word") or "")
+                if gn in target_norm:
+                    by_el.setdefault(t.get("sense"), set()).add(gn)
+            elif code == "he" or lang == "hebrew":
+                w = t.get("word") or ""
+                if w:
+                    by_he.setdefault(t.get("sense"), []).append(
+                        {"word": strip_niqqud(w), "niqqud": w, "roman": t.get("roman")})
+        if not by_el:
+            continue
+        for sense, gns in by_el.items():
+            hebs = by_he.get(sense) or []
+            if not hebs:
                 continue
-            hebs = []
-            for t in trans:
-                if (t.get("code") == "he" or (t.get("lang") or "").lower() == "hebrew") and t.get("sense") in greek_senses:
-                    word = t.get("word") or ""
-                    hebs.append({"word": strip_niqqud(word), "niqqud": word, "roman": t.get("roman")})
-            if hebs:
-                # dedupe by stripped word, keep order
-                seen, out = set(), []
+            for gn in gns:
+                lst = g2h.setdefault(gn, [])
+                have = {x["word"] for x in lst}
                 for h in hebs:
-                    if h["word"] and h["word"] not in seen:
-                        seen.add(h["word"]); out.append(h)
-                return out, hw
-    return [], None
+                    if h["word"] and h["word"] not in have:
+                        lst.append(h); have.add(h["word"])
+    print(f"   scanned {n} English entries; {len(g2h)} target lemmas got Hebrew")
+    return g2h
 
 # ------------------------------------------------------------------- bands ----
 def band(rank_pos, total):
@@ -227,11 +223,14 @@ def main():
     top = pick_top_lemmas(lemmas, form2lemma, freq, TOP_N)
     print(f"   selected {len(top)} lemmas")
 
-    print("C. Hebrew via English pivot (per headword, cached) …")
+    print("C. Hebrew via English pivot — single streaming pass over English extraction …")
+    target_norm = {strip_accents_gr(lemma) for lemma, _ in top}
+    g2h = build_greek2heb(target_norm)
+
     out, with_he = [], 0
     for i, (lemma, count) in enumerate(top, 1):
         info = lemmas[lemma]
-        hebs, via = hebrew_for(lemma, info["glosses"])
+        hebs = g2h.get(strip_accents_gr(lemma), [])
         if hebs: with_he += 1
         out.append({
             "lemma": lemma,
@@ -240,14 +239,11 @@ def main():
             "gloss_en_all": info["glosses"][:4],
             "hebrew": hebs,                         # [] -> app shows English gloss (fallback)
             "hebrew_source": "wiktionary-en-pivot" if hebs else "none",
-            "hebrew_via_en": via,
             "inflections": info["forms"][:20],
             "freq_count": count,
             "freq_rank": i,
             "freq_band": band(i, len(top)),
         })
-        if i % 25 == 0:
-            print(f"   {i}/{len(top)}  (hebrew so far: {with_he})")
 
     # forms index: every inflected form -> lemma, for the selected lemmas
     lemma_set = {r["lemma"] for r in out}
