@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>סקירת תוכן יווני · אישור לפני פרסום</title>
+<style>
+  :root{--teal:#0FB9A7;--teal-dark:#0A8577;--coral:#FF6B6B;--plum:#3E2C56;--bg:#f6f7f9;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--plum);padding:20px 14px 60px;}
+  .wrap{max-width:760px;margin:0 auto;}
+  h1{font-size:1.3rem;margin-bottom:4px;}
+  .sub{color:#6b7280;font-size:.85rem;margin-bottom:16px;}
+  .bar{position:sticky;top:0;z-index:5;background:var(--bg);padding:10px 0;display:flex;flex-wrap:wrap;gap:10px;align-items:center;border-bottom:1px solid #e5e7eb;margin-bottom:14px;}
+  .count{font-size:.85rem;font-weight:700;}
+  .count .keep{color:var(--teal-dark);} .count .flag{color:var(--coral);}
+  select,button,input[type=file]{font-family:inherit;font-size:.85rem;}
+  .btn{border:none;border-radius:10px;padding:9px 16px;font-weight:700;cursor:pointer;}
+  .btn-export{background:var(--teal);color:#fff;margin-inline-start:auto;}
+  .btn-export:active{background:var(--teal-dark);}
+  select{padding:7px 10px;border-radius:9px;border:1px solid #d1d5db;background:#fff;}
+  .load{background:#fff;border:1px dashed #cbd5e1;border-radius:12px;padding:16px;text-align:center;color:#6b7280;font-size:.85rem;margin-bottom:14px;}
+  .card{background:#fff;border:1px solid #eceef1;border-left:4px solid var(--teal);border-radius:14px;padding:14px 16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+  .card.flag{border-left-color:var(--coral);background:#fff8f8;}
+  .card.problem{border-left-color:#f59e0b;}
+  .top{display:flex;align-items:flex-start;gap:12px;}
+  .greek{font-size:1.5rem;font-weight:800;color:var(--teal-dark);direction:ltr;unicode-bidi:isolate;}
+  .pron{font-size:.8rem;color:#9ca3af;margin-top:2px;}
+  .badges{margin-inline-start:auto;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;}
+  .badge{font-size:.68rem;font-weight:700;border-radius:999px;padding:2px 9px;background:#eef2f5;color:#64748b;white-space:nowrap;}
+  .badge.rank-high{background:#e6f7f4;color:var(--teal-dark);} .badge.rank-medium{background:#fef6e6;color:#b45309;} .badge.rank-low{background:#f1f1f4;color:#6b7280;}
+  .tr{font-size:1.05rem;font-weight:600;margin:8px 0 2px;}
+  .gloss{font-size:.82rem;color:#6b7280;}
+  .gloss b,.mnem b,.ex b{color:#374151;}
+  .mnem{font-size:.85rem;background:#f8fafc;border-radius:9px;padding:8px 10px;margin-top:8px;}
+  .ex{font-size:.85rem;margin-top:6px;color:#475569;}
+  .ex .g{direction:ltr;unicode-bidi:isolate;color:var(--teal-dark);font-weight:600;}
+  .problems{font-size:.72rem;color:#b45309;background:#fffbeb;border-radius:8px;padding:5px 9px;margin-top:8px;}
+  .actions{display:flex;gap:8px;margin-top:10px;}
+  .toggle{flex:1;border:1.5px solid #e5e7eb;background:#fff;border-radius:10px;padding:9px;font-weight:700;cursor:pointer;color:#6b7280;}
+  .toggle.on-keep{border-color:var(--teal);background:#e6f7f4;color:var(--teal-dark);}
+  .toggle.on-flag{border-color:var(--coral);background:#fdecec;color:var(--coral);}
+  .empty{text-align:center;color:#9ca3af;padding:40px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🔎 סקירת תוכן יווני</h1>
+  <div class="sub">שלב האישור האנושי לפני פרסום. אשר (שמור) או סמן לתיקון כל כרטיס, ואז ייצא את המאושרים.</div>
+
+  <div class="load" id="loadBox">
+    לא נטען <code>greek-content.json</code> אוטומטית (קורה כשפותחים דרך file://).<br>
+    בחר את הקובץ ידנית: <input type="file" id="file" accept="application/json,.json">
+  </div>
+
+  <div class="bar" id="bar" style="display:none">
+    <span class="count"><span class="keep" id="cKeep">0</span> מאושרים · <span class="flag" id="cFlag">0</span> מסומנים · <span id="cTotal">0</span> סה״כ</span>
+    <select id="filter">
+      <option value="all">הצג הכל</option>
+      <option value="keep">רק מאושרים</option>
+      <option value="flag">רק מסומנים</option>
+      <option value="problem">רק עם אזהרת ולידציה</option>
+    </select>
+    <button class="btn btn-export" id="export">⬇ ייצוא המאושרים</button>
+  </div>
+
+  <div id="list"></div>
+</div>
+
+<script>
+const LS='greekReview_state';
+let items=[], state={};
+try{ state=JSON.parse(localStorage.getItem(LS))||{}; }catch(e){ state={}; }
+const $=id=>document.getElementById(id);
+const save=()=>localStorage.setItem(LS,JSON.stringify(state));
+const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const keyOf=it=>it.target;
+const stateOf=it=>state[keyOf(it)]||'keep';   // default: keep (approved)
+
+function load(data){
+  items=Array.isArray(data)?data:(data.items||[]);
+  $('loadBox').style.display='none';
+  $('bar').style.display='flex';
+  render();
+}
+// try auto-fetch (works when served over http); fall back to the file picker
+fetch('greek-content.json').then(r=>{ if(!r.ok) throw 0; return r.json(); }).then(load).catch(()=>{});
+$('file').addEventListener('change',e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader(); r.onload=()=>{ try{ load(JSON.parse(r.result)); }catch(err){ alert('קובץ JSON לא תקין: '+err.message); } }; r.readAsText(f);
+});
+$('filter').addEventListener('change',render);
+
+function render(){
+  const f=$('filter').value;
+  const list=$('list');
+  let keep=0,flag=0;
+  items.forEach(it=>{ stateOf(it)==='flag'?flag++:keep++; });
+  $('cKeep').textContent=keep; $('cFlag').textContent=flag; $('cTotal').textContent=items.length;
+
+  const shown=items.filter(it=>{
+    const st=stateOf(it);
+    if(f==='keep') return st==='keep';
+    if(f==='flag') return st==='flag';
+    if(f==='problem') return Array.isArray(it._problems)&&it._problems.length;
+    return true;
+  });
+  if(!shown.length){ list.innerHTML='<div class="empty">אין כרטיסים להצגה</div>'; return; }
+
+  list.innerHTML=shown.map((it,idx)=>{
+    const st=stateOf(it);
+    const i=items.indexOf(it);
+    const rank=(it.frequency_rank||'').toLowerCase();
+    const prob=Array.isArray(it._problems)&&it._problems.length;
+    return `<div class="card ${st==='flag'?'flag':''} ${prob?'problem':''}">
+      <div class="top">
+        <div>
+          <div class="greek">${esc(it.target)}</div>
+          <div class="pron">${esc(it.pronunciation)}</div>
+        </div>
+        <div class="badges">
+          <span class="badge">${esc(it.register||'')}</span>
+          <span class="badge rank-${esc(rank)}">${esc(it.frequency_rank||'')}</span>
+          ${it.srs_bucket!=null?`<span class="badge">SRS ${esc(it.srs_bucket)}</span>`:''}
+        </div>
+      </div>
+      <div class="tr">${esc(it.translation)}</div>
+      ${it.literal_gloss?`<div class="gloss"><b>מילולית:</b> ${esc(it.literal_gloss)}</div>`:''}
+      ${it.mnemonic?`<div class="mnem">💡 ${esc(it.mnemonic)}</div>`:''}
+      ${it.example?`<div class="ex"><span class="g">${esc(it.example)}</span>${it.example_translation?' — '+esc(it.example_translation):''}</div>`:''}
+      ${prob?`<div class="problems">⚑ ולידציה: ${esc(it._problems.join(', '))}</div>`:''}
+      <div class="actions">
+        <button class="toggle ${st==='keep'?'on-keep':''}" data-i="${i}" data-s="keep">✓ שמור</button>
+        <button class="toggle ${st==='flag'?'on-flag':''}" data-i="${i}" data-s="flag">⚑ סמן לתיקון</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  list.querySelectorAll('.toggle').forEach(b=>b.onclick=()=>{
+    state[keyOf(items[+b.dataset.i])]=b.dataset.s; save(); render();
+  });
+}
+
+$('export').addEventListener('click',()=>{
+  const approved=items.filter(it=>stateOf(it)!=='flag').map(it=>{
+    const o={}; for(const k in it) if(!k.startsWith('_')) o[k]=it[k]; return o;   // drop internal _fields
+  });
+  const blob=new Blob([JSON.stringify(approved,null,2)+'\n'],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='greek-content.approved.json'; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1500);
+});
+</script>
+</body>
+</html>
