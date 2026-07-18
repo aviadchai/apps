@@ -114,7 +114,7 @@
   .ttip{position:absolute;background:var(--plum);color:#fff;font-size:0.75rem;padding:6px 11px;border-radius:10px;pointer-events:none;white-space:nowrap;transform:translate(50%,-100%);display:none;z-index:5;line-height:1.5;box-shadow:0 6px 18px rgba(62,44,86,0.3);}
   .ttip.show{display:block;}
 
-  .toast{position:fixed;left:50%;bottom:34px;transform:translate(-50%,16px);z-index:60;background:var(--plum);color:#fff;font-size:0.85rem;font-weight:700;padding:11px 20px;border-radius:99px;box-shadow:0 10px 28px rgba(62,44,86,0.3);opacity:0;pointer-events:none;transition:opacity .28s ease, transform .28s cubic-bezier(.22,1,.36,1);max-width:88vw;text-align:center;display:inline-flex;align-items:center;gap:7px;}
+  .toast{position:fixed;left:50%;bottom:34px;transform:translate(-50%,16px);z-index:90;background:var(--plum);color:#fff;font-size:0.85rem;font-weight:700;padding:11px 20px;border-radius:99px;box-shadow:0 10px 28px rgba(62,44,86,0.3);opacity:0;pointer-events:none;transition:opacity .28s ease, transform .28s cubic-bezier(.22,1,.36,1);max-width:88vw;text-align:center;display:inline-flex;align-items:center;gap:7px;}
   .toast.show{opacity:1;transform:translate(-50%,0);}
   .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,0.35);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;}
   .spinner.dark{border-color:rgba(62,44,86,0.25);border-top-color:var(--teal-dark);}
@@ -134,6 +134,47 @@
   .search-wrap{position:relative;margin-bottom:12px;}
   .search-wrap .search{margin-bottom:0;padding-inline-start:46px;}
   .search-ic{position:absolute;inset-inline-start:17px;top:50%;transform:translateY(-50%);color:rgba(62,44,86,0.35);pointer-events:none;display:inline-flex;}
+  /* quiz */
+  .btn-quiz{background:linear-gradient(135deg,var(--coral),#FF9364);color:#fff;box-shadow:0 8px 22px rgba(255,107,107,0.35);margin-bottom:14px;}
+  .quiz{position:fixed;inset:0;z-index:70;background:linear-gradient(160deg,var(--bg1),var(--bg2));display:flex;flex-direction:column;align-items:center;padding:calc(env(safe-area-inset-top) + 18px) 18px calc(env(safe-area-inset-bottom) + 22px);overflow-y:auto;opacity:0;visibility:hidden;transition:opacity .25s ease, visibility .25s ease;}
+  .quiz.show{opacity:1;visibility:visible;}
+  .quiz-inner{width:100%;max-width:440px;margin:auto;}
+  .quiz-x{position:absolute;top:calc(env(safe-area-inset-top) + 14px);inset-inline-end:16px;width:38px;height:38px;border-radius:50%;border:none;background:rgba(62,44,86,0.08);color:var(--plum);font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  .q-title{font-size:1.25rem;font-weight:800;color:var(--plum);text-align:center;margin-bottom:6px;}
+  .q-sub{text-align:center;color:rgba(62,44,86,0.55);font-size:.85rem;margin-bottom:22px;}
+  .q-mode{width:100%;border:none;border-radius:18px;padding:18px;margin-bottom:12px;font-family:inherit;font-size:1rem;font-weight:800;cursor:pointer;text-align:start;color:#fff;box-shadow:0 8px 22px rgba(62,44,86,0.12);}
+  .q-mode small{display:block;font-weight:600;font-size:.78rem;opacity:.9;margin-top:3px;}
+  .q-mode.easy{background:var(--teal);} .q-mode.hard{background:linear-gradient(135deg,var(--coral),#FF9364);}
+  .q-mode:active{transform:scale(.98);}
+  .q-mode:disabled{background:rgba(62,44,86,0.1);color:rgba(62,44,86,0.45);box-shadow:none;cursor:default;}
+  .q-prog{display:flex;justify-content:space-between;align-items:center;font-size:.82rem;font-weight:700;color:var(--plum);margin-bottom:16px;}
+  .q-prog .pts{color:var(--teal-dark);}
+  .q-card{background:#fff;border-radius:22px;padding:26px 20px;text-align:center;box-shadow:0 10px 30px rgba(62,44,86,0.10);margin-bottom:16px;animation:rise .3s ease both;}
+  .q-prompt-el{font-size:2rem;font-weight:800;color:var(--teal-dark);direction:ltr;unicode-bidi:isolate;}
+  .q-prompt-he{font-size:1.5rem;font-weight:800;color:var(--plum);}
+  .q-prompt-sub{font-size:.8rem;color:rgba(62,44,86,0.45);margin-top:6px;}
+  .q-speak{margin-top:12px;background:rgba(15,185,167,0.12);color:var(--teal-dark);border:none;border-radius:12px;padding:8px 20px;font-size:.85rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;}
+  .q-opts{display:flex;flex-direction:column;gap:10px;}
+  .q-opt{border:1.5px solid #eee;background:#fff;border-radius:14px;padding:15px;font-size:1.05rem;font-weight:600;color:var(--plum);cursor:pointer;font-family:inherit;box-shadow:0 4px 14px rgba(62,44,86,0.06);}
+  .q-opt:active{transform:scale(.99);}
+  .q-opt.correct{background:var(--teal);color:#fff;border-color:var(--teal);}
+  .q-opt.wrong{background:rgba(255,107,107,.14);color:var(--coral);border-color:transparent;}
+  .q-opt:disabled{cursor:default;}
+  /* hard mode: letter builder */
+  .q-slot{min-height:56px;display:flex;flex-wrap:wrap;gap:6px;justify-content:center;align-items:center;background:#fff;border:2px dashed rgba(15,185,167,.35);border-radius:14px;padding:10px;margin-bottom:6px;direction:ltr;}
+  .q-slot:empty::before{content:'הקש/י על האותיות כדי לבנות את המילה';color:rgba(62,44,86,0.35);font-size:.8rem;font-weight:600;}
+  .q-slot.ok{border-color:var(--teal);background:rgba(15,185,167,.08);} .q-slot.bad{border-color:var(--coral);background:rgba(255,107,107,.06);}
+  .tile{min-width:40px;height:48px;padding:0 10px;border:none;border-radius:12px;font-size:1.35rem;font-weight:800;font-family:inherit;cursor:pointer;background:#fff;color:var(--teal-dark);box-shadow:0 3px 10px rgba(62,44,86,0.12);display:inline-flex;align-items:center;justify-content:center;}
+  .tile.placed{background:var(--teal);color:#fff;box-shadow:none;}
+  .tile:active{transform:scale(.94);}
+  .q-tiles{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:14px 0;direction:ltr;}
+  .q-actions{display:flex;gap:9px;margin-top:8px;}
+  .q-actions .btn{flex:1;}
+  .q-feed{text-align:center;font-weight:800;margin-top:12px;min-height:24px;}
+  .q-feed.ok{color:var(--teal-dark);} .q-feed.bad{color:var(--coral);}
+  .q-reveal{direction:ltr;font-weight:800;color:var(--teal-dark);}
+  .q-score{font-size:3rem;font-weight:800;color:var(--teal-dark);text-align:center;}
+  .q-score-cap{text-align:center;color:var(--plum);font-weight:600;margin:4px 0 18px;}
   .hidden{display:none !important;}
 </style>
 </head>
@@ -171,6 +212,8 @@
       <button class="btn btn-ghost btn-deep" id="btnDeep"></button>
       <div class="hint">אני מאמת את המילה בתרגום חי מהרשת (וללא רשת — מול מילון מובנה)</div>
     </div>
+
+    <button class="btn btn-quiz hidden" id="btnQuiz"></button>
 
     <div class="verdict" id="verdict"></div>
 
@@ -216,6 +259,25 @@
       <input type="file" id="importFile" accept="application/json,.json" hidden>
     </div>
   </section>
+</div>
+
+<div class="quiz" id="quiz">
+  <button class="quiz-x" id="quizClose">✕</button>
+  <div class="quiz-inner">
+    <div id="quizHome">
+      <div class="q-title">🎯 מבחן על המילים שלך</div>
+      <div class="q-sub" id="quizHomeSub"></div>
+      <button class="q-mode easy" id="qModeEasy">קל — לדעת את הפירוש<small>מראים מילה ביוונית, בוחרים את הפירוש הנכון</small></button>
+      <button class="q-mode hard" id="qModeHard">קשה — לכתוב ביוונית<small>מראים פירוש, מרכיבים את המילה מאותיות יווניות</small></button>
+    </div>
+    <div id="quizPlay" class="hidden">
+      <div class="q-prog"><span id="qProg"></span><span class="pts" id="qPts"></span></div>
+      <div class="q-card" id="qCard"></div>
+      <div id="qAnswer"></div>
+      <div class="q-feed" id="qFeed"></div>
+    </div>
+    <div id="quizEnd" class="hidden"></div>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -740,6 +802,7 @@ function renderStats(){
 
 function render(){
   $('heroNum').textContent=S.words.length;
+  $('btnQuiz').classList.toggle('hidden', S.words.length<4);
   renderList(); renderStats();
 }
 
@@ -792,7 +855,7 @@ $('tabWords').onclick=()=>{$('tabWords').classList.add('on');$('tabStats').class
 $('tabStats').onclick=()=>{$('tabStats').classList.add('on');$('tabWords').classList.remove('on');$('scrStats').classList.remove('hidden');$('scrWords').classList.add('hidden');renderStats();};
 
 /* static UI icons */
-const APP_VERSION = 'v35';
+const APP_VERSION = 'v36';
 $('appVer').textContent = APP_VERSION;
 $('pageTitle').innerHTML = ic('book',24)+'<span>אוצר המילים שלי</span>';
 $('tabWords').innerHTML = ic('pencil',18)+'<span>מילים</span>';
@@ -810,6 +873,113 @@ $('btnImport').innerHTML = ic('upload',18)+'<span>שחזור מקובץ</span>';
 $('btnExport').onclick = exportData;
 $('btnImport').onclick = () => $('importFile').click();
 $('importFile').onchange = e => { const f=e.target.files&&e.target.files[0]; if(f) importData(f); e.target.value=''; };
+
+/* ================= quiz on your words ================= */
+const QN = 10;                                   // max questions per round
+const GRK_ALPHABET = 'αβγδεζηθικλμνξοπρστυφχψω';
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+function sample(a,n){ return shuffle(a).slice(0,n); }
+const quizEl = $('quiz');
+let quiz = null;
+
+function eligibleWords(mode){
+  let pool = S.words.filter(w=>w.he && w.el && hasGreek(w.el));
+  if(mode==='hard') pool = pool.filter(w=>{ const n=stripGr(w.el); return n.length>=2 && n.length<=12 && !/\s/.test(n); });
+  return pool;
+}
+function openQuiz(){
+  $('quizHome').classList.remove('hidden');
+  $('quizPlay').classList.add('hidden');
+  $('quizEnd').classList.add('hidden');
+  const nEasy=eligibleWords('easy').length, nHard=eligibleWords('hard').length;
+  $('quizHomeSub').textContent = `${S.words.length} מילים ברשימה שלך`;
+  $('qModeEasy').disabled = nEasy<4;
+  $('qModeHard').disabled = nHard<1;
+  $('qModeEasy').innerHTML = nEasy<4 ? 'קל — לדעת את הפירוש<small>צריך לפחות 4 מילים עם פירוש</small>'
+    : 'קל — לדעת את הפירוש<small>מראים מילה ביוונית, בוחרים את הפירוש הנכון</small>';
+  $('qModeHard').innerHTML = nHard<1 ? 'קשה — לכתוב ביוונית<small>צריך מילה אחת לפחות באותיות יווניות</small>'
+    : 'קשה — לכתוב ביוונית<small>מראים פירוש, מרכיבים את המילה מאותיות יווניות</small>';
+  quizEl.classList.add('show');
+}
+function closeQuiz(){ quizEl.classList.remove('show'); try{ speechSynthesis.cancel(); }catch(e){} }
+function startQuiz(mode){
+  const pool = eligibleWords(mode);
+  quiz = { mode, qs: sample(pool, Math.min(QN, pool.length)), i:0, score:0 };
+  $('quizHome').classList.add('hidden');
+  $('quizEnd').classList.add('hidden');
+  $('quizPlay').classList.remove('hidden');
+  renderQ();
+}
+function renderQ(){
+  const {mode,qs,i}=quiz;
+  $('qProg').textContent = `שאלה ${i+1} מתוך ${qs.length}`;
+  $('qPts').textContent = `${quiz.score} נק׳`;
+  $('qFeed').textContent=''; $('qFeed').className='q-feed';
+  (mode==='easy'?renderEasy:renderHard)(qs[i]);
+}
+function nextQ(){ quiz.i++; if(quiz.i>=quiz.qs.length) endQuiz(); else renderQ(); }
+function renderEasy(w){
+  $('qCard').innerHTML = `<div class="q-prompt-el">${w.el}</div><div class="q-prompt-sub">${w.tr||''}</div><button class="q-speak" id="qSpk">${ic('speaker',18)}<span>השמעה</span></button>`;
+  $('qSpk').onclick=()=>speak(w.el,$('qSpk'));
+  const others = shuffle(S.words.filter(x=>x!==w && x.he && x.he!==w.he).map(x=>x.he));
+  const distinct=[]; for(const h of others){ if(!distinct.includes(h)){ distinct.push(h); if(distinct.length>=3) break; } }
+  const opts = shuffle([w.he,...distinct]);
+  $('qAnswer').innerHTML = `<div class="q-opts">${opts.map(o=>`<button class="q-opt" data-he="${o.replace(/"/g,'&quot;')}">${o}</button>`).join('')}</div>`;
+  $('qAnswer').querySelectorAll('.q-opt').forEach(b=>b.onclick=()=>{
+    $('qAnswer').querySelectorAll('.q-opt').forEach(x=>{ x.disabled=true; if(x.dataset.he===w.he) x.classList.add('correct'); });
+    if(b.dataset.he===w.he){ quiz.score++; $('qFeed').textContent='✓ נכון!'; $('qFeed').className='q-feed ok'; }
+    else{ b.classList.add('wrong'); $('qFeed').innerHTML=`הפירוש: <b>${w.he}</b>`; $('qFeed').className='q-feed bad'; }
+    $('qPts').textContent=`${quiz.score} נק׳`;
+    setTimeout(nextQ,1100);
+  });
+}
+function renderHard(w){
+  const target = stripGr(w.el);
+  $('qCard').innerHTML = `<div class="q-prompt-he">${w.he}</div><div class="q-prompt-sub">הרכיב/י את המילה ביוונית</div>`;
+  const distractCount = Math.min(4, Math.max(2, Math.floor(target.length/2)));
+  const distract = sample(GRK_ALPHABET.split('').filter(c=>!target.includes(c)), distractCount);
+  const tiles = shuffle([...target.split(''),...distract]);
+  const placed = new Array(tiles.length).fill(false);
+  let built=[];
+  $('qAnswer').innerHTML = `<div class="q-slot" id="qSlot"></div><div class="q-tiles" id="qTiles"></div>
+    <div class="q-actions"><button class="btn btn-ghost" id="qBack">⌫ מחיקה</button><button class="btn btn-main" id="qCheck">בדיקה</button></div>`;
+  const slotEl=$('qSlot'), tilesEl=$('qTiles');
+  function drawSlot(){ slotEl.className='q-slot'; slotEl.innerHTML = built.map(idx=>`<span class="tile placed" style="pointer-events:none">${tiles[idx]}</span>`).join(''); }
+  function drawTiles(){
+    tilesEl.innerHTML = tiles.map((c,idx)=>`<button class="tile ${placed[idx]?'placed':''}" data-idx="${idx}" ${placed[idx]?'disabled':''}>${c}</button>`).join('');
+    tilesEl.querySelectorAll('.tile').forEach(t=>t.onclick=()=>{ const idx=+t.dataset.idx; if(placed[idx])return; placed[idx]=true; built.push(idx); drawSlot(); drawTiles(); });
+  }
+  $('qBack').onclick=()=>{ const idx=built.pop(); if(idx!=null){ placed[idx]=false; drawSlot(); drawTiles(); } };
+  $('qCheck').onclick=()=>{
+    const answer=built.map(idx=>tiles[idx]).join('');
+    if(!answer){ toast('בנה/י את המילה קודם'); return; }
+    const ok = answer===target;
+    slotEl.className='q-slot '+(ok?'ok':'bad');
+    tilesEl.querySelectorAll('.tile').forEach(t=>t.disabled=true);
+    $('qBack').disabled=true; $('qCheck').disabled=true;
+    if(ok){ quiz.score++; $('qFeed').innerHTML=`✓ נכון! <span class="q-reveal">${w.el}</span>`; $('qFeed').className='q-feed ok'; }
+    else{ $('qFeed').innerHTML=`הכתיב הנכון: <span class="q-reveal">${w.el}</span>`; $('qFeed').className='q-feed bad'; }
+    $('qPts').textContent=`${quiz.score} נק׳`;
+    setTimeout(nextQ,1600);
+  };
+  drawSlot(); drawTiles();
+}
+function endQuiz(){
+  $('quizPlay').classList.add('hidden');
+  const end=$('quizEnd'); end.classList.remove('hidden');
+  const total=quiz.qs.length, s=quiz.score, pct=total?Math.round(100*s/total):0;
+  const msg = pct>=90?'מצוין! 🏆':pct>=70?'כל הכבוד! 👏':pct>=50?'יפה, ממשיכים להתאמן 💪':'עוד קצת תרגול ותשתלט על זה 🙂';
+  end.innerHTML = `<div class="q-score">${s}/${total}</div><div class="q-score-cap">${msg}</div>
+    <button class="btn btn-main" id="qAgain">עוד סבב</button>
+    <button class="btn btn-ghost" id="qHome" style="margin-top:9px">חזרה לבחירת מבחן</button>`;
+  $('qAgain').onclick=()=>startQuiz(quiz.mode);
+  $('qHome').onclick=openQuiz;
+}
+$('btnQuiz').textContent = '🎯 מבחן ותרגול';
+$('btnQuiz').onclick=openQuiz;
+$('quizClose').onclick=closeQuiz;
+$('qModeEasy').onclick=()=>{ if(!$('qModeEasy').disabled) startQuiz('easy'); };
+$('qModeHard').onclick=()=>{ if(!$('qModeHard').disabled) startQuiz('hard'); };
 
 render();
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
