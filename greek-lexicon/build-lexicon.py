@@ -179,6 +179,23 @@ def english_stream():
             for raw in r:
                 yield raw.decode("utf-8", "replace")
 
+def translation_groups(e):
+    """Yield co-sense translation groups. wiktextract stores translations either at
+    the top level (grouped by a `sense` string) OR inside each sense
+    (`senses[i].translations`) — the rich entries use the latter, which the old
+    parser missed. Each group is a list of translations sharing one meaning."""
+    top = e.get("translations") or []
+    if top:
+        by_sense = {}
+        for t in top:
+            by_sense.setdefault(t.get("sense"), []).append(t)
+        for g in by_sense.values():
+            yield g
+    for s in (e.get("senses") or []):
+        st = s.get("translations") or []
+        if st:
+            yield st
+
 def build_greek2heb(target_norm):
     g2h = {}
     n = 0
@@ -193,37 +210,24 @@ def build_greek2heb(target_norm):
             e = json.loads(line)
         except json.JSONDecodeError:
             continue
-        trans = e.get("translations")
-        if not trans:
-            continue
-        by_el, by_he = {}, {}
-        for t in trans:
-            code = t.get("code"); lang = (t.get("lang") or "").lower()
-            if code == "el" or lang in ("greek", "modern greek"):
-                gn = strip_accents_gr(t.get("word") or "")
-                if gn in target_norm:
-                    by_el.setdefault(t.get("sense"), set()).add(gn)
-            elif code == "he" or lang == "hebrew":
-                w = t.get("word") or ""
-                if w:
-                    by_he.setdefault(t.get("sense"), []).append(
-                        {"word": strip_niqqud(w), "niqqud": w, "roman": t.get("roman")})
-        if not by_el:
-            continue
-        all_he = [h for hl in by_he.values() for h in hl]
-        for sense, gns in by_el.items():
-            # sense-matched Hebrew, plus Hebrew tagged with no sense (applies broadly);
-            # if the Greek itself had no sense tag, consider all Hebrew in the entry.
-            if sense is None:
-                hebs = all_he
-            else:
-                hebs = list(by_he.get(sense) or []) + list(by_he.get(None) or [])
-            if not hebs:
+        for group in translation_groups(e):
+            gset, hlist = set(), []
+            for t in group:
+                code = t.get("code"); lang = (t.get("lang") or "").lower()
+                if code == "el" or lang in ("greek", "modern greek"):
+                    gn = strip_accents_gr(t.get("word") or "")
+                    if gn in target_norm:
+                        gset.add(gn)
+                elif code == "he" or lang == "hebrew":
+                    w = t.get("word") or ""
+                    if w:
+                        hlist.append({"word": strip_niqqud(w), "niqqud": w, "roman": t.get("roman")})
+            if not gset or not hlist:
                 continue
-            for gn in gns:
+            for gn in gset:
                 lst = g2h.setdefault(gn, [])
                 have = {x["word"] for x in lst}
-                for h in hebs:
+                for h in hlist:
                     if h["word"] and h["word"] not in have:
                         lst.append(h); have.add(h["word"])
     print(f"   scanned {n} English entries; {len(g2h)} target lemmas got Hebrew")
