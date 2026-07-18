@@ -175,6 +175,8 @@
   .tile.g-ok{background:var(--teal);color:#fff;box-shadow:none;}
   .tile.g-bad{background:var(--coral);color:#fff;box-shadow:none;}
   .tile.g-miss{background:rgba(255,107,107,0.12);color:var(--coral);border:1.5px dashed var(--coral);box-shadow:none;}
+  .q-cell{display:inline-flex;flex-direction:column;align-items:center;gap:3px;}
+  .q-want{font-size:.95rem;font-weight:800;color:var(--teal-dark);min-height:18px;line-height:1;direction:ltr;}
   .tile:active{transform:scale(.94);}
   .q-tiles{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:14px 0;direction:ltr;}
   .q-actions{display:flex;gap:9px;margin-top:8px;}
@@ -868,7 +870,7 @@ $('tabWords').onclick=()=>{$('tabWords').classList.add('on');$('tabStats').class
 $('tabStats').onclick=()=>{$('tabStats').classList.add('on');$('tabWords').classList.remove('on');$('scrStats').classList.remove('hidden');$('scrWords').classList.add('hidden');renderStats();};
 
 /* static UI icons */
-const APP_VERSION = 'v38';
+const APP_VERSION = 'v39';
 $('appVer').textContent = APP_VERSION;
 $('pageTitle').innerHTML = ic('book',24)+'<span>אוצר המילים שלי</span>';
 $('tabWords').innerHTML = ic('pencil',18)+'<span>מילים</span>';
@@ -959,40 +961,49 @@ function renderEasy(w){
 }
 function renderHard(w){
   const target = stripGr(w.el);
-  $('qCard').innerHTML = `<div class="q-timer">${ic('clock',14)}<span id="qTimer">0:00</span></div><div class="q-prompt-he">${w.he}</div><div class="q-prompt-sub">הרכיב/י את המילה ביוונית</div>`;
-  startTimer();
+  $('qCard').innerHTML = `<div class="q-prompt-he">${w.he}</div><div class="q-prompt-sub">הרכיב/י את המילה ביוונית</div>`;
   const distractCount = Math.min(4, Math.max(2, Math.floor(target.length/2)));
   const distract = sample(GRK_ALPHABET.split('').filter(c=>!target.includes(c)), distractCount);
   const tiles = shuffle([...target.split(''),...distract]);
   const placed = new Array(tiles.length).fill(false);
-  let built=[];
+  let built=[], graded=false;
   $('qAnswer').innerHTML = `<div class="q-slot" id="qSlot"></div><div class="q-tiles" id="qTiles"></div>
     <div class="q-actions"><button class="btn btn-ghost" id="qBack">⌫ מחיקה</button><button class="btn btn-main" id="qCheck">בדיקה</button></div>`;
   const slotEl=$('qSlot'), tilesEl=$('qTiles');
-  function drawSlot(){ slotEl.className='q-slot'; slotEl.innerHTML = built.map(idx=>`<span class="tile placed" style="pointer-events:none">${tiles[idx]}</span>`).join(''); }
-  function drawTiles(){
-    tilesEl.innerHTML = tiles.map((c,idx)=>`<button class="tile ${placed[idx]?'placed':''}" data-idx="${idx}" ${placed[idx]?'disabled':''}>${c}</button>`).join('');
-    tilesEl.querySelectorAll('.tile').forEach(t=>t.onclick=()=>{ const idx=+t.dataset.idx; if(placed[idx])return; placed[idx]=true; built.push(idx); drawSlot(); drawTiles(); });
+  function removeAt(pos){ if(graded) return; const idx=built[pos]; if(idx==null) return; placed[idx]=false; built.splice(pos,1); drawSlot(); drawTiles(); }
+  function drawSlot(){
+    slotEl.className='q-slot';
+    // tap a letter in the word to remove it
+    slotEl.innerHTML = built.map((idx,pos)=>`<button class="tile placed" data-pos="${pos}">${tiles[idx]}</button>`).join('');
+    slotEl.querySelectorAll('[data-pos]').forEach(b=>b.onclick=()=>removeAt(+b.dataset.pos));
   }
-  $('qBack').onclick=()=>{ const idx=built.pop(); if(idx!=null){ placed[idx]=false; drawSlot(); drawTiles(); } };
+  function drawTiles(){
+    tilesEl.innerHTML = tiles.map((c,idx)=>`<button class="tile ${placed[idx]?'placed':''}" data-idx="${idx}">${c}</button>`).join('');
+    tilesEl.querySelectorAll('.tile').forEach(t=>t.onclick=()=>{ if(graded) return; const idx=+t.dataset.idx;
+      if(placed[idx]){ const pos=built.indexOf(idx); if(pos>=0) removeAt(pos); }   // tap a placed tile again to remove it
+      else { placed[idx]=true; built.push(idx); drawSlot(); drawTiles(); } });
+  }
+  $('qBack').onclick=()=>{ if(graded) return; const idx=built.pop(); if(idx!=null){ placed[idx]=false; drawSlot(); drawTiles(); } };
   $('qCheck').onclick=()=>{
     const answer=built.map(idx=>tiles[idx]).join('');
     if(!answer){ toast('בנה/י את המילה קודם'); return; }
+    graded=true;
     const ok = answer===target;
-    stopTimer(); const took=fmtT(Date.now()-qStart);
     slotEl.className='q-slot '+(ok?'ok':'bad');
-    // grade each position on the word itself: green = right letter in the right place,
-    // red = wrong letter, red-dashed = a letter you were missing.
+    // grade each position on the word: green = right letter in the right place, red = wrong,
+    // red-dashed = a letter you were missing. The correct letter is shown ABOVE each cell.
     const n=Math.max(built.length, target.length);
     slotEl.innerHTML = Array.from({length:n},(_,i)=>{
       const c = i<built.length ? tiles[built[i]] : '';
-      const cls = c ? (c===target[i] ? 'g-ok' : 'g-bad') : 'g-miss';
-      return `<span class="tile ${cls}" style="pointer-events:none">${c}</span>`;
+      const want = target[i] || '';
+      const cls = c ? (c===want ? 'g-ok' : 'g-bad') : 'g-miss';
+      const above = (c===want) ? '' : want;   // show what should have been here when it differs
+      return `<span class="q-cell"><span class="q-want">${above}</span><span class="tile ${cls}" style="pointer-events:none">${c}</span></span>`;
     }).join('');
     tilesEl.querySelectorAll('.tile').forEach(t=>t.disabled=true);
     $('qBack').disabled=true; $('qCheck').disabled=true;
-    if(ok){ quiz.score++; $('qFeed').innerHTML=`✓ נכון! <span class="q-reveal">${w.el}</span> · ⏱ ${took}`; $('qFeed').className='q-feed ok'; }
-    else{ $('qFeed').innerHTML=`הכתיב הנכון: <span class="q-reveal">${w.el}</span> · ⏱ ${took}`; $('qFeed').className='q-feed bad'; }
+    if(ok){ quiz.score++; $('qFeed').innerHTML=`✓ נכון! <span class="q-reveal">${w.el}</span>`; $('qFeed').className='q-feed ok'; }
+    else{ $('qFeed').innerHTML=`הכתיב הנכון: <span class="q-reveal">${w.el}</span>`; $('qFeed').className='q-feed bad'; }
     $('qPts').textContent=`${quiz.score} נק׳`;
     showNext();
   };
