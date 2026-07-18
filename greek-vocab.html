@@ -135,7 +135,12 @@
   .search-wrap .search{margin-bottom:0;padding-inline-start:46px;}
   .search-ic{position:absolute;inset-inline-start:17px;top:50%;transform:translateY(-50%);color:rgba(62,44,86,0.35);pointer-events:none;display:inline-flex;}
   /* quiz */
-  .btn-quiz{background:linear-gradient(135deg,var(--coral),#FF9364);color:#fff;box-shadow:0 8px 22px rgba(255,107,107,0.35);margin-bottom:14px;}
+  /* "learned words / quiz" launcher — inverted app colours (teal on white), not red */
+  .btn-learned{background:#fff;border:1.5px solid var(--teal);color:var(--teal-dark);box-shadow:0 6px 18px rgba(15,185,167,0.16);margin-bottom:14px;}
+  .btn-learned:active{background:rgba(15,185,167,0.08);}
+  .btn-learned .n{background:var(--teal);color:#fff;border-radius:999px;font-size:.72rem;padding:1px 9px;font-weight:800;}
+  .q-timer{display:inline-flex;align-items:center;gap:5px;font-size:.8rem;font-weight:700;color:var(--teal-dark);background:rgba(15,185,167,0.1);border-radius:999px;padding:3px 11px;margin-bottom:12px;}
+  #qNext{margin-top:12px;}
   .quiz{position:fixed;inset:0;z-index:70;background:linear-gradient(160deg,var(--bg1),var(--bg2));display:flex;flex-direction:column;align-items:center;padding:calc(env(safe-area-inset-top) + 18px) 18px calc(env(safe-area-inset-bottom) + 22px);overflow-y:auto;opacity:0;visibility:hidden;transition:opacity .25s ease, visibility .25s ease;}
   .quiz.show{opacity:1;visibility:visible;}
   .quiz-inner{width:100%;max-width:440px;margin:auto;}
@@ -213,9 +218,9 @@
       <div class="hint">אני מאמת את המילה בתרגום חי מהרשת (וללא רשת — מול מילון מובנה)</div>
     </div>
 
-    <button class="btn btn-quiz hidden" id="btnQuiz"></button>
-
     <div class="verdict" id="verdict"></div>
+
+    <button class="btn btn-learned hidden" id="btnQuiz"></button>
 
     <div class="search-wrap hidden" id="searchWrap">
       <span class="search-ic" id="searchIc"></span>
@@ -275,6 +280,7 @@
       <div class="q-card" id="qCard"></div>
       <div id="qAnswer"></div>
       <div class="q-feed" id="qFeed"></div>
+      <div id="qNext"></div>
     </div>
     <div id="quizEnd" class="hidden"></div>
   </div>
@@ -337,7 +343,10 @@ const IC = {
   download:'<path d="M12 3v12"/><polyline points="7 10 12 15 17 10"/><path d="M5 20h14"/>',
   upload:'<path d="M12 21V9"/><polyline points="7 14 12 9 17 14"/><path d="M5 4h14"/>',
   shield:'<path d="M12 3l7 3v5c0 4.5-3 7.6-7 9-4-1.4-7-4.5-7-9V6z"/><polyline points="9 12 11.2 14 15 9.5"/>',
-  globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18"/>'
+  globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18"/>',
+  cap:'<path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v4.5c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5V12"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><polyline points="12 7.5 12 12 15 13.8"/>',
+  arrowRtl:'<line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>'
 };
 function ic(name,size){ size=size||20; return '<svg class="ic" viewBox="0 0 24 24" width="'+size+'" height="'+size+'" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(IC[name]||'')+'</svg>'; }
 
@@ -855,7 +864,7 @@ $('tabWords').onclick=()=>{$('tabWords').classList.add('on');$('tabStats').class
 $('tabStats').onclick=()=>{$('tabStats').classList.add('on');$('tabWords').classList.remove('on');$('scrStats').classList.remove('hidden');$('scrWords').classList.add('hidden');renderStats();};
 
 /* static UI icons */
-const APP_VERSION = 'v36';
+const APP_VERSION = 'v37';
 $('appVer').textContent = APP_VERSION;
 $('pageTitle').innerHTML = ic('book',24)+'<span>אוצר המילים שלי</span>';
 $('tabWords').innerHTML = ic('pencil',18)+'<span>מילים</span>';
@@ -901,7 +910,7 @@ function openQuiz(){
     : 'קשה — לכתוב ביוונית<small>מראים פירוש, מרכיבים את המילה מאותיות יווניות</small>';
   quizEl.classList.add('show');
 }
-function closeQuiz(){ quizEl.classList.remove('show'); try{ speechSynthesis.cancel(); }catch(e){} }
+function closeQuiz(){ stopTimer(); quizEl.classList.remove('show'); try{ speechSynthesis.cancel(); }catch(e){} }
 function startQuiz(mode){
   const pool = eligibleWords(mode);
   quiz = { mode, qs: sample(pool, Math.min(QN, pool.length)), i:0, score:0 };
@@ -910,8 +919,19 @@ function startQuiz(mode){
   $('quizPlay').classList.remove('hidden');
   renderQ();
 }
+let qTimerInt=null, qStart=0;
+function stopTimer(){ if(qTimerInt){ clearInterval(qTimerInt); qTimerInt=null; } }
+function fmtT(ms){ const s=Math.floor(ms/1000); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); }
+function startTimer(){ qStart=Date.now(); stopTimer(); qTimerInt=setInterval(()=>{ const el=$('qTimer'); if(el) el.textContent=fmtT(Date.now()-qStart); },250); }
+// manual advance — the answer stays on screen as long as you want (esp. after a mistake)
+function showNext(){
+  const last = quiz.i>=quiz.qs.length-1;
+  $('qNext').innerHTML = `<button class="btn btn-main" id="qNextBtn"><span>${last?'לסיכום':'לשאלה הבאה'}</span>${ic('arrowRtl',16)}</button>`;
+  $('qNextBtn').onclick=()=>{ $('qNext').innerHTML=''; nextQ(); };
+}
 function renderQ(){
   const {mode,qs,i}=quiz;
+  stopTimer(); $('qNext').innerHTML='';
   $('qProg').textContent = `שאלה ${i+1} מתוך ${qs.length}`;
   $('qPts').textContent = `${quiz.score} נק׳`;
   $('qFeed').textContent=''; $('qFeed').className='q-feed';
@@ -928,14 +948,15 @@ function renderEasy(w){
   $('qAnswer').querySelectorAll('.q-opt').forEach(b=>b.onclick=()=>{
     $('qAnswer').querySelectorAll('.q-opt').forEach(x=>{ x.disabled=true; if(x.dataset.he===w.he) x.classList.add('correct'); });
     if(b.dataset.he===w.he){ quiz.score++; $('qFeed').textContent='✓ נכון!'; $('qFeed').className='q-feed ok'; }
-    else{ b.classList.add('wrong'); $('qFeed').innerHTML=`הפירוש: <b>${w.he}</b>`; $('qFeed').className='q-feed bad'; }
+    else{ b.classList.add('wrong'); $('qFeed').innerHTML=`הפירוש הנכון: <b>${w.he}</b>`; $('qFeed').className='q-feed bad'; }
     $('qPts').textContent=`${quiz.score} נק׳`;
-    setTimeout(nextQ,1100);
+    showNext();
   });
 }
 function renderHard(w){
   const target = stripGr(w.el);
-  $('qCard').innerHTML = `<div class="q-prompt-he">${w.he}</div><div class="q-prompt-sub">הרכיב/י את המילה ביוונית</div>`;
+  $('qCard').innerHTML = `<div class="q-timer">${ic('clock',14)}<span id="qTimer">0:00</span></div><div class="q-prompt-he">${w.he}</div><div class="q-prompt-sub">הרכיב/י את המילה ביוונית</div>`;
+  startTimer();
   const distractCount = Math.min(4, Math.max(2, Math.floor(target.length/2)));
   const distract = sample(GRK_ALPHABET.split('').filter(c=>!target.includes(c)), distractCount);
   const tiles = shuffle([...target.split(''),...distract]);
@@ -954,17 +975,19 @@ function renderHard(w){
     const answer=built.map(idx=>tiles[idx]).join('');
     if(!answer){ toast('בנה/י את המילה קודם'); return; }
     const ok = answer===target;
+    stopTimer(); const took=fmtT(Date.now()-qStart);
     slotEl.className='q-slot '+(ok?'ok':'bad');
     tilesEl.querySelectorAll('.tile').forEach(t=>t.disabled=true);
     $('qBack').disabled=true; $('qCheck').disabled=true;
-    if(ok){ quiz.score++; $('qFeed').innerHTML=`✓ נכון! <span class="q-reveal">${w.el}</span>`; $('qFeed').className='q-feed ok'; }
-    else{ $('qFeed').innerHTML=`הכתיב הנכון: <span class="q-reveal">${w.el}</span>`; $('qFeed').className='q-feed bad'; }
+    if(ok){ quiz.score++; $('qFeed').innerHTML=`✓ נכון! <span class="q-reveal">${w.el}</span> · ⏱ ${took}`; $('qFeed').className='q-feed ok'; }
+    else{ $('qFeed').innerHTML=`הכתיב הנכון: <span class="q-reveal">${w.el}</span> · ⏱ ${took}`; $('qFeed').className='q-feed bad'; }
     $('qPts').textContent=`${quiz.score} נק׳`;
-    setTimeout(nextQ,1600);
+    showNext();
   };
   drawSlot(); drawTiles();
 }
 function endQuiz(){
+  stopTimer();
   $('quizPlay').classList.add('hidden');
   const end=$('quizEnd'); end.classList.remove('hidden');
   const total=quiz.qs.length, s=quiz.score, pct=total?Math.round(100*s/total):0;
@@ -975,7 +998,7 @@ function endQuiz(){
   $('qAgain').onclick=()=>startQuiz(quiz.mode);
   $('qHome').onclick=openQuiz;
 }
-$('btnQuiz').textContent = '🎯 מבחן ותרגול';
+$('btnQuiz').innerHTML = ic('cap',18)+'<span>מבחן על המילים שלמדתי</span>';
 $('btnQuiz').onclick=openQuiz;
 $('quizClose').onclick=closeQuiz;
 $('qModeEasy').onclick=()=>{ if(!$('qModeEasy').disabled) startQuiz('easy'); };
