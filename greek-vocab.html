@@ -139,6 +139,8 @@
   .btn-learned{background:#fff;border:1.5px solid var(--teal);color:var(--teal-dark);box-shadow:0 6px 18px rgba(15,185,167,0.16);margin-bottom:14px;}
   .btn-learned:active{background:rgba(15,185,167,0.08);}
   .btn-learned .n{background:var(--teal);color:#fff;border-radius:999px;font-size:.72rem;padding:1px 9px;font-weight:800;}
+  .back-btn{background:none;border:none;color:var(--teal-dark);font-weight:700;font-size:.92rem;font-family:inherit;display:inline-flex;align-items:center;gap:6px;margin-bottom:12px;cursor:pointer;padding:6px 2px;}
+  .back-btn:active{opacity:.7;}
   .q-timer{display:inline-flex;align-items:center;gap:5px;font-size:.8rem;font-weight:700;color:var(--teal-dark);background:rgba(15,185,167,0.1);border-radius:999px;padding:3px 11px;margin-bottom:12px;}
   #qNext{margin-top:12px;}
   .quiz{position:fixed;inset:0;z-index:70;background:linear-gradient(160deg,var(--bg1),var(--bg2));display:flex;flex-direction:column;align-items:center;padding:calc(env(safe-area-inset-top) + 18px) 18px calc(env(safe-area-inset-bottom) + 22px);overflow-y:auto;opacity:0;visibility:hidden;transition:opacity .25s ease, visibility .25s ease;}
@@ -209,30 +211,40 @@
 
   <!-- ============ WORDS SCREEN ============ -->
   <section id="scrWords">
-    <div class="card">
-      <h2>הוספת מילה חדשה</h2>
-      <div class="field">
-        <label>המילה ביוונית (אותיות יווניות או לטיניות)</label>
-        <input id="inEl" dir="ltr" placeholder="Kalimera / Καλημέρα" autocomplete="off" autocapitalize="off">
+    <!-- home: add a new word (fits without scrolling) -->
+    <div id="homeView">
+      <div class="card">
+        <h2>הוספת מילה חדשה</h2>
+        <div class="field">
+          <label>המילה ביוונית (אותיות יווניות או לטיניות)</label>
+          <input id="inEl" dir="ltr" placeholder="Kalimera / Καλημέρα" autocomplete="off" autocapitalize="off">
+        </div>
+        <div class="field">
+          <label>הפירוש בעברית</label>
+          <input id="inHe" placeholder="בוקר טוב" autocomplete="off">
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-main" id="btnCheck"></button>
+          <button class="btn btn-ghost" id="btnDeep"></button>
+        </div>
+        <div class="hint">מאמת בתרגום חי מהרשת (וללא רשת — מול מילון מובנה)</div>
       </div>
-      <div class="field">
-        <label>הפירוש בעברית</label>
-        <input id="inHe" placeholder="בוקר טוב" autocomplete="off">
-      </div>
-      <button class="btn btn-main" id="btnCheck"></button>
-      <button class="btn btn-ghost btn-deep" id="btnDeep"></button>
-      <div class="hint">אני מאמת את המילה בתרגום חי מהרשת (וללא רשת — מול מילון מובנה)</div>
+
+      <div class="verdict" id="verdict"></div>
+
+      <button class="btn btn-learned hidden" id="btnLearned"></button>
     </div>
 
-    <div class="verdict" id="verdict"></div>
-
-    <button class="btn btn-learned hidden" id="btnQuiz"></button>
-
-    <div class="search-wrap hidden" id="searchWrap">
-      <span class="search-ic" id="searchIc"></span>
-      <input class="search" id="search" placeholder="חיפוש ברשימה...">
+    <!-- the words you've learned + the quiz -->
+    <div id="learnedView" class="hidden">
+      <button class="back-btn" id="btnBack"></button>
+      <button class="btn btn-learned" id="btnQuiz"></button>
+      <div class="search-wrap hidden" id="searchWrap">
+        <span class="search-ic" id="searchIc"></span>
+        <input class="search" id="search" placeholder="חיפוש ברשימה...">
+      </div>
+      <div id="list"></div>
     </div>
-    <div id="list"></div>
   </section>
 
   <!-- ============ STATS SCREEN ============ -->
@@ -815,9 +827,14 @@ function renderStats(){
   });
 }
 
+function showHome(){ $('learnedView').classList.add('hidden'); $('homeView').classList.remove('hidden'); }
+function showLearned(){ $('homeView').classList.add('hidden'); $('learnedView').classList.remove('hidden'); renderList(); }
 function render(){
-  $('heroNum').textContent=S.words.length;
-  $('btnQuiz').classList.toggle('hidden', S.words.length<4);
+  const n=S.words.length;
+  $('heroNum').textContent=n;
+  $('btnLearned').classList.toggle('hidden', n===0);
+  $('btnLearned').innerHTML = ic('book',18)+'<span>המילים שלמדתי</span>'+(n?` <span class="n">${n}</span>`:'');
+  $('btnQuiz').classList.toggle('hidden', n<4);
   renderList(); renderStats();
 }
 
@@ -866,11 +883,11 @@ $('startDate').addEventListener('change',e=>{
   if(v && new Date(v)>new Date()){ toast('התאריך לא יכול להיות בעתיד'); e.target.value=S.startDate||''; return; }
   S.startDate=v||null; save(); renderStats(); toast('תאריך ההתחלה נשמר');
 });
-$('tabWords').onclick=()=>{$('tabWords').classList.add('on');$('tabStats').classList.remove('on');$('scrWords').classList.remove('hidden');$('scrStats').classList.add('hidden');};
+$('tabWords').onclick=()=>{$('tabWords').classList.add('on');$('tabStats').classList.remove('on');$('scrWords').classList.remove('hidden');$('scrStats').classList.add('hidden');showHome();};
 $('tabStats').onclick=()=>{$('tabStats').classList.add('on');$('tabWords').classList.remove('on');$('scrStats').classList.remove('hidden');$('scrWords').classList.add('hidden');renderStats();};
 
 /* static UI icons */
-const APP_VERSION = 'v39';
+const APP_VERSION = 'v40';
 $('appVer').textContent = APP_VERSION;
 $('pageTitle').innerHTML = ic('book',24)+'<span>אוצר המילים שלי</span>';
 $('tabWords').innerHTML = ic('pencil',18)+'<span>מילים</span>';
@@ -1021,8 +1038,11 @@ function endQuiz(){
   $('qAgain').onclick=()=>startQuiz(quiz.mode);
   $('qHome').onclick=openQuiz;
 }
-$('btnQuiz').innerHTML = ic('cap',18)+'<span>מבחן על המילים שלמדתי</span>';
+$('btnQuiz').innerHTML = ic('cap',18)+'<span>מבחן ותרגול</span>';
 $('btnQuiz').onclick=openQuiz;
+$('btnLearned').onclick=showLearned;
+$('btnBack').innerHTML = ic('arrowRtl',16)+'<span>חזרה להוספה</span>';
+$('btnBack').onclick=showHome;
 $('quizClose').onclick=closeQuiz;
 $('qModeEasy').onclick=()=>{ if(!$('qModeEasy').disabled) startQuiz('easy'); };
 $('qModeHard').onclick=()=>{ if(!$('qModeHard').disabled) startQuiz('hard'); };
