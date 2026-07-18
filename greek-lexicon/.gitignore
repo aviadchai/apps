@@ -3,3 +3,7 @@ kaikki-greek.jsonl
 kaikki-english.jsonl
 el_50k.txt
 el_full.txt
+
+# python bytecode
+__pycache__/
+*.pyc
