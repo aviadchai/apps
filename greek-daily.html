@@ -1215,7 +1215,7 @@ function render(){
   }
 
   document.body.classList.remove('study-mode');
-  label.innerHTML='2 מילים<br>של היום';
+  label.innerHTML='המילים<br>של היום';
 
   state.day.slots.forEach((slot, i) => {
     const e = entryOf(slot.word);
@@ -1464,15 +1464,26 @@ document.getElementById('addwOpen').onclick = openAddWords;
 document.getElementById('addwClose').onclick = closeAddWords;
 
 function wordState(g){ return state.known.includes(g)?'known' : (state.queue||[]).includes(g)?'queued' : 'new'; }
-function addToQueue(g){
-  const s=wordState(g);
-  if(s==='known'){ toast(ic('checkCircle',16)+'כבר ידעת את זה'); return; }
-  if(s==='queued'){ toast('כבר בתור 🎉'); return; }
-  state.queue.push(g); save(); renderStat();
-  toast(ic('plus',16)+'נוסף לתור הלמידה');
-  renderAddResults(addwInput.value);
+// Add a word so it joins today's words right away (you can have 3, 4+ a day).
+function queueWord(g){
+  if(state.known.includes(g)){ toast(ic('checkCircle',16)+'כבר ידעת את זה'); return; }
+  if(state.day.slots.some(s=>s.word===g && !s.done)){ toast('כבר במילים של היום 🎉'); return; }
+  if(!state.queue.includes(g)) state.queue.push(g);
+  if(!state.day.opened){
+    state.day.slots = pickSlots();      // opens the day; queued word comes first
+    state.day.opened = true; state.day.studyStart = 0;
+  } else {
+    state.day.slots.push({ word:g, done:false, studying:false });   // extra card, right now
+  }
+  save(); render();
+  toast(ic('plus',16)+'נוסף למילים של היום');
 }
-function removeFromQueue(g){ state.queue=(state.queue||[]).filter(w=>w!==g); save(); renderStat(); renderAddResults(addwInput.value); }
+function addToQueue(g){ queueWord(g); renderAddResults(addwInput.value); }
+function removeFromQueue(g){
+  state.queue=(state.queue||[]).filter(w=>w!==g);
+  state.day.slots=state.day.slots.filter(s=>!(s.word===g && !s.done));   // pull it off today too
+  save(); render(); renderAddResults(addwInput.value);
+}
 
 function addRow(e){
   const g=e[0], s=wordState(g);
@@ -1516,11 +1527,8 @@ async function translateAndAdd(q){
     else if(hasHebrew(q)){ he=q; greek=await apiTranslate('iw','el',q); tr=romanize(greek); }
     else { greek=await apiTranslate('en','el',q); he=await apiTranslate('en','iw',q); tr=romanize(greek); }
     if(!greek || !he) throw new Error('no result');
-    const existing = entryOf(greek);
-    if(!existing){ state.custom.push([greek,tr,he]); }
-    if(!state.queue.includes(greek) && !state.known.includes(greek)) state.queue.push(greek);
-    save(); renderStat();
-    toast(ic('checkCircle',16)+'נוסף: '+greek+' — '+he);
+    if(!entryOf(greek)){ state.custom.push([greek,tr,he]); }
+    queueWord(greek);   // adds to today's words immediately
     addwInput.value=''; renderAddResults('');
   }catch(err){
     toast(ic('x',16)+'לא הצלחתי לתרגם (בדקו חיבור לאינטרנט)');
