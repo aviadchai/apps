@@ -188,6 +188,56 @@
   .q-reveal{direction:ltr;font-weight:800;color:var(--teal-dark);}
   .q-score{font-size:3rem;font-weight:800;color:var(--teal-dark);text-align:center;}
   .q-score-cap{text-align:center;color:var(--plum);font-weight:600;margin:4px 0 18px;}
+
+  /* ============ LEARN tab ============ */
+  .learn-intro{text-align:center;font-size:0.9rem;font-weight:700;color:rgba(62,44,86,0.6);margin:2px 0 14px;display:flex;align-items:center;justify-content:center;gap:7px;}
+  .lcard{background:#fff;border-radius:22px;padding:22px 20px 16px;margin-bottom:14px;box-shadow:0 10px 30px rgba(62,44,86,0.10);text-align:center;animation:rise .35s ease both;}
+  .lgreek{font-size:2.1rem;font-weight:800;color:var(--teal-dark);direction:ltr;unicode-bidi:isolate;line-height:1.1;}
+  .lgreek.big{font-size:2.7rem;}
+  .ltranslit{font-size:0.9rem;color:rgba(62,44,86,0.45);direction:ltr;margin-top:3px;font-weight:600;}
+  .lhebrew{font-size:1.2rem;font-weight:700;color:var(--plum);margin-top:9px;}
+  .lhebrew.big{font-size:1.5rem;margin-top:12px;}
+  .lrow{display:flex;gap:8px;margin-top:16px;}
+  .laction{flex:1;padding:11px 6px;border:none;border-radius:14px;font-family:inherit;font-size:0.82rem;font-weight:700;cursor:pointer;background:rgba(15,185,167,0.1);color:var(--teal-dark);display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;}
+  .laction:active{transform:scale(0.95);}
+  .laction.lprimary{background:var(--teal);color:#fff;box-shadow:0 6px 16px rgba(15,185,167,0.32);}
+  .lskip{width:100%;margin-top:9px;border:none;background:transparent;color:rgba(62,44,86,0.4);font-family:inherit;font-size:0.78rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:6px;}
+  .lskip:active{opacity:.6;}
+  .learn-done{text-align:center;padding:30px 20px;}
+  .learn-done .ld-emoji{font-size:2.6rem;}
+  .learn-done .ld-title{font-size:1.1rem;font-weight:800;color:var(--plum);margin-top:8px;}
+  .learn-done .ld-sub{font-size:0.86rem;color:rgba(62,44,86,0.55);margin-top:5px;margin-bottom:16px;}
+  .learn-done .btn{width:auto;margin:0 auto;padding:12px 22px;}
+
+  /* milestone timeline */
+  .tl-head{font-size:0.85rem;color:rgba(62,44,86,0.7);font-weight:600;margin-bottom:16px;line-height:1.6;}
+  .tl-head b{color:var(--teal-dark);font-weight:800;}
+  .tl{position:relative;}
+  .tl-item{position:relative;display:flex;gap:13px;padding-bottom:18px;}
+  .tl-item:last-child{padding-bottom:0;}
+  .tl-item::before{content:'';position:absolute;inset-inline-start:11px;top:24px;bottom:-2px;width:2px;background:rgba(62,44,86,0.12);}
+  .tl-item:last-child::before{display:none;}
+  .tl-item.done::before{background:var(--teal);}
+  .tl-dot{flex:0 0 auto;width:24px;height:24px;border-radius:50%;background:rgba(62,44,86,0.12);display:flex;align-items:center;justify-content:center;color:#fff;z-index:1;margin-top:1px;}
+  .tl-item.done .tl-dot{background:var(--teal);}
+  .tl-item.cur .tl-dot{background:var(--teal-dark);box-shadow:0 0 0 4px rgba(15,185,167,0.2);}
+  .tl-body{flex:1;padding-bottom:2px;}
+  .tl-num{font-size:0.7rem;font-weight:800;color:var(--teal-dark);letter-spacing:.3px;}
+  .tl-item:not(.done) .tl-num{color:rgba(62,44,86,0.4);}
+  .tl-title{font-size:0.98rem;font-weight:800;color:var(--plum);margin-top:1px;}
+  .tl-item:not(.done):not(.cur) .tl-title{color:rgba(62,44,86,0.5);}
+  .tl-desc{font-size:0.8rem;color:rgba(62,44,86,0.6);margin-top:3px;line-height:1.55;}
+
+  /* study overlay */
+  .study{position:fixed;inset:0;z-index:70;background:linear-gradient(160deg,var(--bg1),var(--bg2));display:flex;flex-direction:column;align-items:center;justify-content:center;padding:calc(env(safe-area-inset-top) + 18px) 18px calc(env(safe-area-inset-bottom) + 22px);opacity:0;visibility:hidden;transition:opacity .25s ease,visibility .25s ease;}
+  .study.show{opacity:1;visibility:visible;}
+  .study-inner{width:100%;max-width:420px;}
+  .study-title{font-size:1.15rem;font-weight:800;color:var(--plum);text-align:center;margin-bottom:16px;display:flex;align-items:center;justify-content:center;gap:8px;}
+  .study-card{background:#fff;border-radius:24px;padding:34px 22px;text-align:center;box-shadow:0 12px 34px rgba(62,44,86,0.12);}
+  .study-tip{font-size:0.82rem;color:rgba(62,44,86,0.6);text-align:center;margin:16px 4px;line-height:1.6;display:flex;align-items:center;justify-content:center;gap:6px;}
+  .study-actions{display:flex;gap:10px;}
+  .study-actions .btn{flex:1;}
+
   .hidden{display:none !important;}
 </style>
 </head>
@@ -205,46 +255,41 @@
   </header>
 
   <div class="tabs">
-    <button id="tabWords" class="on"></button>
+    <button id="tabLearn" class="on"></button>
+    <button id="tabWords"></button>
     <button id="tabStats"></button>
   </div>
 
-  <!-- ============ WORDS SCREEN ============ -->
-  <section id="scrWords">
-    <!-- home: add a new word (fits without scrolling) -->
-    <div id="homeView">
-      <div class="card">
-        <h2>הוספת מילה חדשה</h2>
-        <div class="field">
-          <label>המילה ביוונית (אותיות יווניות או לטיניות)</label>
-          <input id="inEl" dir="ltr" placeholder="Kalimera / Καλημέρα" autocomplete="off" autocapitalize="off">
-        </div>
-        <div class="field">
-          <label>הפירוש בעברית</label>
-          <input id="inHe" placeholder="בוקר טוב" autocomplete="off">
-        </div>
-        <div class="btn-row">
-          <button class="btn btn-main" id="btnCheck"></button>
-          <button class="btn btn-ghost" id="btnDeep"></button>
-        </div>
-        <div class="hint">מאמת בתרגום חי מהרשת (וללא רשת — מול מילון מובנה)</div>
+  <!-- ============ LEARN SCREEN ============ -->
+  <section id="scrLearn">
+    <div class="learn-intro" id="learnIntro"></div>
+    <div id="learnCards"></div>
+    <div class="card">
+      <h2 id="tlTitle"></h2>
+      <div id="timeline"></div>
+    </div>
+  </section>
+
+  <!-- ============ WORDS SCREEN (add a word) ============ -->
+  <section id="scrWords" class="hidden">
+    <div class="card">
+      <h2>הוספת מילה חדשה</h2>
+      <div class="field">
+        <label>המילה ביוונית (אותיות יווניות או לטיניות)</label>
+        <input id="inEl" dir="ltr" placeholder="Kalimera / Καλημέρα" autocomplete="off" autocapitalize="off">
       </div>
-
-      <div class="verdict" id="verdict"></div>
-
-      <button class="btn btn-learned hidden" id="btnLearned"></button>
+      <div class="field">
+        <label>הפירוש בעברית</label>
+        <input id="inHe" placeholder="בוקר טוב" autocomplete="off">
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-main" id="btnCheck"></button>
+        <button class="btn btn-ghost" id="btnDeep"></button>
+      </div>
+      <div class="hint">מאמת בתרגום חי מהרשת (וללא רשת — מול מילון מובנה)</div>
     </div>
 
-    <!-- the words you've learned + the quiz -->
-    <div id="learnedView" class="hidden">
-      <button class="back-btn" id="btnBack"></button>
-      <button class="btn btn-learned" id="btnQuiz"></button>
-      <div class="search-wrap hidden" id="searchWrap">
-        <span class="search-ic" id="searchIc"></span>
-        <input class="search" id="search" placeholder="חיפוש ברשימה...">
-      </div>
-      <div id="list"></div>
-    </div>
+    <div class="verdict" id="verdict"></div>
   </section>
 
   <!-- ============ STATS SCREEN ============ -->
@@ -270,6 +315,16 @@
         <div class="cxl" id="chartX"></div>
         <div class="ttip" id="ttip"></div>
       </div>
+    </div>
+
+    <div class="card">
+      <h2 id="wordsTitle">המילים שלמדתי</h2>
+      <button class="btn btn-learned" id="btnQuiz"></button>
+      <div class="search-wrap hidden" id="searchWrap">
+        <span class="search-ic" id="searchIc"></span>
+        <input class="search" id="search" placeholder="חיפוש ברשימה...">
+      </div>
+      <div id="list"></div>
     </div>
 
     <div class="card">
@@ -304,6 +359,11 @@
   </div>
 </div>
 
+<div class="study" id="study">
+  <button class="quiz-x" id="studyClose">✕</button>
+  <div class="study-inner" id="studyInner"></div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -326,6 +386,9 @@ function readStore(key){
 let S = readStore(LS) || readStore(LS_BAK) || { words: [], startDate: null };
 if(!Array.isArray(S.words)) S.words = [];
 if(!('startDate' in S)) S.startDate = null;
+if(!S.learn || typeof S.learn!=='object') S.learn = { date:'', slots:[], skipped:[] };
+if(!Array.isArray(S.learn.slots)) S.learn.slots = [];
+if(!Array.isArray(S.learn.skipped)) S.learn.skipped = [];
 
 let saveWarned = false;
 function save(){
@@ -364,7 +427,11 @@ const IC = {
   globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18"/>',
   cap:'<path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v4.5c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5V12"/>',
   clock:'<circle cx="12" cy="12" r="9"/><polyline points="12 7.5 12 12 15 13.8"/>',
-  arrowRtl:'<line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>'
+  arrowRtl:'<line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>',
+  refresh:'<polyline points="21 4 21 9 16 9"/><polyline points="3 20 3 15 8 15"/><path d="M5 9a8 8 0 0 1 13-3l3 3M3 15l3 3a8 8 0 0 0 13-3"/>',
+  plus:'<circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>',
+  x:'<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+  bulb:'<path d="M9 18h6"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.3 1 2.5h6c0-1.2.3-1.8 1-2.5A6 6 0 0 0 12 3z"/>'
 };
 function ic(name,size){ size=size||20; return '<svg class="ic" viewBox="0 0 24 24" width="'+size+'" height="'+size+'" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(IC[name]||'')+'</svg>'; }
 
@@ -827,15 +894,175 @@ function renderStats(){
   });
 }
 
-function showHome(){ $('learnedView').classList.add('hidden'); $('homeView').classList.remove('hidden'); }
-function showLearned(){ $('homeView').classList.add('hidden'); $('learnedView').classList.remove('hidden'); renderList(); }
+/* ================= LEARN tab: daily new words + study ================= */
+const dictOf   = g => DICT.find(w=>stripGr(w[0])===stripGr(g));
+const isKnownGr = g => { const k=stripGr(g); return S.words.some(w=>stripGr(w.el)===k); };
+const newRemaining = () => DICT.reduce((n,w)=>n+(isKnownGr(w[0])?0:1),0);
+
+// next useful word (DICT is ordered by usefulness) that isn't known / on screen / skipped today
+function pickLearn(onScreen, allowSkipped){
+  const skip = allowSkipped ? [] : (S.learn.skipped||[]);
+  const taken = g => onScreen.some(x=>stripGr(x)===stripGr(g)) || skip.some(x=>stripGr(x)===stripGr(g));
+  for(const [el] of DICT){ if(!isKnownGr(el) && !taken(el)) return el; }
+  return null;
+}
+function pickLearnSlots(n){
+  const slots=[];
+  for(let i=0;i<n;i++){
+    let w=pickLearn(slots.map(s=>s.el),false) || pickLearn(slots.map(s=>s.el),true);
+    if(w) slots.push({el:w, done:false}); else break;
+  }
+  return slots;
+}
+function ensureLearnDay(){
+  if(S.learn.date!==todayKey()){
+    S.learn = { date: todayKey(), slots: pickLearnSlots(2), skipped: [] };
+    save();
+  }
+}
+function learnWord(g){
+  const e = dictOf(g);
+  if(e && !isDup(e[0])){
+    S.words.unshift({el:e[0], tr:e[1], he:e[2], ts:Date.now(), v:true, src:'learned'});
+    if(!S.startDate) S.startDate = todayKey();
+  }
+  save();
+}
+function replaceSlot(i){   // put the next new word into slot i, or mark it done if none left
+  const others = S.learn.slots.filter((x,j)=>j!==i && !x.done).map(x=>x.el);
+  const nw = pickLearn(others,false) || pickLearn(others,true);
+  if(nw) S.learn.slots[i] = {el:nw, done:false}; else S.learn.slots[i].done = true;
+}
+function doLearn(i){
+  learnWord(S.learn.slots[i].el);
+  S.learn.slots[i].done = true;   // this word is finished for today; skip (מילה אחרת) is what refills a slot
+  save(); render();
+  const n=$('heroNum'); n.classList.add('bump'); setTimeout(()=>n.classList.remove('bump'),250);
+  toast(ic('checkCircle',16)+`נוסף לאוצר! ${S.words.length} מילים`);
+}
+function skipLearn(i){
+  (S.learn.skipped=S.learn.skipped||[]).push(S.learn.slots[i].el);
+  replaceSlot(i);
+  save(); renderLearn();
+}
+
+function renderLearn(){
+  ensureLearnDay();
+  const cards = $('learnCards'), intro = $('learnIntro');
+  if(newRemaining()===0){
+    intro.innerHTML = ic('sparkles',17)+'<span>למדת את כל המילון!</span>';
+    cards.innerHTML = `<div class="lcard learn-done"><div class="ld-emoji">🏆</div>
+      <div class="ld-title">כל הכבוד — סיימת את כל ${DICT.length} המילים!</div>
+      <div class="ld-sub">אתה שולט בכל אוצר המילים של האפליקציה</div></div>`;
+    renderTimeline();
+    return;
+  }
+  const pending = S.learn.slots.filter(s=>!s.done);
+  if(!pending.length){
+    intro.innerHTML = ic('check',17)+'<span>סיימת להיום</span>';
+    cards.innerHTML = `<div class="lcard learn-done"><div class="ld-emoji">🎉</div>
+      <div class="ld-title">סיימת את המילים של היום!</div>
+      <div class="ld-sub">חזור מחר ל־2 מילים חדשות — או קח עוד עכשיו</div>
+      <button class="btn btn-ghost" id="btnExtra">${ic('plus',18)}<span>עוד 2 מילים</span></button></div>`;
+    $('btnExtra').onclick = ()=>{
+      const more = pickLearnSlots(2);
+      if(!more.length){ toast('אין עוד מילים חדשות 🎉'); return; }
+      S.learn.slots = S.learn.slots.concat(more); save(); renderLearn();
+    };
+    renderTimeline();
+    return;
+  }
+  intro.innerHTML = ic('sparkles',17)+'<span>המילים של היום</span>';
+  cards.innerHTML = S.learn.slots.map((s,i)=>{
+    if(s.done) return '';
+    const e = dictOf(s.el); if(!e) return '';
+    return `<div class="lcard">
+      <div class="lgreek">${e[0]}</div>
+      <div class="ltranslit">${e[1]}</div>
+      <div class="lhebrew">${e[2]}</div>
+      <div class="lrow">
+        <button class="laction" data-a="speak" data-i="${i}">${ic('speaker',20)}<span>האזנה</span></button>
+        <button class="laction" data-a="study" data-i="${i}">${ic('bulb',18)}<span>ללמוד</span></button>
+        <button class="laction lprimary" data-a="learn" data-i="${i}">${ic('check',18)}<span>למדתי</span></button>
+      </div>
+      <button class="lskip" data-a="skip" data-i="${i}">${ic('refresh',15)}<span>מילה אחרת</span></button>
+    </div>`;
+  }).join('');
+  cards.querySelectorAll('[data-a]').forEach(b=>{
+    const i=+b.dataset.i, a=b.dataset.a, e=dictOf(S.learn.slots[i].el);
+    b.onclick=()=>{
+      if(a==='speak') speak(e[0], b);
+      else if(a==='study') openStudy(i);
+      else if(a==='learn') doLearn(i);
+      else if(a==='skip') skipLearn(i);
+    };
+  });
+  renderTimeline();
+}
+
+/* study overlay: focus on one word, then mark it learned */
+let studyIdx=-1;
+function openStudy(i){
+  studyIdx=i;
+  const e = dictOf(S.learn.slots[i].el); if(!e) return;
+  $('studyInner').innerHTML = `
+    <div class="study-title">${ic('bulb',24)}<span>ללמוד את המילה</span></div>
+    <div class="study-card">
+      <div class="lgreek big">${e[0]}</div>
+      <div class="ltranslit">${e[1]}</div>
+      <div class="lhebrew big">${e[2]}</div>
+      <button class="q-speak" id="studySpk">${ic('speaker',18)}<span>השמעה</span></button>
+    </div>
+    <div class="study-tip">${ic('sparkles',15)}<span>אמור/י את המילה בקול כמה פעמים ותרגם/י אותה בראש</span></div>
+    <div class="study-actions">
+      <button class="btn btn-ghost" id="studyLater"><span>עדיין לא</span></button>
+      <button class="btn btn-main" id="studyGot">${ic('check',18)}<span>למדתי</span></button>
+    </div>`;
+  $('studySpk').onclick=()=>speak(e[0],$('studySpk'));
+  $('studyLater').onclick=closeStudy;
+  $('studyGot').onclick=()=>{ closeStudy(); doLearn(studyIdx); };
+  $('study').classList.add('show');
+  speak(e[0]);
+}
+function closeStudy(){ $('study').classList.remove('show'); try{ speechSynthesis.cancel(); }catch(e){} }
+
+/* milestone timeline — words are ordered by usefulness, so each threshold is a real jump */
+function renderTimeline(){
+  const box=$('timeline'); if(!box) return;
+  const all=DICT.length, known=S.words.length;
+  const STAGES=[
+    {min:0,   t:'הצעד הראשון',    d:'מתחילים את המסע — כל מילה נחשבת'},
+    {min:10,  t:'המילים הראשונות', d:'שלום, תודה, כן ולא — הבסיס שאי אפשר בלעדיו'},
+    {min:20,  t:'מרכיבים משפט',    d:'מספיק מילים כדי לחבר משפט פשוט משלך'},
+    {min:50,  t:'מתחילים לדבר',    d:'מסתדרים בשיחה קצרה — בחנות, בקפה, ברחוב'},
+    {min:100, t:'שיחה יומיומית',   d:'מבינים ומגיבים ברוב המצבים היומיומיים'},
+    {min:200, t:'שליטה יפה בשפה',  d:'מדברים בביטחון על מגוון רחב של נושאים'},
+    {min:350, t:'כמעט שוטפים',     d:'מבינים כמעט הכול, כמעט בלי לתרגם בראש'},
+    {min:all, t:'שוטפים — כל המילון! 🏆', d:`למדת את כל ${all} המילים. כל הכבוד!`}
+  ];
+  let ci=0; STAGES.forEach((s,i)=>{ if(known>=s.min) ci=i; });
+  const nxt=STAGES[ci+1];
+  $('tlTitle').innerHTML = ic('chart',18)+'<span>המסע שלי</span>';
+  box.innerHTML =
+    `<div class="tl-head"><b>${known}</b> מתוך ${all} מילים`+
+      (nxt ? ` · עוד <b>${nxt.min-known}</b> ל“${nxt.t}”` : ' · סיימת הכול! 🏆')+`</div>`+
+    '<div class="tl">'+STAGES.map((s,i)=>{
+      const done=known>=s.min, cur=i===ci;
+      const label = s.min===0 ? 'התחלה' : (s.min===all ? all+' מילים' : s.min+' מילים');
+      return `<div class="tl-item ${done?'done':''} ${cur?'cur':''}">
+        <div class="tl-dot">${done?ic('check',13):''}</div>
+        <div class="tl-body"><div class="tl-num">${label}</div>
+          <div class="tl-title">${s.t}</div><div class="tl-desc">${s.d}</div></div>
+      </div>`;
+    }).join('')+'</div>';
+}
+
 function render(){
   const n=S.words.length;
   $('heroNum').textContent=n;
-  $('btnLearned').classList.toggle('hidden', n===0);
-  $('btnLearned').innerHTML = ic('book',18)+'<span>המילים שלמדתי</span>'+(n?` <span class="n">${n}</span>`:'');
   $('btnQuiz').classList.toggle('hidden', n<4);
-  renderList(); renderStats();
+  $('wordsTitle').innerHTML = ic('book',18)+'<span>המילים שלמדתי'+(n?` · ${n}`:'')+'</span>';
+  renderLearn(); renderList(); renderStats();
 }
 
 /* ================= backup: export / import to a file ================= */
@@ -883,14 +1110,24 @@ $('startDate').addEventListener('change',e=>{
   if(v && new Date(v)>new Date()){ toast('התאריך לא יכול להיות בעתיד'); e.target.value=S.startDate||''; return; }
   S.startDate=v||null; save(); renderStats(); toast('תאריך ההתחלה נשמר');
 });
-$('tabWords').onclick=()=>{$('tabWords').classList.add('on');$('tabStats').classList.remove('on');$('scrWords').classList.remove('hidden');$('scrStats').classList.add('hidden');showHome();};
-$('tabStats').onclick=()=>{$('tabStats').classList.add('on');$('tabWords').classList.remove('on');$('scrStats').classList.remove('hidden');$('scrWords').classList.add('hidden');renderStats();};
+function selectTab(which){
+  const tabs={learn:'tabLearn',words:'tabWords',stats:'tabStats'};
+  const scrs={learn:'scrLearn',words:'scrWords',stats:'scrStats'};
+  for(const k in tabs) $(tabs[k]).classList.toggle('on', k===which);
+  for(const k in scrs) $(scrs[k]).classList.toggle('hidden', k!==which);
+  if(which==='learn') renderLearn();
+  if(which==='stats'){ renderStats(); renderList(); }
+}
+$('tabLearn').onclick=()=>selectTab('learn');
+$('tabWords').onclick=()=>selectTab('words');
+$('tabStats').onclick=()=>selectTab('stats');
 
 /* static UI icons */
 const APP_VERSION = 'v40';
 $('appVer').textContent = APP_VERSION;
 $('pageTitle').innerHTML = ic('book',24)+'<span>אוצר המילים שלי</span>';
-$('tabWords').innerHTML = ic('pencil',18)+'<span>מילים</span>';
+$('tabLearn').innerHTML = ic('sparkles',18)+'<span>לימוד</span>';
+$('tabWords').innerHTML = ic('pencil',18)+'<span>הוספה</span>';
 $('tabStats').innerHTML = ic('chart',18)+'<span>סטטיסטיקה</span>';
 $('btnCheck').innerHTML = ic('checkCircle',19)+'<span>בדוק והוסף</span>';
 $('btnDeep').innerHTML = ic('search',17)+'<span>בדיקה מעמיקה</span>';
@@ -1040,10 +1277,8 @@ function endQuiz(){
 }
 $('btnQuiz').innerHTML = ic('cap',18)+'<span>מבחן ותרגול</span>';
 $('btnQuiz').onclick=openQuiz;
-$('btnLearned').onclick=showLearned;
-$('btnBack').innerHTML = ic('arrowRtl',16)+'<span>חזרה להוספה</span>';
-$('btnBack').onclick=showHome;
 $('quizClose').onclick=closeQuiz;
+$('studyClose').onclick=closeStudy;
 $('qModeEasy').onclick=()=>{ if(!$('qModeEasy').disabled) startQuiz('easy'); };
 $('qModeHard').onclick=()=>{ if(!$('qModeHard').disabled) startQuiz('hard'); };
 
