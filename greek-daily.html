@@ -26,8 +26,9 @@
     display:flex; flex-direction:column; align-items:center;
     padding:7vh 20px 50px; overflow-x:hidden;
   }
+  .top-actions{ display:flex; gap:10px; margin-bottom:22px; flex-wrap:wrap; justify-content:center; }
   .menu-btn{
-    height:38px; padding:0 16px; margin-bottom:22px;
+    height:38px; padding:0 16px;
     border-radius:99px; background:rgba(255,255,255,0.85); border:none;
     color:var(--teal-dark); font-size:0.82rem; font-weight:700;
     display:inline-flex; align-items:center; gap:6px;
@@ -226,11 +227,37 @@
   .quiz-score-cap{ font-size:1.05rem; color:var(--plum); font-weight:600; margin-bottom:10px; }
   .quiz-again{ border:none; border-radius:14px; padding:13px 44px; font-weight:800; color:#fff; background:var(--teal); box-shadow:0 8px 22px rgba(15,185,167,.3); cursor:pointer; }
   .quiz-end .quiz-close{ width:auto; height:auto; border-radius:14px; padding:10px 26px; background:rgba(62,44,86,.06); font-weight:600; font-size:0.9rem; }
+
+  .addw{ position:fixed; inset:0; z-index:45; background:linear-gradient(160deg,var(--bg1),var(--bg2)); display:flex; flex-direction:column; align-items:center; padding:5vh 16px 24px; overflow-y:auto; opacity:0; visibility:hidden; transform:scale(1.015); transition:opacity .3s ease, visibility .3s ease, transform .3s ease; }
+  .addw.show{ opacity:1; visibility:visible; transform:scale(1); }
+  .addw-inner{ width:100%; max-width:460px; }
+  .addw-top{ display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
+  .addw-top h2{ margin:0; font-size:1.05rem; }
+  .addw-sub{ font-size:0.78rem; color:rgba(62,44,86,0.5); margin-bottom:14px; text-align:center; line-height:1.5; }
+  .addw-input{ width:100%; border:1.5px solid rgba(62,44,86,0.15); border-radius:14px; padding:13px 16px; font-size:1rem; font-family:inherit; color:var(--plum); background:#fff; margin-bottom:14px; }
+  .addw-input:focus{ outline:none; border-color:var(--teal); }
+  .addw-results{ width:100%; display:flex; flex-direction:column; gap:9px; }
+  .addw-section{ font-size:0.75rem; font-weight:700; color:rgba(62,44,86,0.5); margin:2px 0; }
+  .addw-empty{ font-size:0.85rem; color:rgba(62,44,86,0.45); text-align:center; padding:14px 0; }
+  .addw-row{ display:flex; align-items:center; gap:10px; background:#fff; border-radius:14px; padding:11px 14px; box-shadow:0 4px 14px rgba(62,44,86,0.06); }
+  .addw-w{ flex:1; display:flex; flex-direction:column; gap:1px; min-width:0; }
+  .addw-w .g{ font-weight:800; color:var(--plum); }
+  .addw-w .t{ font-size:0.72rem; color:rgba(62,44,86,0.4); direction:ltr; }
+  .addw-w .h{ font-size:0.85rem; color:var(--teal-dark); font-weight:600; }
+  .addw-add{ flex:0 0 auto; border:none; border-radius:12px; padding:9px 15px; font-weight:700; font-size:0.85rem; color:#fff; background:var(--teal); cursor:pointer; display:inline-flex; align-items:center; gap:5px; }
+  .addw-tag{ flex:0 0 auto; font-size:0.78rem; font-weight:700; padding:7px 12px; border-radius:12px; display:inline-flex; align-items:center; gap:4px; border:none; }
+  .addw-tag.done{ color:var(--teal-dark); background:rgba(15,185,167,0.12); }
+  .addw-tag.q{ color:var(--coral); background:rgba(255,107,107,0.1); cursor:pointer; }
+  .addw-translate{ width:100%; border:none; border-radius:14px; padding:13px; margin-top:4px; font-weight:700; font-size:0.9rem; color:#fff; background:linear-gradient(135deg,var(--teal),var(--teal-dark)); cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:7px; }
+  .addw-translate:disabled{ opacity:.7; }
 </style>
 </head>
 <body>
 
-<button class="menu-btn" id="menuBtn" aria-label="המילים שאני יודע"></button>
+<div class="top-actions">
+  <button class="menu-btn" id="menuBtn" aria-label="המילים שאני יודע"></button>
+  <button class="menu-btn" id="addwOpen" aria-label="הוסף מילים"></button>
+</div>
 <div class="stat" id="statText"></div>
 <div class="progress-track"><div class="progress-fill" id="progFill"></div></div>
 
@@ -267,6 +294,20 @@
 </div>
 
 <div class="quiz" id="quiz"></div>
+
+<div class="addw" id="addw">
+  <div class="addw-inner">
+    <div class="addw-top">
+      <button class="panel-ic" id="addwClose" aria-label="סגור"></button>
+      <h2>הוספת מילים</h2>
+      <div style="width:36px"></div>
+    </div>
+    <div class="addw-sub">חפשו מילה מהמאגר, או כתבו מילה בעברית/יוונית והמערכת תמצא את התרגום. מילים שתוסיפו יופיעו ראשונות ללימוד.</div>
+    <input class="addw-input" id="addwInput" type="text" autocomplete="off" placeholder="חיפוש או מילה חדשה…">
+    <div class="addw-results" id="addwResults"></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -320,6 +361,7 @@ const WORDS = [
 ["με","me","עם"],
 ["χωρίς","chorís","בלי"],
 ["πολύ","polý","מאוד"],
+["πολύ καλά","polý kalá","טוב מאוד"],
 ["λίγο","lígo","קצת"],
 ["μόνο","móno","רק"],
 ["επίσης","epísis","גם כן"],
@@ -340,6 +382,7 @@ const WORDS = [
 ["αύριο","ávrio","מחר"],
 ["χθες","chthes","אתמול"],
 ["καλός","kalós","טוב"],
+["καλά","kalá","טוב / בסדר / כשורה"],
 ["κακός","kakós","רע"],
 ["μεγάλος","megálos","גדול"],
 ["μικρός","mikrós","קטן"],
@@ -350,6 +393,8 @@ const WORDS = [
 ["μιλάω","miláo","אני מדבר"],
 ["λέω","léo","אני אומר"],
 ["καταλαβαίνω","katalavéno","אני מבין"],
+["καταλαβαίνεις","katalavénis","אתה מבין / את מבינה"],
+["καταλαβαίνετε","katalavénete","אתם מבינים / אתה מבין (בנימוס)"],
 ["μαθαίνω","mathéno","אני לומד"],
 ["τρώω","tróo","אני אוכל"],
 ["πίνω","píno","אני שותה"],
@@ -430,6 +475,7 @@ const WORDS = [
 ["χαίρομαι","chérome","נעים לי"],
 ["χαίρω πολύ","chéro polý","נעים מאוד להכיר"],
 ["τι κάνεις;","ti kánis?","מה שלומך?"],
+["τι κάνετε;","ti kánete?","מה שלומך? (בנימוס / רבים)"],
 ["καλά είμαι","kalá íme","אני בסדר"],
 ["πώς σε λένε;","pos se léne?","איך קוראים לך?"],
 ["με λένε...","me léne...","קוראים לי..."],
@@ -880,10 +926,12 @@ function load(){
     if(!p.day) p.day = { date:"", slots:[], opened:false };
     if(!Array.isArray(p.log)) p.log = [];
     if(!Array.isArray(p.review)) p.review = [];   // missed words waiting to resurface
+    if(!Array.isArray(p.queue)) p.queue = [];     // words the user chose to learn next
+    if(!Array.isArray(p.custom)) p.custom = [];   // user-added [greek,translit,hebrew] not in the base list
     const logged = new Set(p.log.map(e=>e.w));   // backfill dates for pre-existing known words
     p.known.forEach(g=>{ if(!logged.has(g)) p.log.push({ w:g, t:Date.now() }); });
     return p;
-  }catch(e){ return { known: [], log: [], review: [], day: { date:"", slots:[], opened:false } }; }
+  }catch(e){ return { known: [], log: [], review: [], queue: [], custom: [], day: { date:"", slots:[], opened:false } }; }
 }
 function save(){ localStorage.setItem(KEY, JSON.stringify(state)); }
 
@@ -893,7 +941,40 @@ if(state.day.date !== todayKey()){
   save();
 }
 
-const entryOf = g => WORDS.find(w => w[0] === g);
+// full vocabulary = the curated list + anything the user added themselves
+const entryOf = g => WORDS.find(w => w[0] === g) || (state.custom||[]).find(w => w[0] === g);
+const totalWords = () => WORDS.length + (state.custom ? state.custom.length : 0);
+
+// Greek -> latin transliteration (auto-translit for user-added words)
+const ROM=[['ου','ou'],['αι','e'],['ει','i'],['οι','i'],['υι','i'],['αυ','av'],['ευ','ev'],['γγ','ng'],['γκ','g'],['μπ','b'],['ντ','d'],['τσ','ts'],['τζ','tz'],['θ','th'],['χ','ch'],['ψ','ps'],['ξ','x'],['φ','f'],['β','v'],['γ','g'],['δ','d'],['ζ','z'],['κ','k'],['λ','l'],['μ','m'],['ν','n'],['π','p'],['ρ','r'],['σ','s'],['ς','s'],['τ','t'],['α','a'],['ε','e'],['η','i'],['ι','i'],['ο','o'],['υ','i'],['ω','o'],[' ',' ']];
+const _accents={'ά':'α','έ':'ε','ή':'η','ί':'ι','ό':'ο','ύ':'υ','ώ':'ω','ϊ':'ι','ϋ':'υ','ΐ':'ι','ΰ':'υ'};
+function romanize(g){
+  let s=(g||'').toLowerCase().replace(/[άέήίόύώϊϋΐΰ]/g, c=>_accents[c]||c), out='';
+  outer: while(s.length){
+    for(const [k,v] of ROM){ if(s.startsWith(k)){ out+=v; s=s.slice(k.length); continue outer; } }
+    out+=s[0]; s=s.slice(1);
+  }
+  return out;
+}
+const hasGreek  = s => /[\u0370-\u03FF]/.test(s);
+const hasHebrew = s => /[\u0590-\u05FF]/.test(s);
+// Free Google endpoint (no key) — finds the meaning/word for anything not in the list.
+let _trCache={};
+async function apiTranslate(sl,tl,text){
+  text=(text||'').trim(); if(!text) return '';
+  const key=sl+'>'+tl+':'+text.toLowerCase();
+  if(_trCache[key]!==undefined) return _trCache[key];
+  const ctrl=new AbortController(); const to=setTimeout(()=>ctrl.abort(),7000);
+  try{
+    const url='https://translate.googleapis.com/translate_a/single?client=gtx&sl='+sl+'&tl='+tl+'&dt=t&q='+encodeURIComponent(text);
+    const r=await fetch(url,{signal:ctrl.signal});
+    if(!r.ok) throw new Error('http');
+    const j=await r.json();
+    const out=((j&&j[0])||[]).map(s=>(s&&s[0])||'').join('').replace(/\s+/g,' ').replace(/[.!?;·]+$/,'').trim();
+    if(!out) throw new Error('empty');
+    _trCache[key]=out; return out;
+  } finally { clearTimeout(to); }
+}
 
 // Line-art icons (single color via currentColor, rounded strokes) — SF-Symbols feel.
 const IC = {
@@ -976,6 +1057,9 @@ if('speechSynthesis' in window){ try{ speechSynthesis.getVoices(); speechSynthes
 function pickOne(onScreen){
   const now=Date.now();
   const skip = state.day.skipped || [];
+  // words the user explicitly queued come first
+  const q=(state.queue||[]).find(w=> !onScreen.includes(w) && !skip.includes(w) && !state.known.includes(w));
+  if(q) return q;
   const due=state.review.find(r=> r.due<=now && !onScreen.includes(r.w) && !skip.includes(r.w));
   if(due) return due.w;
   const inReview=new Set(state.review.map(r=>r.w));
@@ -990,6 +1074,7 @@ function markKnown(g){
     state.log.push({ w:g, t:Date.now() });   // record the date this word was learned
   }
   state.review = state.review.filter(r=>r.w!==g);   // learned for good — drop from review
+  state.queue  = (state.queue||[]).filter(w=>w!==g);
 }
 function scheduleReview(g){   // missed — bring it back in the future
   const due=Date.now()+REVIEW_DAYS*24*60*60*1000;
@@ -1047,10 +1132,10 @@ function toast(html){
 
 function renderStat(){
   document.getElementById('statText').innerHTML =
-    "<b>"+state.known.length+"</b> / "+WORDS.length+" מילים שאני יודע";
+    "<b>"+state.known.length+"</b> / "+totalWords()+" מילים שאני יודע";
   const f=document.getElementById('progFill');
   if(f){
-    const pct = state.known.length/WORDS.length*100;
+    const pct = state.known.length/totalWords()*100;
     f.style.width = state.known.length ? Math.max(pct,2).toFixed(2)+'%' : '0%';  // keep a visible sliver
   }
 }
@@ -1253,7 +1338,7 @@ function renderProgress(){
   const hero=document.getElementById('progHero');
   const chartBox=document.getElementById('progChart');
   if(!hero || !chartBox) return;
-  const known=state.known.length, all=WORDS.length;
+  const known=state.known.length, all=totalWords();
   const pct=known/all*100, w=known?Math.max(pct,2).toFixed(2):0;
   // Milestones — words are ordered by usefulness, so each threshold is a real jump in ability.
   const STAGES=[
@@ -1364,8 +1449,87 @@ startInput.max = dayStr(Date.now());
 startInput.onchange = () => { if(startInput.value){ state.startDate = startInput.value; save(); renderProgress(); } };
 
 document.getElementById('menuBtn').innerHTML = ic('list',18)+'<span>מילים שלמדתי</span>';
+document.getElementById('addwOpen').innerHTML = ic('plus',18)+'<span>הוסף מילים</span>';
 document.getElementById('panelSettings').innerHTML = ic('gear',19);
 document.getElementById('panelClose').innerHTML = ic('x',18);
+
+// ---------------- Add words: search the list, or type a word and auto-translate ----------------
+const addwEl = document.getElementById('addw');
+const addwInput = document.getElementById('addwInput');
+const addwResults = document.getElementById('addwResults');
+document.getElementById('addwClose').innerHTML = ic('x',18);
+function openAddWords(){ addwEl.classList.add('show'); addwInput.value=''; renderAddResults(''); setTimeout(()=>addwInput.focus(),80); }
+function closeAddWords(){ addwEl.classList.remove('show'); }
+document.getElementById('addwOpen').onclick = openAddWords;
+document.getElementById('addwClose').onclick = closeAddWords;
+
+function wordState(g){ return state.known.includes(g)?'known' : (state.queue||[]).includes(g)?'queued' : 'new'; }
+function addToQueue(g){
+  const s=wordState(g);
+  if(s==='known'){ toast(ic('checkCircle',16)+'כבר ידעת את זה'); return; }
+  if(s==='queued'){ toast('כבר בתור 🎉'); return; }
+  state.queue.push(g); save(); renderStat();
+  toast(ic('plus',16)+'נוסף לתור הלמידה');
+  renderAddResults(addwInput.value);
+}
+function removeFromQueue(g){ state.queue=(state.queue||[]).filter(w=>w!==g); save(); renderStat(); renderAddResults(addwInput.value); }
+
+function addRow(e){
+  const g=e[0], s=wordState(g);
+  const right = s==='known' ? '<span class="addw-tag done">'+ic('checkCircle',15)+'ידעת</span>'
+              : s==='queued' ? '<button class="addw-tag q" data-rm="'+g+'">בתור · הסר</button>'
+              : '<button class="addw-add" data-add="'+g+'">'+ic('plus',16)+'הוסף</button>';
+  return '<div class="addw-row"><div class="addw-w"><span class="g">'+e[0]+'</span>'+
+    '<span class="t">'+e[1]+'</span><span class="h">'+e[2]+'</span></div>'+right+'</div>';
+}
+function renderAddResults(q){
+  q=(q||'').trim();
+  const qLow=q.toLowerCase();
+  if(!q){
+    const queued=(state.queue||[]).map(entryOf).filter(Boolean);
+    addwResults.innerHTML = queued.length
+      ? '<div class="addw-section">בתור ללימוד ('+queued.length+')</div>'+queued.map(addRow).join('')
+      : '<div class="addw-empty">התחילו להקליד כדי לחפש מילה…</div>';
+    wireAddRows();
+    return;
+  }
+  const pool = WORDS.concat(state.custom||[]);
+  const matches = pool.filter(e=> e[0].toLowerCase().includes(qLow) || e[1].toLowerCase().includes(qLow) || e[2].includes(q)).slice(0,25);
+  let html = matches.length ? matches.map(addRow).join('') : '<div class="addw-empty">לא נמצא במאגר.</div>';
+  html += '<button class="addw-translate" id="addwTranslate">'+ic('sparkles',18)+'תרגם והוסף: «'+q+'»</button>';
+  addwResults.innerHTML = html;
+  wireAddRows();
+  document.getElementById('addwTranslate').onclick = ()=>translateAndAdd(q);
+}
+function wireAddRows(){
+  addwResults.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>addToQueue(b.getAttribute('data-add')));
+  addwResults.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>removeFromQueue(b.getAttribute('data-rm')));
+}
+let _translating=false;
+async function translateAndAdd(q){
+  if(_translating) return; _translating=true;
+  const btn=document.getElementById('addwTranslate');
+  if(btn){ btn.disabled=true; btn.innerHTML=ic('clock',18)+'מתרגם…'; }
+  try{
+    let greek='', he='', tr='';
+    if(hasGreek(q)){ greek=q; tr=romanize(q); he=await apiTranslate('el','iw',q); }
+    else if(hasHebrew(q)){ he=q; greek=await apiTranslate('iw','el',q); tr=romanize(greek); }
+    else { greek=await apiTranslate('en','el',q); he=await apiTranslate('en','iw',q); tr=romanize(greek); }
+    if(!greek || !he) throw new Error('no result');
+    const existing = entryOf(greek);
+    if(!existing){ state.custom.push([greek,tr,he]); }
+    if(!state.queue.includes(greek) && !state.known.includes(greek)) state.queue.push(greek);
+    save(); renderStat();
+    toast(ic('checkCircle',16)+'נוסף: '+greek+' — '+he);
+    addwInput.value=''; renderAddResults('');
+  }catch(err){
+    toast(ic('x',16)+'לא הצלחתי לתרגם (בדקו חיבור לאינטרנט)');
+    if(btn){ btn.disabled=false; btn.innerHTML=ic('sparkles',18)+'תרגם והוסף: «'+q+'»'; }
+  }finally{ _translating=false; }
+}
+let _addwDeb=null;
+addwInput.oninput = ()=>{ clearTimeout(_addwDeb); _addwDeb=setTimeout(()=>renderAddResults(addwInput.value),160); };
+addwInput.onkeydown = (e)=>{ if(e.key==='Enter'){ const t=document.getElementById('addwTranslate'); if(t) t.click(); } };
 
 // ---------------- Quiz: test yourself on words you've learned ----------------
 const quizBtn = document.getElementById('quizBtn');
