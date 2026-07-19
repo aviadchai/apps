@@ -209,24 +209,22 @@
   .learn-done .ld-sub{font-size:0.86rem;color:rgba(62,44,86,0.55);margin-top:5px;margin-bottom:16px;}
   .learn-done .btn{width:auto;margin:0 auto;padding:12px 22px;}
 
-  /* milestone timeline */
-  .tl-head{font-size:0.85rem;color:rgba(62,44,86,0.7);font-weight:600;margin-bottom:16px;line-height:1.6;}
-  .tl-head b{color:var(--teal-dark);font-weight:800;}
-  .tl{position:relative;}
-  .tl-item{position:relative;display:flex;gap:13px;padding-bottom:18px;}
-  .tl-item:last-child{padding-bottom:0;}
-  .tl-item::before{content:'';position:absolute;inset-inline-start:11px;top:24px;bottom:-2px;width:2px;background:rgba(62,44,86,0.12);}
-  .tl-item:last-child::before{display:none;}
-  .tl-item.done::before{background:var(--teal);}
-  .tl-dot{flex:0 0 auto;width:24px;height:24px;border-radius:50%;background:rgba(62,44,86,0.12);display:flex;align-items:center;justify-content:center;color:#fff;z-index:1;margin-top:1px;}
-  .tl-item.done .tl-dot{background:var(--teal);}
-  .tl-item.cur .tl-dot{background:var(--teal-dark);box-shadow:0 0 0 4px rgba(15,185,167,0.2);}
-  .tl-body{flex:1;padding-bottom:2px;}
-  .tl-num{font-size:0.7rem;font-weight:800;color:var(--teal-dark);letter-spacing:.3px;}
-  .tl-item:not(.done) .tl-num{color:rgba(62,44,86,0.4);}
-  .tl-title{font-size:0.98rem;font-weight:800;color:var(--plum);margin-top:1px;}
-  .tl-item:not(.done):not(.cur) .tl-title{color:rgba(62,44,86,0.5);}
-  .tl-desc{font-size:0.8rem;color:rgba(62,44,86,0.6);margin-top:3px;line-height:1.55;}
+  /* milestone progress bar — a single row that fills right→left (RTL) */
+  .pbar-head{font-size:0.9rem;color:rgba(62,44,86,0.7);font-weight:600;margin-bottom:2px;}
+  .pbar-head b{color:var(--teal-dark);font-weight:800;font-size:1.05rem;}
+  .pbar-track{position:relative;height:16px;background:rgba(62,44,86,0.1);border-radius:99px;margin:16px 0 8px;}
+  .pbar-fill{position:absolute;right:0;top:0;bottom:0;min-width:8px;border-radius:99px;
+    background:linear-gradient(270deg,var(--teal-dark),var(--teal));
+    box-shadow:0 2px 8px rgba(15,185,167,0.35);transition:width .6s cubic-bezier(.22,1,.36,1);}
+  .pbar-tick{position:absolute;top:-4px;height:24px;width:2px;border-radius:2px;background:rgba(62,44,86,0.2);transform:translateX(50%);z-index:1;}
+  .pbar-tick.hit{background:rgba(255,255,255,0.85);}
+  .pbar-tick .lbl{position:absolute;top:26px;right:50%;transform:translateX(50%);font-size:0.6rem;font-weight:800;color:rgba(62,44,86,0.4);white-space:nowrap;}
+  .pbar-tick.hit .lbl{color:var(--teal-dark);}
+  .pbar-stage{margin-top:26px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;}
+  .pbar-stage .now{font-size:1.05rem;font-weight:800;color:var(--plum);}
+  .pbar-stage .badge{font-size:0.66rem;font-weight:800;color:var(--teal-dark);background:rgba(15,185,167,0.12);border-radius:99px;padding:2px 9px;}
+  .pbar-desc{font-size:0.82rem;color:rgba(62,44,86,0.6);margin-top:4px;line-height:1.55;}
+  .pbar-next{font-size:0.82rem;color:var(--teal-dark);font-weight:700;margin-top:9px;display:flex;align-items:center;gap:6px;}
 
   /* study overlay */
   .study{position:fixed;inset:0;z-index:70;background:linear-gradient(160deg,var(--bg1),var(--bg2));display:flex;flex-direction:column;align-items:center;justify-content:center;padding:calc(env(safe-area-inset-top) + 18px) 18px calc(env(safe-area-inset-bottom) + 22px);opacity:0;visibility:hidden;transition:opacity .25s ease,visibility .25s ease;}
@@ -255,13 +253,13 @@
   </header>
 
   <div class="tabs">
-    <button id="tabLearn" class="on"></button>
-    <button id="tabWords"></button>
+    <button id="tabWords" class="on"></button>
+    <button id="tabLearn"></button>
     <button id="tabStats"></button>
   </div>
 
   <!-- ============ LEARN SCREEN ============ -->
-  <section id="scrLearn">
+  <section id="scrLearn" class="hidden">
     <div class="learn-intro" id="learnIntro"></div>
     <div id="learnCards"></div>
     <div class="card">
@@ -271,7 +269,7 @@
   </section>
 
   <!-- ============ WORDS SCREEN (add a word) ============ -->
-  <section id="scrWords" class="hidden">
+  <section id="scrWords">
     <div class="card">
       <h2>הוספת מילה חדשה</h2>
       <div class="field">
@@ -1041,20 +1039,22 @@ function renderTimeline(){
     {min:all, t:'שוטפים — כל המילון! 🏆', d:`למדת את כל ${all} המילים. כל הכבוד!`}
   ];
   let ci=0; STAGES.forEach((s,i)=>{ if(known>=s.min) ci=i; });
-  const nxt=STAGES[ci+1];
+  const cur=STAGES[ci], nxt=STAGES[ci+1];
+  const pct = Math.min(100, Math.max(known/all*100, known?2:0));
+  // interior milestone notches (skip 0 and the final "all"); label the roomier ones
+  const ticks = STAGES.filter(s=>s.min>0 && s.min<all).map(s=>{
+    const hit = known>=s.min;
+    const lbl = s.min>=50 ? `<span class="lbl">${s.min}</span>` : '';
+    return `<div class="pbar-tick ${hit?'hit':''}" style="right:${(s.min/all*100).toFixed(2)}%">${lbl}</div>`;
+  }).join('');
   $('tlTitle').innerHTML = ic('chart',18)+'<span>המסע שלי</span>';
   box.innerHTML =
-    `<div class="tl-head"><b>${known}</b> מתוך ${all} מילים`+
-      (nxt ? ` · עוד <b>${nxt.min-known}</b> ל“${nxt.t}”` : ' · סיימת הכול! 🏆')+`</div>`+
-    '<div class="tl">'+STAGES.map((s,i)=>{
-      const done=known>=s.min, cur=i===ci;
-      const label = s.min===0 ? 'התחלה' : (s.min===all ? all+' מילים' : s.min+' מילים');
-      return `<div class="tl-item ${done?'done':''} ${cur?'cur':''}">
-        <div class="tl-dot">${done?ic('check',13):''}</div>
-        <div class="tl-body"><div class="tl-num">${label}</div>
-          <div class="tl-title">${s.t}</div><div class="tl-desc">${s.d}</div></div>
-      </div>`;
-    }).join('')+'</div>';
+    `<div class="pbar-head"><b>${known}</b> מתוך ${all} מילים</div>`+
+    `<div class="pbar-track"><div class="pbar-fill" style="width:${pct.toFixed(2)}%"></div>${ticks}</div>`+
+    `<div class="pbar-stage"><span class="now">${cur.t}</span><span class="badge">השלב שלך</span></div>`+
+    `<div class="pbar-desc">${cur.d}</div>`+
+    (nxt ? `<div class="pbar-next">${ic('sparkles',14)}<span>עוד ${nxt.min-known} מילים ל“${nxt.t}”</span></div>`
+         : `<div class="pbar-next">${ic('check',14)}<span>סיימת את כל המילון! 🏆</span></div>`);
 }
 
 function render(){
@@ -1123,7 +1123,7 @@ $('tabWords').onclick=()=>selectTab('words');
 $('tabStats').onclick=()=>selectTab('stats');
 
 /* static UI icons */
-const APP_VERSION = 'v40';
+const APP_VERSION = 'v41';
 $('appVer').textContent = APP_VERSION;
 $('pageTitle').innerHTML = ic('book',24)+'<span>Lexi</span>';
 $('tabLearn').innerHTML = ic('sparkles',18)+'<span>לימוד</span>';
