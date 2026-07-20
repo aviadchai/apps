@@ -197,6 +197,8 @@
   .ltranslit{font-size:0.9rem;color:rgba(62,44,86,0.45);direction:ltr;margin-top:3px;font-weight:600;}
   .lhebrew{font-size:1.2rem;font-weight:700;color:var(--plum);margin-top:9px;}
   .lhebrew.big{font-size:1.5rem;margin-top:12px;}
+  .ltimer{display:inline-flex;align-items:center;gap:5px;margin-top:12px;font-size:0.78rem;font-weight:800;color:var(--teal-dark);background:rgba(15,185,167,0.1);border-radius:99px;padding:4px 13px;font-variant-numeric:tabular-nums;}
+  .ltimer.expired{color:var(--coral);background:rgba(255,107,107,0.12);}
   .lrow{display:flex;gap:8px;margin-top:16px;}
   .laction{flex:1;padding:11px 6px;border:none;border-radius:14px;font-family:inherit;font-size:0.82rem;font-weight:700;cursor:pointer;background:rgba(15,185,167,0.1);color:var(--teal-dark);display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;}
   .laction:active{transform:scale(0.95);}
@@ -929,7 +931,7 @@ function pickLearnSlots(n){
   const slots=[];
   for(let i=0;i<n;i++){
     let w=pickLearn(slots.map(s=>s.el),false) || pickLearn(slots.map(s=>s.el),true);
-    if(w) slots.push({el:w, done:false}); else break;
+    if(w) slots.push({el:w, done:false, ts:Date.now()}); else break;
   }
   return slots;
 }
@@ -950,7 +952,7 @@ function learnWord(g){
 function replaceSlot(i){   // put the next new word into slot i, or mark it done if none left
   const others = S.learn.slots.filter((x,j)=>j!==i && !x.done).map(x=>x.el);
   const nw = pickLearn(others,false) || pickLearn(others,true);
-  if(nw) S.learn.slots[i] = {el:nw, done:false}; else S.learn.slots[i].done = true;
+  if(nw) S.learn.slots[i] = {el:nw, done:false, ts:Date.now()}; else S.learn.slots[i].done = true;
 }
 function doLearn(i){
   learnWord(S.learn.slots[i].el);
@@ -963,6 +965,30 @@ function skipLearn(i){
   (S.learn.skipped=S.learn.skipped||[]).push(S.learn.slots[i].el);
   replaceSlot(i);
   save(); renderLearn();
+}
+
+/* 24-hour study countdown — each word you add gets 24h to learn it */
+const LEARN_MS = 24*3600*1000;
+let learnTimerInt=null;
+function fmtHMS(ms){
+  let s=Math.max(0,Math.floor(ms/1000));
+  const h=Math.floor(s/3600); s-=h*3600;
+  const m=Math.floor(s/60); s-=m*60;
+  return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+function updateLearnTimers(){
+  const els=document.querySelectorAll('#learnCards .ltimer');
+  if(!els.length){ if(learnTimerInt){ clearInterval(learnTimerInt); learnTimerInt=null; } return; }
+  els.forEach(el=>{
+    const rem=(+el.dataset.ts)+LEARN_MS-Date.now();
+    if(rem<=0){ el.classList.add('expired'); el.innerHTML=ic('clock',14)+'<span>הזמן ללמידה נגמר</span>'; }
+    else { el.classList.remove('expired'); el.innerHTML=ic('clock',14)+'<span>נשאר ללמוד: '+fmtHMS(rem)+'</span>'; }
+  });
+}
+function startLearnTimers(){
+  if(learnTimerInt) clearInterval(learnTimerInt);
+  updateLearnTimers();
+  learnTimerInt=setInterval(updateLearnTimers,1000);
 }
 
 function renderLearn(){
@@ -992,13 +1018,16 @@ function renderLearn(){
     return;
   }
   intro.innerHTML = ic('sparkles',17)+'<span>המילים של היום</span>';
+  let tsChanged=false;
   cards.innerHTML = S.learn.slots.map((s,i)=>{
     if(s.done) return '';
     const e = dictOf(s.el); if(!e) return '';
+    if(!s.ts){ s.ts=Date.now(); tsChanged=true; }   // give older slots a fresh 24h window
     return `<div class="lcard">
       <div class="lgreek">${e[0]}</div>
       <div class="ltranslit">${e[1]}</div>
       <div class="lhebrew">${e[2]}</div>
+      <div class="ltimer" data-ts="${s.ts}"></div>
       <div class="lrow">
         <button class="laction" data-a="speak" data-i="${i}">${ic('speaker',20)}<span>האזנה</span></button>
         <button class="laction" data-a="study" data-i="${i}">${ic('bulb',18)}<span>ללמוד</span></button>
@@ -1016,6 +1045,8 @@ function renderLearn(){
       else if(a==='skip') skipLearn(i);
     };
   });
+  if(tsChanged) save();
+  startLearnTimers();
   renderTimeline();
 }
 
@@ -1023,7 +1054,7 @@ function renderLearn(){
 function addToLearn(el){
   if(isKnownGr(el)){ toast('כבר באוצר שלך 🎉'); return; }
   if(S.learn.slots.some(s=>!s.done && stripGr(s.el)===stripGr(el))){ toast('כבר במילים של היום'); return; }
-  S.learn.slots.push({ el, done:false });
+  S.learn.slots.push({ el, done:false, ts:Date.now() });
   save(); renderLearn(); renderLearnSearch();
   toast(ic('sparkles',16)+'נוסף למילים ללמידה');
 }
@@ -1177,7 +1208,7 @@ $('tabWords').onclick=()=>selectTab('words');
 $('tabStats').onclick=()=>selectTab('stats');
 
 /* static UI icons */
-const APP_VERSION = 'v42';
+const APP_VERSION = 'v43';
 $('appVer').textContent = APP_VERSION;
 $('pageTitle').innerHTML = ic('book',24)+'<span>Lexi</span>';
 $('tabLearn').innerHTML = ic('sparkles',18)+'<span>לימוד</span>';
