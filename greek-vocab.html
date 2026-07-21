@@ -210,8 +210,10 @@
   .linput{width:100%;margin-top:14px;padding:13px 15px;border:1.5px solid rgba(62,44,86,0.15);border-radius:14px;font-size:1.15rem;font-family:inherit;text-align:center;font-weight:700;color:var(--plum);outline:none;background:#fff;}
   .linput:focus{border-color:var(--teal);}
   .linput:disabled{opacity:.75;}
+  .lprompt{font-size:1.55rem;font-weight:800;color:var(--plum);line-height:1.25;}
   .lfeed{font-size:0.9rem;font-weight:800;margin-top:9px;text-align:center;min-height:0;}
   .lfeed.bad,.lfeed.bad b{color:var(--coral);}
+  .lfeed-tr{font-weight:600;opacity:.6;direction:ltr;}
   .lwait{display:inline-flex;align-items:center;gap:6px;margin-top:13px;font-size:0.84rem;font-weight:700;color:var(--teal-dark);background:rgba(15,185,167,0.1);border-radius:12px;padding:9px 15px;}
   .lwait b{font-variant-numeric:tabular-nums;}
   .lcard.waiting{opacity:.94;}
@@ -1047,7 +1049,7 @@ function renderLearn(){
     renderTimeline();
     return;
   }
-  intro.innerHTML = ic('sparkles',17)+'<span>המילים של היום — כתוב/י את הפירוש</span>';
+  intro.innerHTML = ic('sparkles',17)+'<span>המילים של היום — כתוב/י ביוונית</span>';
   let changed=false;
   const now=Date.now();
   cards.innerHTML = S.learn.slots.map((s,i)=>{
@@ -1058,19 +1060,19 @@ function renderLearn(){
     if(typeof s.nextTs!=='number'){ s.nextTs=0; changed=true; }
     const dots = Array.from({length:REPS_NEEDED},(_,k)=>`<span class="ldot ${k<s.reps?'on':''}"></span>`).join('');
     const prog = `<div class="lprog">${dots}<span class="lprog-txt">${s.reps}/${REPS_NEEDED}</span></div>`;
-    // resting between spaced reps — the word is answered right and waits for the 30-min gap
+    // resting between spaced reps — reinforce with the Greek word you just produced
     if(s.nextTs>now){
       return `<div class="lcard waiting" data-i="${i}">
-        <div class="lgreek">${e[0]}</div>${prog}
+        <div class="lgreek">${e[0]}</div><div class="ltranslit">${e[1]}</div><div class="lhebrew">${e[2]}</div>${prog}
         <div class="lwait">${ic('check',15)}<span>נכון! חזרה הבאה בעוד <b class="lwait-cd" data-next="${s.nextTs}">--:--</b></span></div>
         <button class="lskip" data-a="skip" data-i="${i}">${ic('refresh',15)}<span>מילה אחרת</span></button>
       </div>`;
     }
-    // ready to be tested — only the Greek word is shown, you type the Hebrew
+    // ready to be tested — the Hebrew meaning is shown, you type the word in Greek (or English letters)
     return `<div class="lcard" data-i="${i}">
-      <div class="lgreek">${e[0]}</div>${prog}
+      <div class="lprompt">${e[2]}</div>${prog}
       <div class="ltimer" data-ts="${s.ts}"></div>
-      <input class="linput" data-i="${i}" placeholder="כתוב/י את הפירוש בעברית…" autocomplete="off">
+      <input class="linput" dir="ltr" data-i="${i}" placeholder="כתוב/י ביוונית או באנגלית…" autocomplete="off" autocapitalize="off">
       <div class="lfeed" data-i="${i}"></div>
       <div class="lrow">
         <button class="laction" data-a="speak" data-i="${i}">${ic('speaker',20)}<span>האזנה</span></button>
@@ -1095,6 +1097,17 @@ function renderLearn(){
   renderTimeline();
 }
 
+/* accept the answer whether typed in Greek letters or English transliteration, with a little slack */
+function greekAnswerOk(ans, el, tr){
+  ans=(ans||'').trim(); if(!ans) return false;
+  if(hasGreek(ans)){
+    const a=stripGr(ans), r=stripGr(el);
+    return a===r || lev(a,r)<=Math.max(1,typoBudget(r.length));
+  }
+  const a=loose(stripLat(ans));
+  const refs=[loose(romanize(el)), loose(stripLat(tr||''))].filter(Boolean);
+  return refs.some(r=> a===r || lev(a,r)<=Math.max(1,typoBudget(r.length)));
+}
 /* test a word: correct → a spaced rep; 3 spaced reps lock it into your vocabulary */
 function checkLearn(i){
   const card = document.querySelector('#learnCards .lcard[data-i="'+i+'"]');
@@ -1103,8 +1116,8 @@ function checkLearn(i){
   const inp = card.querySelector('.linput'), feed = card.querySelector('.lfeed');
   if(!inp || inp.disabled) return;
   const ans = inp.value.trim();
-  if(!ans){ toast('כתוב/י את הפירוש קודם 🙂'); return; }
-  if(heSimilar(ans, e[2]) || heMatch(ans, e[2])){
+  if(!ans){ toast('כתוב/י את המילה קודם 🙂'); return; }
+  if(greekAnswerOk(ans, e[0], e[1])){   // accepts Greek letters or English transliteration
     s.reps = (s.reps||0) + 1;
     s.nextTs = Date.now() + REP_GAP;
     if(s.reps >= REPS_NEEDED){
@@ -1119,10 +1132,10 @@ function checkLearn(i){
     }
     return;
   }
-  // wrong — reveal the answer for 3 seconds, then go back to Greek-only
+  // wrong — reveal the correct Greek word for 3 seconds, then go back to the prompt
   inp.disabled = true;
   card.querySelectorAll('[data-a=check]').forEach(x=>x.disabled=true);
-  feed.className = 'lfeed bad'; feed.innerHTML = `הפירוש הנכון: <b>${e[2]}</b>`;
+  feed.className = 'lfeed bad'; feed.innerHTML = `המילה הנכונה: <b dir="ltr">${e[0]}</b> <span class="lfeed-tr">(${e[1]})</span>`;
   setTimeout(()=>{
     const c = document.querySelector('#learnCards .lcard[data-i="'+i+'"]');
     if(!c) return;
@@ -1291,7 +1304,7 @@ $('tabWords').onclick=()=>selectTab('words');
 $('tabStats').onclick=()=>selectTab('stats');
 
 /* static UI icons */
-const APP_VERSION = 'v45';
+const APP_VERSION = 'v46';
 $('appVer').textContent = APP_VERSION;
 $('pageTitle').innerHTML = ic('book',24)+'<span>Lexi</span>';
 $('tabLearn').innerHTML = ic('sparkles',18)+'<span>לימוד</span>';
