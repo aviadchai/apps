@@ -213,6 +213,7 @@
   .lprompt{font-size:1.55rem;font-weight:800;color:var(--plum);line-height:1.25;}
   .lfeed{font-size:0.9rem;font-weight:800;margin-top:9px;text-align:center;min-height:0;}
   .lfeed.bad,.lfeed.bad b{color:var(--coral);}
+  .lfeed.ok,.lfeed.ok b{color:var(--teal-dark);}
   .lfeed-tr{font-weight:600;opacity:.6;direction:ltr;}
   .lwait{display:inline-flex;align-items:center;gap:6px;margin-top:13px;font-size:0.84rem;font-weight:700;color:var(--teal-dark);background:rgba(15,185,167,0.1);border-radius:12px;padding:9px 15px;}
   .lwait b{font-variant-numeric:tabular-nums;}
@@ -1063,8 +1064,8 @@ function renderLearn(){
     // resting between spaced reps — reinforce with the Greek word you just produced
     if(s.nextTs>now){
       return `<div class="lcard waiting" data-i="${i}">
-        <div class="lgreek">${e[0]}</div><div class="ltranslit">${e[1]}</div><div class="lhebrew">${e[2]}</div>${prog}
-        <div class="lwait">${ic('check',15)}<span>נכון! חזרה הבאה בעוד <b class="lwait-cd" data-next="${s.nextTs}">--:--</b></span></div>
+        <div class="lprompt">${e[2]}</div>${prog}
+        <div class="lwait">${ic('clock',15)}<span>נכון! חזרה הבאה בעוד <b class="lwait-cd" data-next="${s.nextTs}">--:--</b></span></div>
         <button class="lskip" data-a="skip" data-i="${i}">${ic('refresh',15)}<span>מילה אחרת</span></button>
       </div>`;
     }
@@ -1120,16 +1121,21 @@ function checkLearn(i){
   if(greekAnswerOk(ans, e[0], e[1])){   // accepts Greek letters or English transliteration
     s.reps = (s.reps||0) + 1;
     s.nextTs = Date.now() + REP_GAP;
+    save();
     if(s.reps >= REPS_NEEDED){
       learnWord(s.el);                 // mastered — moves into the vocabulary
       S.learn.slots.splice(i,1);
       save(); render();
       const n=$('heroNum'); n.classList.add('bump'); setTimeout(()=>n.classList.remove('bump'),250);
       toast(ic('sparkles',16)+`מצוין! ${e[0]} נלמדה 🎉`);
-    } else {
-      save(); renderLearn();
-      toast(ic('check',16)+`נכון! חזרה ${s.reps}/${REPS_NEEDED} — עוד אחת בעוד חצי שעה`);
+      return;
     }
+    // confirm the correct answer for ~2.5s (reveal the Greek), then settle into the 30-min wait
+    inp.disabled = true;
+    card.querySelectorAll('[data-a=check]').forEach(x=>x.disabled=true);
+    feed.className = 'lfeed ok'; feed.innerHTML = `✓ נכון! <b dir="ltr">${e[0]}</b> <span class="lfeed-tr">(${e[1]})</span>`;
+    toast(ic('check',16)+`נכון! חזרה ${s.reps}/${REPS_NEEDED} — עוד אחת בעוד חצי שעה`);
+    setTimeout(()=>{ renderLearn(); }, 2500);
     return;
   }
   // wrong — reveal the correct Greek word for 3 seconds, then go back to the prompt
@@ -1304,7 +1310,7 @@ $('tabWords').onclick=()=>selectTab('words');
 $('tabStats').onclick=()=>selectTab('stats');
 
 /* static UI icons */
-const APP_VERSION = 'v46';
+const APP_VERSION = 'v47';
 $('appVer').textContent = APP_VERSION;
 $('pageTitle').innerHTML = ic('book',24)+'<span>Lexi</span>';
 $('tabLearn').innerHTML = ic('sparkles',18)+'<span>לימוד</span>';
