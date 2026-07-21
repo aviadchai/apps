@@ -202,6 +202,19 @@
   .lhebrew.big{font-size:1.5rem;margin-top:12px;}
   .ltimer{display:inline-flex;align-items:center;gap:5px;margin-top:12px;font-size:0.78rem;font-weight:800;color:var(--teal-dark);background:rgba(15,185,167,0.1);border-radius:99px;padding:4px 13px;font-variant-numeric:tabular-nums;}
   .ltimer.expired{color:var(--coral);background:rgba(255,107,107,0.12);}
+  /* spaced-mastery test on each learn card */
+  .lprog{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:11px;}
+  .ldot{width:9px;height:9px;border-radius:50%;background:rgba(62,44,86,0.15);transition:background .2s;}
+  .ldot.on{background:var(--teal);}
+  .lprog-txt{font-size:0.72rem;font-weight:800;color:rgba(62,44,86,0.45);margin-inline-start:2px;}
+  .linput{width:100%;margin-top:14px;padding:13px 15px;border:1.5px solid rgba(62,44,86,0.15);border-radius:14px;font-size:1.15rem;font-family:inherit;text-align:center;font-weight:700;color:var(--plum);outline:none;background:#fff;}
+  .linput:focus{border-color:var(--teal);}
+  .linput:disabled{opacity:.75;}
+  .lfeed{font-size:0.9rem;font-weight:800;margin-top:9px;text-align:center;min-height:0;}
+  .lfeed.bad,.lfeed.bad b{color:var(--coral);}
+  .lwait{display:inline-flex;align-items:center;gap:6px;margin-top:13px;font-size:0.84rem;font-weight:700;color:var(--teal-dark);background:rgba(15,185,167,0.1);border-radius:12px;padding:9px 15px;}
+  .lwait b{font-variant-numeric:tabular-nums;}
+  .lcard.waiting{opacity:.94;}
   .lrow{display:flex;gap:8px;margin-top:16px;}
   .laction{flex:1;padding:11px 6px;border:none;border-radius:14px;font-family:inherit;font-size:0.82rem;font-weight:700;cursor:pointer;background:rgba(15,185,167,0.1);color:var(--teal-dark);display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;}
   .laction:active{transform:scale(0.95);}
@@ -934,7 +947,7 @@ function pickLearnSlots(n){
   const slots=[];
   for(let i=0;i<n;i++){
     let w=pickLearn(slots.map(s=>s.el),false) || pickLearn(slots.map(s=>s.el),true);
-    if(w) slots.push({el:w, done:false, ts:Date.now()}); else break;
+    if(w) slots.push({el:w, done:false, ts:Date.now(), reps:0, nextTs:0}); else break;
   }
   return slots;
 }
@@ -955,7 +968,7 @@ function learnWord(g){
 function replaceSlot(i){   // put the next new word into slot i, or mark it done if none left
   const others = S.learn.slots.filter((x,j)=>j!==i && !x.done).map(x=>x.el);
   const nw = pickLearn(others,false) || pickLearn(others,true);
-  if(nw) S.learn.slots[i] = {el:nw, done:false, ts:Date.now()}; else S.learn.slots[i].done = true;
+  if(nw) S.learn.slots[i] = {el:nw, done:false, ts:Date.now(), reps:0, nextTs:0}; else S.learn.slots[i].done = true;
 }
 function doLearn(i){
   learnWord(S.learn.slots[i].el);
@@ -970,8 +983,10 @@ function skipLearn(i){
   save(); renderLearn();
 }
 
-/* 24-hour study countdown — each word you add gets 24h to learn it */
-const LEARN_MS = 24*3600*1000;
+/* spaced mastery: 3 correct answers, each at least 30 min apart, to lock in a word */
+const LEARN_MS = 24*3600*1000;       // overall 24h study window
+const REP_GAP  = 30*60*1000;         // minimum gap between counted correct reps
+const REPS_NEEDED = 3;
 let learnTimerInt=null;
 function fmtHMS(ms){
   let s=Math.max(0,Math.floor(ms/1000));
@@ -979,14 +994,26 @@ function fmtHMS(ms){
   const m=Math.floor(s/60); s-=m*60;
   return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
 }
+function fmtMS(ms){
+  let s=Math.max(0,Math.floor(ms/1000));
+  const m=Math.floor(s/60); s-=m*60;
+  return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
 function updateLearnTimers(){
-  const els=document.querySelectorAll('#learnCards .ltimer');
-  if(!els.length){ if(learnTimerInt){ clearInterval(learnTimerInt); learnTimerInt=null; } return; }
-  els.forEach(el=>{
+  const timers=document.querySelectorAll('#learnCards .ltimer');
+  const waits=document.querySelectorAll('#learnCards .lwait-cd');
+  if(!timers.length && !waits.length){ if(learnTimerInt){ clearInterval(learnTimerInt); learnTimerInt=null; } return; }
+  timers.forEach(el=>{
     const rem=(+el.dataset.ts)+LEARN_MS-Date.now();
     if(rem<=0){ el.classList.add('expired'); el.innerHTML=ic('clock',14)+'<span>הזמן ללמידה נגמר</span>'; }
     else { el.classList.remove('expired'); el.innerHTML=ic('clock',14)+'<span>נשאר ללמוד: '+fmtHMS(rem)+'</span>'; }
   });
+  let flip=false;
+  waits.forEach(el=>{
+    const rem=(+el.dataset.next)-Date.now();
+    if(rem<=0) flip=true; else el.textContent=fmtMS(rem);
+  });
+  if(flip) renderLearn();   // a resting word is ready to be tested again
 }
 function startLearnTimers(){
   if(learnTimerInt) clearInterval(learnTimerInt);
@@ -1020,21 +1047,34 @@ function renderLearn(){
     renderTimeline();
     return;
   }
-  intro.innerHTML = ic('sparkles',17)+'<span>המילים של היום</span>';
-  let tsChanged=false;
+  intro.innerHTML = ic('sparkles',17)+'<span>המילים של היום — כתוב/י את הפירוש</span>';
+  let changed=false;
+  const now=Date.now();
   cards.innerHTML = S.learn.slots.map((s,i)=>{
     if(s.done) return '';
     const e = dictOf(s.el); if(!e) return '';
-    if(!s.ts){ s.ts=Date.now(); tsChanged=true; }   // give older slots a fresh 24h window
-    return `<div class="lcard">
-      <div class="lgreek">${e[0]}</div>
-      <div class="ltranslit">${e[1]}</div>
-      <div class="lhebrew">${e[2]}</div>
+    if(!s.ts){ s.ts=now; changed=true; }               // fresh 24h window for older slots
+    if(typeof s.reps!=='number'){ s.reps=0; changed=true; }
+    if(typeof s.nextTs!=='number'){ s.nextTs=0; changed=true; }
+    const dots = Array.from({length:REPS_NEEDED},(_,k)=>`<span class="ldot ${k<s.reps?'on':''}"></span>`).join('');
+    const prog = `<div class="lprog">${dots}<span class="lprog-txt">${s.reps}/${REPS_NEEDED}</span></div>`;
+    // resting between spaced reps — the word is answered right and waits for the 30-min gap
+    if(s.nextTs>now){
+      return `<div class="lcard waiting" data-i="${i}">
+        <div class="lgreek">${e[0]}</div>${prog}
+        <div class="lwait">${ic('check',15)}<span>נכון! חזרה הבאה בעוד <b class="lwait-cd" data-next="${s.nextTs}">--:--</b></span></div>
+        <button class="lskip" data-a="skip" data-i="${i}">${ic('refresh',15)}<span>מילה אחרת</span></button>
+      </div>`;
+    }
+    // ready to be tested — only the Greek word is shown, you type the Hebrew
+    return `<div class="lcard" data-i="${i}">
+      <div class="lgreek">${e[0]}</div>${prog}
       <div class="ltimer" data-ts="${s.ts}"></div>
+      <input class="linput" data-i="${i}" placeholder="כתוב/י את הפירוש בעברית…" autocomplete="off">
+      <div class="lfeed" data-i="${i}"></div>
       <div class="lrow">
         <button class="laction" data-a="speak" data-i="${i}">${ic('speaker',20)}<span>האזנה</span></button>
-        <button class="laction" data-a="study" data-i="${i}">${ic('bulb',18)}<span>ללמוד</span></button>
-        <button class="laction lprimary" data-a="learn" data-i="${i}">${ic('check',18)}<span>למדתי</span></button>
+        <button class="laction lprimary" data-a="check" data-i="${i}">${ic('checkCircle',18)}<span>בדיקה</span></button>
       </div>
       <button class="lskip" data-a="skip" data-i="${i}">${ic('refresh',15)}<span>מילה אחרת</span></button>
     </div>`;
@@ -1043,21 +1083,61 @@ function renderLearn(){
     const i=+b.dataset.i, a=b.dataset.a, e=dictOf(S.learn.slots[i].el);
     b.onclick=()=>{
       if(a==='speak') speak(e[0], b);
-      else if(a==='study') openStudy(i);
-      else if(a==='learn') doLearn(i);
+      else if(a==='check') checkLearn(i);
       else if(a==='skip') skipLearn(i);
     };
   });
-  if(tsChanged) save();
+  cards.querySelectorAll('.linput').forEach(inp=>{
+    inp.addEventListener('keydown',ev=>{ if(ev.key==='Enter'){ ev.preventDefault(); checkLearn(+inp.dataset.i); } });
+  });
+  if(changed) save();
   startLearnTimers();
   renderTimeline();
+}
+
+/* test a word: correct → a spaced rep; 3 spaced reps lock it into your vocabulary */
+function checkLearn(i){
+  const card = document.querySelector('#learnCards .lcard[data-i="'+i+'"]');
+  const s = S.learn.slots[i], e = s && dictOf(s.el);
+  if(!card || !e) return;
+  const inp = card.querySelector('.linput'), feed = card.querySelector('.lfeed');
+  if(!inp || inp.disabled) return;
+  const ans = inp.value.trim();
+  if(!ans){ toast('כתוב/י את הפירוש קודם 🙂'); return; }
+  if(heSimilar(ans, e[2]) || heMatch(ans, e[2])){
+    s.reps = (s.reps||0) + 1;
+    s.nextTs = Date.now() + REP_GAP;
+    if(s.reps >= REPS_NEEDED){
+      learnWord(s.el);                 // mastered — moves into the vocabulary
+      S.learn.slots.splice(i,1);
+      save(); render();
+      const n=$('heroNum'); n.classList.add('bump'); setTimeout(()=>n.classList.remove('bump'),250);
+      toast(ic('sparkles',16)+`מצוין! ${e[0]} נלמדה 🎉`);
+    } else {
+      save(); renderLearn();
+      toast(ic('check',16)+`נכון! חזרה ${s.reps}/${REPS_NEEDED} — עוד אחת בעוד חצי שעה`);
+    }
+    return;
+  }
+  // wrong — reveal the answer for 3 seconds, then go back to Greek-only
+  inp.disabled = true;
+  card.querySelectorAll('[data-a=check]').forEach(x=>x.disabled=true);
+  feed.className = 'lfeed bad'; feed.innerHTML = `הפירוש הנכון: <b>${e[2]}</b>`;
+  setTimeout(()=>{
+    const c = document.querySelector('#learnCards .lcard[data-i="'+i+'"]');
+    if(!c) return;
+    const ci=c.querySelector('.linput'), cf=c.querySelector('.lfeed');
+    if(ci){ ci.disabled=false; ci.value=''; try{ ci.focus(); }catch(_){} }
+    if(cf){ cf.className='lfeed'; cf.innerHTML=''; }
+    c.querySelectorAll('[data-a=check]').forEach(x=>x.disabled=false);
+  }, 3000);
 }
 
 /* search the dictionary for a specific word you want to learn, and add it to today's cards */
 function addToLearn(el){
   if(isKnownGr(el)){ toast('כבר באוצר שלך 🎉'); return; }
   if(S.learn.slots.some(s=>!s.done && stripGr(s.el)===stripGr(el))){ toast('כבר במילים של היום'); return; }
-  S.learn.slots.push({ el, done:false, ts:Date.now() });
+  S.learn.slots.push({ el, done:false, ts:Date.now(), reps:0, nextTs:0 });
   save(); renderLearn(); renderLearnSearch();
   toast(ic('sparkles',16)+'נוסף למילים ללמידה');
 }
@@ -1211,7 +1291,7 @@ $('tabWords').onclick=()=>selectTab('words');
 $('tabStats').onclick=()=>selectTab('stats');
 
 /* static UI icons */
-const APP_VERSION = 'v44';
+const APP_VERSION = 'v45';
 $('appVer').textContent = APP_VERSION;
 $('pageTitle').innerHTML = ic('book',24)+'<span>Lexi</span>';
 $('tabLearn').innerHTML = ic('sparkles',18)+'<span>לימוד</span>';
