@@ -161,6 +161,9 @@
   .q-prompt-he{font-size:1.5rem;font-weight:800;color:var(--plum);}
   .q-prompt-sub{font-size:.8rem;color:rgba(62,44,86,0.45);margin-top:6px;}
   .q-speak{margin-top:12px;background:rgba(15,185,167,0.12);color:var(--teal-dark);border:none;border-radius:12px;padding:8px 20px;font-size:.85rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;}
+  .q-input{width:100%;padding:14px 16px;border:1.5px solid rgba(62,44,86,0.15);border-radius:14px;font-size:1.15rem;font-family:inherit;background:#fff;color:var(--plum);outline:none;text-align:center;font-weight:700;}
+  .q-input:focus{border-color:var(--teal);}
+  .q-input:disabled{opacity:.75;}
   .q-opts{display:flex;flex-direction:column;gap:10px;}
   .q-opt{border:1.5px solid #eee;background:#fff;border-radius:14px;padding:15px;font-size:1.05rem;font-weight:600;color:var(--plum);cursor:pointer;font-family:inherit;box-shadow:0 4px 14px rgba(62,44,86,0.06);}
   .q-opt:active{transform:scale(.99);}
@@ -365,7 +368,7 @@
     <div id="quizHome">
       <div class="q-title">🎯 מבחן על המילים שלך</div>
       <div class="q-sub" id="quizHomeSub"></div>
-      <button class="q-mode easy" id="qModeEasy">קל — לדעת את הפירוש<small>מראים מילה ביוונית, בוחרים את הפירוש הנכון</small></button>
+      <button class="q-mode easy" id="qModeEasy">קל — לדעת את הפירוש<small>מראים מילה ביוונית, כותבים את הפירוש בעברית</small></button>
       <button class="q-mode hard" id="qModeHard">קשה — לכתוב ביוונית<small>מראים פירוש, מרכיבים את המילה מאותיות יווניות</small></button>
     </div>
     <div id="quizPlay" class="hidden">
@@ -1208,7 +1211,7 @@ $('tabWords').onclick=()=>selectTab('words');
 $('tabStats').onclick=()=>selectTab('stats');
 
 /* static UI icons */
-const APP_VERSION = 'v43';
+const APP_VERSION = 'v44';
 $('appVer').textContent = APP_VERSION;
 $('pageTitle').innerHTML = ic('book',24)+'<span>Lexi</span>';
 $('tabLearn').innerHTML = ic('sparkles',18)+'<span>לימוד</span>';
@@ -1248,10 +1251,10 @@ function openQuiz(){
   $('quizEnd').classList.add('hidden');
   const nEasy=eligibleWords('easy').length, nHard=eligibleWords('hard').length;
   $('quizHomeSub').textContent = `${S.words.length} מילים ברשימה שלך`;
-  $('qModeEasy').disabled = nEasy<4;
+  $('qModeEasy').disabled = nEasy<1;
   $('qModeHard').disabled = nHard<1;
-  $('qModeEasy').innerHTML = nEasy<4 ? 'קל — לדעת את הפירוש<small>צריך לפחות 4 מילים עם פירוש</small>'
-    : 'קל — לדעת את הפירוש<small>מראים מילה ביוונית, בוחרים את הפירוש הנכון</small>';
+  $('qModeEasy').innerHTML = nEasy<1 ? 'קל — לדעת את הפירוש<small>צריך מילה אחת לפחות עם פירוש</small>'
+    : 'קל — לדעת את הפירוש<small>מראים מילה ביוונית, כותבים את הפירוש בעברית</small>';
   $('qModeHard').innerHTML = nHard<1 ? 'קשה — לכתוב ביוונית<small>צריך מילה אחת לפחות באותיות יווניות</small>'
     : 'קשה — לכתוב ביוונית<small>מראים פירוש, מרכיבים את המילה מאותיות יווניות</small>';
   quizEl.classList.add('show');
@@ -1285,19 +1288,27 @@ function renderQ(){
 }
 function nextQ(){ quiz.i++; if(quiz.i>=quiz.qs.length) endQuiz(); else renderQ(); }
 function renderEasy(w){
+  // no multiple choice — you type the Hebrew meaning yourself
   $('qCard').innerHTML = `<div class="q-prompt-el">${w.el}</div><div class="q-prompt-sub">${w.tr||''}</div><button class="q-speak" id="qSpk">${ic('speaker',18)}<span>השמעה</span></button>`;
   $('qSpk').onclick=()=>speak(w.el,$('qSpk'));
-  const others = shuffle(S.words.filter(x=>x!==w && x.he && x.he!==w.he).map(x=>x.he));
-  const distinct=[]; for(const h of others){ if(!distinct.includes(h)){ distinct.push(h); if(distinct.length>=3) break; } }
-  const opts = shuffle([w.he,...distinct]);
-  $('qAnswer').innerHTML = `<div class="q-opts">${opts.map(o=>`<button class="q-opt" data-he="${o.replace(/"/g,'&quot;')}">${o}</button>`).join('')}</div>`;
-  $('qAnswer').querySelectorAll('.q-opt').forEach(b=>b.onclick=()=>{
-    $('qAnswer').querySelectorAll('.q-opt').forEach(x=>{ x.disabled=true; if(x.dataset.he===w.he) x.classList.add('correct'); });
-    if(b.dataset.he===w.he){ quiz.score++; $('qFeed').textContent='✓ נכון!'; $('qFeed').className='q-feed ok'; }
-    else{ b.classList.add('wrong'); $('qFeed').innerHTML=`הפירוש הנכון: <b>${w.he}</b>`; $('qFeed').className='q-feed bad'; }
+  $('qAnswer').innerHTML = `<input class="q-input" id="qInput" placeholder="כתוב/י את הפירוש בעברית…" autocomplete="off">
+    <div class="q-actions"><button class="btn btn-main" id="qCheck">בדיקה</button></div>`;
+  const inp=$('qInput');
+  let graded=false;
+  function grade(){
+    if(graded) return;
+    const ans=inp.value.trim();
+    if(!ans){ toast('כתוב/י את הפירוש קודם'); return; }
+    graded=true; inp.disabled=true; $('qCheck').disabled=true;
+    const ok = heSimilar(ans, w.he) || heMatch(ans, w.he);
+    if(ok){ quiz.score++; $('qFeed').innerHTML=`✓ נכון! <b>${w.he}</b>`; $('qFeed').className='q-feed ok'; }
+    else{ $('qFeed').innerHTML=`הפירוש הנכון: <b>${w.he}</b>`; $('qFeed').className='q-feed bad'; }
     $('qPts').textContent=`${quiz.score} נק׳`;
     showNext();
-  });
+  }
+  $('qCheck').onclick=grade;
+  inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); grade(); }});
+  try{ inp.focus(); }catch(e){}
 }
 function renderHard(w){
   const target = stripGr(w.el);
