@@ -1070,7 +1070,7 @@ function renderLearn(){
         <div class="study-hint">${ic('bulb',14)}<span>שנן/י את המילה, ואז סמן/י שלמדת</span></div>
         <div class="lrow">
           <button class="laction" data-a="speak" data-i="${i}">${ic('speaker',20)}<span>האזנה</span></button>
-          <button class="laction lprimary" data-a="studied" data-i="${i}">${ic('check',18)}<span>אוקי, למדתי</span></button>
+          <button class="laction lprimary" data-a="studied" data-i="${i}">${ic('check',18)}<span>למדתי</span></button>
         </div>
         <button class="lskip" data-a="skip" data-i="${i}">${ic('refresh',15)}<span>מילה אחרת</span></button>
       </div>`;
@@ -1334,7 +1334,7 @@ $('tabWords').onclick=()=>selectTab('words');
 $('tabStats').onclick=()=>selectTab('stats');
 
 /* static UI icons */
-const APP_VERSION = 'v48';
+const APP_VERSION = 'v49';
 $('appVer').textContent = APP_VERSION;
 $('pageTitle').innerHTML = ic('book',24)+'<span>Lexi</span>';
 $('tabLearn').innerHTML = ic('sparkles',18)+'<span>לימוד</span>';
