@@ -201,8 +201,9 @@
   .lctrl:active{background:rgba(62,44,86,0.07);transform:scale(0.9);}
   @keyframes lcollapse{to{opacity:0;transform:scale(0.9) translateY(-6px);}}
   .lcard.closing{animation:lcollapse .26s ease forwards;pointer-events:none;}
-  .lcard.mini{padding:14px 20px;display:flex;align-items:center;justify-content:center;min-height:52px;}
+  .lcard.mini{padding:12px 44px;display:flex;align-items:center;justify-content:center;gap:12px;min-height:52px;}
   .lprompt.mini{font-size:1.15rem;}
+  .lmini-speak{flex:0 0 auto;width:36px;height:36px;border-radius:11px;border:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;}
   .lgreek{font-size:2.1rem;font-weight:800;color:var(--teal-dark);direction:ltr;unicode-bidi:isolate;line-height:1.1;}
   .lgreek.big{font-size:2.7rem;}
   .ltranslit{font-size:0.9rem;color:rgba(62,44,86,0.45);direction:ltr;margin-top:3px;font-weight:600;}
@@ -1079,7 +1080,8 @@ function renderLearn(){
       `<button class="lctrl lctrl-min" data-a="min" data-i="${i}" aria-label="מזעור/הגדלה">${ic(s.min?'chevronDown':'chevronUp',18)}</button>`;
     // minimized — only the Hebrew word is shown
     if(s.min){
-      return `<div class="lcard mini" data-i="${i}">${ctrls}<div class="lprompt mini">${e[2]}</div></div>`;
+      return `<div class="lcard mini" data-i="${i}">${ctrls}<div class="lprompt mini">${e[2]}</div>
+        <button class="lmini-speak play" data-a="speak" data-i="${i}" aria-label="האזנה">${ic('speaker',18)}</button></div>`;
     }
     // 1) study phase — see the word in Hebrew AND Greek, then mark it learned
     if(!s.studied){
@@ -1358,7 +1360,7 @@ $('tabWords').onclick=()=>selectTab('words');
 $('tabStats').onclick=()=>selectTab('stats');
 
 /* static UI icons */
-const APP_VERSION = 'v53';
+const APP_VERSION = 'v54';
 $('appVer').textContent = APP_VERSION;
 $('pageTitle').innerHTML = ic('book',24)+'<span>Lexi</span>';
 $('tabLearn').innerHTML = ic('sparkles',18)+'<span>לימוד</span>';
