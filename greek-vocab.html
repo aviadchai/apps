@@ -96,6 +96,7 @@
   /* stats */
   .tiles{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:14px;}
   .tile{background:#fff;border-radius:20px;padding:16px 12px;text-align:center;box-shadow:0 10px 30px rgba(62,44,86,0.08);opacity:0;transform:translateY(14px);animation:rise .35s ease forwards;}
+  .tile .tico{font-size:1.15rem;line-height:1;margin-bottom:4px;}
   .tile .v{font-size:1.9rem;font-weight:800;color:var(--teal-dark);line-height:1.15;}
   .tile .k{font-size:0.74rem;color:rgba(62,44,86,0.5);margin-top:4px;font-weight:600;}
   .date-row{display:flex;align-items:center;justify-content:space-between;gap:10px;background:rgba(15,185,167,0.06);border-radius:14px;padding:10px 14px;font-size:0.85rem;font-weight:600;color:rgba(62,44,86,0.7);}
@@ -271,6 +272,21 @@
   .pbar-stage .badge{font-size:0.66rem;font-weight:800;color:var(--teal-dark);background:rgba(15,185,167,0.12);border-radius:99px;padding:2px 9px;}
   .pbar-desc{font-size:0.82rem;color:rgba(62,44,86,0.6);margin-top:4px;line-height:1.55;}
   .pbar-next{font-size:0.82rem;color:var(--teal-dark);font-weight:700;margin-top:9px;display:flex;align-items:center;gap:6px;}
+  /* journey stepper — milestone stations along a filling path */
+  .jhead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:2px;}
+  .jlevel{font-size:1.05rem;font-weight:800;color:var(--plum);}
+  .jcount{font-size:0.82rem;color:rgba(62,44,86,0.5);font-weight:600;white-space:nowrap;}
+  .jcount b{color:var(--teal-dark);font-size:1.15rem;font-weight:800;}
+  .jstepper{position:relative;margin:16px 2px 12px;}
+  .jtrack{position:absolute;top:14px;right:15px;left:15px;height:3px;background:rgba(62,44,86,0.12);border-radius:2px;}
+  .jtrack-fill{position:absolute;right:0;top:0;bottom:0;background:linear-gradient(270deg,var(--teal-dark),var(--teal));border-radius:2px;transition:width .7s cubic-bezier(.22,1,.36,1);}
+  .jnodes{position:relative;display:flex;justify-content:space-between;direction:rtl;}
+  .jnode{width:30px;height:30px;border-radius:50%;background:#fff;border:2px solid rgba(62,44,86,0.13);display:flex;align-items:center;justify-content:center;font-size:0.6rem;font-weight:800;color:rgba(62,44,86,0.4);z-index:1;transition:transform .25s ease;}
+  .jstation.done .jnode{background:var(--teal);border-color:var(--teal);color:#fff;}
+  .jstation.cur .jnode{background:var(--teal-dark);border-color:var(--teal-dark);color:#fff;font-size:0.95rem;transform:scale(1.2);box-shadow:0 0 0 4px rgba(15,185,167,0.2);}
+  .jdesc{font-size:0.82rem;color:rgba(62,44,86,0.6);line-height:1.5;margin-top:2px;}
+  .jnext{display:flex;align-items:center;gap:6px;font-size:0.82rem;color:var(--teal-dark);font-weight:700;margin-top:11px;background:rgba(15,185,167,0.08);border-radius:11px;padding:9px 13px;}
+  .jnext b{font-weight:800;}
 
   /* study overlay */
   .study{position:fixed;inset:0;z-index:70;background:linear-gradient(160deg,var(--bg1),var(--bg2));display:flex;flex-direction:column;align-items:center;justify-content:center;padding:calc(env(safe-area-inset-top) + 18px) 18px calc(env(safe-area-inset-bottom) + 22px);opacity:0;visibility:hidden;transition:opacity .25s ease,visibility .25s ease;}
@@ -350,10 +366,10 @@
     </div>
 
     <div class="tiles">
-      <div class="tile"><div class="v" id="stTotal">0</div><div class="k">מילים בסך הכל</div></div>
-      <div class="tile"><div class="v" id="stDays">0</div><div class="k">ימי לימוד</div></div>
-      <div class="tile"><div class="v" id="stAvg">0</div><div class="k">מילים ליום בממוצע</div></div>
-      <div class="tile"><div class="v" id="stWeek">0</div><div class="k">מילים בשבוע האחרון</div></div>
+      <div class="tile"><div class="tico">✨</div><div class="v" id="stToday">0</div><div class="k">נלמדו היום</div></div>
+      <div class="tile"><div class="tico">📅</div><div class="v" id="stWeek">0</div><div class="k">השבוע האחרון</div></div>
+      <div class="tile"><div class="tico">🔥</div><div class="v" id="stDays">0</div><div class="k">ימי לימוד</div></div>
+      <div class="tile"><div class="tico">📈</div><div class="v" id="stAvg">0</div><div class="k">ממוצע ליום</div></div>
     </div>
 
     <div class="card">
@@ -914,7 +930,8 @@ function daysLearning(){
 }
 function renderStats(){
   const total=S.words.length, days=daysLearning();
-  $('stTotal').textContent=total;
+  const tk=todayKey();
+  $('stToday').textContent=S.words.filter(w=>todayKey(w.ts)===tk).length;
   $('stDays').textContent=S.startDate?days:'—';
   $('stAvg').textContent=S.startDate&&total? (total/days).toFixed(1).replace(/\.0$/,'') : '0';
   const weekAgo=Date.now()-7*86400000;
@@ -1271,31 +1288,31 @@ function renderTimeline(){
   const box=$('timeline'); if(!box) return;
   const all=DICT.length, known=S.words.length;
   const STAGES=[
-    {min:0,   t:'הצעד הראשון',    d:'מתחילים את המסע — כל מילה נחשבת'},
-    {min:10,  t:'המילים הראשונות', d:'שלום, תודה, כן ולא — הבסיס שאי אפשר בלעדיו'},
-    {min:20,  t:'מרכיבים משפט',    d:'מספיק מילים כדי לחבר משפט פשוט משלך'},
-    {min:50,  t:'מתחילים לדבר',    d:'מסתדרים בשיחה קצרה — בחנות, בקפה, ברחוב'},
-    {min:100, t:'שיחה יומיומית',   d:'מבינים ומגיבים ברוב המצבים היומיומיים'},
-    {min:200, t:'שליטה יפה בשפה',  d:'מדברים בביטחון על מגוון רחב של נושאים'},
-    {min:350, t:'כמעט שוטפים',     d:'מבינים כמעט הכול, כמעט בלי לתרגם בראש'},
-    {min:all, t:'שוטפים — כל המילון! 🏆', d:`למדת את כל ${all} המילים. כל הכבוד!`}
+    {min:0,   e:'🌱', t:'הצעד הראשון',    d:'מתחילים את המסע — כל מילה נחשבת'},
+    {min:10,  e:'👋', t:'המילים הראשונות', d:'שלום, תודה, כן ולא — הבסיס שאי אפשר בלעדיו'},
+    {min:20,  e:'🧩', t:'מרכיבים משפט',    d:'מספיק מילים כדי לחבר משפט פשוט משלך'},
+    {min:50,  e:'🗣️', t:'מתחילים לדבר',    d:'מסתדרים בשיחה קצרה — בחנות, בקפה, ברחוב'},
+    {min:100, e:'💬', t:'שיחה יומיומית',   d:'מבינים ומגיבים ברוב המצבים היומיומיים'},
+    {min:200, e:'🎯', t:'שליטה יפה בשפה',  d:'מדברים בביטחון על מגוון רחב של נושאים'},
+    {min:350, e:'⭐', t:'כמעט שוטפים',     d:'מבינים כמעט הכול, כמעט בלי לתרגם בראש'},
+    {min:all, e:'🏆', t:'שוטפים — כל המילון!', d:`למדת את כל ${all} המילים. כל הכבוד!`}
   ];
   let ci=0; STAGES.forEach((s,i)=>{ if(known>=s.min) ci=i; });
-  const cur=STAGES[ci], nxt=STAGES[ci+1];
-  const pct = Math.min(100, Math.max(known/all*100, known?2:0));
-  // interior milestone notches (skip 0 and the final "all"); label the roomier ones
-  const ticks = STAGES.filter(s=>s.min>0 && s.min<all).map(s=>{
-    const hit = known>=s.min;
-    const lbl = s.min>=50 ? `<span class="lbl">${s.min}</span>` : '';
-    return `<div class="pbar-tick ${hit?'hit':''}" style="right:${(s.min/all*100).toFixed(2)}%">${lbl}</div>`;
+  const cur=STAGES[ci], nxt=STAGES[ci+1], N=STAGES.length;
+  // journey stepper — evenly-spaced milestone stations with a filling path (RTL)
+  const frac = nxt ? Math.min(1, Math.max(0,(known-cur.min)/(nxt.min-cur.min))) : 1;
+  const fillPct = ((ci+frac)/(N-1))*100;
+  const nodes = STAGES.map((s,i)=>{
+    const done=known>=s.min, curn=i===ci;
+    const inner = curn ? s.e : (done ? ic('check',13) : (s.min===all ? '🏆' : s.min));
+    return `<div class="jstation ${done?'done':''} ${curn?'cur':''}"><div class="jnode">${inner}</div></div>`;
   }).join('');
   const html =
-    `<div class="pbar-head"><b>${known}</b> מתוך ${all} מילים</div>`+
-    `<div class="pbar-track"><div class="pbar-fill" style="width:${pct.toFixed(2)}%"></div>${ticks}</div>`+
-    `<div class="pbar-stage"><span class="now">${cur.t}</span><span class="badge">השלב שלך</span></div>`+
-    `<div class="pbar-desc">${cur.d}</div>`+
-    (nxt ? `<div class="pbar-next">${ic('sparkles',14)}<span>עוד ${nxt.min-known} מילים ל“${nxt.t}”</span></div>`
-         : `<div class="pbar-next">${ic('check',14)}<span>סיימת את כל המילון! 🏆</span></div>`);
+    `<div class="jhead"><div class="jlevel">${cur.e} ${cur.t}</div><div class="jcount"><b>${known}</b> / ${all}</div></div>`+
+    `<div class="jstepper"><div class="jtrack"><div class="jtrack-fill" style="width:${fillPct.toFixed(1)}%"></div></div><div class="jnodes">${nodes}</div></div>`+
+    `<div class="jdesc">${cur.d}</div>`+
+    (nxt ? `<div class="jnext">${ic('sparkles',14)}<span>עוד <b>${nxt.min-known}</b> מילים ל“${nxt.t}”</span></div>`
+         : `<div class="jnext done">${ic('check',14)}<span>סיימת את כל המילון! 🏆</span></div>`);
   const title = ic('chart',18)+'<span>המסע שלי</span>';
   ['timeline','timelineStats'].forEach(id=>{ const el=$(id); if(el) el.innerHTML=html; });
   ['tlTitle','tlTitleStats'].forEach(id=>{ const el=$(id); if(el) el.innerHTML=title; });
@@ -1372,7 +1389,7 @@ $('tabWords').onclick=()=>selectTab('words');
 $('tabStats').onclick=()=>selectTab('stats');
 
 /* static UI icons */
-const APP_VERSION = 'v55';
+const APP_VERSION = 'v56';
 $('appVer').textContent = APP_VERSION;
 $('pageTitle').innerHTML = ic('book',24)+'<span>Lexi</span>';
 $('tabLearn').innerHTML = ic('sparkles',18)+'<span>לימוד</span>';
