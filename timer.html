@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>טיימר כושר</title>
+<link rel="icon" href="icon-timer.svg" type="image/svg+xml">
+<link rel="manifest" href="timer-manifest.json">
+<meta name="theme-color" content="#0b0f1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="טיימר">
+<link rel="apple-touch-icon" href="icon-timer.svg">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --work:#22c55e;
+  --rest:#3b82f6;
+  --bg:#0b0f1a;
+}
+html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:#f1f5f9;overflow:hidden;}
+body{padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);display:flex;flex-direction:column;min-height:100%;transition:background 0.4s;}
+body.phase-work{background:radial-gradient(circle at 50% 30%,#0e2a1a,#0b0f1a 70%);}
+body.phase-rest{background:radial-gradient(circle at 50% 30%,#0e1f38,#0b0f1a 70%);}
+.wrap{flex:1;max-width:480px;width:100%;margin:0 auto;padding:24px 22px;display:flex;flex-direction:column;}
+
+h1{text-align:center;font-size:22px;font-weight:800;color:#e2e8f0;margin-bottom:4px;}
+.tagline{text-align:center;color:#64748b;font-size:13px;margin-bottom:22px;}
+
+/* ---- Setup card ---- */
+.settings{display:flex;flex-direction:column;gap:14px;margin-bottom:22px;}
+.row{background:#151b2b;border:1px solid #232c42;border-radius:18px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.row .label{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:700;}
+.dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
+.dot.work{background:var(--work);}
+.dot.rest{background:var(--rest);}
+.stepper{display:flex;align-items:center;gap:6px;}
+.stepper button{width:40px;height:40px;border-radius:12px;border:none;background:#232c42;color:#f1f5f9;font-size:24px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .1s,background .15s;}
+.stepper button:active{transform:scale(0.9);background:#2f3a56;}
+.stepper .val{min-width:74px;text-align:center;font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;}
+.stepper .val small{font-size:12px;color:#64748b;font-weight:600;margin-inline-start:3px;}
+
+.rounds-row{background:#151b2b;border:1px solid #232c42;border-radius:18px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.rounds-row .label{font-size:16px;font-weight:700;display:flex;align-items:center;gap:10px;}
+.seg{display:flex;gap:6px;}
+.seg button{padding:8px 12px;border-radius:11px;border:1px solid #232c42;background:#151b2b;color:#94a3b8;font-size:14px;font-weight:700;cursor:pointer;transition:.15s;}
+.seg button.active{background:#f1f5f9;color:#0b0f1a;border-color:#f1f5f9;}
+
+/* ---- Timer display ---- */
+.stage{flex:1;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;}
+.stage.on{display:flex;}
+.phase-name{font-size:28px;font-weight:800;letter-spacing:.5px;margin-bottom:6px;}
+.phase-name.work{color:var(--work);}
+.phase-name.rest{color:var(--rest);}
+.ring{position:relative;width:min(74vw,300px);height:min(74vw,300px);margin:6px 0 10px;}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg);}
+.ring .track{stroke:#1e263a;}
+.ring .bar{stroke-linecap:round;transition:stroke .4s;}
+.ring .bar.work{stroke:var(--work);}
+.ring .bar.rest{stroke:var(--rest);}
+.count{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.count .big{font-size:78px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1;}
+.count .sub{margin-top:8px;font-size:14px;color:#64748b;font-weight:600;}
+
+/* ---- Controls ---- */
+.controls{display:flex;gap:12px;margin-top:8px;}
+.btn{flex:1;padding:18px;border-radius:16px;border:none;font-size:18px;font-weight:800;cursor:pointer;transition:transform .1s,opacity .15s;}
+.btn:active{transform:scale(0.97);}
+.btn.primary{background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;}
+.btn.ghost{background:#1a2133;color:#cbd5e1;border:1px solid #2a3550;flex:0 0 auto;width:70px;}
+.btn.stop{background:#1a2133;color:#f87171;border:1px solid #3a2530;}
+.hidden{display:none!important;}
+</style>
+</head>
+<body class="phase-idle">
+<div class="wrap">
+  <h1>טיימר כושר</h1>
+  <p class="tagline">עבודה ומנוחה — רץ בלופ עד שעוצרים</p>
+
+  <!-- SETUP -->
+  <div id="setup">
+    <div class="settings">
+      <div class="row">
+        <span class="label"><span class="dot work"></span>עבודה</span>
+        <div class="stepper">
+          <button data-t="work" data-d="-5" aria-label="הפחת">−</button>
+          <span class="val"><span id="workVal">30</span><small>שנ׳</small></span>
+          <button data-t="work" data-d="5" aria-label="הוסף">+</button>
+        </div>
+      </div>
+      <div class="row">
+        <span class="label"><span class="dot rest"></span>מנוחה</span>
+        <div class="stepper">
+          <button data-t="rest" data-d="-5" aria-label="הפחת">−</button>
+          <span class="val"><span id="restVal">15</span><small>שנ׳</small></span>
+          <button data-t="rest" data-d="5" aria-label="הוסף">+</button>
+        </div>
+      </div>
+      <div class="rounds-row">
+        <span class="label">🔁 סבבים</span>
+        <div class="seg" id="roundsSeg">
+          <button data-r="0" class="active">∞</button>
+          <button data-r="5">5</button>
+          <button data-r="8">8</button>
+          <button data-r="10">10</button>
+        </div>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="btn primary" id="startBtn">▶ הפעל</button>
+    </div>
+  </div>
+
+  <!-- RUNNING -->
+  <div class="stage" id="stage">
+    <div class="phase-name work" id="phaseName">עבודה</div>
+    <div class="ring">
+      <svg viewBox="0 0 100 100">
+        <circle class="track" cx="50" cy="50" r="45" fill="none" stroke-width="7"/>
+        <circle class="bar work" id="bar" cx="50" cy="50" r="45" fill="none" stroke-width="7"
+          stroke-dasharray="282.74" stroke-dashoffset="0"/>
+      </svg>
+      <div class="count">
+        <span class="big" id="bigCount">30</span>
+        <span class="sub" id="roundInfo">סבב 1</span>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="btn ghost" id="pauseBtn">⏸</button>
+      <button class="btn stop" id="stopBtn">■ עצור</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var MIN_W=5, MIN_R=0, MAX=600, R=45, CIRC=2*Math.PI*R;
+
+  var cfg = { work:30, rest:15, rounds:0 };
+  var state = { running:false, paused:false, phase:'work', remaining:0, round:1, tick:null };
+
+  // ---- persistence ----
+  try{ var saved=JSON.parse(localStorage.getItem('fitTimer')||'{}');
+       if(saved.work) cfg.work=saved.work; if(saved.rest!=null) cfg.rest=saved.rest;
+       if(saved.rounds!=null) cfg.rounds=saved.rounds; }catch(e){}
+  function save(){ try{ localStorage.setItem('fitTimer',JSON.stringify(cfg)); }catch(e){} }
+
+  var el = {
+    setup:document.getElementById('setup'),
+    stage:document.getElementById('stage'),
+    workVal:document.getElementById('workVal'),
+    restVal:document.getElementById('restVal'),
+    roundsSeg:document.getElementById('roundsSeg'),
+    startBtn:document.getElementById('startBtn'),
+    pauseBtn:document.getElementById('pauseBtn'),
+    stopBtn:document.getElementById('stopBtn'),
+    phaseName:document.getElementById('phaseName'),
+    bigCount:document.getElementById('bigCount'),
+    roundInfo:document.getElementById('roundInfo'),
+    bar:document.getElementById('bar')
+  };
+
+  function renderSettings(){
+    el.workVal.textContent = cfg.work;
+    el.restVal.textContent = cfg.rest;
+    [].forEach.call(el.roundsSeg.children,function(b){
+      b.classList.toggle('active', parseInt(b.dataset.r,10)===cfg.rounds);
+    });
+  }
+  renderSettings();
+
+  // ---- steppers ----
+  document.querySelectorAll('.stepper button').forEach(function(b){
+    b.addEventListener('click',function(){
+      var t=b.dataset.t, d=parseInt(b.dataset.d,10);
+      var min = t==='work'?MIN_W:MIN_R;
+      cfg[t] = Math.max(min, Math.min(MAX, cfg[t]+d));
+      renderSettings(); save();
+    });
+  });
+  el.roundsSeg.addEventListener('click',function(e){
+    var b=e.target.closest('button'); if(!b) return;
+    cfg.rounds = parseInt(b.dataset.r,10); renderSettings(); save();
+  });
+
+  // ---- audio (beeps) ----
+  var ac=null;
+  function actx(){ if(!ac){ ac=new (window.AudioContext||window.webkitAudioContext)(); } return ac; }
+  function beep(freq,dur,vol){
+    try{
+      var c=actx(); if(c.state==='suspended') c.resume();
+      var o=c.createOscillator(), g=c.createGain();
+      o.type='sine'; o.frequency.value=freq;
+      o.connect(g); g.connect(c.destination);
+      var t=c.currentTime;
+      g.gain.setValueAtTime(0,t);
+      g.gain.linearRampToValueAtTime(vol||0.3,t+0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001,t+(dur||0.15));
+      o.start(t); o.stop(t+(dur||0.15)+0.02);
+    }catch(e){}
+  }
+  // start of phase: distinct tone per phase
+  function beepStart(phase){ beep(phase==='work'?880:520,0.18,0.35); }
+  // final countdown ticks (3-2-1) and end-of-phase double beep
+  function beepTick(){ beep(700,0.09,0.25); }
+  function beepEnd(){ beep(1100,0.14,0.35); setTimeout(function(){beep(1100,0.2,0.35);},170); }
+
+  function vibrate(ms){ if(navigator.vibrate) try{navigator.vibrate(ms);}catch(e){} }
+
+  // ---- timer engine ----
+  function setPhase(phase){
+    state.phase=phase;
+    state.remaining = phase==='work'?cfg.work:cfg.rest;
+    document.body.className = 'phase-'+phase;
+    el.phaseName.textContent = phase==='work'?'עבודה':'מנוחה';
+    el.phaseName.className = 'phase-name '+phase;
+    el.bar.className = 'bar '+phase;
+    beepStart(phase);
+    vibrate(phase==='work'?[80,40,80]:60);
+    updateDisplay(true);
+  }
+
+  function updateDisplay(fullRing){
+    el.bigCount.textContent = state.remaining;
+    var total = state.phase==='work'?cfg.work:cfg.rest;
+    var frac = total>0 ? state.remaining/total : 0;
+    el.bar.style.strokeDasharray = CIRC.toFixed(2);
+    el.bar.style.strokeDashoffset = (CIRC*(1-frac)).toFixed(2);
+    if(cfg.rounds>0){
+      el.roundInfo.textContent = 'סבב '+state.round+' / '+cfg.rounds;
+    } else {
+      el.roundInfo.textContent = 'סבב '+state.round;
+    }
+  }
+
+  function onSecond(){
+    if(state.paused) return;
+    state.remaining--;
+    if(state.remaining<=3 && state.remaining>0){ beepTick(); }
+    if(state.remaining<=0){
+      beepEnd();
+      // advance phase
+      if(state.phase==='work'){
+        if(cfg.rest>0){ setPhase('rest'); return; }
+        // no rest configured -> straight to next round work
+        nextRound(); return;
+      } else {
+        nextRound(); return;
+      }
+    }
+    updateDisplay();
+  }
+
+  function nextRound(){
+    state.round++;
+    if(cfg.rounds>0 && state.round>cfg.rounds){ finish(); return; }
+    setPhase('work');
+  }
+
+  function finish(){
+    stopTimer();
+    // completion fanfare
+    beep(880,0.15,0.35); setTimeout(function(){beep(1100,0.15,0.35);},160);
+    setTimeout(function(){beep(1320,0.3,0.35);},320);
+    vibrate([120,60,120,60,200]);
+    showSetup();
+  }
+
+  function start(){
+    // resume audio on user gesture
+    try{ actx().resume(); }catch(e){}
+    beep(1,0.01,0.001); // prime
+    state.running=true; state.paused=false; state.round=1;
+    el.setup.classList.add('hidden');
+    el.stage.classList.add('on');
+    el.pauseBtn.textContent='⏸';
+    setPhase('work');
+    state.tick=setInterval(onSecond,1000);
+  }
+
+  function stopTimer(){
+    state.running=false; state.paused=false;
+    if(state.tick){ clearInterval(state.tick); state.tick=null; }
+  }
+
+  function showSetup(){
+    el.stage.classList.remove('on');
+    el.setup.classList.remove('hidden');
+    document.body.className='phase-idle';
+  }
+
+  el.startBtn.addEventListener('click',start);
+  el.stopBtn.addEventListener('click',function(){ stopTimer(); showSetup(); });
+  el.pauseBtn.addEventListener('click',function(){
+    if(!state.running) return;
+    state.paused=!state.paused;
+    el.pauseBtn.textContent = state.paused?'▶':'⏸';
+  });
+
+  // keep screen awake if supported
+  var wakeLock=null;
+  async function requestWake(){
+    try{ if('wakeLock' in navigator){ wakeLock=await navigator.wakeLock.request('screen'); } }catch(e){}
+  }
+  document.addEventListener('visibilitychange',function(){
+    if(document.visibilityState==='visible' && state.running) requestWake();
+  });
+  el.startBtn.addEventListener('click',requestWake);
+})();
+</script>
+</body>
+</html>

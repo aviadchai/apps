@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#22c55e"/>
+      <stop offset="1" stop-color="#3b82f6"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <!-- stopwatch button + stem -->
+  <rect x="226" y="70" width="60" height="34" rx="10" fill="#fff"/>
+  <rect x="246" y="98" width="20" height="34" fill="#fff"/>
+  <!-- dial -->
+  <circle cx="256" cy="300" r="140" fill="#fff"/>
+  <circle cx="256" cy="300" r="140" fill="none" stroke="#e2e8f0" stroke-width="4"/>
+  <!-- progress arc -->
+  <path d="M256 172 a128 128 0 0 1 90.5 218.5" fill="none" stroke="#22c55e" stroke-width="20" stroke-linecap="round"/>
+  <!-- hands -->
+  <rect x="248" y="200" width="16" height="112" rx="8" fill="#0b0f1a"/>
+  <circle cx="256" cy="300" r="16" fill="#0b0f1a"/>
+</svg>
