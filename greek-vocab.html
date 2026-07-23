@@ -194,7 +194,12 @@
 
   /* ============ LEARN tab ============ */
   .learn-intro{text-align:center;font-size:0.9rem;font-weight:700;color:rgba(62,44,86,0.6);margin:2px 0 14px;display:flex;align-items:center;justify-content:center;gap:7px;}
-  .lcard{background:#fff;border-radius:22px;padding:22px 20px 16px;margin-bottom:14px;box-shadow:0 10px 30px rgba(62,44,86,0.10);text-align:center;animation:rise .35s ease both;}
+  .lcard{position:relative;background:#fff;border-radius:22px;padding:22px 20px 16px;margin-bottom:14px;box-shadow:0 10px 30px rgba(62,44,86,0.10);text-align:center;animation:rise .35s ease both;}
+  .lctrls{position:absolute;top:9px;left:10px;display:flex;gap:1px;z-index:2;}
+  .lctrl{width:30px;height:30px;border:none;background:transparent;color:rgba(62,44,86,0.4);cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:9px;}
+  .lctrl:active{background:rgba(62,44,86,0.07);transform:scale(0.9);}
+  .lcard.mini{padding:14px 20px;display:flex;align-items:center;justify-content:center;min-height:52px;}
+  .lprompt.mini{font-size:1.15rem;}
   .lgreek{font-size:2.1rem;font-weight:800;color:var(--teal-dark);direction:ltr;unicode-bidi:isolate;line-height:1.1;}
   .lgreek.big{font-size:2.7rem;}
   .ltranslit{font-size:0.9rem;color:rgba(62,44,86,0.45);direction:ltr;margin-top:3px;font-weight:600;}
@@ -468,6 +473,8 @@ const IC = {
   cap:'<path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v4.5c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5V12"/>',
   clock:'<circle cx="12" cy="12" r="9"/><polyline points="12 7.5 12 12 15 13.8"/>',
   arrowRtl:'<line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>',
+  chevronUp:'<polyline points="6 15 12 9 18 15"/>',
+  chevronDown:'<polyline points="6 9 12 15 18 9"/>',
   refresh:'<polyline points="21 4 21 9 16 9"/><polyline points="3 20 3 15 8 15"/><path d="M5 9a8 8 0 0 1 13-3l3 3M3 15l3 3a8 8 0 0 0 13-3"/>',
   plus:'<circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>',
   x:'<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
@@ -1061,11 +1068,21 @@ function renderLearn(){
     if(typeof s.reps!=='number'){ s.reps=0; changed=true; }
     if(typeof s.nextTs!=='number'){ s.nextTs=0; changed=true; }
     if(typeof s.studied!=='boolean'){ s.studied = s.reps>0; changed=true; }  // words mid-test stay in the test flow
+    if(typeof s.min!=='boolean'){ s.min=false; changed=true; }
     const dots = Array.from({length:REPS_NEEDED},(_,k)=>`<span class="ldot ${k<s.reps?'on':''}"></span>`).join('');
     const prog = `<div class="lprog">${dots}<span class="lprog-txt">${s.reps}/${REPS_NEEDED}</span></div>`;
+    // corner controls: minimize (show Hebrew only) + close (remove from learning)
+    const ctrls = `<div class="lctrls">
+      <button class="lctrl" data-a="min" data-i="${i}" aria-label="מזעור/הגדלה">${ic(s.min?'chevronDown':'chevronUp',18)}</button>
+      <button class="lctrl" data-a="close" data-i="${i}" aria-label="סגירה">${ic('x',16)}</button>
+    </div>`;
+    // minimized — only the Hebrew word is shown
+    if(s.min){
+      return `<div class="lcard mini" data-i="${i}">${ctrls}<div class="lprompt mini">${e[2]}</div></div>`;
+    }
     // 1) study phase — see the word in Hebrew AND Greek, then mark it learned
     if(!s.studied){
-      return `<div class="lcard studying" data-i="${i}">
+      return `<div class="lcard studying" data-i="${i}">${ctrls}
         <div class="lgreek">${e[0]}</div><div class="ltranslit">${e[1]}</div><div class="lhebrew">${e[2]}</div>${prog}
         <div class="study-hint">${ic('bulb',14)}<span>שנן/י את המילה, ואז סמן/י שלמדת</span></div>
         <div class="lrow">
@@ -1078,14 +1095,14 @@ function renderLearn(){
     // 2) resting — after marking learned (first check) or between spaced reps — Hebrew only
     if(s.nextTs>now){
       const msg = s.reps>0 ? 'נכון! חזרה הבאה בעוד' : 'יופי! הבדיקה הראשונה בעוד';
-      return `<div class="lcard waiting" data-i="${i}">
+      return `<div class="lcard waiting" data-i="${i}">${ctrls}
         <div class="lprompt">${e[2]}</div>${prog}
         <div class="lwait">${ic('clock',15)}<span>${msg} <b class="lwait-cd" data-next="${s.nextTs}">--:--</b></span></div>
         <button class="lskip" data-a="skip" data-i="${i}">${ic('refresh',15)}<span>מילה אחרת</span></button>
       </div>`;
     }
     // 3) ready to be tested — the Hebrew meaning is shown, you type the word in Greek (or English letters)
-    return `<div class="lcard" data-i="${i}">
+    return `<div class="lcard" data-i="${i}">${ctrls}
       <div class="lprompt">${e[2]}</div>${prog}
       <div class="ltimer" data-ts="${s.ts}"></div>
       <input class="linput" dir="ltr" data-i="${i}" placeholder="כתוב/י ביוונית או באנגלית…" autocomplete="off" autocapitalize="off">
@@ -1104,6 +1121,8 @@ function renderLearn(){
       else if(a==='studied') markStudied(i);
       else if(a==='check') checkLearn(i);
       else if(a==='skip') skipLearn(i);
+      else if(a==='min'){ S.learn.slots[i].min=!S.learn.slots[i].min; save(); renderLearn(); }
+      else if(a==='close'){ (S.learn.skipped=S.learn.skipped||[]).push(S.learn.slots[i].el); S.learn.slots.splice(i,1); save(); renderLearn(); toast('המילה הוסרה מהלמידה'); }
     };
   });
   cards.querySelectorAll('.linput').forEach(inp=>{
@@ -1334,7 +1353,7 @@ $('tabWords').onclick=()=>selectTab('words');
 $('tabStats').onclick=()=>selectTab('stats');
 
 /* static UI icons */
-const APP_VERSION = 'v51';
+const APP_VERSION = 'v52';
 $('appVer').textContent = APP_VERSION;
 $('pageTitle').innerHTML = ic('book',24)+'<span>Lexi</span>';
 $('tabLearn').innerHTML = ic('sparkles',18)+'<span>לימוד</span>';
