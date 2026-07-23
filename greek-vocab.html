@@ -201,6 +201,10 @@
   .lctrl:active{background:rgba(62,44,86,0.07);transform:scale(0.9);}
   @keyframes lcollapse{to{opacity:0;transform:scale(0.9) translateY(-6px);}}
   .lcard.closing{animation:lcollapse .26s ease forwards;pointer-events:none;}
+  /* minimize / expand fold animation on the just-toggled card only */
+  @keyframes lfold{from{opacity:.35;transform:scaleY(.8);}to{opacity:1;transform:scaleY(1);}}
+  .lcard.lanim{animation:lfold .28s ease;transform-origin:top center;}
+  .lcard.lstatic{animation:none;}
   .lcard.mini{padding:12px 44px;display:flex;align-items:center;justify-content:center;gap:12px;min-height:52px;}
   .lprompt.mini{font-size:1.15rem;}
   .lmini-speak{flex:0 0 auto;width:36px;height:36px;border-radius:11px;border:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;}
@@ -1003,6 +1007,7 @@ const LEARN_MS = 24*3600*1000;       // overall 24h study window
 const REP_GAP  = 30*60*1000;         // minimum gap between counted correct reps
 const REPS_NEEDED = 3;
 let learnTimerInt=null;
+let lanimEl=null;   // greek word of the card to play the open/close animation on (transient)
 function fmtHMS(ms){
   let s=Math.max(0,Math.floor(ms/1000));
   const h=Math.floor(s/3600); s-=h*3600;
@@ -1078,14 +1083,16 @@ function renderLearn(){
     // corner controls: minimize (show Hebrew only) + close (remove from learning)
     const ctrls = `<button class="lctrl lctrl-close" data-a="close" data-i="${i}" aria-label="סגירה">${ic('x',16)}</button>`+
       `<button class="lctrl lctrl-min" data-a="min" data-i="${i}" aria-label="מזעור/הגדלה">${ic(s.min?'chevronDown':'chevronUp',18)}</button>`;
+    // open/close animation: the just-toggled card folds; the others stay still
+    const anim = (s.el===lanimEl) ? ' lanim' : (lanimEl ? ' lstatic' : '');
     // minimized — only the Hebrew word is shown
     if(s.min){
-      return `<div class="lcard mini" data-i="${i}">${ctrls}<div class="lprompt mini">${e[2]}</div>
+      return `<div class="lcard mini${anim}" data-i="${i}">${ctrls}<div class="lprompt mini">${e[2]}</div>
         <button class="lmini-speak play" data-a="speak" data-i="${i}" aria-label="האזנה">${ic('speaker',18)}</button></div>`;
     }
     // 1) study phase — see the word in Hebrew AND Greek, then mark it learned
     if(!s.studied){
-      return `<div class="lcard studying" data-i="${i}">${ctrls}
+      return `<div class="lcard studying${anim}" data-i="${i}">${ctrls}
         <div class="lgreek">${e[0]}</div><div class="ltranslit">${e[1]}</div><div class="lhebrew">${e[2]}</div>${prog}
         <div class="study-hint">${ic('bulb',14)}<span>שנן/י את המילה, ואז סמן/י שלמדת</span></div>
         <div class="lrow">
@@ -1098,14 +1105,14 @@ function renderLearn(){
     // 2) resting — after marking learned (first check) or between spaced reps — Hebrew only
     if(s.nextTs>now){
       const msg = s.reps>0 ? 'נכון! חזרה הבאה בעוד' : 'יופי! הבדיקה הראשונה בעוד';
-      return `<div class="lcard waiting" data-i="${i}">${ctrls}
+      return `<div class="lcard waiting${anim}" data-i="${i}">${ctrls}
         <div class="lprompt">${e[2]}</div>${prog}
         <div class="lwait">${ic('clock',15)}<span>${msg} <b class="lwait-cd" data-next="${s.nextTs}">--:--</b></span></div>
         <button class="lskip" data-a="skip" data-i="${i}">${ic('refresh',15)}<span>מילה אחרת</span></button>
       </div>`;
     }
     // 3) ready to be tested — the Hebrew meaning is shown, you type the word in Greek (or English letters)
-    return `<div class="lcard" data-i="${i}">${ctrls}
+    return `<div class="lcard${anim}" data-i="${i}">${ctrls}
       <div class="lprompt">${e[2]}</div>${prog}
       <div class="ltimer" data-ts="${s.ts}"></div>
       <input class="linput" dir="ltr" data-i="${i}" placeholder="כתוב/י ביוונית או באנגלית…" autocomplete="off" autocapitalize="off">
@@ -1117,6 +1124,7 @@ function renderLearn(){
       <button class="lskip" data-a="skip" data-i="${i}">${ic('refresh',15)}<span>מילה אחרת</span></button>
     </div>`;
   }).join('');
+  lanimEl=null;   // consumed by this render
   cards.querySelectorAll('[data-a]').forEach(b=>{
     const i=+b.dataset.i, a=b.dataset.a, e=dictOf(S.learn.slots[i].el);
     b.onclick=()=>{
@@ -1124,7 +1132,7 @@ function renderLearn(){
       else if(a==='studied') markStudied(i);
       else if(a==='check') checkLearn(i);
       else if(a==='skip') skipLearn(i);
-      else if(a==='min'){ S.learn.slots[i].min=!S.learn.slots[i].min; save(); renderLearn(); }
+      else if(a==='min'){ lanimEl=S.learn.slots[i].el; S.learn.slots[i].min=!S.learn.slots[i].min; save(); renderLearn(); }
       else if(a==='close'){
         const el=S.learn.slots[i].el, card=b.closest('.lcard');
         const remove=()=>{ (S.learn.skipped=S.learn.skipped||[]).push(el); S.learn.slots.splice(i,1); save(); renderLearn(); toast('המילה הוסרה מהלמידה'); };
@@ -1303,7 +1311,7 @@ function render(){
 
 /* ================= backup: export / import to a file ================= */
 function exportData(){
-  const payload = { app:'greek-vocab', version:1, exportedAt:new Date().toISOString(), startDate:S.startDate, words:S.words };
+  const payload = { app:'greek-vocab', version:2, exportedAt:new Date().toISOString(), startDate:S.startDate, words:S.words, learn:S.learn };
   const blob = new Blob([JSON.stringify(payload,null,2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -1329,6 +1337,10 @@ function importData(file){
     S.words.sort((a,b)=>b.ts-a.ts);
     const dates=[S.startDate, data.startDate].filter(Boolean).sort();
     if(dates.length) S.startDate = dates[0];
+    // restore the learning progress too, if the backup carried it (a full snapshot)
+    if(data.learn && typeof data.learn==='object' && Array.isArray(data.learn.slots)){
+      S.learn = { date:String(data.learn.date||''), slots:data.learn.slots, skipped:Array.isArray(data.learn.skipped)?data.learn.skipped:[] };
+    }
     save(); render();
     toast(ic('checkCircle',16)+(added ? 'שוחזרו '+added+' מילים' : 'הכול כבר קיים — לא נוספו מילים'));
   };
@@ -1360,7 +1372,7 @@ $('tabWords').onclick=()=>selectTab('words');
 $('tabStats').onclick=()=>selectTab('stats');
 
 /* static UI icons */
-const APP_VERSION = 'v54';
+const APP_VERSION = 'v55';
 $('appVer').textContent = APP_VERSION;
 $('pageTitle').innerHTML = ic('book',24)+'<span>Lexi</span>';
 $('tabLearn').innerHTML = ic('sparkles',18)+'<span>לימוד</span>';
