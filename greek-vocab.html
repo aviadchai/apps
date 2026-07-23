@@ -195,9 +195,12 @@
   /* ============ LEARN tab ============ */
   .learn-intro{text-align:center;font-size:0.9rem;font-weight:700;color:rgba(62,44,86,0.6);margin:2px 0 14px;display:flex;align-items:center;justify-content:center;gap:7px;}
   .lcard{position:relative;background:#fff;border-radius:22px;padding:22px 20px 16px;margin-bottom:14px;box-shadow:0 10px 30px rgba(62,44,86,0.10);text-align:center;animation:rise .35s ease both;}
-  .lctrls{position:absolute;top:9px;left:10px;display:flex;gap:1px;z-index:2;}
-  .lctrl{width:30px;height:30px;border:none;background:transparent;color:rgba(62,44,86,0.4);cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:9px;}
+  .lctrl{position:absolute;top:9px;width:30px;height:30px;border:none;background:transparent;color:rgba(62,44,86,0.4);cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:9px;z-index:2;}
+  .lctrl-close{left:10px;}
+  .lctrl-min{right:10px;}
   .lctrl:active{background:rgba(62,44,86,0.07);transform:scale(0.9);}
+  @keyframes lcollapse{to{opacity:0;transform:scale(0.9) translateY(-6px);}}
+  .lcard.closing{animation:lcollapse .26s ease forwards;pointer-events:none;}
   .lcard.mini{padding:14px 20px;display:flex;align-items:center;justify-content:center;min-height:52px;}
   .lprompt.mini{font-size:1.15rem;}
   .lgreek{font-size:2.1rem;font-weight:800;color:var(--teal-dark);direction:ltr;unicode-bidi:isolate;line-height:1.1;}
@@ -1072,10 +1075,8 @@ function renderLearn(){
     const dots = Array.from({length:REPS_NEEDED},(_,k)=>`<span class="ldot ${k<s.reps?'on':''}"></span>`).join('');
     const prog = `<div class="lprog">${dots}<span class="lprog-txt">${s.reps}/${REPS_NEEDED}</span></div>`;
     // corner controls: minimize (show Hebrew only) + close (remove from learning)
-    const ctrls = `<div class="lctrls">
-      <button class="lctrl" data-a="min" data-i="${i}" aria-label="מזעור/הגדלה">${ic(s.min?'chevronDown':'chevronUp',18)}</button>
-      <button class="lctrl" data-a="close" data-i="${i}" aria-label="סגירה">${ic('x',16)}</button>
-    </div>`;
+    const ctrls = `<button class="lctrl lctrl-close" data-a="close" data-i="${i}" aria-label="סגירה">${ic('x',16)}</button>`+
+      `<button class="lctrl lctrl-min" data-a="min" data-i="${i}" aria-label="מזעור/הגדלה">${ic(s.min?'chevronDown':'chevronUp',18)}</button>`;
     // minimized — only the Hebrew word is shown
     if(s.min){
       return `<div class="lcard mini" data-i="${i}">${ctrls}<div class="lprompt mini">${e[2]}</div></div>`;
@@ -1122,7 +1123,11 @@ function renderLearn(){
       else if(a==='check') checkLearn(i);
       else if(a==='skip') skipLearn(i);
       else if(a==='min'){ S.learn.slots[i].min=!S.learn.slots[i].min; save(); renderLearn(); }
-      else if(a==='close'){ (S.learn.skipped=S.learn.skipped||[]).push(S.learn.slots[i].el); S.learn.slots.splice(i,1); save(); renderLearn(); toast('המילה הוסרה מהלמידה'); }
+      else if(a==='close'){
+        const el=S.learn.slots[i].el, card=b.closest('.lcard');
+        const remove=()=>{ (S.learn.skipped=S.learn.skipped||[]).push(el); S.learn.slots.splice(i,1); save(); renderLearn(); toast('המילה הוסרה מהלמידה'); };
+        if(card){ card.classList.add('closing'); setTimeout(remove,260); } else remove();
+      }
     };
   });
   cards.querySelectorAll('.linput').forEach(inp=>{
@@ -1353,7 +1358,7 @@ $('tabWords').onclick=()=>selectTab('words');
 $('tabStats').onclick=()=>selectTab('stats');
 
 /* static UI icons */
-const APP_VERSION = 'v52';
+const APP_VERSION = 'v53';
 $('appVer').textContent = APP_VERSION;
 $('pageTitle').innerHTML = ic('book',24)+'<span>Lexi</span>';
 $('tabLearn').innerHTML = ic('sparkles',18)+'<span>לימוד</span>';
