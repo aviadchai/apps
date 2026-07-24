@@ -601,6 +601,10 @@ body.light-mode .cal-cell.future .cal-date,body.light-mode .cal-cell.missed .cal
     <div class="nav-indicator"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
     <span class="nav-text" data-t="stats">Stats</span>
   </button>
+  <button class="nav-btn" id="nav-timer" onclick="location.href='timer.html'">
+    <div class="nav-indicator"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5"/><path d="M9 2h6"/></svg></div>
+    <span class="nav-text" data-t="timer">Timer</span>
+  </button>
   <button class="nav-btn" id="nav-set" onclick="show('set')">
     <div class="nav-indicator"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></div>
     <span class="nav-text" data-t="settings">Settings</span>
@@ -627,7 +631,7 @@ let DATA = {};
 const T = {
   en: {
     appTitle: 'Fitness Deal',
-    home: 'Home', calendar: 'Calendar', stats: 'Stats', settings: 'Settings',
+    home: 'Home', calendar: 'Calendar', stats: 'Stats', timer: 'Timer', settings: 'Settings',
     letsGo: "Let's Go →", next: 'Next →', back: 'Back',
     obTitle: 'Fitness Deal',
     obBody: 'You make a <strong>deal</strong> with yourself — a daily commitment to train.<br><br>A missed day doesn\'t disappear. It becomes <strong>debt</strong> that grows.<br><br>Because real commitment doesn\'t reset.',
@@ -692,7 +696,7 @@ const T = {
   },
   he: {
     appTitle: 'דיל כושר',
-    home: 'בית', calendar: 'יומן', stats: 'סטטיסטיקות', settings: 'הגדרות',
+    home: 'בית', calendar: 'יומן', stats: 'סטטיסטיקות', timer: 'טיימר', settings: 'הגדרות',
     letsGo: 'יאללה →', next: 'הבא →', back: 'חזור',
     obTitle: 'דיל כושר',
     obBody: 'אתה עושה <strong>דיל</strong> עם עצמך — התחייבות יומית להתאמן.<br><br>יום שהוחמץ לא נעלם. הוא הופך ל<strong>חוב</strong> שגדל.<br><br>כי התחייבות אמיתית לא מתאפסת.',

@@ -6,7 +6,7 @@
 <title>טיימר כושר</title>
 <link rel="icon" href="icon-timer.svg" type="image/svg+xml">
 <link rel="manifest" href="timer-manifest.json">
-<meta name="theme-color" content="#0b0f1a">
+<meta name="theme-color" content="#07080D">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="טיימר">
@@ -14,303 +14,459 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 :root{
-  --work:#22c55e;
-  --rest:#3b82f6;
-  --bg:#0b0f1a;
+  --bg:#07080D;
+  --elev:#12141d;
+  --elev2:#1a1d29;
+  --line:#252a3a;
+  --text:#f3f5fb;
+  --muted:#8b90a3;
+  --accent:#ff7a18;        /* uniform icon / brand accent */
+  --accent-soft:rgba(255,122,24,.16);
+  --work:#ff7a18;          /* energetic */
+  --work-glow:rgba(255,122,24,.55);
+  --rest:#22d3a5;          /* calm */
+  --rest-glow:rgba(34,211,165,.5);
+  --danger:#ff4d5e;
+  --ph:var(--work);
+  --ph-glow:var(--work-glow);
 }
-html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:#f1f5f9;overflow:hidden;}
-body{padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);display:flex;flex-direction:column;min-height:100%;transition:background 0.4s;}
-body.phase-work{background:radial-gradient(circle at 50% 30%,#0e2a1a,#0b0f1a 70%);}
-body.phase-rest{background:radial-gradient(circle at 50% 30%,#0e1f38,#0b0f1a 70%);}
-.wrap{flex:1;max-width:480px;width:100%;margin:0 auto;padding:24px 22px;display:flex;flex-direction:column;}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;}
+.mono{font-family:ui-monospace,'SF Mono','Roboto Mono','Menlo',monospace;font-variant-numeric:tabular-nums;}
+body{display:flex;flex-direction:column;min-height:100%;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  position:relative;isolation:isolate;}
 
-h1{text-align:center;font-size:22px;font-weight:800;color:#e2e8f0;margin-bottom:4px;}
-.tagline{text-align:center;color:#64748b;font-size:13px;margin-bottom:22px;}
+/* ambient glow that reacts to phase */
+.aura{position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:radial-gradient(60% 45% at 50% 22%,var(--ph-glow),transparent 70%);
+  opacity:.35;transition:background .6s ease,opacity .6s ease;animation:breathe 6s ease-in-out infinite;}
+@keyframes breathe{0%,100%{opacity:.28;transform:scale(1);}50%{opacity:.5;transform:scale(1.06);}}
+.grid-bg{position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.5;
+  background:
+    linear-gradient(transparent 95%,rgba(255,255,255,.03) 0) 0 0/100% 26px,
+    linear-gradient(90deg,transparent 95%,rgba(255,255,255,.03) 0) 0 0/26px 100%;
+  -webkit-mask:radial-gradient(70% 60% at 50% 40%,#000,transparent 80%);
+          mask:radial-gradient(70% 60% at 50% 40%,#000,transparent 80%);}
 
-/* ---- Setup card ---- */
-.settings{display:flex;flex-direction:column;gap:14px;margin-bottom:22px;}
-.row{background:#151b2b;border:1px solid #232c42;border-radius:18px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
-.row .label{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:700;}
-.dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
-.dot.work{background:var(--work);}
-.dot.rest{background:var(--rest);}
-.stepper{display:flex;align-items:center;gap:6px;}
-.stepper button{width:40px;height:40px;border-radius:12px;border:none;background:#232c42;color:#f1f5f9;font-size:24px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .1s,background .15s;}
-.stepper button:active{transform:scale(0.9);background:#2f3a56;}
-.stepper .val{min-width:74px;text-align:center;font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;}
-.stepper .val small{font-size:12px;color:#64748b;font-weight:600;margin-inline-start:3px;}
+.wrap{flex:1;width:100%;max-width:460px;margin:0 auto;padding:14px 20px 24px;display:flex;flex-direction:column;}
 
-.rounds-row{background:#151b2b;border:1px solid #232c42;border-radius:18px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
-.rounds-row .label{font-size:16px;font-weight:700;display:flex;align-items:center;gap:10px;}
+/* ---- top bar ---- */
+.top{display:flex;align-items:center;gap:12px;margin-bottom:16px;min-height:40px;}
+.top h1{font-size:19px;font-weight:800;letter-spacing:.3px;flex:1;text-align:center;}
+.top .brand{display:inline-flex;align-items:center;gap:7px;}
+.top .brand .glyph{width:22px;height:22px;color:var(--accent);}
+.iconbtn{width:40px;height:40px;border-radius:13px;border:1px solid var(--line);background:var(--elev);
+  color:var(--accent);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;
+  transition:transform .12s,background .15s;}
+.iconbtn:active{transform:scale(.9);background:var(--elev2);}
+.iconbtn svg{width:20px;height:20px;}
+
+/* ================= SETUP ================= */
+#setup{display:flex;flex-direction:column;gap:16px;flex:1;}
+.card{background:linear-gradient(160deg,var(--elev),#0f111a);border:1px solid var(--line);
+  border-radius:22px;padding:18px 18px 20px;position:relative;overflow:hidden;}
+.card::before{content:"";position:absolute;inset:0 0 auto 0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--ph),transparent);opacity:.8;}
+.card.work{--ph:var(--work);--ph-glow:var(--work-glow);}
+.card.rest{--ph:var(--rest);--ph-glow:var(--rest-glow);}
+
+.card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.tag{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;}
+.tag .dot{width:9px;height:9px;border-radius:50%;background:var(--ph);box-shadow:0 0 12px 1px var(--ph);}
+.tag .txt{color:var(--ph);}
+
+.readout{display:flex;align-items:baseline;justify-content:center;gap:4px;margin:2px 0 14px;}
+.readout .num{font-size:52px;font-weight:800;line-height:1;color:var(--text);
+  text-shadow:0 0 18px var(--ph-glow);letter-spacing:1px;transition:transform .15s;}
+.readout .unit{font-size:15px;color:var(--muted);font-weight:700;}
+
+/* slider */
+.slider-wrap{position:relative;padding:6px 2px 2px;}
+.ticks{position:absolute;left:14px;right:14px;top:2px;height:9px;pointer-events:none;opacity:.5;
+  background:repeating-linear-gradient(90deg,var(--muted) 0 1px,transparent 1px 100%);
+  background-size:calc(100%/20) 100%;-webkit-mask:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);}
+input[type=range].rng{-webkit-appearance:none;appearance:none;width:100%;height:16px;border-radius:99px;
+  direction:ltr;background:linear-gradient(90deg,var(--ph) calc(var(--pct,50)*1%),#232838 0);
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.5);outline:none;margin-top:8px;cursor:pointer;}
+input[type=range].rng::-webkit-slider-thumb{-webkit-appearance:none;width:30px;height:30px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#ffffff,#dfe3ee);border:3px solid var(--ph);
+  box-shadow:0 0 0 5px var(--ph-glow),0 6px 14px rgba(0,0,0,.5);transition:transform .1s;}
+input[type=range].rng:active::-webkit-slider-thumb{transform:scale(1.18);}
+input[type=range].rng::-moz-range-thumb{width:28px;height:28px;border-radius:50%;background:#fff;
+  border:3px solid var(--ph);box-shadow:0 0 0 5px var(--ph-glow),0 6px 14px rgba(0,0,0,.5);}
+.range-lbls{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:8px;direction:ltr;}
+.chips{display:flex;gap:7px;margin-top:12px;}
+.chips button{flex:1;padding:9px 0;border-radius:12px;border:1px solid var(--line);background:var(--elev2);
+  color:var(--muted);font-size:13px;font-weight:800;cursor:pointer;transition:.15s;font-family:inherit;}
+.chips button.on{background:var(--ph);color:#0b0c12;border-color:var(--ph);box-shadow:0 0 16px var(--ph-glow);}
+
+/* rounds + sound rows */
+.rowcard{background:linear-gradient(160deg,var(--elev),#0f111a);border:1px solid var(--line);
+  border-radius:20px;padding:15px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.rowcard .lab{font-size:15px;font-weight:800;display:flex;align-items:center;gap:9px;}
+.rowcard .lab svg{width:20px;height:20px;color:var(--accent);}
 .seg{display:flex;gap:6px;}
-.seg button{padding:8px 12px;border-radius:11px;border:1px solid #232c42;background:#151b2b;color:#94a3b8;font-size:14px;font-weight:700;cursor:pointer;transition:.15s;}
-.seg button.active{background:#f1f5f9;color:#0b0f1a;border-color:#f1f5f9;}
+.seg button{min-width:44px;padding:9px 10px;border-radius:12px;border:1px solid var(--line);background:var(--elev2);
+  color:var(--muted);font-size:14px;font-weight:800;cursor:pointer;transition:.15s;font-family:inherit;}
+.seg button.on{background:var(--accent);color:#0b0c12;border-color:var(--accent);box-shadow:0 0 16px var(--accent-soft);}
+.sound-row{flex-direction:column;align-items:stretch;gap:12px;}
+.sound-pick{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.sound-pick button{padding:11px 6px;border-radius:13px;border:1px solid var(--line);background:var(--elev2);
+  color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;transition:.15s;font-family:inherit;
+  display:flex;flex-direction:column;align-items:center;gap:5px;}
+.sound-pick button svg{width:20px;height:20px;color:var(--accent);}
+.sound-pick button.on{border-color:var(--accent);color:var(--text);background:var(--accent-soft);}
+.sound-pick button.on svg{color:var(--accent);}
 
-/* ---- Timer display ---- */
-.stage{flex:1;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;}
-.stage.on{display:flex;}
-.phase-name{font-size:28px;font-weight:800;letter-spacing:.5px;margin-bottom:6px;}
-.phase-name.work{color:var(--work);}
-.phase-name.rest{color:var(--rest);}
-.ring{position:relative;width:min(74vw,300px);height:min(74vw,300px);margin:6px 0 10px;}
-.ring svg{width:100%;height:100%;transform:rotate(-90deg);}
-.ring .track{stroke:#1e263a;}
-.ring .bar{stroke-linecap:round;transition:stroke .4s;}
-.ring .bar.work{stroke:var(--work);}
-.ring .bar.rest{stroke:var(--rest);}
-.count{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
-.count .big{font-size:78px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1;}
-.count .sub{margin-top:8px;font-size:14px;color:#64748b;font-weight:600;}
+/* start button */
+.start{margin-top:auto;padding:19px;border:none;border-radius:20px;cursor:pointer;font-family:inherit;
+  font-size:19px;font-weight:900;letter-spacing:.5px;color:#0b0c12;position:relative;overflow:hidden;
+  background:linear-gradient(135deg,#ff9a3d,var(--accent));box-shadow:0 10px 30px -6px var(--work-glow);
+  display:flex;align-items:center;justify-content:center;gap:10px;transition:transform .1s;}
+.start:active{transform:scale(.97);}
+.start svg{width:22px;height:22px;}
+.start::after{content:"";position:absolute;inset:0;background:linear-gradient(120deg,transparent 30%,rgba(255,255,255,.35),transparent 70%);
+  transform:translateX(-120%);animation:sheen 3.2s ease-in-out infinite;}
+@keyframes sheen{0%,60%{transform:translateX(-120%);}80%,100%{transform:translateX(120%);}}
 
-/* ---- Controls ---- */
-.controls{display:flex;gap:12px;margin-top:8px;}
-.btn{flex:1;padding:18px;border-radius:16px;border:none;font-size:18px;font-weight:800;cursor:pointer;transition:transform .1s,opacity .15s;}
-.btn:active{transform:scale(0.97);}
-.btn.primary{background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;}
-.btn.ghost{background:#1a2133;color:#cbd5e1;border:1px solid #2a3550;flex:0 0 auto;width:70px;}
-.btn.stop{background:#1a2133;color:#f87171;border:1px solid #3a2530;}
+/* ================= RUNNING ================= */
+#run{display:none;flex:1;flex-direction:column;align-items:center;justify-content:center;text-align:center;}
+#run.on{display:flex;}
+.phase-name{font-size:26px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--ph);
+  text-shadow:0 0 20px var(--ph-glow);transition:color .4s;}
+.phase-name.swap{animation:popname .45s ease;}
+@keyframes popname{0%{transform:scale(.6);opacity:0;letter-spacing:8px;}60%{transform:scale(1.1);}100%{transform:scale(1);opacity:1;}}
+.ringbox{position:relative;width:min(78vw,320px);height:min(78vw,320px);margin:14px 0;}
+.ringbox svg{width:100%;height:100%;transform:rotate(-90deg);}
+.ringbox .track{stroke:#191c28;}
+.ringbox .bar{stroke:var(--ph);stroke-linecap:round;filter:drop-shadow(0 0 8px var(--ph-glow));transition:stroke .4s;}
+.ringbox .pulse{animation:ringpulse 1s ease-out infinite;}
+@keyframes ringpulse{0%{filter:drop-shadow(0 0 6px var(--ph-glow));}50%{filter:drop-shadow(0 0 22px var(--ph-glow));}100%{filter:drop-shadow(0 0 6px var(--ph-glow));}}
+.center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.center .time{font-size:76px;font-weight:800;line-height:1;letter-spacing:2px;color:var(--text);
+  text-shadow:0 0 26px var(--ph-glow);transition:transform .12s,color .2s;}
+.center .time.tick{animation:tickpop .5s ease;color:var(--danger);}
+@keyframes tickpop{0%{transform:scale(1.35);}100%{transform:scale(1);}}
+.center .rounds{margin-top:12px;font-size:14px;color:var(--muted);font-weight:700;letter-spacing:1px;}
+.pips{display:flex;gap:7px;margin-top:8px;flex-wrap:wrap;justify-content:center;max-width:230px;}
+.pips .pip{width:9px;height:9px;border-radius:50%;background:#2a2f40;transition:.3s;}
+.pips .pip.done{background:var(--ph);box-shadow:0 0 10px var(--ph-glow);}
+.pips .pip.cur{background:var(--ph);transform:scale(1.35);box-shadow:0 0 12px var(--ph-glow);}
+.next-hint{margin-top:14px;font-size:13px;color:var(--muted);font-weight:600;min-height:18px;letter-spacing:.5px;}
+
+.run-ctrl{display:flex;gap:12px;margin-top:22px;width:100%;max-width:340px;}
+.run-ctrl button{flex:1;padding:17px;border-radius:17px;font-family:inherit;font-size:17px;font-weight:800;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .1s;}
+.run-ctrl button:active{transform:scale(.96);}
+.run-ctrl button svg{width:20px;height:20px;}
+.btn-pause{background:var(--elev);color:var(--text);border:1px solid var(--line);}
+.btn-pause.paused{background:var(--accent);color:#0b0c12;border-color:var(--accent);}
+.btn-stop{background:rgba(255,77,94,.12);color:var(--danger);border:1px solid rgba(255,77,94,.3);}
+
 .hidden{display:none!important;}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
 </style>
 </head>
-<body class="phase-idle">
-<div class="wrap">
-  <h1>טיימר כושר</h1>
-  <p class="tagline">עבודה ומנוחה — רץ בלופ עד שעוצרים</p>
+<body>
+<div class="aura" id="aura"></div>
+<div class="grid-bg"></div>
 
-  <!-- SETUP -->
-  <div id="setup">
-    <div class="settings">
-      <div class="row">
-        <span class="label"><span class="dot work"></span>עבודה</span>
-        <div class="stepper">
-          <button data-t="work" data-d="-5" aria-label="הפחת">−</button>
-          <span class="val"><span id="workVal">30</span><small>שנ׳</small></span>
-          <button data-t="work" data-d="5" aria-label="הוסף">+</button>
-        </div>
-      </div>
-      <div class="row">
-        <span class="label"><span class="dot rest"></span>מנוחה</span>
-        <div class="stepper">
-          <button data-t="rest" data-d="-5" aria-label="הפחת">−</button>
-          <span class="val"><span id="restVal">15</span><small>שנ׳</small></span>
-          <button data-t="rest" data-d="5" aria-label="הוסף">+</button>
-        </div>
-      </div>
-      <div class="rounds-row">
-        <span class="label">🔁 סבבים</span>
-        <div class="seg" id="roundsSeg">
-          <button data-r="0" class="active">∞</button>
-          <button data-r="5">5</button>
-          <button data-r="8">8</button>
-          <button data-r="10">10</button>
-        </div>
-      </div>
-    </div>
-    <div class="controls">
-      <button class="btn primary" id="startBtn">▶ הפעל</button>
-    </div>
+<div class="wrap">
+  <div class="top">
+    <button class="iconbtn" id="backBtn" aria-label="חזור">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+    </button>
+    <h1><span class="brand"><svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5"/><path d="M9 2h6"/></svg>טיימר כושר</span></h1>
+    <div style="width:40px"></div>
   </div>
 
-  <!-- RUNNING -->
-  <div class="stage" id="stage">
-    <div class="phase-name work" id="phaseName">עבודה</div>
-    <div class="ring">
-      <svg viewBox="0 0 100 100">
-        <circle class="track" cx="50" cy="50" r="45" fill="none" stroke-width="7"/>
-        <circle class="bar work" id="bar" cx="50" cy="50" r="45" fill="none" stroke-width="7"
-          stroke-dasharray="282.74" stroke-dashoffset="0"/>
-      </svg>
-      <div class="count">
-        <span class="big" id="bigCount">30</span>
-        <span class="sub" id="roundInfo">סבב 1</span>
+  <!-- ============ SETUP ============ -->
+  <div id="setup">
+    <div class="card work">
+      <div class="card-head">
+        <span class="tag"><span class="dot"></span><span class="txt">עבודה</span></span>
+      </div>
+      <div class="readout"><span class="num mono" id="workRead">30</span><span class="unit" id="workUnit">שנ׳</span></div>
+      <div class="slider-wrap">
+        <div class="ticks"></div>
+        <input type="range" class="rng" id="workRng" min="5" max="300" step="5" value="30">
+        <div class="range-lbls"><span>5s</span><span>5:00</span></div>
+      </div>
+      <div class="chips" data-t="work">
+        <button data-v="20">20s</button><button data-v="30">30s</button>
+        <button data-v="45">45s</button><button data-v="60">1:00</button>
       </div>
     </div>
-    <div class="controls">
-      <button class="btn ghost" id="pauseBtn">⏸</button>
-      <button class="btn stop" id="stopBtn">■ עצור</button>
+
+    <div class="card rest">
+      <div class="card-head">
+        <span class="tag"><span class="dot"></span><span class="txt">מנוחה</span></span>
+      </div>
+      <div class="readout"><span class="num mono" id="restRead">15</span><span class="unit" id="restUnit">שנ׳</span></div>
+      <div class="slider-wrap">
+        <div class="ticks"></div>
+        <input type="range" class="rng" id="restRng" min="0" max="180" step="5" value="15">
+        <div class="range-lbls"><span>0s</span><span>3:00</span></div>
+      </div>
+      <div class="chips" data-t="rest">
+        <button data-v="10">10s</button><button data-v="15">15s</button>
+        <button data-v="30">30s</button><button data-v="60">1:00</button>
+      </div>
+    </div>
+
+    <div class="rowcard">
+      <span class="lab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4"/><path d="M3 11v-1a4 4 0 014-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v1a4 4 0 01-4 4H3"/></svg>סבבים</span>
+      <div class="seg" id="roundsSeg">
+        <button data-r="0" class="on">∞</button>
+        <button data-r="5">5</button>
+        <button data-r="8">8</button>
+        <button data-r="10">10</button>
+      </div>
+    </div>
+
+    <div class="rowcard sound-row">
+      <span class="lab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 010 7"/><path d="M19 5a9 9 0 010 14"/></svg>צליל התראה</span>
+      <div class="sound-pick" id="soundPick">
+        <button data-s="bell"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>פעמון</button>
+        <button data-s="chime"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>צליל</button>
+        <button data-s="whistle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a4 4 0 004 4h6l6 3v-9a4 4 0 00-4-4H7a4 4 0 00-4 4z"/><circle cx="7" cy="12" r="1.4"/></svg>משרוקית</button>
+        <button data-s="digital"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h4l2-6 4 12 2-6h6"/></svg>דיגיטלי</button>
+        <button data-s="airhorn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10v4l7 3V7z"/><path d="M10 8c3 0 5 1.5 5 4s-2 4-5 4"/><path d="M18 6c2 1 3 3.5 3 6s-1 5-3 6"/></svg>צופר</button>
+        <button data-s="beep"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h4l3-8 2 16 3-8h4"/></svg>ביפ</button>
+      </div>
+    </div>
+
+    <button class="start" id="startBtn">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>הפעל אימון
+    </button>
+  </div>
+
+  <!-- ============ RUNNING ============ -->
+  <div id="run">
+    <div class="phase-name" id="phaseName">עבודה</div>
+    <div class="ringbox">
+      <svg viewBox="0 0 100 100">
+        <circle class="track" cx="50" cy="50" r="45" fill="none" stroke-width="6"/>
+        <circle class="bar" id="bar" cx="50" cy="50" r="45" fill="none" stroke-width="6"
+          stroke-dasharray="282.74" stroke-dashoffset="0"/>
+      </svg>
+      <div class="center">
+        <span class="time mono" id="bigTime">0:30</span>
+        <span class="rounds mono" id="roundInfo">סבב 1</span>
+        <div class="pips" id="pips"></div>
+      </div>
+    </div>
+    <div class="next-hint" id="nextHint"></div>
+    <div class="run-ctrl">
+      <button class="btn-pause" id="pauseBtn"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>השהה</button>
+      <button class="btn-stop" id="stopBtn"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>עצור</button>
     </div>
   </div>
 </div>
 
 <script>
 (function(){
-  var MIN_W=5, MIN_R=0, MAX=600, R=45, CIRC=2*Math.PI*R;
+  var R=45, CIRC=2*Math.PI*R;
 
-  var cfg = { work:30, rest:15, rounds:0 };
-  var state = { running:false, paused:false, phase:'work', remaining:0, round:1, tick:null };
+  var cfg={ work:30, rest:15, rounds:0, sound:'bell' };
+  try{ var s=JSON.parse(localStorage.getItem('fitTimer2')||'{}');
+       ['work','rest','rounds'].forEach(function(k){ if(typeof s[k]==='number') cfg[k]=s[k]; });
+       if(s.sound) cfg.sound=s.sound; }catch(e){}
+  function save(){ try{ localStorage.setItem('fitTimer2',JSON.stringify(cfg)); }catch(e){} }
 
-  // ---- persistence ----
-  try{ var saved=JSON.parse(localStorage.getItem('fitTimer')||'{}');
-       if(saved.work) cfg.work=saved.work; if(saved.rest!=null) cfg.rest=saved.rest;
-       if(saved.rounds!=null) cfg.rounds=saved.rounds; }catch(e){}
-  function save(){ try{ localStorage.setItem('fitTimer',JSON.stringify(cfg)); }catch(e){} }
+  var $=function(id){return document.getElementById(id);};
+  var el={ setup:$('setup'), run:$('run'), aura:$('aura'),
+    workRng:$('workRng'), restRng:$('restRng'), workRead:$('workRead'), restRead:$('restRead'),
+    workUnit:$('workUnit'), restUnit:$('restUnit'),
+    roundsSeg:$('roundsSeg'), soundPick:$('soundPick'),
+    startBtn:$('startBtn'), pauseBtn:$('pauseBtn'), stopBtn:$('stopBtn'), backBtn:$('backBtn'),
+    phaseName:$('phaseName'), bigTime:$('bigTime'), roundInfo:$('roundInfo'),
+    pips:$('pips'), bar:$('bar'), nextHint:$('nextHint') };
 
-  var el = {
-    setup:document.getElementById('setup'),
-    stage:document.getElementById('stage'),
-    workVal:document.getElementById('workVal'),
-    restVal:document.getElementById('restVal'),
-    roundsSeg:document.getElementById('roundsSeg'),
-    startBtn:document.getElementById('startBtn'),
-    pauseBtn:document.getElementById('pauseBtn'),
-    stopBtn:document.getElementById('stopBtn'),
-    phaseName:document.getElementById('phaseName'),
-    bigCount:document.getElementById('bigCount'),
-    roundInfo:document.getElementById('roundInfo'),
-    bar:document.getElementById('bar')
-  };
+  function fmt(sec){ sec=Math.max(0,Math.round(sec));
+    if(sec<60) return sec+''; var m=Math.floor(sec/60), s=sec%60; return m+':'+(s<10?'0':'')+s; }
+  function unit(sec){ return sec<60?'שנ׳':'דק׳'; }
 
-  function renderSettings(){
-    el.workVal.textContent = cfg.work;
-    el.restVal.textContent = cfg.rest;
-    [].forEach.call(el.roundsSeg.children,function(b){
-      b.classList.toggle('active', parseInt(b.dataset.r,10)===cfg.rounds);
+  // ---------- setup rendering ----------
+  function setPct(rng){ var p=(rng.value-rng.min)/(rng.max-rng.min)*100; rng.style.setProperty('--pct',p); }
+  function renderSetup(){
+    el.workRng.value=cfg.work; el.restRng.value=cfg.rest;
+    setPct(el.workRng); setPct(el.restRng);
+    el.workRead.textContent=fmt(cfg.work); el.workUnit.textContent=unit(cfg.work);
+    el.restRead.textContent=fmt(cfg.rest); el.restUnit.textContent=unit(cfg.rest);
+    [].forEach.call(el.roundsSeg.children,function(b){ b.classList.toggle('on',+b.dataset.r===cfg.rounds); });
+    [].forEach.call(el.soundPick.children,function(b){ b.classList.toggle('on',b.dataset.s===cfg.sound); });
+    syncChips();
+  }
+  function syncChips(){
+    document.querySelectorAll('.chips').forEach(function(c){
+      var t=c.dataset.t;
+      [].forEach.call(c.children,function(b){ b.classList.toggle('on',+b.dataset.v===cfg[t]); });
     });
   }
-  renderSettings();
-
-  // ---- steppers ----
-  document.querySelectorAll('.stepper button').forEach(function(b){
-    b.addEventListener('click',function(){
-      var t=b.dataset.t, d=parseInt(b.dataset.d,10);
-      var min = t==='work'?MIN_W:MIN_R;
-      cfg[t] = Math.max(min, Math.min(MAX, cfg[t]+d));
-      renderSettings(); save();
-    });
+  el.workRng.addEventListener('input',function(){ cfg.work=+this.value; setPct(this);
+    el.workRead.textContent=fmt(cfg.work); el.workUnit.textContent=unit(cfg.work); syncChips(); save(); });
+  el.restRng.addEventListener('input',function(){ cfg.rest=+this.value; setPct(this);
+    el.restRead.textContent=fmt(cfg.rest); el.restUnit.textContent=unit(cfg.rest); syncChips(); save(); });
+  document.querySelectorAll('.chips').forEach(function(c){
+    c.addEventListener('click',function(e){ var b=e.target.closest('button'); if(!b) return;
+      cfg[c.dataset.t]=+b.dataset.v; renderSetup(); save(); });
   });
-  el.roundsSeg.addEventListener('click',function(e){
-    var b=e.target.closest('button'); if(!b) return;
-    cfg.rounds = parseInt(b.dataset.r,10); renderSettings(); save();
-  });
+  el.roundsSeg.addEventListener('click',function(e){ var b=e.target.closest('button'); if(!b) return;
+    cfg.rounds=+b.dataset.r; renderSetup(); save(); });
+  el.soundPick.addEventListener('click',function(e){ var b=e.target.closest('button'); if(!b) return;
+    cfg.sound=b.dataset.s; renderSetup(); save(); primeAudio(); playSound(cfg.sound,'work'); });
 
-  // ---- audio (beeps) ----
+  // ---------- audio ----------
   var ac=null;
-  function actx(){ if(!ac){ ac=new (window.AudioContext||window.webkitAudioContext)(); } return ac; }
-  function beep(freq,dur,vol){
-    try{
-      var c=actx(); if(c.state==='suspended') c.resume();
-      var o=c.createOscillator(), g=c.createGain();
-      o.type='sine'; o.frequency.value=freq;
-      o.connect(g); g.connect(c.destination);
-      var t=c.currentTime;
-      g.gain.setValueAtTime(0,t);
-      g.gain.linearRampToValueAtTime(vol||0.3,t+0.01);
-      g.gain.exponentialRampToValueAtTime(0.0001,t+(dur||0.15));
-      o.start(t); o.stop(t+(dur||0.15)+0.02);
-    }catch(e){}
+  function ctx(){ if(!ac) ac=new (window.AudioContext||window.webkitAudioContext)(); return ac; }
+  function primeAudio(){ try{ var c=ctx(); if(c.state==='suspended') c.resume();
+    var o=c.createOscillator(),g=c.createGain(); g.gain.value=0.0001; o.connect(g); g.connect(c.destination);
+    o.start(); o.stop(c.currentTime+0.02);}catch(e){} }
+  function tone(freq,t0,dur,vol,type,glideTo){
+    var c=ctx(); var o=c.createOscillator(),g=c.createGain();
+    o.type=type||'sine'; o.frequency.setValueAtTime(freq,t0);
+    if(glideTo) o.frequency.exponentialRampToValueAtTime(glideTo,t0+dur);
+    g.gain.setValueAtTime(0.0001,t0); g.gain.exponentialRampToValueAtTime(vol,t0+0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+    o.connect(g); g.connect(c.destination); o.start(t0); o.stop(t0+dur+0.03);
   }
-  // start of phase: distinct tone per phase
-  function beepStart(phase){ beep(phase==='work'?880:520,0.18,0.35); }
-  // final countdown ticks (3-2-1) and end-of-phase double beep
-  function beepTick(){ beep(700,0.09,0.25); }
-  function beepEnd(){ beep(1100,0.14,0.35); setTimeout(function(){beep(1100,0.2,0.35);},170); }
-
-  function vibrate(ms){ if(navigator.vibrate) try{navigator.vibrate(ms);}catch(e){} }
-
-  // ---- timer engine ----
-  function setPhase(phase){
-    state.phase=phase;
-    state.remaining = phase==='work'?cfg.work:cfg.rest;
-    document.body.className = 'phase-'+phase;
-    el.phaseName.textContent = phase==='work'?'עבודה':'מנוחה';
-    el.phaseName.className = 'phase-name '+phase;
-    el.bar.className = 'bar '+phase;
-    beepStart(phase);
-    vibrate(phase==='work'?[80,40,80]:60);
-    updateDisplay(true);
-  }
-
-  function updateDisplay(fullRing){
-    el.bigCount.textContent = state.remaining;
-    var total = state.phase==='work'?cfg.work:cfg.rest;
-    var frac = total>0 ? state.remaining/total : 0;
-    el.bar.style.strokeDasharray = CIRC.toFixed(2);
-    el.bar.style.strokeDashoffset = (CIRC*(1-frac)).toFixed(2);
-    if(cfg.rounds>0){
-      el.roundInfo.textContent = 'סבב '+state.round+' / '+cfg.rounds;
-    } else {
-      el.roundInfo.textContent = 'סבב '+state.round;
+  function playSound(kind,phase){
+    var c; try{ c=ctx(); if(c.state==='suspended') c.resume(); }catch(e){ return; }
+    var t=c.currentTime, base=phase==='rest'?0.85:1;
+    if(kind==='bell'){
+      [1,2.76,5.4].forEach(function(m,i){ tone(660*base*m, t, 1.3-i*0.25, i===0?0.5:0.22-i*0.05, 'sine'); });
+      tone(660*base, t, 0.05, 0.4, 'triangle');
+    } else if(kind==='chime'){
+      [523,659,784,1046].forEach(function(f,i){ tone(f*base, t+i*0.11, 0.5, 0.4, 'sine'); });
+    } else if(kind==='whistle'){
+      tone(1800*base, t, 0.5, 0.4, 'sine', 2400*base);
+      tone(1810*base, t, 0.5, 0.2, 'sine', 2410*base);
+    } else if(kind==='digital'){
+      [0,0.13,0.26].forEach(function(d){ tone(988*base, t+d, 0.1, 0.35, 'square'); });
+    } else if(kind==='airhorn'){
+      tone(233*base, t, 0.7, 0.4, 'sawtooth'); tone(311*base, t, 0.7, 0.35, 'sawtooth');
+      tone(466*base, t, 0.7, 0.2, 'square');
+    } else { // beep
+      tone(880*base, t, 0.18, 0.4, 'sine');
     }
   }
+  function tick(){ var c; try{c=ctx();}catch(e){return;} tone(720,c.currentTime,0.08,0.3,'square'); }
+  function finishFanfare(){ var c; try{c=ctx();}catch(e){return;} var t=c.currentTime;
+    [523,659,784,1046,1318].forEach(function(f,i){ tone(f,t+i*0.12,0.5,0.4,i>=3?'triangle':'sine'); }); }
+  function vibrate(p){ if(navigator.vibrate) try{navigator.vibrate(p);}catch(e){} }
 
-  function onSecond(){
-    if(state.paused) return;
-    state.remaining--;
-    if(state.remaining<=3 && state.remaining>0){ beepTick(); }
-    if(state.remaining<=0){
-      beepEnd();
-      // advance phase
-      if(state.phase==='work'){
-        if(cfg.rest>0){ setPhase('rest'); return; }
-        // no rest configured -> straight to next round work
-        nextRound(); return;
-      } else {
-        nextRound(); return;
+  // ---------- engine ----------
+  var st={running:false,paused:false,phase:'work',round:1,endAt:0,remain:0,dur:0,lastWhole:-1,raf:null};
+
+  function setPhaseVars(phase){
+    el.aura.style.setProperty('--ph', phase==='work'?'var(--work)':'var(--rest)');
+    el.aura.style.setProperty('--ph-glow', phase==='work'?'var(--work-glow)':'var(--rest-glow)');
+    el.run.style.setProperty('--ph', phase==='work'?'var(--work)':'var(--rest)');
+    el.run.style.setProperty('--ph-glow', phase==='work'?'var(--work-glow)':'var(--rest-glow)');
+  }
+  function buildPips(){
+    el.pips.innerHTML='';
+    if(cfg.rounds>0 && cfg.rounds<=12){ for(var i=0;i<cfg.rounds;i++){ var d=document.createElement('div'); d.className='pip'; el.pips.appendChild(d);} }
+  }
+  function paintPips(){
+    [].forEach.call(el.pips.children,function(p,i){ p.className='pip'+(i<st.round-1?' done':i===st.round-1?' cur':''); });
+  }
+
+  function beginPhase(phase){
+    st.phase=phase; st.dur=phase==='work'?cfg.work:cfg.rest; st.remain=st.dur;
+    st.endAt=performance.now()+st.dur*1000; st.lastWhole=-1;
+    setPhaseVars(phase);
+    el.phaseName.textContent=phase==='work'?'עבודה':'מנוחה';
+    el.phaseName.classList.remove('swap'); void el.phaseName.offsetWidth; el.phaseName.classList.add('swap');
+    el.bar.classList.remove('pulse');
+    playSound(cfg.sound,phase);
+    vibrate(phase==='work'?[90,50,90]:60);
+    el.nextHint.textContent = phase==='work'
+      ? (cfg.rest>0?'אחריי: מנוחה '+fmt(cfg.rest):'')
+      : 'אחריי: עבודה '+fmt(cfg.work);
+    paintPips();
+    draw(true);
+  }
+
+  function draw(force){
+    var frac = st.dur>0 ? Math.max(0,st.remain/st.dur) : 0;
+    el.bar.style.strokeDashoffset=(CIRC*(1-frac)).toFixed(2);
+    var whole=Math.ceil(st.remain-0.0001);
+    if(whole!==st.lastWhole || force){
+      if(whole<0) whole=0;
+      el.bigTime.textContent=fmt(whole);
+      if(!force && whole<=3 && whole>0){ tick(); vibrate(40);
+        el.bigTime.classList.remove('tick'); void el.bigTime.offsetWidth; el.bigTime.classList.add('tick');
+        el.bar.classList.add('pulse');
       }
+      st.lastWhole=whole;
     }
-    updateDisplay();
+    el.roundInfo.textContent = cfg.rounds>0 ? ('סבב '+st.round+' / '+cfg.rounds) : ('סבב '+st.round);
   }
 
+  function loop(){
+    if(!st.running){ return; }
+    if(!st.paused){
+      st.remain=(st.endAt-performance.now())/1000;
+      if(st.remain<=0){ endPhase(); if(!st.running) return; }
+      else draw(false);
+    }
+    st.raf=requestAnimationFrame(loop);
+  }
+
+  function endPhase(){
+    vibrate([120,60,120]);
+    if(st.phase==='work'){
+      if(cfg.rest>0){ beginPhase('rest'); return; }
+      nextRound();
+    } else { nextRound(); }
+  }
   function nextRound(){
-    state.round++;
-    if(cfg.rounds>0 && state.round>cfg.rounds){ finish(); return; }
-    setPhase('work');
+    st.round++;
+    if(cfg.rounds>0 && st.round>cfg.rounds){ finish(); return; }
+    beginPhase('work');
   }
-
-  function finish(){
-    stopTimer();
-    // completion fanfare
-    beep(880,0.15,0.35); setTimeout(function(){beep(1100,0.15,0.35);},160);
-    setTimeout(function(){beep(1320,0.3,0.35);},320);
-    vibrate([120,60,120,60,200]);
-    showSetup();
-  }
+  function finish(){ stop(); finishFanfare(); vibrate([150,80,150,80,250]); showSetup(); }
 
   function start(){
-    // resume audio on user gesture
-    try{ actx().resume(); }catch(e){}
-    beep(1,0.01,0.001); // prime
-    state.running=true; state.paused=false; state.round=1;
-    el.setup.classList.add('hidden');
-    el.stage.classList.add('on');
-    el.pauseBtn.textContent='⏸';
-    setPhase('work');
-    state.tick=setInterval(onSecond,1000);
+    primeAudio();
+    st.running=true; st.paused=false; st.round=1;
+    el.setup.classList.add('hidden'); el.run.classList.add('on');
+    el.pauseBtn.classList.remove('paused');
+    el.pauseBtn.querySelector('svg').innerHTML='<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>';
+    buildPips(); beginPhase('work'); requestWake();
+    cancelAnimationFrame(st.raf); st.raf=requestAnimationFrame(loop);
   }
-
-  function stopTimer(){
-    state.running=false; state.paused=false;
-    if(state.tick){ clearInterval(state.tick); state.tick=null; }
-  }
-
-  function showSetup(){
-    el.stage.classList.remove('on');
-    el.setup.classList.remove('hidden');
-    document.body.className='phase-idle';
-  }
+  function stop(){ st.running=false; st.paused=false; cancelAnimationFrame(st.raf); releaseWake(); }
+  function showSetup(){ el.run.classList.remove('on'); el.setup.classList.remove('hidden');
+    el.aura.style.setProperty('--ph','var(--work)'); el.aura.style.setProperty('--ph-glow','var(--work-glow)'); }
 
   el.startBtn.addEventListener('click',start);
-  el.stopBtn.addEventListener('click',function(){ stopTimer(); showSetup(); });
+  el.stopBtn.addEventListener('click',function(){ stop(); showSetup(); });
   el.pauseBtn.addEventListener('click',function(){
-    if(!state.running) return;
-    state.paused=!state.paused;
-    el.pauseBtn.textContent = state.paused?'▶':'⏸';
+    if(!st.running) return;
+    st.paused=!st.paused;
+    if(st.paused){ st.remain=(st.endAt-performance.now())/1000; el.pauseBtn.classList.add('paused');
+      el.pauseBtn.querySelector('svg').innerHTML='<path d="M8 5v14l11-7z"/>'; }
+    else { st.endAt=performance.now()+st.remain*1000; el.pauseBtn.classList.remove('paused');
+      el.pauseBtn.querySelector('svg').innerHTML='<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>'; }
+  });
+  el.backBtn.addEventListener('click',function(){
+    if(st.running){ stop(); showSetup(); return; }
+    if(document.referrer && /deal/.test(document.referrer)){ location.href='deal.html'; return; }
+    if(history.length>1) history.back(); else location.href='index.html';
   });
 
-  // keep screen awake if supported
-  var wakeLock=null;
-  async function requestWake(){
-    try{ if('wakeLock' in navigator){ wakeLock=await navigator.wakeLock.request('screen'); } }catch(e){}
-  }
-  document.addEventListener('visibilitychange',function(){
-    if(document.visibilityState==='visible' && state.running) requestWake();
-  });
-  el.startBtn.addEventListener('click',requestWake);
+  // ---------- wake lock ----------
+  var wl=null;
+  async function requestWake(){ try{ if('wakeLock' in navigator) wl=await navigator.wakeLock.request('screen'); }catch(e){} }
+  function releaseWake(){ try{ if(wl){ wl.release(); wl=null; } }catch(e){} }
+  document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible'&&st.running) requestWake(); });
 
-  // register shared service worker (offline / PWA)
-  if('serviceWorker' in navigator){
-    navigator.serviceWorker.register('sw.js').catch(function(){});
-  }
+  renderSetup();
+  if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(function(){}); }
 })();
 </script>
 </body>
