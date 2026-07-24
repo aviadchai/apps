@@ -60,6 +60,10 @@ body{display:flex;flex-direction:column;height:100dvh;
   transition:transform .12s,background .15s;}
 .iconbtn:active{transform:scale(.9);background:var(--elev2);}
 .iconbtn svg{width:20px;height:20px;}
+.iconbtn.loop{color:var(--muted);}
+.iconbtn.loop.on{color:var(--accent);background:var(--accent-soft);border-color:var(--accent);box-shadow:0 0 16px var(--accent-soft);}
+.iconbtn.loop .slash{display:none;}
+.iconbtn.loop:not(.on) .slash{display:block;}
 
 /* ================= SETUP ================= */
 #setup{display:flex;flex-direction:column;gap:12px;flex:1;min-height:0;}
@@ -170,7 +174,9 @@ body{display:flex;flex-direction:column;height:100dvh;
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
     </button>
     <h1><span class="brand"><svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5"/><path d="M9 2h6"/></svg>טיימר כושר</span></h1>
-    <div style="width:40px"></div>
+    <button class="iconbtn loop on" id="loopBtn" aria-label="לולאה אינסופית" title="לולאה אינסופית — פועל/כבוי">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12c-2-2.67-4-4-6-4a4 4 0 100 8c2 0 4-1.33 6-4Zm0 0c2 2.67 4 4 6 4a4 4 0 100-8c-2 0-4 1.33-6 4Z"/><line class="slash" x1="4" y1="20" x2="20" y2="4"/></svg>
+    </button>
   </div>
 
   <!-- ============ SETUP ============ -->
@@ -185,16 +191,6 @@ body{display:flex;flex-direction:column;height:100dvh;
         <div class="tag"><span class="dot"></span><span class="txt">מנוחה</span></div>
         <div class="wheel"><div class="band"></div><div class="wheel-scroll" id="restScroll"></div></div>
         <div class="wheel-hint">גלול לדקות : שניות</div>
-      </div>
-    </div>
-
-    <div class="rowcard">
-      <span class="lab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4"/><path d="M3 11v-1a4 4 0 014-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v1a4 4 0 01-4 4H3"/></svg>סבבים</span>
-      <div class="seg" id="roundsSeg">
-        <button data-r="0" class="on">∞</button>
-        <button data-r="5">5</button>
-        <button data-r="8">8</button>
-        <button data-r="10">10</button>
       </div>
     </div>
 
@@ -249,11 +245,12 @@ body{display:flex;flex-direction:column;height:100dvh;
        if(s.sound) cfg.sound=s.sound; }catch(e){}
   cfg.work=Math.min(WORK_MAX,Math.max(WORK_MIN,cfg.work));
   cfg.rest=Math.min(REST_MAX,Math.max(REST_MIN,cfg.rest));
+  if(cfg.rounds!==0) cfg.rounds=1; // loop on (0=∞) or off (single round)
   function save(){ try{ localStorage.setItem('fitTimer2',JSON.stringify(cfg)); }catch(e){} }
 
   var $=function(id){return document.getElementById(id);};
   var el={ setup:$('setup'), run:$('run'), aura:$('aura'),
-    roundsSeg:$('roundsSeg'), soundPick:$('soundPick'),
+    loopBtn:$('loopBtn'), soundPick:$('soundPick'),
     startBtn:$('startBtn'), pauseBtn:$('pauseBtn'), stopBtn:$('stopBtn'), backBtn:$('backBtn'),
     phaseName:$('phaseName'), bigTime:$('bigTime'), roundInfo:$('roundInfo'),
     pips:$('pips'), bar:$('bar'), nextHint:$('nextHint') };
@@ -293,11 +290,10 @@ body{display:flex;flex-direction:column;height:100dvh;
   requestAnimationFrame(function(){ wWork.setValue(cfg.work); wRest.setValue(cfg.rest); });
 
   function renderChrome(){
-    [].forEach.call(el.roundsSeg.children,function(b){ b.classList.toggle('on',+b.dataset.r===cfg.rounds); });
+    el.loopBtn.classList.toggle('on',cfg.rounds===0);
     [].forEach.call(el.soundPick.children,function(b){ b.classList.toggle('on',b.dataset.s===cfg.sound); });
   }
-  el.roundsSeg.addEventListener('click',function(e){ var b=e.target.closest('button'); if(!b) return;
-    cfg.rounds=+b.dataset.r; renderChrome(); save(); });
+  el.loopBtn.addEventListener('click',function(){ cfg.rounds = cfg.rounds===0 ? 1 : 0; renderChrome(); save(); });
   el.soundPick.addEventListener('click',function(e){ var b=e.target.closest('button'); if(!b) return;
     cfg.sound=b.dataset.s; renderChrome(); save(); primeAudio(); playSound(cfg.sound,'work'); });
   renderChrome();
