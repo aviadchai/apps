@@ -988,10 +988,20 @@ function pickLearnSlots(n){
   return slots;
 }
 function ensureLearnDay(){
-  if(S.learn.date!==todayKey()){
-    S.learn = { date: todayKey(), slots: pickLearnSlots(2), skipped: [] };
-    save();
+  if(S.learn.date===todayKey()) return;
+  // New day: KEEP words still being learned so spaced-rep progress (which spans
+  // hours/days) isn't lost. Only drop finished placeholders, then top up to 2 active words.
+  S.learn.date = todayKey();
+  S.learn.skipped = [];
+  S.learn.slots = (S.learn.slots||[]).filter(s=>!s.done);
+  S.learn.slots.forEach(s=>{ if(s.ts && Date.now()-s.ts > LEARN_MS) s.ts = Date.now(); });  // refresh a stale 24h window
+  let guard=0;
+  while(S.learn.slots.length<2 && guard++<50){
+    const w = pickLearn(S.learn.slots.map(s=>s.el), false) || pickLearn(S.learn.slots.map(s=>s.el), true);
+    if(!w) break;
+    S.learn.slots.push({el:w, done:false, ts:Date.now(), reps:0, nextTs:0, studied:false});
   }
+  save();
 }
 function learnWord(g){
   const e = dictOf(g);
@@ -1389,7 +1399,7 @@ $('tabWords').onclick=()=>selectTab('words');
 $('tabStats').onclick=()=>selectTab('stats');
 
 /* static UI icons */
-const APP_VERSION = 'v56';
+const APP_VERSION = 'v57';
 $('appVer').textContent = APP_VERSION;
 $('pageTitle').innerHTML = ic('book',24)+'<span>Lexi</span>';
 $('tabLearn').innerHTML = ic('sparkles',18)+'<span>לימוד</span>';
