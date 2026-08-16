@@ -147,23 +147,17 @@ header{display:flex;align-items:center;gap:10px;padding:12px 16px;padding-top:ca
 .conf-cancel:hover{background:var(--surface3);}
 .conf-ok{flex:1;background:var(--danger);border:none;color:#fff;font-family:inherit;font-size:14px;font-weight:600;padding:10px;border-radius:12px;cursor:pointer;transition:opacity 0.15s;}
 .conf-ok:hover{opacity:0.85;}
-/* per-item edit sheet */
-.edit-dialog{text-align:right;padding:20px 18px 16px;width:min(340px,90vw);}
-.edit-title{font-size:16px;font-weight:600;color:var(--text);margin-bottom:16px;text-align:center;}
-.edit-field{margin-bottom:14px;}
-.edit-field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:500;}
-.edit-field input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:11px 13px;font-family:inherit;font-size:15px;color:var(--text);outline:none;}
-.edit-field input:focus{border-color:var(--accent);}
-.edit-qty{display:flex;align-items:center;gap:8px;}
-.edit-qty input{text-align:center;}
-.edit-qty button{width:38px;height:38px;flex-shrink:0;border-radius:50%;border:1.5px solid var(--border2);background:none;color:var(--text);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
-.edit-qty button:active{background:var(--surface3);}
-.edit-missing{width:100%;background:var(--surface2);border:1.5px solid var(--border);color:var(--muted);font-family:inherit;font-size:14px;font-weight:600;padding:11px;border-radius:12px;cursor:pointer;margin-bottom:16px;display:flex;align-items:center;justify-content:center;gap:7px;transition:all 0.15s;}
-.edit-missing.on{background:rgba(245,158,11,0.15);border-color:var(--warn);color:var(--warn);}
-.edit-save{background:var(--accent)!important;}
-.miss-badge{font-size:10px;font-weight:600;color:var(--warn);background:rgba(245,158,11,0.15);border-radius:8px;padding:1px 7px;margin-inline-start:6px;white-space:nowrap;}
+/* inline note edit (tap the note text and type) */
+.item-note{cursor:text;outline:none;border-radius:5px;padding:1px 4px;min-width:8px;margin-inline-start:4px;}
+.item-note:empty::before{content:'הערה';color:var(--border2);}
+.item-note:focus{background:var(--surface2);color:var(--text);}
+/* "missing at store" toggle chip (replaces the old did-you-know button) */
+.miss-btn{background:none;border:1px solid var(--border2);color:var(--muted);font-family:inherit;font-size:11px;font-weight:600;padding:3px 9px;border-radius:12px;cursor:pointer;flex-shrink:0;transition:all 0.15s;}
+.miss-btn.on{background:rgba(245,158,11,0.15);border-color:var(--warn);color:var(--warn);}
 .item.missing .item-name{color:var(--warn);}
-.item-name-wrap{cursor:pointer;}
+/* add-quantity button for items without a quantity */
+.qty-add{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--border2);background:none;color:var(--muted);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0;}
+.qty-add:hover{border-color:var(--accent);color:var(--accent);}
 @keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(-6px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
 .proc-dots::after{content:'';animation:proc-dots 1.2s steps(1) infinite;}
 @keyframes proc-dots{0%{content:''}33%{content:'.'}66%{content:'..'}99%{content:'...'}}
@@ -334,29 +328,6 @@ header{display:flex;align-items:center;gap:10px;padding:12px 16px;padding-top:ca
 <div id="item-popup">
   <button class="popup-close" onclick="closePopup()">×</button>
   <div id="item-popup-content"></div>
-</div>
-
-<div id="item-edit" class="conf-overlay" onclick="if(event.target===this)closeEdit()">
-  <div class="conf-dialog edit-dialog">
-    <div class="edit-title" id="edit-title"></div>
-    <div class="edit-field">
-      <label>כמות</label>
-      <div class="edit-qty">
-        <button type="button" onclick="editQtyStep(-1)">−</button>
-        <input id="edit-qty" type="text" placeholder="למשל 2 / קילו / חבילה" autocomplete="off">
-        <button type="button" onclick="editQtyStep(1)">+</button>
-      </div>
-    </div>
-    <div class="edit-field">
-      <label>הערה</label>
-      <input id="edit-note" type="text" placeholder="למשל: מותג מסוים, בשל, ללא סוכר…" autocomplete="off">
-    </div>
-    <button type="button" id="edit-missing" class="edit-missing" onclick="editToggleMissing()">אין בסופר / חסר</button>
-    <div class="conf-btns">
-      <button type="button" class="conf-cancel" onclick="closeEdit()">ביטול</button>
-      <button type="button" class="conf-ok edit-save" onclick="saveEdit()">שמירה</button>
-    </div>
-  </div>
 </div>
 
 <!-- Firebase -->
@@ -563,25 +534,21 @@ function render() {
         ${catItems.map(it => {
           const qtyNum = parseFloat(it.qty);
           const hasArrows = it.qty && !isNaN(qtyNum);
-          const qtyHtml = it.qty
-            ? (hasArrows
-                ? `<div class="qty-ctrl"><button class="qty-btn" onclick="changeQty('${it.id}',-1)">−</button><span class="item-qty">${esc(it.qty)}</span><button class="qty-btn" onclick="changeQty('${it.id}',1)">+</button></div>`
-                : `<span class="item-qty">${esc(it.qty)}</span>`)
-            : '';
+          const qtyHtml = hasArrows
+            ? `<div class="qty-ctrl"><button class="qty-btn" onclick="changeQty('${it.id}',-1)">−</button><span class="item-qty">${esc(it.qty)}</span><button class="qty-btn" onclick="changeQty('${it.id}',1)">+</button></div>`
+            : (it.qty
+                ? `<span class="item-qty">${esc(it.qty)}</span>`
+                : `<button class="qty-add" onclick="changeQty('${it.id}',1)" title="הוסף כמות">+</button>`);
           return `<div class="item${it.missing?' missing':''}">
             <div class="chk ${it.done?'done':''}" onclick="toggle('${it.id}')"></div>
             ${it.health ? `<span class="health-dot h${it.health}"></span>` : ''}
-            <div class="item-name-wrap" onclick="openEdit('${it.id}')" title="עריכת פריט">
+            <div class="item-name-wrap">
               <span class="item-name ${it.done?'done':''}">${esc(it.name)}</span>
-              ${it.note ? `<span class="item-note">· ${esc(it.note)}</span>` : ''}
-              ${it.missing ? `<span class="miss-badge">חסר בסופר</span>` : ''}
+              <span class="item-note" contenteditable="true" data-id="${it.id}" onblur="saveNote('${it.id}',this)" onkeydown="noteKey(event,this)">${esc(it.note||'')}</span>
             </div>
             <button class="cat-chip" onclick="openCatPicker('${it.id}',this,event)" title="שנה קטגוריה"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--border2)"><polyline points="6 9 12 15 18 9"/></svg></button>
             ${qtyHtml}
-            <button class="dyk-btn${it.fun_fact||it.health_note?' loaded':''}" onclick="showDyk('${it.id}',this)" title="הידעת?">
-              <svg class="dyk-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 1 7 7c0 2.4-1.2 4.5-3 5.7V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.3C6.2 13.5 5 11.4 5 9a7 7 0 0 1 7-7z"/><line x1="9" y1="21" x2="15" y2="21"/><line x1="9" y1="18" x2="15" y2="18"/></svg>
-              <svg class="dyk-spin" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.2-8.6"/></svg>
-            </button>
+            <button class="miss-btn${it.missing?' on':''}" onclick="toggleMissing('${it.id}')" title="אין בסופר / חסר">אין</button>
             <button class="del-btn" onclick="delItem('${it.id}')">×</button>
           </div>`;
         }).join('')}
@@ -598,47 +565,30 @@ function esc(s) {
 function changeQty(id, delta) {
   const it = items.find(i => i.id === id);
   if (!it) return;
-  const n = parseFloat(it.qty) || 1;
-  const next = Math.max(1, Math.round((n + delta) * 10) / 10);
+  const cur = parseFloat(it.qty);
+  const base = isNaN(cur) ? 0 : cur;   // no quantity yet → first "+" gives 1
+  const next = Math.max(1, Math.round((base + delta) * 10) / 10);
   it.qty = String(next);
   persistItems(); render();
 }
 
-// ── Per-item edit sheet: note, quantity (add/change), "missing at store" ──
-let editId = null, editMissing = false;
-function _editMissBtn() {
-  const mb = document.getElementById('edit-missing');
-  mb.classList.toggle('on', editMissing);
-  mb.textContent = editMissing ? '✓ מסומן: אין בסופר / חסר' : 'אין בסופר / חסר';
-}
-function openEdit(id) {
+// ── Simple inline actions: "missing" toggle + tap-to-edit note ──
+function toggleMissing(id) {
   const it = items.find(i => i.id === id);
   if (!it) return;
-  editId = id; editMissing = !!it.missing;
-  document.getElementById('edit-title').textContent = it.name;
-  document.getElementById('edit-qty').value = it.qty || '';
-  document.getElementById('edit-note').value = it.note || '';
-  _editMissBtn();
-  document.getElementById('item-edit').classList.add('open');
+  it.missing = !it.missing;
+  persistItems(); render();
 }
-function closeEdit() {
-  document.getElementById('item-edit').classList.remove('open');
-  editId = null;
+function saveNote(id, el) {
+  const it = items.find(i => i.id === id);
+  if (!it) return;
+  const val = el.textContent.trim();
+  if ((it.note || '') === val) return;   // unchanged — no need to re-render
+  it.note = val;
+  persistItems();
 }
-function editToggleMissing() { editMissing = !editMissing; _editMissBtn(); }
-function editQtyStep(delta) {
-  const el = document.getElementById('edit-qty');
-  const n = parseFloat(el.value);
-  if (isNaN(n)) { el.value = delta > 0 ? '1' : ''; return; }
-  el.value = String(Math.max(1, Math.round((n + delta) * 10) / 10));
-}
-function saveEdit() {
-  const it = items.find(i => i.id === editId);
-  if (!it) { closeEdit(); return; }
-  it.qty = document.getElementById('edit-qty').value.trim();
-  it.note = document.getElementById('edit-note').value.trim();
-  it.missing = editMissing;
-  persistItems(); render(); closeEdit();
+function noteKey(e, el) {
+  if (e.key === 'Enter') { e.preventDefault(); el.blur(); }
 }
 
 const HC = ['','#ef4444','#f97316','#eab308','#84cc16','#22c55e'];
