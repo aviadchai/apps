@@ -184,6 +184,16 @@
       <button class="btn btn-wine" id="btnGen">✦ צור שיעור עם AI</button>
       <div class="status" id="addStatus"></div>
     </div>
+
+    <div class="card" style="text-align:right;padding:20px;margin-top:14px;">
+      <div class="field" style="margin-bottom:8px;">
+        <label>או: הדבקת שיר מוכן (JSON) — בלי מפתח</label>
+        <textarea id="inJson" placeholder='{"title":"...","lines":[...],"keyPhrases":[...]}'></textarea>
+        <div class="hint">אם קיבלת JSON מוכן של שיר, הדביקו כאן. הוא נשמר רק במכשיר שלכם.</div>
+      </div>
+      <button class="btn btn-ghost" id="btnImport">הוספה מ-JSON</button>
+      <div class="status" id="importStatus"></div>
+    </div>
   </section>
 </div>
 
@@ -551,6 +561,24 @@ ${lyrics}`;
   }
 }
 
+/* import a ready-made song JSON (no API key needed) — stays in localStorage */
+async function importSongJson(){
+  const st=$('importStatus'); const raw=$('inJson').value.trim();
+  if(!raw){ st.className='status err'; st.textContent='הדביקו קודם JSON'; return; }
+  let obj; try{ obj=JSON.parse(raw); }catch(e){ st.className='status err'; st.textContent='ה-JSON לא תקין'; return; }
+  const arr=Array.isArray(obj)?obj:[obj];
+  const user=readUserSongs(); let added=0, first=null;
+  arr.forEach(s=>{
+    if(s && Array.isArray(s.lines) && s.lines.length){
+      if(!s.id) s.id='user-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,6);
+      user.push(s); added++; if(!first) first=s.id;
+    }
+  });
+  if(!added){ st.className='status err'; st.textContent='לא נמצא שיר תקין (חסר lines)'; return; }
+  LS.set('gs_user',user); await loadSongs(); renderList();
+  $('inJson').value=''; toast('🎶 '+(added>1?added+' שירים נוספו':'השיר נוסף')); if(first) openSong(first);
+}
+
 /* ============ wire ============ */
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
   MODE=b.dataset.mode;
@@ -561,6 +589,7 @@ $('btnBack').onclick=()=>{ renderList(); show('scrList'); };
 $('btnBackAdd').onclick=()=>{ renderList(); show('scrList'); };
 $('btnAddScreen').onclick=openAdd;
 $('btnGen').onclick=generateSong;
+$('btnImport').onclick=importSongJson;
 
 /* ============ boot ============ */
 (async()=>{ await loadSongs(); renderList(); })();
