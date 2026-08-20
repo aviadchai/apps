@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<title>Μελωδία — יוונית דרך שירים</title>
+<meta name="theme-color" content="#a6374f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Μελωδία">
+<style>
+  :root{
+    --bg1:#FBF4EA; --bg2:#F0DFC7;
+    --ink:#3b2a2f; --muted:#907d73;
+    --wine:#a6374f; --wine-d:#7d2740;
+    --gold:#d99b4e; --gold-d:#b3792c;
+    --card:#fffdf8; --line:#ecdcc6;
+    --ok:#2f8f6b; --bad:#c0483f;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:var(--ink);}
+  body{min-height:100vh;background:linear-gradient(165deg,var(--bg1),var(--bg2));padding:calc(env(safe-area-inset-top) + 8px) 0 calc(env(safe-area-inset-bottom) + 32px);overflow-x:hidden;}
+  .wrap{max-width:480px;margin:0 auto;padding:16px;}
+  .gr{direction:ltr;unicode-bidi:isolate;font-family:Georgia,'Times New Roman',serif;}
+  button{font-family:inherit;cursor:pointer;transition:transform .15s ease, opacity .2s ease, background .2s ease;}
+  button:active{transform:scale(.97);}
+  .hidden{display:none !important;}
+
+  header{text-align:center;margin-bottom:18px;}
+  header h1{font-size:1.7rem;font-weight:800;color:var(--wine);display:inline-flex;align-items:center;gap:8px;font-family:Georgia,serif;letter-spacing:.5px;}
+  header .sub{font-size:.85rem;color:var(--muted);margin-top:5px;font-weight:600;}
+
+  /* song list */
+  .song-card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px 18px;margin-bottom:13px;box-shadow:0 8px 22px rgba(120,60,40,.08);cursor:pointer;display:flex;align-items:center;gap:14px;animation:rise .35s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+  .song-card:active{transform:scale(.99);}
+  .song-disc{width:52px;height:52px;border-radius:50%;flex-shrink:0;background:radial-gradient(circle at 35% 30%,var(--gold),var(--wine) 78%,var(--wine-d));display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.3rem;box-shadow:inset 0 -3px 8px rgba(0,0,0,.18);position:relative;}
+  .song-disc::after{content:'';position:absolute;width:12px;height:12px;border-radius:50%;background:var(--card);}
+  .song-info{flex:1;min-width:0;}
+  .song-info .t{font-size:1.15rem;font-weight:800;color:var(--ink);direction:ltr;text-align:right;unicode-bidi:isolate;font-family:Georgia,serif;}
+  .song-info .th{font-size:.85rem;color:var(--wine);font-weight:700;margin-top:1px;}
+  .song-info .ar{font-size:.75rem;color:var(--muted);margin-top:3px;}
+  .song-prog{font-size:.68rem;color:var(--gold-d);font-weight:800;margin-top:5px;display:flex;align-items:center;gap:5px;}
+  .prog-bar{flex:1;height:5px;background:rgba(166,55,79,.12);border-radius:9px;overflow:hidden;max-width:120px;}
+  .prog-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--wine));border-radius:9px;}
+
+  .add-song{width:100%;background:none;border:1.5px dashed var(--gold);color:var(--gold-d);font-size:.92rem;font-weight:800;padding:14px;border-radius:18px;margin-top:6px;display:flex;align-items:center;justify-content:center;gap:8px;}
+  .add-song:active{background:rgba(217,155,78,.08);}
+
+  /* song screen */
+  .topbar{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+  .back{background:var(--card);border:1px solid var(--line);color:var(--wine);width:40px;height:40px;border-radius:13px;font-size:1.2rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .topbar .ti{flex:1;min-width:0;}
+  .topbar .ti .t{font-size:1.15rem;font-weight:800;direction:ltr;text-align:right;unicode-bidi:isolate;font-family:Georgia,serif;color:var(--ink);}
+  .topbar .ti .s{font-size:.76rem;color:var(--muted);}
+  .yt{background:rgba(166,55,79,.1);color:var(--wine);border:none;width:40px;height:40px;border-radius:13px;font-size:1.1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;text-decoration:none;}
+
+  .tabs{display:flex;gap:5px;background:var(--card);border:1px solid var(--line);border-radius:15px;padding:5px;margin-bottom:16px;}
+  .tabs button{flex:1;border:none;background:none;padding:9px 0;border-radius:11px;font-size:.85rem;font-weight:700;color:var(--muted);}
+  .tabs button.on{background:var(--wine);color:#fff;box-shadow:0 4px 12px rgba(166,55,79,.3);}
+
+  /* read-along */
+  .chip{display:inline-flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--line);color:var(--muted);font-size:.78rem;font-weight:700;padding:6px 13px;border-radius:99px;}
+  .chip.on{background:var(--gold);border-color:var(--gold);color:#fff;}
+  .read-head{display:flex;justify-content:center;margin-bottom:14px;}
+  .line{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:15px 16px 13px;margin-bottom:12px;box-shadow:0 6px 16px rgba(120,60,40,.06);cursor:pointer;animation:rise .3s ease both;position:relative;}
+  .line:active{background:#fffaf0;}
+  .line .gr{font-size:1.4rem;line-height:1.5;color:var(--ink);font-weight:600;}
+  .line .translit{font-size:.82rem;color:var(--gold-d);direction:ltr;text-align:right;unicode-bidi:isolate;margin-top:4px;font-style:italic;}
+  .line .translit-he{font-size:.82rem;color:var(--muted);margin-top:2px;}
+  .line .he{font-size:1rem;color:var(--wine-d);font-weight:600;margin-top:7px;}
+  .line .say{position:absolute;top:12px;inset-inline-start:12px;color:var(--gold);font-size:1rem;opacity:.6;}
+  .w{cursor:pointer;border-bottom:1.5px dotted rgba(217,155,78,.7);padding-bottom:1px;}
+  .w:active,.w.tap{background:rgba(217,155,78,.25);border-radius:4px;}
+
+  /* word popover */
+  #wordPop{position:fixed;z-index:80;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px;max-width:270px;box-shadow:0 14px 40px rgba(80,30,20,.28);opacity:0;visibility:hidden;transform:translateY(6px);transition:opacity .18s, transform .18s, visibility .18s;}
+  #wordPop.show{opacity:1;visibility:visible;transform:translateY(0);}
+  #wordPop .pg{font-size:1.5rem;font-weight:700;color:var(--wine);direction:ltr;font-family:Georgia,serif;}
+  #wordPop .plemma{font-size:.76rem;color:var(--muted);direction:ltr;margin-top:1px;}
+  #wordPop .ppos{display:inline-block;font-size:.68rem;font-weight:800;color:var(--gold-d);background:rgba(217,155,78,.16);border-radius:7px;padding:2px 8px;margin-top:8px;}
+  #wordPop .phe{font-size:1.05rem;color:var(--ink);font-weight:700;margin-top:7px;}
+  #wordPop .pnote{font-size:.8rem;color:var(--muted);margin-top:6px;line-height:1.5;}
+  #wordPop .psay{margin-top:10px;background:rgba(166,55,79,.1);color:var(--wine);border:none;border-radius:10px;padding:7px 14px;font-size:.82rem;font-weight:700;display:inline-flex;align-items:center;gap:6px;}
+
+  /* drill */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:24px 20px;box-shadow:0 10px 28px rgba(120,60,40,.1);text-align:center;animation:rise .3s ease both;}
+  .drill-prog{text-align:center;font-size:.8rem;font-weight:700;color:var(--muted);margin-bottom:14px;}
+  .drill-prompt{font-size:.8rem;color:var(--muted);font-weight:700;margin-bottom:6px;}
+  .drill-he{font-size:1.5rem;font-weight:800;color:var(--wine-d);}
+  .drill-gr{font-size:1.9rem;font-weight:700;color:var(--ink);direction:ltr;font-family:Georgia,serif;margin-top:14px;line-height:1.3;}
+  .drill-translit{font-size:.9rem;color:var(--gold-d);direction:ltr;font-style:italic;margin-top:3px;}
+  .drill-note{font-size:.82rem;color:var(--muted);margin-top:8px;line-height:1.5;}
+  .btn{width:100%;border:none;border-radius:15px;padding:14px;font-size:1rem;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;}
+  .btn-wine{background:var(--wine);color:#fff;box-shadow:0 8px 20px rgba(166,55,79,.3);}
+  .btn-ghost{background:rgba(166,55,79,.08);color:var(--wine);}
+  .btn-gold{background:var(--gold);color:#fff;box-shadow:0 8px 20px rgba(217,155,78,.3);}
+  .drill-actions{display:flex;gap:10px;margin-top:16px;}
+  .drill-actions .btn{flex:1;}
+  .btn-hard{background:rgba(192,72,63,.12);color:var(--bad);}
+  .btn-know{background:rgba(47,143,107,.14);color:var(--ok);}
+  .say-btn{margin-top:12px;background:rgba(166,55,79,.1);color:var(--wine);border:none;border-radius:12px;padding:8px 18px;font-size:.85rem;font-weight:700;display:inline-flex;align-items:center;gap:6px;}
+
+  /* blank */
+  .blank-line{font-size:1.35rem;line-height:1.6;color:var(--ink);direction:ltr;text-align:center;font-family:Georgia,serif;font-weight:600;}
+  .blank-slot{display:inline-block;min-width:66px;border-bottom:2.5px solid var(--gold);margin:0 4px;color:var(--gold-d);font-weight:800;}
+  .blank-slot.filled{border-color:var(--ok);color:var(--ok);}
+  .blank-slot.bad{border-color:var(--bad);color:var(--bad);}
+  .blank-he{font-size:.95rem;color:var(--wine-d);text-align:center;margin-top:10px;font-weight:600;}
+  .opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px;}
+  .opt{border:1.5px solid var(--line);background:var(--card);border-radius:14px;padding:13px 8px;font-size:1.15rem;font-weight:700;color:var(--ink);direction:ltr;font-family:Georgia,serif;}
+  .opt.correct{background:rgba(47,143,107,.14);border-color:var(--ok);color:var(--ok);}
+  .opt.wrong{background:rgba(192,72,63,.12);border-color:var(--bad);color:var(--bad);}
+  .opt:disabled{cursor:default;}
+  .feedback{text-align:center;font-weight:800;margin-top:14px;min-height:22px;}
+  .feedback.ok{color:var(--ok);} .feedback.bad{color:var(--bad);}
+
+  .empty{text-align:center;color:var(--muted);font-size:.9rem;padding:36px 16px;line-height:1.8;}
+
+  /* add-song */
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:.8rem;font-weight:700;color:var(--muted);margin-bottom:6px;}
+  .field input,.field textarea{width:100%;background:var(--card);border:1.5px solid var(--line);border-radius:13px;padding:12px 14px;font-family:inherit;font-size:1rem;color:var(--ink);outline:none;}
+  .field input:focus,.field textarea:focus{border-color:var(--wine);}
+  .field textarea{min-height:150px;direction:ltr;text-align:left;font-family:Georgia,serif;line-height:1.5;resize:vertical;}
+  .field .hint{font-size:.72rem;color:var(--muted);margin-top:5px;line-height:1.5;}
+  .status{font-size:.85rem;text-align:center;margin-top:12px;min-height:20px;color:var(--muted);}
+  .status.err{color:var(--bad);}
+  .spinner{width:15px;height:15px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  #toast{position:fixed;left:50%;bottom:30px;transform:translate(-50%,14px);z-index:90;background:var(--ink);color:#fff;font-size:.85rem;font-weight:700;padding:11px 20px;border-radius:99px;box-shadow:0 10px 28px rgba(0,0,0,.3);opacity:0;pointer-events:none;transition:opacity .28s, transform .28s;max-width:88vw;text-align:center;}
+  #toast.show{opacity:1;transform:translate(-50%,0);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🎵 Μελωδία</h1>
+    <div class="sub">לומדים יוונית מהשירים שאתם אוהבים</div>
+  </header>
+
+  <!-- ===== SONG LIST ===== -->
+  <section id="scrList">
+    <div id="songList"></div>
+    <button class="add-song" id="btnAddScreen">✦ הוספת שיר משלי</button>
+  </section>
+
+  <!-- ===== SONG ===== -->
+  <section id="scrSong" class="hidden">
+    <div class="topbar">
+      <button class="back" id="btnBack">→</button>
+      <div class="ti"><div class="t" id="songTitle"></div><div class="s" id="songArtist"></div></div>
+      <a class="yt hidden" id="songYt" target="_blank" rel="noopener">▶</a>
+    </div>
+    <div class="tabs">
+      <button data-mode="read" class="on">קריאה</button>
+      <button data-mode="drill">תרגול ביטויים</button>
+      <button data-mode="blank">השלמת מילים</button>
+    </div>
+    <div id="songBody"></div>
+  </section>
+
+  <!-- ===== ADD SONG ===== -->
+  <section id="scrAdd" class="hidden">
+    <div class="topbar">
+      <button class="back" id="btnBackAdd">→</button>
+      <div class="ti"><div class="t" style="direction:rtl;font-family:inherit;color:var(--wine)">הוספת שיר</div><div class="s">הדביקו מילים ביוונית ותנו ל-AI לבנות שיעור</div></div>
+    </div>
+    <div class="card" style="text-align:right;padding:20px;">
+      <div class="field">
+        <label>מילות השיר ביוונית</label>
+        <textarea id="inLyrics" placeholder="Καλημέρα, όμορφη μέρα&#10;Ο ήλιος λάμπει..."></textarea>
+      </div>
+      <div class="field">
+        <label>שם השיר / אמן (אופציונלי)</label>
+        <input id="inTitle" placeholder="למשל: Μάνος Χατζιδάκις — ...">
+      </div>
+      <div class="field">
+        <label>מפתח Anthropic API</label>
+        <input id="inKey" type="password" placeholder="sk-ant-..." autocomplete="off">
+        <div class="hint">המפתח נשמר רק במכשיר שלך (localStorage) ונשלח ישירות ל-Anthropic. אפשר גם לערוך את <b>greek-songs.json</b> ידנית במקום.</div>
+      </div>
+      <button class="btn btn-wine" id="btnGen">✦ צור שיעור עם AI</button>
+      <div class="status" id="addStatus"></div>
+    </div>
+  </section>
+</div>
+
+<div id="wordPop"></div>
+<div id="toast"></div>
+
+<script>
+/* ============ embedded seed (fallback when greek-songs.json can't be fetched) ============ */
+const SEED = [{
+  id:"demo-thalassa", title:"Η θάλασσα", titleHe:"הים · שיר דוגמה", artist:"דוגמה — החליפו בשיר שלכם", youtubeUrl:"",
+  lines:[
+    {gr:"Καλημέρα, όμορφη μέρα",translit:"Kaliméra, ómorfi méra",translitHe:"קַלִימֶרַה, אוֹמוֹרְפִי מֶרַה",he:"בוקר טוב, יום יפה",words:[
+      {gr:"Καλημέρα",lemma:"καλημέρα",pos:"ברכה",he:"בוקר טוב",note:"מילולית: יום טוב"},
+      {gr:"όμορφη",lemma:"όμορφος",pos:"שם תואר",he:"יפה",note:"צורת נקבה"},
+      {gr:"μέρα",lemma:"μέρα",pos:"שם עצם",he:"יום",note:"נקבה"}]},
+    {gr:"Ο ήλιος λάμπει στη θάλασσα",translit:"O ílios lámpei sti thálassa",translitHe:"אוֹ אִילְיוֹס לַאמְבִּי סְטִי תַ׳אלַסַה",he:"השמש זורחת על הים",words:[
+      {gr:"ήλιος",lemma:"ήλιος",pos:"שם עצם",he:"שמש",note:"זכר"},
+      {gr:"λάμπει",lemma:"λάμπω",pos:"פועל",he:"זורח/ת",note:"גוף שלישי יחיד"},
+      {gr:"θάλασσα",lemma:"θάλασσα",pos:"שם עצם",he:"ים",note:"נקבה; στη = על ה־"}]},
+    {gr:"Τραγουδάω ένα γλυκό τραγούδι",translit:"Tragoudáo éna glykó tragoúdi",translitHe:"טְרַגוּדַאוֹ אֶנַה גְלִיקוֹ טְרַגוּדִי",he:"אני שר שיר מתוק",words:[
+      {gr:"Τραγουδάω",lemma:"τραγουδάω",pos:"פועל",he:"אני שר",note:"גוף ראשון יחיד"},
+      {gr:"ένα",lemma:"ένας",pos:"תווית",he:"אחד",note:"נטרלי"},
+      {gr:"γλυκό",lemma:"γλυκός",pos:"שם תואר",he:"מתוק",note:"נטרלי"},
+      {gr:"τραγούδι",lemma:"τραγούδι",pos:"שם עצם",he:"שיר",note:"נטרלי"}]},
+    {gr:"Η καρδιά μου είναι γεμάτη χαρά",translit:"I kardiá mou íne gemáti hará",translitHe:"אִי קַרְדְיַה מוּ אִינֶה גֶמַאטִי חַרַה",he:"הלב שלי מלא שמחה",words:[
+      {gr:"καρδιά",lemma:"καρδιά",pos:"שם עצם",he:"לב",note:"נקבה"},
+      {gr:"μου",lemma:"μου",pos:"כינוי שייכות",he:"שלי",note:"בא אחרי שם העצם"},
+      {gr:"είναι",lemma:"είμαι",pos:"פועל",he:"הוא/היא",note:"'להיות'"},
+      {gr:"γεμάτη",lemma:"γεμάτος",pos:"שם תואר",he:"מלא/ה",note:"צורת נקבה"},
+      {gr:"χαρά",lemma:"χαρά",pos:"שם עצם",he:"שמחה",note:"נקבה"}]}
+  ],
+  keyPhrases:[
+    {gr:"Καλημέρα",he:"בוקר טוב",note:"ברכת בוקר"},
+    {gr:"όμορφη μέρα",he:"יום יפה",note:"תיאור נפוץ"},
+    {gr:"Η καρδιά μου",he:"הלב שלי",note:"שם עצם + שייכות"},
+    {gr:"γεμάτη χαρά",he:"מלא/ה שמחה",note:"תואר + שם עצם"}
+  ]
+}];
+
+/* ============ helpers ============ */
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const norm = s => (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\u03c2/g,'\u03c3').replace(/[^\p{L}]/gu,'');
+function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2600); }
+const LS = { get:(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}}, set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}} };
+
+/* ============ speech (el-GR, graceful) ============ */
+let grVoice=null;
+function pickVoice(){
+  const vs=(window.speechSynthesis?speechSynthesis.getVoices():[])||[];
+  const el=vs.filter(v=>/^el(-|_|$)/i.test(v.lang||''));
+  grVoice = el.sort((a,b)=>{
+    const sc=v=>/enhanced|premium|natural|siri|google/i.test(v.name||'')?1:0;
+    return sc(b)-sc(a);
+  })[0]||null;
+}
+if('speechSynthesis' in window){ pickVoice(); speechSynthesis.onvoiceschanged=pickVoice; }
+let voiceHinted=false;
+function speak(text, btn){
+  if(!('speechSynthesis' in window)){ toast('אין תמיכה בהשמעה במכשיר זה'); return; }
+  try{
+    if(!grVoice) pickVoice();
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang='el-GR'; if(grVoice) u.voice=grVoice; u.rate=.9;
+    speechSynthesis.speak(u);
+  }catch(e){ /* TTS unavailable — degrade silently, never break the UI */ }
+  if(!grVoice && (speechSynthesis.getVoices()||[]).length && !voiceHinted){
+    voiceHinted=true;
+    toast('להגייה טובה יותר התקינו קול יווני במכשיר (הגדרות ‹ נגישות ‹ תוכן מדובר ‹ קולות)');
+  }
+}
+
+/* ============ state ============ */
+let SONGS=[], CUR=null, MODE='read';
+let showTranslit = LS.get('gs_translit', false);
+
+function readUserSongs(){ const u=LS.get('gs_user',[]); return Array.isArray(u)?u:[]; }
+async function loadSongs(){
+  let base=SEED;
+  try{
+    const r=await fetch('greek-songs.json',{cache:'no-cache'});
+    if(r.ok){ const j=await r.json(); if(Array.isArray(j)&&j.length) base=j; }
+  }catch(e){}
+  SONGS=[...base, ...readUserSongs()];
+}
+
+/* progress */
+function seenSet(id){ const s=LS.get('gs_seen',{}); return new Set(s[id]||[]); }
+function markSeen(id, wnorm){ const s=LS.get('gs_seen',{}); const arr=new Set(s[id]||[]); arr.add(wnorm); s[id]=[...arr]; LS.set('gs_seen',s); }
+function srsKey(id,gr){ return id+'::'+norm(gr); }
+function srsLevel(id,gr){ const s=LS.get('gs_srs',{}); return s[srsKey(id,gr)]||0; }
+function srsSet(id,gr,lv){ const s=LS.get('gs_srs',{}); s[srsKey(id,gr)]=lv; LS.set('gs_srs',s); }
+function songProgress(song){
+  const totalWords=song.lines.reduce((n,l)=>n+(l.words||[]).length,0);
+  const seen=seenSet(song.id).size;
+  const mastered=(song.keyPhrases||[]).filter(p=>srsLevel(song.id,p.gr)>=4).length;
+  const kp=(song.keyPhrases||[]).length;
+  const pct = totalWords+kp ? Math.round(((seen)+(mastered))/((totalWords)+(kp))*100) : 0;
+  return {seen,totalWords,mastered,kp,pct:Math.min(100,pct)};
+}
+
+/* ============ song list ============ */
+function renderList(){
+  $('songList').innerHTML = SONGS.map(s=>{
+    const p=songProgress(s);
+    return `<div class="song-card" onclick="openSong('${s.id}')">
+      <div class="song-disc">♪</div>
+      <div class="song-info">
+        <div class="t">${esc(s.title)}</div>
+        <div class="th">${esc(s.titleHe||'')}</div>
+        <div class="ar">${esc(s.artist||'')}</div>
+        <div class="song-prog"><span>${p.pct}%</span><span class="prog-bar"><i style="width:${p.pct}%"></i></span></div>
+      </div>
+    </div>`;
+  }).join('') || `<div class="empty">אין עדיין שירים.<br>הוסיפו שיר משלכם למטה 🎶</div>`;
+}
+
+/* ============ open a song ============ */
+function show(scr){ ['scrList','scrSong','scrAdd'].forEach(x=>$(x).classList.toggle('hidden',x!==scr)); }
+window.openSong=function(id){
+  CUR=SONGS.find(s=>s.id===id); if(!CUR) return;
+  MODE='read';
+  $('songTitle').textContent=CUR.title;
+  $('songArtist').textContent=CUR.artist||'';
+  const yt=$('songYt');
+  if(CUR.youtubeUrl){ yt.href=CUR.youtubeUrl; yt.classList.remove('hidden'); } else yt.classList.add('hidden');
+  document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.mode==='read'));
+  show('scrSong'); renderMode(); window.scrollTo(0,0);
+};
+function renderMode(){
+  closePop();
+  if(MODE==='read') renderRead();
+  else if(MODE==='drill') renderDrill();
+  else renderBlank();
+}
+
+/* ============ read-along ============ */
+function renderLineGreek(line, li){
+  const words=line.words||[]; const used=new Array(words.length).fill(false);
+  return line.gr.split(/(\s+)/).map(part=>{
+    if(/^\s+$/.test(part)) return part;
+    const m=part.match(/^([^\p{L}]*)(.*?)([^\p{L}]*)$/u);
+    const pre=m[1]||'', core=m[2]||'', post=m[3]||'';
+    if(core){
+      const nc=norm(core);
+      const wi=words.findIndex((w,i)=>!used[i] && norm(w.gr)===nc);
+      if(wi>=0){ used[wi]=true; return esc(pre)+`<span class="w" data-li="${li}" data-wi="${wi}" onclick="tapWord(event,${li},${wi})">${esc(core)}</span>`+esc(post); }
+    }
+    return esc(part);
+  }).join('');
+}
+function renderRead(){
+  const html = `<div class="read-head"><button class="chip ${showTranslit?'on':''}" onclick="toggleTranslit()">Aa תעתיק</button></div>` +
+    CUR.lines.map((line,li)=>`
+      <div class="line" onclick="speakLine(${li})">
+        <span class="say">🔊</span>
+        <div class="gr">${renderLineGreek(line,li)}</div>
+        <div class="translit ${showTranslit?'':'hidden'}">${esc(line.translit||'')}</div>
+        ${line.translitHe?`<div class="translit-he ${showTranslit?'':'hidden'}">${esc(line.translitHe)}</div>`:''}
+        <div class="he">${esc(line.he||'')}</div>
+      </div>`).join('');
+  $('songBody').innerHTML=html;
+}
+window.toggleTranslit=function(){ showTranslit=!showTranslit; LS.set('gs_translit',showTranslit); renderRead(); };
+window.speakLine=function(li){ speak(CUR.lines[li].gr); };
+window.tapWord=function(ev,li,wi){
+  ev.stopPropagation();
+  const w=CUR.lines[li].words[wi]; if(!w) return;
+  markSeen(CUR.id, norm(w.gr));
+  document.querySelectorAll('.w.tap').forEach(x=>x.classList.remove('tap'));
+  ev.currentTarget.classList.add('tap');
+  const pop=$('wordPop');
+  pop.innerHTML=`<div class="pg">${esc(w.gr)}</div>
+    ${w.lemma&&norm(w.lemma)!==norm(w.gr)?`<div class="plemma">← ${esc(w.lemma)}</div>`:''}
+    ${w.pos?`<span class="ppos">${esc(w.pos)}</span>`:''}
+    <div class="phe">${esc(w.he||'')}</div>
+    ${w.note?`<div class="pnote">${esc(w.note)}</div>`:''}
+    <button class="psay" onclick="speak('${w.gr.replace(/'/g,"\\'")}')">🔊 האזנה</button>`;
+  pop.classList.add('show');
+  const r=ev.currentTarget.getBoundingClientRect();
+  pop.style.visibility='hidden'; pop.style.display='block';
+  const pw=pop.offsetWidth, ph=pop.offsetHeight;
+  let left=Math.min(Math.max(8,r.left+r.width/2-pw/2), window.innerWidth-pw-8);
+  let top=r.top-ph-10; if(top<8) top=r.bottom+10;
+  pop.style.left=left+'px'; pop.style.top=top+'px'; pop.style.visibility='';
+};
+function closePop(){ $('wordPop').classList.remove('show'); document.querySelectorAll('.w.tap').forEach(x=>x.classList.remove('tap')); }
+document.addEventListener('click',e=>{ if(!e.target.closest('#wordPop') && !e.target.closest('.w')) closePop(); });
+
+/* ============ phrases drill (Pimsleur-style SRS) ============ */
+let DRILL=null;
+function renderDrill(){
+  const phrases=(CUR.keyPhrases||[]);
+  if(!phrases.length){ $('songBody').innerHTML=`<div class="empty">אין ביטויים לתרגול בשיר הזה.</div>`; return; }
+  if(!DRILL || DRILL.songId!==CUR.id){
+    const q=[...phrases].sort((a,b)=>srsLevel(CUR.id,a.gr)-srsLevel(CUR.id,b.gr));
+    DRILL={songId:CUR.id, queue:q, total:phrases.length, done:0, revealed:false};
+  }
+  drillStep();
+}
+function drillStep(){
+  if(!DRILL.queue.length){
+    const mastered=(CUR.keyPhrases||[]).filter(p=>srsLevel(CUR.id,p.gr)>=4).length;
+    $('songBody').innerHTML=`<div class="card">
+      <div style="font-size:2.4rem">🎉</div>
+      <div class="drill-he" style="margin-top:8px">כל הכבוד!</div>
+      <div class="drill-note">שלטת ב־${mastered} מתוך ${(CUR.keyPhrases||[]).length} הביטויים</div>
+      <button class="btn btn-gold" style="margin-top:18px" onclick="DRILL=null;renderDrill()">סבב נוסף</button>
+    </div>`;
+    return;
+  }
+  const p=DRILL.queue[0]; DRILL.revealed=false;
+  $('songBody').innerHTML=`
+    <div class="drill-prog">ביטוי ${DRILL.done+1} · נותרו ${DRILL.queue.length}</div>
+    <div class="card">
+      <div class="drill-prompt">איך אומרים ביוונית?</div>
+      <div class="drill-he">${esc(p.he)}</div>
+      <div id="drillReveal"></div>
+      <button class="btn btn-wine" style="margin-top:20px" id="drillShow" onclick="drillShowAnswer()">הצג את היוונית</button>
+    </div>`;
+}
+window.drillShowAnswer=function(){
+  const p=DRILL.queue[0];
+  speak(p.gr);
+  $('drillReveal').innerHTML=`
+    <div class="drill-gr">${esc(p.gr)}</div>
+    ${p.note?`<div class="drill-note">${esc(p.note)}</div>`:''}
+    <button class="say-btn" onclick="speak('${p.gr.replace(/'/g,"\\'")}')">🔊 שוב</button>`;
+  $('drillShow').outerHTML=`<div class="drill-actions">
+    <button class="btn btn-hard" onclick="drillRate(false)">קשה</button>
+    <button class="btn btn-know" onclick="drillRate(true)">ידעתי ✓</button>
+  </div>`;
+};
+window.drillRate=function(knew){
+  const p=DRILL.queue.shift();
+  let lv=srsLevel(CUR.id,p.gr);
+  if(knew){ lv=Math.min(5,lv+1); DRILL.done++; }
+  else { lv=Math.max(0,lv-1); DRILL.queue.splice(Math.min(DRILL.queue.length,2),0,p); }
+  srsSet(CUR.id,p.gr,lv);
+  drillStep();
+};
+
+/* ============ fill-in-the-blank ============ */
+let BLANK=null;
+function buildBlanks(song){
+  const ex=[];
+  song.lines.forEach((line,li)=>{
+    const cand=(line.words||[]).filter(w=>norm(w.gr).length>1);
+    if(!cand.length) return;
+    const target=cand[Math.floor(Math.random()*cand.length)];
+    ex.push({li,target});
+  });
+  return ex;
+}
+function allWordForms(song){
+  const set=new Map();
+  song.lines.forEach(l=>(l.words||[]).forEach(w=>{ if(norm(w.gr).length>1) set.set(norm(w.gr),w.gr); }));
+  return [...set.values()];
+}
+function renderBlank(){
+  const ex=buildBlanks(CUR);
+  if(!ex.length){ $('songBody').innerHTML=`<div class="empty">אין מספיק מילים מתויגות להשלמה בשיר הזה.</div>`; return; }
+  BLANK={ex, i:0, score:0, forms:allWordForms(CUR)};
+  blankStep();
+}
+function blankLineHtml(line,li,targetGr,revealGr){
+  const words=line.words||[]; const used=new Array(words.length).fill(false); let blanked=false;
+  return line.gr.split(/(\s+)/).map(part=>{
+    if(/^\s+$/.test(part)) return part;
+    const m=part.match(/^([^\p{L}]*)(.*?)([^\p{L}]*)$/u);
+    const pre=m[1]||'', core=m[2]||'', post=m[3]||'';
+    if(core && !blanked && norm(core)===norm(targetGr)){
+      blanked=true;
+      const cls = revealGr==null?'' : (revealGr? 'filled':'bad');
+      const txt = revealGr==null?'＿＿' : esc(revealGr);
+      return esc(pre)+`<span class="blank-slot ${cls}">${txt}</span>`+esc(post);
+    }
+    return esc(part);
+  }).join('');
+}
+function blankStep(){
+  if(BLANK.i>=BLANK.ex.length){
+    $('songBody').innerHTML=`<div class="card">
+      <div style="font-size:2.4rem">✨</div>
+      <div class="drill-he" style="margin-top:8px">${BLANK.score}/${BLANK.ex.length}</div>
+      <div class="drill-note">${BLANK.score===BLANK.ex.length?'מושלם!':'יופי — עוד סבב יחדד את זה'}</div>
+      <button class="btn btn-gold" style="margin-top:18px" onclick="renderBlank()">עוד סבב</button>
+    </div>`;
+    return;
+  }
+  const q=BLANK.ex[BLANK.i]; const line=CUR.lines[q.li];
+  const distract=BLANK.forms.filter(f=>norm(f)!==norm(q.target.gr));
+  for(let k=distract.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[distract[k],distract[j]]=[distract[j],distract[k]];}
+  const opts=[q.target.gr,...distract.slice(0,3)];
+  for(let k=opts.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[opts[k],opts[j]]=[opts[j],opts[k]];}
+  $('songBody').innerHTML=`
+    <div class="drill-prog">משפט ${BLANK.i+1} מתוך ${BLANK.ex.length}</div>
+    <div class="card">
+      <div class="blank-line" id="blankLine">${blankLineHtml(line,q.li,q.target.gr,null)}</div>
+      <div class="blank-he">${esc(line.he||'')}</div>
+      <div class="opts" id="blankOpts">${opts.map(o=>`<button class="opt" onclick="blankPick(this,'${o.replace(/'/g,"\\'")}')">${esc(o)}</button>`).join('')}</div>
+      <div class="feedback" id="blankFeed"></div>
+      <div id="blankNext"></div>
+    </div>`;
+}
+window.blankPick=function(btn,picked){
+  const q=BLANK.ex[BLANK.i]; const line=CUR.lines[q.li];
+  const ok=norm(picked)===norm(q.target.gr);
+  document.querySelectorAll('#blankOpts .opt').forEach(b=>{ b.disabled=true;
+    if(norm(b.textContent)===norm(q.target.gr)) b.classList.add('correct');
+  });
+  if(!ok) btn.classList.add('wrong');
+  else BLANK.score++;
+  $('blankLine').innerHTML=blankLineHtml(line,q.li,q.target.gr,ok?q.target.gr:q.target.gr);
+  $('blankLine').querySelector('.blank-slot')?.classList.toggle('bad',!ok);
+  const fb=$('blankFeed'); fb.className='feedback '+(ok?'ok':'bad');
+  fb.innerHTML = ok? '✓ נכון!' : `הנכון: <span class="gr">${esc(q.target.gr)}</span> — ${esc(q.target.he||'')}`;
+  markSeen(CUR.id,norm(q.target.gr));
+  speak(line.gr);
+  $('blankNext').innerHTML=`<button class="btn btn-wine" style="margin-top:14px" onclick="BLANK.i++;blankStep()">${BLANK.i>=BLANK.ex.length-1?'לסיכום':'הבא'} →</button>`;
+};
+
+/* ============ add a song (Claude API, browser-direct) ============ */
+function openAdd(){ $('inKey').value=LS.get('gs_key',''); $('addStatus').textContent=''; $('addStatus').className='status'; show('scrAdd'); window.scrollTo(0,0); }
+async function generateSong(){
+  const lyrics=$('inLyrics').value.trim();
+  const key=$('inKey').value.trim();
+  const st=$('addStatus');
+  if(!lyrics){ st.textContent='הדביקו קודם מילות שיר'; st.className='status err'; return; }
+  if(!key){ st.textContent='צריך מפתח Anthropic API'; st.className='status err'; return; }
+  LS.set('gs_key',key);
+  const btn=$('btnGen'); btn.disabled=true; btn.innerHTML='<span class="spinner"></span> בונה שיעור…';
+  st.className='status'; st.textContent='שולח ל-Claude… זה עשוי לקחת חצי דקה';
+  const schema='{id,title,titleHe,artist,youtubeUrl,lines:[{gr,translit,translitHe,he,words:[{gr,lemma,pos,he,note}]}],keyPhrases:[{gr,he,note}]}';
+  const prompt=`אתה מורה מומחה ליוונית מודרנית שבונה נתוני שיעור מדויקים לדובר עברית. צור אובייקט JSON יחיד (בלי markdown, בלי הסבר) לפי הסכמה:
+${schema}
+כללים: כל התרגומים וההערות בעברית. translit בלטינית, translitHe בעברית פונטית. pos בעברית (שם עצם/פועל/שם תואר/כינוי/מילת יחס/ברכה...). ב-words פרק כל מילה משמעותית בשורה עם lemma (צורת מילון), pos, he (משמעות), note (הערה קצרה). ב-keyPhrases 3-6 ביטויים שימושיים. שם השיר/אמן: ${$('inTitle').value.trim()||'(נסה לזהות מהמילים)'}.
+מילות השיר:
+${lyrics}`;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-opus-5',max_tokens:8000,messages:[{role:'user',content:prompt}]})
+    });
+    if(!res.ok){ let e=''; try{e=(await res.json()).error?.message||'';}catch(_){}
+      throw new Error(res.status===401?'מפתח לא תקין (401)':('שגיאת שרת '+res.status+(e?': '+e:''))); }
+    const data=await res.json();
+    const text=(data.content||[]).map(b=>b.text||'').join('');
+    const jstart=text.indexOf('{'), jend=text.lastIndexOf('}');
+    if(jstart<0||jend<0) throw new Error('לא הצלחתי לקרוא JSON מהתשובה');
+    const song=JSON.parse(text.slice(jstart,jend+1));
+    if(!song.lines||!song.lines.length) throw new Error('התשובה לא כללה שורות');
+    song.id='user-'+Date.now();
+    const user=readUserSongs(); user.push(song); LS.set('gs_user',user);
+    await loadSongs(); renderList();
+    $('inLyrics').value='';
+    toast('🎶 השיר נוסף!'); openSong(song.id);
+  }catch(err){
+    st.className='status err';
+    st.textContent = /Failed to fetch|NetworkError/i.test(err.message) ? 'שגיאת רשת — ייתכן חסימת CORS או אין חיבור' : err.message;
+  }finally{
+    btn.disabled=false; btn.innerHTML='✦ צור שיעור עם AI';
+  }
+}
+
+/* ============ wire ============ */
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
+  MODE=b.dataset.mode;
+  document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));
+  renderMode();
+});
+$('btnBack').onclick=()=>{ renderList(); show('scrList'); };
+$('btnBackAdd').onclick=()=>{ renderList(); show('scrList'); };
+$('btnAddScreen').onclick=openAdd;
+$('btnGen').onclick=generateSong;
+
+/* ============ boot ============ */
+(async()=>{ await loadSongs(); renderList(); })();
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
