@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<title>לוח שהות משותף</title>
+<meta name="theme-color" content="#3f7d8c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="לוח שהות">
+<style>
+  :root{
+    --a:#3f7d8c; --a-soft:#e7f0f2; --a-ink:#2c5a66;
+    --b:#b0794f; --b-soft:#f5ece3; --b-ink:#8a5c37;
+    --bg:#f6f7f8; --card:#ffffff; --ink:#2b3138; --muted:#7c848d; --line:#e8ebee;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:var(--ink);}
+  body{min-height:100vh;background:var(--bg);padding:calc(env(safe-area-inset-top) + 6px) 0 calc(env(safe-area-inset-bottom) + 40px);}
+  .wrap{max-width:520px;margin:0 auto;padding:14px 16px;}
+  button,input,select{font-family:inherit;}
+  button{cursor:pointer;transition:transform .12s ease, background .15s ease, opacity .15s;}
+  button:active{transform:scale(.98);}
+  .hidden{display:none !important;}
+
+  header{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+  header h1{font-size:1.2rem;font-weight:800;flex:1;letter-spacing:-.2px;}
+  .icon-btn{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--muted);font-size:1.05rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .icon-btn:active{background:#eef1f3;}
+  #sync{font-size:.66rem;font-weight:700;color:var(--muted);display:flex;align-items:center;gap:5px;}
+  #sync .dot{width:7px;height:7px;border-radius:50%;background:var(--muted);}
+  #sync.ok .dot{background:#3aa76d;} #sync.saving .dot{background:#e0a83a;} #sync.err .dot{background:#c85a4a;}
+
+  /* summary */
+  .summary{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 4px 16px rgba(43,49,56,.04);}
+  .summary .rng{display:flex;gap:6px;margin-bottom:14px;}
+  .summary .rng button{flex:1;border:1px solid var(--line);background:var(--bg);color:var(--muted);font-size:.78rem;font-weight:700;padding:8px 0;border-radius:10px;}
+  .summary .rng button.on{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .custom-range{display:flex;gap:8px;align-items:center;margin-bottom:14px;font-size:.8rem;color:var(--muted);}
+  .custom-range input{flex:1;border:1px solid var(--line);border-radius:9px;padding:7px 9px;font-size:.82rem;color:var(--ink);background:var(--bg);}
+  .totbar{display:flex;height:14px;border-radius:8px;overflow:hidden;margin-bottom:12px;background:var(--line);}
+  .totbar .pa{background:var(--a);} .totbar .pb{background:var(--b);}
+  .tots{display:flex;gap:10px;}
+  .tot{flex:1;text-align:center;}
+  .tot .nm{font-size:.76rem;font-weight:700;display:inline-flex;align-items:center;gap:5px;justify-content:center;}
+  .tot .nm .sw{width:9px;height:9px;border-radius:50%;}
+  .tot .big{font-size:1.5rem;font-weight:800;margin-top:2px;}
+  .tot .sub{font-size:.72rem;color:var(--muted);}
+
+  .loadmore{width:100%;background:none;border:1px dashed var(--line);color:var(--muted);font-size:.8rem;font-weight:700;padding:11px;border-radius:12px;margin-bottom:10px;}
+  .loadmore:active{background:#eef1f3;}
+
+  /* agenda day */
+  .day{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:0;margin-bottom:10px;overflow:hidden;box-shadow:0 3px 12px rgba(43,49,56,.04);display:flex;cursor:pointer;}
+  .day:active{background:#fcfcfd;}
+  .day .side{width:6px;flex-shrink:0;}
+  .day .body{flex:1;padding:13px 15px;min-width:0;}
+  .day .dhead{display:flex;align-items:baseline;gap:8px;margin-bottom:9px;}
+  .day .dnum{font-size:1.15rem;font-weight:800;}
+  .day .ddow{font-size:.9rem;font-weight:700;color:var(--muted);}
+  .day .dmon{font-size:.72rem;color:var(--muted);margin-inline-start:auto;}
+  .day.today{border-color:var(--a);box-shadow:0 0 0 1.5px var(--a);}
+  .day.today .dnum::after{content:' · היום';font-size:.7rem;color:var(--a);font-weight:800;}
+
+  .seg{display:flex;align-items:center;gap:9px;font-size:.92rem;padding:3px 0;}
+  .seg .sw{width:11px;height:11px;border-radius:50%;flex-shrink:0;}
+  .seg .who{font-weight:700;}
+  .seg .tm{color:var(--muted);font-size:.82rem;}
+  .seg .hrs{margin-inline-start:auto;font-size:.74rem;color:var(--muted);font-weight:700;background:var(--bg);padding:1px 8px;border-radius:8px;}
+  .handover{display:flex;align-items:center;gap:7px;font-size:.8rem;color:var(--ink);font-weight:600;margin:5px 0 5px 3px;padding:5px 9px;background:var(--bg);border-radius:9px;}
+  .handover .hi{font-size:.9rem;}
+  .handover .from{color:var(--muted);font-weight:700;}
+  .handover .stay{margin-inline-start:auto;font-size:.7rem;color:var(--muted);}
+  .a-txt{color:var(--a-ink);} .b-txt{color:var(--b-ink);}
+  .a-sw{background:var(--a);} .b-sw{background:var(--b);}
+
+  /* modal */
+  .overlay{position:fixed;inset:0;background:rgba(30,35,40,.45);backdrop-filter:blur(3px);z-index:60;display:none;align-items:flex-end;justify-content:center;}
+  .overlay.show{display:flex;animation:fade .18s ease;}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .sheet{background:var(--card);width:100%;max-width:520px;border-radius:22px 22px 0 0;padding:20px 18px calc(env(safe-area-inset-bottom) + 20px);max-height:90vh;overflow-y:auto;animation:up .22s cubic-bezier(.22,1,.36,1);}
+  @keyframes up{from{transform:translateY(30px);opacity:.6}to{transform:translateY(0);opacity:1}}
+  .sheet h2{font-size:1.05rem;font-weight:800;margin-bottom:3px;}
+  .sheet .sub{font-size:.8rem;color:var(--muted);margin-bottom:16px;}
+  .fld{margin-bottom:15px;}
+  .fld label{display:block;font-size:.78rem;font-weight:700;color:var(--muted);margin-bottom:6px;}
+  .fld input,.fld select{width:100%;border:1px solid var(--line);border-radius:11px;padding:11px 12px;font-size:1rem;color:var(--ink);background:var(--bg);outline:none;}
+  .fld input:focus,.fld select:focus{border-color:var(--a);}
+  .seg2{display:flex;gap:7px;}
+  .seg2 button{flex:1;border:1.5px solid var(--line);background:var(--bg);color:var(--muted);font-size:.9rem;font-weight:800;padding:11px 0;border-radius:11px;}
+  .seg2 button.on-a{background:var(--a-soft);border-color:var(--a);color:var(--a-ink);}
+  .seg2 button.on-b{background:var(--b-soft);border-color:var(--b);color:var(--b-ink);}
+  .ho-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:9px 10px;}
+  .ho-row input[type=time]{width:auto;flex:0 0 auto;padding:7px 9px;border:1px solid var(--line);border-radius:9px;background:#fff;font-size:.95rem;}
+  .ho-row .to{flex:1;display:flex;gap:5px;}
+  .ho-row .to button{flex:1;border:1.5px solid var(--line);background:#fff;color:var(--muted);font-size:.8rem;font-weight:800;padding:7px 0;border-radius:8px;}
+  .ho-row .to button.on-a{background:var(--a-soft);border-color:var(--a);color:var(--a-ink);}
+  .ho-row .to button.on-b{background:var(--b-soft);border-color:var(--b);color:var(--b-ink);}
+  .ho-row .del{width:32px;height:32px;border:none;background:none;color:#c85a4a;font-size:1.2rem;flex-shrink:0;}
+  .add-ho{width:100%;border:1px dashed var(--line);background:none;color:var(--muted);font-weight:700;font-size:.85rem;padding:10px;border-radius:11px;margin-top:2px;}
+  .btn{width:100%;border:none;border-radius:13px;padding:14px;font-size:1rem;font-weight:800;display:flex;align-items:center;justify-content:center;gap:7px;}
+  .btn-main{background:var(--a);color:#fff;}
+  .btn-ghost{background:var(--bg);color:var(--ink);border:1px solid var(--line);}
+  .btn-reset{background:none;color:var(--muted);border:none;font-size:.85rem;font-weight:700;padding:12px;width:100%;}
+  .row2{display:flex;gap:9px;margin-top:6px;}
+  .row2 .btn{flex:1;}
+  .hint{font-size:.72rem;color:var(--muted);line-height:1.55;margin-top:8px;}
+
+  #toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,14px);z-index:90;background:var(--ink);color:#fff;font-size:.85rem;font-weight:700;padding:11px 20px;border-radius:99px;box-shadow:0 10px 28px rgba(0,0,0,.28);opacity:0;pointer-events:none;transition:opacity .28s, transform .28s;max-width:88vw;text-align:center;}
+  #toast.show{opacity:1;transform:translate(-50%,0);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 id="title">לוח שהות משותף</h1>
+    <div id="sync"><span class="dot"></span><span id="syncTxt">מתחבר…</span></div>
+    <button class="icon-btn" id="btnShare" title="שיתוף קישור">🔗</button>
+    <button class="icon-btn" id="btnSettings" title="הגדרות">⚙️</button>
+  </header>
+
+  <div class="summary">
+    <div class="rng">
+      <button data-r="14" class="on">שבועיים</button>
+      <button data-r="30">חודש</button>
+      <button data-r="custom">מותאם</button>
+    </div>
+    <div class="custom-range hidden" id="customRange">
+      <span>מ־</span><input type="date" id="cFrom">
+      <span>עד</span><input type="date" id="cTo">
+    </div>
+    <div class="totbar"><div class="pa" id="barA"></div><div class="pb" id="barB"></div></div>
+    <div class="tots">
+      <div class="tot"><div class="nm"><span class="sw a-sw"></span><span id="totNameA">הורה א׳</span></div><div class="big a-txt" id="totPctA">—</div><div class="sub" id="totHrsA"></div></div>
+      <div class="tot"><div class="nm"><span class="sw b-sw"></span><span id="totNameB">הורה ב׳</span></div><div class="big b-txt" id="totPctB">—</div><div class="sub" id="totHrsB"></div></div>
+    </div>
+  </div>
+
+  <button class="loadmore" id="loadPrev">↑ ימים קודמים</button>
+  <div id="agenda"></div>
+  <button class="loadmore" id="loadNext">ימים נוספים ↓</button>
+</div>
+
+<!-- day edit -->
+<div class="overlay" id="dayOverlay">
+  <div class="sheet">
+    <h2 id="deTitle"></h2>
+    <div class="sub" id="deSub"></div>
+    <div class="fld">
+      <label>בתחילת היום (00:00) הילדים אצל</label>
+      <div class="seg2" id="deStart"></div>
+    </div>
+    <div class="fld">
+      <label>החלפות במהלך היום</label>
+      <div id="deHandovers"></div>
+      <button class="add-ho" id="deAddHo">+ הוספת החלפה</button>
+    </div>
+    <div class="row2">
+      <button class="btn btn-ghost" id="deCancel">ביטול</button>
+      <button class="btn btn-main" id="deSave">שמירה</button>
+    </div>
+    <button class="btn-reset" id="deReset">↺ החזרה לכלל החוזר</button>
+  </div>
+</div>
+
+<!-- settings / rule -->
+<div class="overlay" id="setOverlay">
+  <div class="sheet">
+    <h2>הגדרות הלוח</h2>
+    <div class="sub">שמות ההורים והכלל החוזר</div>
+    <div class="fld"><label>שם הורה א׳</label><input id="sNameA" placeholder="הורה א׳"></div>
+    <div class="fld"><label>שם הורה ב׳</label><input id="sNameB" placeholder="הורה ב׳"></div>
+    <div class="fld">
+      <label>כלל חוזר</label>
+      <div class="seg2" id="sRuleOn">
+        <button data-v="1">פעיל</button><button data-v="0">כבוי</button>
+      </div>
+    </div>
+    <div id="ruleFields">
+      <div class="fld"><label>תאריך תחילת הכלל</label><input type="date" id="sAnchor"></div>
+      <div class="fld"><label>בתאריך זה מתחיל/ה</label><div class="seg2" id="sStartOwner"></div></div>
+      <div class="fld"><label>החלפה כל (ימים)</label>
+        <select id="sBlock"><option value="7">כל שבוע (7)</option><option value="14">כל שבועיים (14)</option><option value="3">כל 3 ימים</option><option value="2">כל יומיים</option><option value="1">כל יום</option></select>
+      </div>
+      <div class="fld"><label>שעת ההחלפה</label><input type="time" id="sTime" value="08:00"></div>
+    </div>
+    <div class="row2">
+      <button class="btn btn-ghost" id="setCancel">ביטול</button>
+      <button class="btn btn-main" id="setSave">שמירה</button>
+    </div>
+    <div class="hint">הכלל מייצר את הימים אוטומטית קדימה. שינוי של יום בודד (בלחיצה על היום) גובר עליו נקודתית, בלי לשבור את הכלל.</div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+window._fb = { initializeApp, getFirestore, doc, onSnapshot, setDoc };
+window.dispatchEvent(new Event('fb-ready'));
+</script>
+
+<script>
+/* ================= helpers ================= */
+const $ = id => document.getElementById(id);
+const esc = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2400); }
+const other = o => o==='A'?'B':'A';
+const floorDiv=(a,b)=>Math.floor(a/b), mod=(a,b)=>((a%b)+b)%b;
+function startOfDay(d){ const x=new Date(d); x.setHours(0,0,0,0); return x; }
+function addDays(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
+function ymd(d){ const x=new Date(d); return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0'); }
+function parseYMD(s){ const [y,m,d]=(s||'').split('-').map(Number); return new Date(y,(m||1)-1,d||1); }
+const DOW=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+const MON=['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+function fmtHrs(ms){ const h=ms/3600000; return (Math.round(h*10)/10).toString().replace(/\.0$/,'')+' ש׳'; }
+function humanStay(ms){ const h=Math.round(ms/3600000); if(h<24) return h+' ש׳'; const d=Math.floor(h/24), rh=h%24; return d+' ימ׳'+(rh?' '+rh+'ש׳':''); }
+function nm(o){ return (STATE.names&&STATE.names[o])|| (o==='A'?'הורה א׳':'הורה ב׳'); }
+
+/* ================= schedule id (the shared link = access) ================= */
+function getScheduleId(){
+  const u=new URL(location.href);
+  let id=u.searchParams.get('s');
+  if(!id){ id=Math.random().toString(36).slice(2,10); u.searchParams.set('s',id); history.replaceState(null,'',u.toString()); }
+  return id;
+}
+const SCHED = getScheduleId();
+
+/* ================= state ================= */
+function upcomingSunday(){ const d=startOfDay(new Date()); return addDays(d, mod(0-d.getDay(),7)); } // next Sunday (incl today)
+let STATE = {
+  names:{A:'הורה א׳', B:'הורה ב׳'},
+  rule:{ enabled:true, anchorDate:ymd(upcomingSunday()), blockDays:7, handoverTime:'08:00', startOwner:'A' },
+  overrides:{}
+};
+function normState(s){
+  s=s||{}; s.names=Object.assign({A:'הורה א׳',B:'הורה ב׳'}, s.names||{});
+  s.rule=Object.assign({enabled:true,anchorDate:ymd(upcomingSunday()),blockDays:7,handoverTime:'08:00',startOwner:'A'}, s.rule||{});
+  s.overrides=s.overrides||{};
+  return s;
+}
+
+/* ================= the schedule model ================= */
+// each day => {startOwner, handovers:[{time:'HH:MM', to:'A'|'B'}]}
+function baseDay(d){
+  const r=STATE.rule;
+  if(!r||!r.enabled) return {startOwner:'A', handovers:[]};
+  const days=Math.round((startOfDay(d)-startOfDay(parseYMD(r.anchorDate)))/86400000);
+  const bl=Math.max(1, r.blockDays||7);
+  const ownerBlock = mod(floorDiv(days,bl),2)===0 ? r.startOwner : other(r.startOwner);
+  if(mod(days,bl)===0) return {startOwner: other(ownerBlock), handovers:[{time:r.handoverTime||'08:00', to:ownerBlock}]};
+  return {startOwner: ownerBlock, handovers:[]};
+}
+function effectiveDay(d){
+  const key=ymd(d), ov=STATE.overrides[key];
+  if(ov) return {startOwner:ov.startOwner||'A', handovers:(ov.handovers||[]).slice().sort((a,b)=>a.time.localeCompare(b.time))};
+  return baseDay(d);
+}
+// build continuous stays across [start,end)
+function buildStays(start,end){
+  start=startOfDay(start); end=startOfDay(end);
+  const stays=[]; let cur=new Date(start);
+  let holder=effectiveDay(cur).startOwner; let stayStart=new Date(start);
+  while(cur<end){
+    const key=ymd(cur), ov=STATE.overrides[key], ed=effectiveDay(cur);
+    if(ov && ed.startOwner!==holder && cur.getTime()!==start.getTime()){
+      stays.push({start:stayStart,end:new Date(cur),owner:holder}); stayStart=new Date(cur); holder=ed.startOwner;
+    }
+    for(const h of ed.handovers){
+      const [hh,mm]=h.time.split(':').map(Number); const dt=new Date(cur); dt.setHours(hh||0,mm||0,0,0);
+      if(dt<=stayStart) continue;
+      if(h.to!==holder){ stays.push({start:stayStart,end:dt,owner:holder}); stayStart=dt; holder=h.to; }
+    }
+    cur=addDays(cur,1);
+  }
+  stays.push({start:stayStart,end:new Date(end),owner:holder});
+  return stays.filter(s=>s.end>s.start);
+}
+
+/* ================= agenda render ================= */
+let viewStart=addDays(startOfDay(new Date()),-7);
+let viewEnd=addDays(startOfDay(new Date()),21);
+function render(){
+  $('title').textContent='לוח שהות';
+  $('totNameA').textContent=nm('A'); $('totNameB').textContent=nm('B');
+  const stays=buildStays(viewStart, addDays(viewEnd,1));
+  const todayKey=ymd(new Date());
+  let html='';
+  for(let d=new Date(viewStart); d<=viewEnd; d=addDays(d,1)){
+    const ds=startOfDay(d), de=addDays(ds,1);
+    const segs=[];
+    for(const s of stays){ const a=Math.max(s.start,ds), b=Math.min(s.end,de); if(b>a) segs.push({owner:s.owner,start:new Date(a),end:new Date(b),stay:s}); }
+    if(!segs.length) segs.push({owner:effectiveDay(d).startOwner,start:ds,end:de,stay:null});
+    const isToday=ymd(d)===todayKey;
+    const oneOwner = segs.every(s=>s.owner===segs[0].owner);
+    const side = oneOwner ? `background:var(--${segs[0].owner==='A'?'a':'b'})` : `background:linear-gradient(var(--a) 0 50%, var(--b) 50% 100%)`;
+    let body='';
+    segs.forEach((s,i)=>{
+      const cl=s.owner==='A'?'a':'b';
+      const t1 = s.start.getTime()===ds.getTime() ? '00:00' : String(s.start.getHours()).padStart(2,'0')+':'+String(s.start.getMinutes()).padStart(2,'0');
+      const t2 = s.end.getTime()===de.getTime() ? '24:00' : String(s.end.getHours()).padStart(2,'0')+':'+String(s.end.getMinutes()).padStart(2,'0');
+      const whole = t1==='00:00'&&t2==='24:00';
+      body+=`<div class="seg"><span class="sw ${cl}-sw"></span><span class="who ${cl}-txt">${esc(nm(s.owner))}</span><span class="tm">${whole?'כל היום':t1+'–'+t2}</span><span class="hrs">${fmtHrs(s.end-s.start)}</span></div>`;
+      if(i<segs.length-1){
+        const nx=segs[i+1]; const stayMs=s.stay?(s.stay.end-s.stay.start):(s.end-s.start);
+        body+=`<div class="handover"><span class="hi">🔄</span><span>${t2}</span><span class="from">${esc(nm(s.owner))} ← ${esc(nm(nx.owner))}</span><span class="stay">שהות: ${humanStay(stayMs)}</span></div>`;
+      }
+    });
+    html+=`<div class="day ${isToday?'today':''}" data-d="${ymd(d)}">
+      <div class="side" style="${side}"></div>
+      <div class="body">
+        <div class="dhead"><span class="dnum">${d.getDate()}</span><span class="ddow">${DOW[d.getDay()]}</span><span class="dmon">${MON[d.getMonth()]} ${d.getFullYear()}</span></div>
+        ${body}
+      </div></div>`;
+  }
+  $('agenda').innerHTML=html;
+  $('agenda').querySelectorAll('.day').forEach(el=>el.onclick=()=>openDay(el.dataset.d));
+  renderTotals();
+}
+
+/* ================= totals ================= */
+let rangeMode='14';
+function totalsRange(){
+  const t=startOfDay(new Date());
+  if(rangeMode==='14') return [t, addDays(t,14)];
+  if(rangeMode==='30') return [t, addDays(t,30)];
+  const f=$('cFrom').value?parseYMD($('cFrom').value):t;
+  const e=$('cTo').value?addDays(parseYMD($('cTo').value),1):addDays(t,14);
+  return [f, e>f?e:addDays(f,1)];
+}
+function renderTotals(){
+  const [s,e]=totalsRange();
+  const stays=buildStays(s,e);
+  let ms={A:0,B:0};
+  for(const st of stays){ const a=Math.max(st.start,s), b=Math.min(st.end,e); if(b>a) ms[st.owner]+= (b-a); }
+  const tot=ms.A+ms.B||1;
+  const pa=Math.round(ms.A/tot*100), pb=100-pa;
+  $('barA').style.width=pa+'%'; $('barB').style.width=pb+'%';
+  $('totPctA').textContent=pa+'%'; $('totPctB').textContent=pb+'%';
+  $('totHrsA').textContent=fmtHrs(ms.A); $('totHrsB').textContent=fmtHrs(ms.B);
+}
+
+/* ================= day edit ================= */
+let edKey=null, edStart='A', edHo=[];
+function openDay(key){
+  edKey=key; const ed=effectiveDay(parseYMD(key));
+  edStart=ed.startOwner; edHo=ed.handovers.map(h=>({time:h.time,to:h.to}));
+  const d=parseYMD(key);
+  $('deTitle').textContent=`${d.getDate()} ב${MON[d.getMonth()]}`;
+  $('deSub').textContent=`יום ${DOW[d.getDay()]}${STATE.overrides[key]?' · שונה ידנית':''}`;
+  drawDeStart(); drawDeHo();
+  $('dayOverlay').classList.add('show');
+}
+function segBtns(container, val, cb){
+  container.innerHTML=`<button data-v="A" class="${val==='A'?'on-a':''}">${esc(nm('A'))}</button><button data-v="B" class="${val==='B'?'on-b':''}">${esc(nm('B'))}</button>`;
+  container.querySelectorAll('button').forEach(b=>b.onclick=()=>cb(b.dataset.v));
+}
+function drawDeStart(){ segBtns($('deStart'), edStart, v=>{ edStart=v; drawDeStart(); }); }
+function drawDeHo(){
+  $('deHandovers').innerHTML = edHo.map((h,i)=>`
+    <div class="ho-row">
+      <input type="time" value="${h.time}" data-i="${i}" class="ho-time">
+      <div class="to">
+        <button class="${h.to==='A'?'on-a':''}" data-i="${i}" data-v="A">${esc(nm('A'))}</button>
+        <button class="${h.to==='B'?'on-b':''}" data-i="${i}" data-v="B">${esc(nm('B'))}</button>
+      </div>
+      <button class="del" data-i="${i}">×</button>
+    </div>`).join('') || `<div class="hint">אין החלפות ביום זה — הילדים אצל ${esc(nm(edStart))} כל היום.</div>`;
+  $('deHandovers').querySelectorAll('.ho-time').forEach(inp=>inp.onchange=e=>{ edHo[+e.target.dataset.i].time=e.target.value; });
+  $('deHandovers').querySelectorAll('.to button').forEach(b=>b.onclick=()=>{ edHo[+b.dataset.i].to=b.dataset.v; drawDeHo(); });
+  $('deHandovers').querySelectorAll('.del').forEach(b=>b.onclick=()=>{ edHo.splice(+b.dataset.i,1); drawDeHo(); });
+}
+$('deAddHo').onclick=()=>{ edHo.push({time:'18:00', to:other(edHo.length?edHo[edHo.length-1].to:edStart)}); drawDeHo(); };
+$('deSave').onclick=()=>{
+  const ho=edHo.filter(h=>h.time).sort((a,b)=>a.time.localeCompare(b.time));
+  STATE.overrides[edKey]={startOwner:edStart, handovers:ho};
+  save(); $('dayOverlay').classList.remove('show'); render(); toast('היום נשמר');
+};
+$('deReset').onclick=()=>{ delete STATE.overrides[edKey]; save(); $('dayOverlay').classList.remove('show'); render(); toast('הוחזר לכלל החוזר'); };
+$('deCancel').onclick=()=>$('dayOverlay').classList.remove('show');
+
+/* ================= settings / rule ================= */
+let setStartOwner='A', setRuleOn=1;
+function openSettings(){
+  $('sNameA').value=STATE.names.A||''; $('sNameB').value=STATE.names.B||'';
+  $('sAnchor').value=STATE.rule.anchorDate; $('sTime').value=STATE.rule.handoverTime||'08:00';
+  $('sBlock').value=String(STATE.rule.blockDays||7);
+  setStartOwner=STATE.rule.startOwner||'A'; setRuleOn=STATE.rule.enabled?1:0;
+  drawRuleOn(); drawSetOwner();
+  $('setOverlay').classList.add('show');
+}
+function drawRuleOn(){
+  $('sRuleOn').querySelectorAll('button').forEach(b=>{ const on=+b.dataset.v===setRuleOn; b.className=on?(setRuleOn?'on-a':'on-b'):''; b.onclick=()=>{ setRuleOn=+b.dataset.v; drawRuleOn(); $('ruleFields').classList.toggle('hidden',!setRuleOn); }; });
+  $('ruleFields').classList.toggle('hidden',!setRuleOn);
+}
+function drawSetOwner(){ segBtns($('sStartOwner'), setStartOwner, v=>{ setStartOwner=v; drawSetOwner(); }); }
+$('setSave').onclick=()=>{
+  STATE.names.A=$('sNameA').value.trim()||'הורה א׳';
+  STATE.names.B=$('sNameB').value.trim()||'הורה ב׳';
+  STATE.rule={ enabled:!!setRuleOn, anchorDate:$('sAnchor').value||ymd(upcomingSunday()), blockDays:+$('sBlock').value||7, handoverTime:$('sTime').value||'08:00', startOwner:setStartOwner };
+  save(); $('setOverlay').classList.remove('show'); render(); toast('ההגדרות נשמרו');
+};
+$('setCancel').onclick=()=>$('setOverlay').classList.remove('show');
+
+/* ================= range controls ================= */
+document.querySelectorAll('.summary .rng button').forEach(b=>b.onclick=()=>{
+  rangeMode=b.dataset.r;
+  document.querySelectorAll('.summary .rng button').forEach(x=>x.classList.toggle('on',x===b));
+  $('customRange').classList.toggle('hidden', rangeMode!=='custom');
+  renderTotals();
+});
+$('cFrom').onchange=renderTotals; $('cTo').onchange=renderTotals;
+$('loadPrev').onclick=()=>{ viewStart=addDays(viewStart,-14); render(); };
+$('loadNext').onclick=()=>{ viewEnd=addDays(viewEnd,14); render(); };
+$('btnSettings').onclick=openSettings;
+$('btnShare').onclick=async()=>{
+  try{ await navigator.clipboard.writeText(location.href); toast('הקישור הועתק — שלחו אותו להורה השני'); }
+  catch(e){ prompt('העתיקו את הקישור ושלחו להורה השני:', location.href); }
+};
+[ 'dayOverlay','setOverlay' ].forEach(id=>$(id).addEventListener('click',e=>{ if(e.target===$(id)) $(id).classList.remove('show'); }));
+
+/* ================= Firestore (real-time, shared) + local cache ================= */
+let db=null, docRef=null, ready=false, applying=false;
+const LKEY='custody_'+SCHED;
+function setSync(cls,txt){ const s=$('sync'); s.className=cls; $('syncTxt').textContent=txt; }
+function loadLocal(){ try{ const v=localStorage.getItem(LKEY); if(v){ STATE=normState(JSON.parse(v)); } }catch(e){} }
+function cacheLocal(){ try{ localStorage.setItem(LKEY, JSON.stringify(STATE)); }catch(e){} }
+function save(){
+  STATE.updatedAt=Date.now(); cacheLocal();
+  if(!docRef){ setSync('err','מקומי בלבד'); return; }
+  setSync('saving','שומר…');
+  window._fb.setDoc(docRef, STATE, {merge:false}).then(()=>setSync('ok','מסונכרן')).catch(()=>setSync('err','שגיאת שמירה'));
+}
+function initFirebase(){
+  if(!window._fb){ window.addEventListener('fb-ready', initFirebase, {once:true}); return; }
+  try{
+    const app=window._fb.initializeApp({ apiKey:'AIzaSyD_UcFfuBdQMkRiEwZPhcxqdxmLCmgp6CU', authDomain:'shoping-83493.firebaseapp.com', projectId:'shoping-83493', appId:'1:508380767537:web:20410bed78a0ed36587c10' }, 'custody-app');
+    db=window._fb.getFirestore(app);
+    docRef=window._fb.doc(db,'custody',SCHED);
+    setSync('saving','מתחבר…');
+    let first=true;
+    window._fb.onSnapshot(docRef, snap=>{
+      if(snap.exists()){ STATE=normState(snap.data()); cacheLocal(); render(); setSync('ok','מסונכרן'); }
+      else if(first){ save(); render(); }   // brand-new schedule → seed the doc
+      first=false;
+    }, err=>{ setSync('err','לא מחובר'); });
+  }catch(e){ setSync('err','לא מחובר'); }
+}
+
+/* ================= boot ================= */
+loadLocal();
+$('cFrom').value=ymd(new Date()); $('cTo').value=ymd(addDays(new Date(),14));
+render();
+initFirebase();
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
