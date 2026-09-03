@@ -3,81 +3,99 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
-<title>Packy — רשימות חכמות</title>
-<meta name="theme-color" content="#f7f8fa">
+<title>Packy — רשימות שחוזרות איתך לחיים</title>
+<meta name="theme-color" content="#f4f1ea">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Packy">
-<style>
-:root{--bg:#f7f8fa;--card:#fff;--panel:#f1f3f6;--text:#1f2329;--muted:#8b93a1;--line:#e5e8ed;--accent:#4777f5;--accent-soft:#edf2ff;--green:#35a875;--red:#dc6262;--shadow:0 10px 30px rgba(28,39,60,.07)}
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}html,body{min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--text)}button,input,textarea{font:inherit}button{cursor:pointer}.app{max-width:1180px;margin:auto;padding:18px}.shell{display:grid;grid-template-columns:280px minmax(0,1fr);min-height:calc(100vh - 36px);background:var(--card);border:1px solid var(--line);border-radius:24px;overflow:hidden;box-shadow:var(--shadow)}
-.sidebar{background:#fbfbfc;border-left:1px solid var(--line);display:flex;flex-direction:column;min-width:0}.brand{display:flex;align-items:center;gap:10px;padding:18px}.logo{width:38px;height:38px;border-radius:13px;display:grid;place-items:center;background:linear-gradient(145deg,#6d93ff,#3a66e0);color:#fff;font-size:19px}.brand h1{font-size:18px}.brand p{font-size:11px;color:var(--muted);margin-top:1px}.new-list{margin:0 14px 12px;min-height:44px;border:0;border-radius:13px;background:var(--accent);color:#fff;font-weight:700}.side-label{font-size:10px;font-weight:800;color:var(--muted);padding:8px 18px;text-transform:uppercase;letter-spacing:.08em}.lists{padding:0 8px;overflow:auto;flex:1}.list-row{display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;cursor:pointer;margin:2px 0;min-width:0}.list-row:hover{background:var(--panel)}.list-row.active{background:var(--accent-soft);color:#2e5fdc}.list-emoji{width:30px;height:30px;border-radius:9px;background:#f0f2f5;display:grid;place-items:center;flex:0 0 auto}.list-row.active .list-emoji{background:#fff}.list-text{min-width:0;flex:1}.list-name{font-size:13px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.list-meta{font-size:10px;color:var(--muted);margin-top:2px}.side-bottom{border-top:1px solid var(--line);padding:10px}.side-btn{width:100%;min-height:42px;border:0;background:transparent;border-radius:11px;color:var(--muted);text-align:right;padding:0 10px}.side-btn:hover{background:var(--panel)}
-.main{min-width:0;display:flex;flex-direction:column}.main-head{min-height:72px;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:12px 22px;gap:12px}.mobile-back{display:none;border:0;background:var(--panel);width:38px;height:38px;border-radius:11px}.head-copy{flex:1;min-width:0}.head-title-row{display:flex;align-items:center;gap:8px}.head-title{font-size:20px;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rename-btn,.menu-btn{border:0;background:transparent;color:var(--muted);padding:7px}.head-sub{font-size:11px;color:var(--muted);margin-top:3px}.progress-pill{font-size:11px;background:var(--accent-soft);color:#4167c8;padding:6px 9px;border-radius:999px;font-weight:700}.content{flex:1;overflow:auto;padding:20px 24px 150px}.empty-home{max-width:460px;margin:90px auto;text-align:center}.empty-home .big{font-size:56px}.empty-home h2{font-size:22px;margin:10px 0 6px}.empty-home p{color:var(--muted);font-size:13px;line-height:1.6}.empty-home button{margin-top:16px;border:0;background:var(--accent);color:#fff;border-radius:13px;padding:12px 18px;font-weight:700}
-.group{margin-bottom:22px}.group-head{display:flex;align-items:center;gap:8px;margin-bottom:7px;padding:0 3px}.group-title{font-size:12px;font-weight:800;color:#6e7787}.group-count{font-size:10px;color:var(--muted)}.task{display:flex;align-items:flex-start;gap:11px;min-height:48px;padding:10px 8px;border-bottom:1px solid #f0f1f3}.task:last-child{border-bottom:0}.check{width:22px;height:22px;border-radius:50%;border:1.5px solid #c8ced8;background:#fff;display:grid;place-items:center;flex:0 0 auto;margin-top:1px}.check.done{background:var(--green);border-color:var(--green);color:#fff}.check.done:after{content:'✓';font-size:12px;font-weight:900}.task-copy{flex:1;min-width:0}.task-name{font-size:14px;line-height:1.45}.task-name.done{text-decoration:line-through;color:#a4abb5}.task-note{font-size:11px;color:var(--muted);margin-top:2px}.task-del{opacity:0;border:0;background:transparent;color:#b6bdc7;font-size:18px;padding:1px 4px}.task:hover .task-del{opacity:1}.task-del:hover{color:var(--red)}.manual-add{display:flex;gap:8px;margin-top:14px}.manual-add input{flex:1;min-width:0;border:1px solid var(--line);border-radius:12px;padding:10px 12px;outline:none;background:#fff}.manual-add input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(71,119,245,.09)}.manual-add button{border:0;background:var(--panel);border-radius:12px;padding:0 15px;color:#626c7b;font-weight:650}
-.composer{position:absolute;left:24px;right:24px;bottom:22px}.main{position:relative}.composer-card{background:rgba(255,255,255,.96);border:1px solid var(--line);box-shadow:0 14px 42px rgba(37,49,70,.15);border-radius:18px;padding:10px;backdrop-filter:blur(18px)}.composer-top{display:flex;gap:8px;align-items:flex-end}.attach{width:42px;height:42px;border:0;background:var(--panel);border-radius:12px;color:#657083;flex:0 0 auto}.composer textarea{flex:1;resize:none;min-height:42px;max-height:110px;border:0;background:transparent;outline:none;padding:10px 4px;color:var(--text);line-height:1.45}.smart-btn{height:42px;border:0;border-radius:12px;background:var(--accent);color:#fff;padding:0 15px;font-weight:750;white-space:nowrap}.smart-btn:disabled{opacity:.55}.thumbs{display:flex;gap:7px;padding:0 2px 8px;overflow-x:auto}.thumb-wrap{position:relative;flex:0 0 auto}.thumb{width:52px;height:52px;border-radius:10px;object-fit:cover;border:1px solid var(--line)}.thumb-remove{position:absolute;top:-5px;left:-5px;width:20px;height:20px;border:0;border-radius:50%;background:#333;color:#fff;font-size:12px}.composer-hint{font-size:10px;color:var(--muted);padding:5px 4px 0}.notice{font-size:11px;color:#4f679f;background:var(--accent-soft);padding:8px 10px;border-radius:10px;margin-bottom:8px;display:none}.notice.show{display:block}#photoInput{display:none}
-.modal{display:none;position:fixed;inset:0;background:rgba(17,25,38,.38);z-index:50;align-items:center;justify-content:center;padding:18px}.modal.show{display:flex}.modal-card{width:min(420px,100%);background:#fff;border-radius:19px;padding:18px;box-shadow:0 24px 70px rgba(0,0,0,.18)}.modal-card h3{font-size:17px;margin-bottom:5px}.modal-card p{font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:13px}.modal-input{width:100%;border:1px solid var(--line);border-radius:12px;padding:11px 12px;outline:none}.modal-actions{display:flex;gap:8px;margin-top:12px}.modal-actions button{min-height:40px;border-radius:11px;padding:0 14px}.primary{border:0;background:var(--accent);color:#fff}.secondary{border:1px solid var(--line);background:#fff;color:var(--muted)}
-@media(max-width:760px){.app{padding:0}.shell{display:block;min-height:100vh;border:0;border-radius:0;box-shadow:none}.sidebar{min-height:100vh;border:0}.main{display:none;min-height:100vh}.shell.in-list .sidebar{display:none}.shell.in-list .main{display:flex}.brand{padding-top:calc(16px + env(safe-area-inset-top))}.new-list{margin-bottom:16px}.mobile-back{display:grid;place-items:center}.main-head{padding-top:calc(10px + env(safe-area-inset-top));padding-left:14px;padding-right:14px}.content{padding:18px 16px 150px}.composer{left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom))}.smart-btn{padding:0 12px}.task-del{opacity:1}.progress-pill{display:none}}
-</style>
+<link rel="stylesheet" href="packy.css">
 </head>
 <body>
-<div class="app"><div class="shell" id="shell">
-<aside class="sidebar">
-  <div class="brand"><div class="logo">✓</div><div><h1>Packy</h1><p>כל הרשימות שלך, מסודרות חכם</p></div></div>
-  <button class="new-list" id="newListBtn">＋ רשימה חדשה</button>
-  <div class="side-label">הרשימות שלי</div>
-  <div class="lists" id="lists"></div>
-  <div class="side-bottom"><button class="side-btn" id="settingsBtn">⚙️ הגדרות AI</button></div>
-</aside>
-<main class="main">
-  <header class="main-head">
-    <button class="mobile-back" id="backBtn">‹</button>
-    <div class="head-copy"><div class="head-title-row"><div class="head-title" id="headTitle">רשימה</div><button class="rename-btn" id="renameBtn">✎</button></div><div class="head-sub" id="headSub">0 פריטים</div></div>
-    <div class="progress-pill" id="progressPill">0 / 0</div>
-    <button class="menu-btn" id="deleteListBtn" title="מחיקת רשימה">⋯</button>
-  </header>
-  <div class="content" id="content"></div>
-  <div class="composer" id="composer" style="display:none"><div class="composer-card">
-    <div class="notice" id="notice"></div><div class="thumbs" id="thumbs"></div>
-    <div class="composer-top"><button class="attach" id="attachBtn" title="הוסף תמונה">＋</button><textarea id="smartText" rows="1" placeholder="זרוק טקסט, הודעה, רעיונות או תמונה..."></textarea><button class="smart-btn" id="smartBtn">סדר לי</button></div>
-    <div class="composer-hint">AI יכול להוסיף פריטים, להסיר כפילויות ולסדר את הרשימה לקטגוריות.</div>
-    <input id="photoInput" type="file" accept="image/*" multiple>
-  </div></div>
-</main>
-</div></div>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><div class="brand-mark">P</div><div><b>Packy</b><small>Never forget it twice.</small></div></div>
+    <button class="new-btn" onclick="openCreate()">＋ צור עם AI</button>
+    <nav class="nav">
+      <button id="navHome" class="active" onclick="go('home')">⌂ הבית</button>
+      <button id="navLists" onclick="go('lists')">✓ הרשימות שלי</button>
+      <button id="navTemplates" onclick="go('templates')">✦ תבניות</button>
+      <button id="navPrint" onclick="openStudio(null,'checklist')">▧ הדפסות</button>
+    </nav>
+    <div class="side-card"><small>PACKY PROTOTYPE</small><b>בונים פעם אחת. משתמשים שוב.</b><p>רשימות שחוזרות לחיים האמיתיים — בבית, עם הילדים, בנסיעות ובעבודה.</p></div>
+  </aside>
 
-<div class="modal" id="newModal"><div class="modal-card"><h3>רשימה חדשה</h3><p>תן לה שם פשוט. אחר כך אפשר לזרוק פנימה טקסט ותמונות.</p><input class="modal-input" id="newName" placeholder="למשל: לים מחר, קמפינג, תיק לגן"><div class="modal-actions"><button class="primary" id="createList">צור רשימה</button><button class="secondary" data-close="newModal">ביטול</button></div></div></div>
-<div class="modal" id="settingsModal"><div class="modal-card"><h3>חיבור AI</h3><p>Packy משתמש באותו חיבור AI של Carty. אם כבר הגדרת אותו בדפדפן הזה, אין צורך לעשות דבר.</p><input class="modal-input" id="keyInput" type="password" placeholder="Anthropic API key" dir="ltr"><div class="modal-actions"><button class="primary" id="saveKey">שמור</button><button class="secondary" data-close="settingsModal">ביטול</button></div></div></div>
+  <main class="main">
+    <section id="homeScreen" class="screen active">
+      <div class="topbar"><div><div class="eyebrow">בוקר טוב</div><h1>מה עושים שוב היום?</h1></div><div class="top-actions"><button class="btn soft" onclick="go('templates')">תבניות</button><button class="btn primary" onclick="openCreate()">＋ רשימה חדשה</button></div></div>
+      <div class="hero">
+        <div class="hero-main">
+          <div class="eyebrow" style="color:#aaa49b">CREATE WITH AI</div>
+          <h2>תגיד מה קורה. Packy יהפוך את זה לרשימה שאפשר להשתמש בה שוב.</h2>
+          <p>לא עוד לפתוח Notes ולבנות הכול מחדש. פעם אחת יוצרים — בפעם הבאה פשוט מריצים.</p>
+          <div class="prompt"><input id="quickPrompt" placeholder="למשל: מחר לבריכה עם שני ילדים בני 3 ו־5"><button onclick="quickGenerate()">סדר לי ✦</button></div>
+        </div>
+        <div class="hero-side"><div><div class="big">↻</div><h3>החיים חוזרים על עצמם.</h3><p>Packy זוכר בשבילך מה בדרך כלל צריך בכל סיטואציה.</p></div><div class="stats"><div class="stat"><b id="statLists">0</b><span>רשימות שמורות</span></div><div class="stat"><b id="statRuns">0</b><span>הרצות שבוצעו</span></div></div></div>
+      </div>
+      <div class="section-head"><h2>האחרונות שלך</h2><span>לחץ Run כדי להתחיל מחדש</span></div>
+      <div class="list-grid" id="homeCards"></div>
+      <div class="section-head"><h2>דברים שאפשר לעשות עם Packy</h2><span>אותו מנוע, שימושים שונים</span></div>
+      <div class="quick-grid">
+        <button class="quick" onclick="createFromTemplate('pool')"><div class="qicon">🏖️</div><b>יום בבריכה</b><span>ציוד משפחתי שחוזר</span></button>
+        <button class="quick" onclick="createFromTemplate('morning')"><div class="qicon">🌤️</div><b>בוקר עם ילדים</b><span>רוטינה שאפשר להדפיס</span></button>
+        <button class="quick" onclick="openStudio(null,'labels')"><div class="qicon">🏷️</div><b>מדבקות שם</b><span>A4 מוכן להדפסה</span></button>
+        <button class="quick" onclick="createFromTemplate('trip')"><div class="qicon">✈️</div><b>לפני חופשה</b><span>מה לסגור לפני שיוצאים</span></button>
+      </div>
+    </section>
 
-<script>
-const $=s=>document.querySelector(s);
-const WORKER='https://carty-api.aviadchai.workers.dev';
-const STORE='packy_lists_v1';
-let lists=[];let activeId=null;let photos=[];
-function id(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
-function esc(s=''){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function load(){try{lists=JSON.parse(localStorage.getItem(STORE)||'[]')}catch{lists=[]}if(!lists.length){lists=[{id:id(),name:'דוגמה — יום בים',emoji:'🏖️',created:Date.now(),groups:[{name:'דברים חשובים',items:[{id:id(),name:'בקבוקי מים',done:false},{id:id(),name:'קרם הגנה',done:false}]},{name:'לילדים',items:[{id:id(),name:'בגדי החלפה',done:false},{id:id(),name:'מגבונים',done:false}]}]}];save()}renderLists()}
-function save(){localStorage.setItem(STORE,JSON.stringify(lists))}
-function current(){return lists.find(l=>l.id===activeId)}
-function counts(l){const a=(l?.groups||[]).flatMap(g=>g.items||[]);return{all:a.length,done:a.filter(x=>x.done).length}}
-function renderLists(){const box=$('#lists');box.innerHTML='';if(!lists.length)box.innerHTML='<div style="padding:18px;color:var(--muted);font-size:12px">אין רשימות עדיין</div>';lists.slice().sort((a,b)=>(b.updated||b.created)-(a.updated||a.created)).forEach(l=>{const c=counts(l),r=document.createElement('div');r.className='list-row'+(l.id===activeId?' active':'');r.innerHTML=`<div class="list-emoji">${esc(l.emoji||'📋')}</div><div class="list-text"><div class="list-name">${esc(l.name)}</div><div class="list-meta">${c.done}/${c.all} הושלמו</div></div>`;r.addEventListener('click',()=>openList(l.id));box.appendChild(r)})}
-function openList(i){activeId=i;$('#shell').classList.add('in-list');$('#composer').style.display='block';renderLists();renderCurrent()}
-function renderCurrent(){const l=current();if(!l)return;const c=counts(l);$('#headTitle').textContent=l.name;$('#headSub').textContent=c.all?`${c.all} פריטים · ${c.done} הושלמו`:'רשימה חדשה';$('#progressPill').textContent=`${c.done} / ${c.all}`;const content=$('#content');if(!c.all){content.innerHTML='<div class="empty-home"><div class="big">📋</div><h2>הרשימה ריקה</h2><p>הוסף פריט ידנית, או זרוק למטה טקסט / צילום מסך ו-Packy יסדר אותו עבורך.</p><div class="manual-add"><input id="manualInput" placeholder="הוסף פריט ראשון"><button id="manualBtn">הוסף</button></div></div>';bindManual();return}let html='';l.groups.forEach(g=>{if(!g.items?.length)return;html+=`<section class="group"><div class="group-head"><div class="group-title">${esc(g.name||'כללי')}</div><div class="group-count">${g.items.length}</div></div>`;g.items.forEach(t=>{html+=`<div class="task" data-id="${t.id}"><button class="check ${t.done?'done':''}" data-check="${t.id}"></button><div class="task-copy"><div class="task-name ${t.done?'done':''}">${esc(t.name)}</div>${t.note?`<div class="task-note">${esc(t.note)}</div>`:''}</div><button class="task-del" data-del="${t.id}">×</button></div>`});html+='</section>'});html+='<div class="manual-add"><input id="manualInput" placeholder="הוסף פריט"><button id="manualBtn">הוסף</button></div>';content.innerHTML=html;content.querySelectorAll('[data-check]').forEach(b=>b.addEventListener('click',()=>toggleTask(b.dataset.check)));content.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',()=>deleteTask(b.dataset.del)));bindManual()}
-function bindManual(){const i=$('#manualInput'),b=$('#manualBtn');if(!i||!b)return;const add=()=>{const v=i.value.trim();if(!v)return;const l=current();let g=l.groups.find(x=>x.name==='כללי');if(!g){g={name:'כללי',items:[]};l.groups.push(g)}g.items.push({id:id(),name:v,done:false});l.updated=Date.now();i.value='';save();renderLists();renderCurrent()};b.addEventListener('click',add);i.addEventListener('keydown',e=>{if(e.key==='Enter')add()})}
-function toggleTask(tid){const l=current();for(const g of l.groups){const t=g.items.find(x=>x.id===tid);if(t){t.done=!t.done;l.updated=Date.now();break}}save();renderLists();renderCurrent()}
-function deleteTask(tid){const l=current();l.groups.forEach(g=>g.items=g.items.filter(x=>x.id!==tid));l.groups=l.groups.filter(g=>g.items.length);l.updated=Date.now();save();renderLists();renderCurrent()}
-function showModal(id){$('#'+id).classList.add('show')}
-function closeModal(id){$('#'+id).classList.remove('show')}
-$('#newListBtn').addEventListener('click',()=>{showModal('newModal');setTimeout(()=>$('#newName').focus(),50)});$('#createList').addEventListener('click',()=>{const n=$('#newName').value.trim()||'רשימה חדשה';const l={id:id(),name:n,emoji:'📋',created:Date.now(),updated:Date.now(),groups:[]};lists.unshift(l);save();$('#newName').value='';closeModal('newModal');renderLists();openList(l.id)});$('#newName').addEventListener('keydown',e=>{if(e.key==='Enter')$('#createList').click()});document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>closeModal(b.dataset.close)));
-$('#backBtn').addEventListener('click',()=>{$('#shell').classList.remove('in-list');activeId=null;renderLists()});$('#renameBtn').addEventListener('click',()=>{const l=current();if(!l)return;const n=prompt('שם הרשימה:',l.name);if(n?.trim()){l.name=n.trim();l.updated=Date.now();save();renderLists();renderCurrent()}});$('#deleteListBtn').addEventListener('click',()=>{const l=current();if(!l)return;if(confirm(`למחוק את "${l.name}"?`)){lists=lists.filter(x=>x.id!==l.id);save();activeId=null;renderLists();$('#shell').classList.remove('in-list')}});
-$('#settingsBtn').addEventListener('click',()=>{const cfg=JSON.parse(localStorage.getItem('app_cfg')||'{}');$('#keyInput').value=cfg.antKey||'';showModal('settingsModal')});$('#saveKey').addEventListener('click',()=>{const k=$('#keyInput').value.trim();const cfg=JSON.parse(localStorage.getItem('app_cfg')||'{}');cfg.antKey=k;localStorage.setItem('app_cfg',JSON.stringify(cfg));closeModal('settingsModal');notice('חיבור ה-AI נשמר ✓')});
-$('#attachBtn').addEventListener('click',()=>$('#photoInput').click());$('#photoInput').addEventListener('change',async e=>{const files=Array.from(e.target.files||[]).slice(0,4-photos.length);for(const f of files){if(!f.type.startsWith('image/'))continue;photos.push(await fileToData(f))}renderThumbs();e.target.value=''});
-function fileToData(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>{const [head,data]=String(r.result).split(',');res({media_type:(head.match(/data:(.*?);/)||[])[1]||file.type,data})};r.onerror=rej;r.readAsDataURL(file)})}
-function renderThumbs(){const b=$('#thumbs');b.innerHTML='';photos.forEach((p,i)=>{const w=document.createElement('div');w.className='thumb-wrap';w.innerHTML=`<img class="thumb" src="data:${p.media_type};base64,${p.data}"><button class="thumb-remove">×</button>`;w.querySelector('button').addEventListener('click',()=>{photos.splice(i,1);renderThumbs()});b.appendChild(w)})}
-function notice(t){const n=$('#notice');n.textContent=t;n.classList.add('show');clearTimeout(notice.t);notice.t=setTimeout(()=>n.classList.remove('show'),4500)}
-const SYSTEM=`אתה עוזר שמארגן רשימות בעברית. המשתמש נותן טקסט חופשי ולעיתים תמונות. מטרתך לעדכן רשימה קיימת בצורה פרקטית ונקייה, בסגנון אפליקציית משימות. חלץ רק דברים שאפשר לבצע/לקחת/לזכור. הסר כפילויות, אל תמציא פריטים לא קשורים, וקבץ לקטגוריות קצרות והגיוניות. אם מדובר ברשימת ציוד ליציאה, אפשר להוסיף מספר קטן של פריטים חיוניים שנשכחו בבירור. החזר JSON בלבד ללא markdown בפורמט: {"title":"שם מוצע לרשימה או null","emoji":"אימוג'י אחד","groups":[{"name":"קטגוריה","items":[{"name":"פריט","note":null}]}]}. שמור על ניסוחים קצרים.`;
-$('#smartBtn').addEventListener('click',smartOrganize);async function smartOrganize(){const l=current();if(!l)return;const txt=$('#smartText').value.trim();if(!txt&&!photos.length)return notice('כתוב משהו או צרף תמונה');const cfg=JSON.parse(localStorage.getItem('app_cfg')||'{}');if(!cfg.antKey){showModal('settingsModal');return}const btn=$('#smartBtn');btn.disabled=true;btn.textContent='מסדר…';notice('קורא ומסדר את הרשימה…');try{const existing=l.groups.flatMap(g=>g.items.map(i=>`${g.name}: ${i.name}`)).join('\n');const content=[];content.push({type:'text',text:`שם הרשימה: ${l.name}\nפריטים קיימים:\n${existing||'(אין)'}\n\nחומר חדש:\n${txt||'(רק תמונות)'}`});photos.forEach(p=>content.push({type:'image',source:{type:'base64',media_type:p.media_type,data:p.data}}));const resp=await fetch(WORKER,{method:'POST',headers:{'Content-Type':'application/json','x-api-key':cfg.antKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:1800,system:SYSTEM,messages:[{role:'user',content}]})});if(!resp.ok)throw new Error('AI request failed');const data=await resp.json();const raw=data.content?.[0]?.text||'';const parsed=JSON.parse(raw.replace(/```json|```/g,'').trim());applyAI(parsed,l);$('#smartText').value='';photos=[];renderThumbs();notice('סידרתי את הרשימה ✓')}catch(e){console.error(e);notice('לא הצלחתי לסדר כרגע. נסה שוב או בדוק את חיבור ה-AI.')}finally{btn.disabled=false;btn.textContent='סדר לי'}}
-function applyAI(r,l){const oldDone=new Map();l.groups.forEach(g=>g.items.forEach(i=>oldDone.set(i.name.trim().toLowerCase(),i.done)));l.groups=(r.groups||[]).map(g=>({name:g.name||'כללי',items:(g.items||[]).map(x=>({id:id(),name:String(x.name||x).trim(),note:x.note||null,done:oldDone.get(String(x.name||x).trim().toLowerCase())||false})).filter(x=>x.name)})).filter(g=>g.items.length);if(r.title&&l.name==='רשימה חדשה')l.name=r.title;if(r.emoji)l.emoji=r.emoji;l.updated=Date.now();save();renderLists();renderCurrent()}
-$('#smartText').addEventListener('input',e=>{e.target.style.height='42px';e.target.style.height=Math.min(e.target.scrollHeight,110)+'px'});$('#smartText').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();smartOrganize()}});
-load();
-</script>
-</body></html>
+    <section id="listsScreen" class="screen">
+      <div class="topbar"><div><div class="eyebrow">MY LISTS</div><h1>הרשימות שלי</h1></div><div class="top-actions"><button class="btn primary" onclick="openCreate()">＋ צור רשימה</button></div></div>
+      <div class="library-grid" id="libraryRows"></div>
+    </section>
+
+    <section id="templatesScreen" class="screen">
+      <div class="topbar"><div><div class="eyebrow">START FAST</div><h1>תבניות לחיים האמיתיים</h1></div></div>
+      <div class="list-grid" id="templateCards"></div>
+    </section>
+
+    <section id="runScreen" class="screen">
+      <div class="topbar"><div><button class="btn ghost" onclick="go('home')">→ חזרה</button><div class="eyebrow">RUNNING NOW</div></div><div class="top-actions"><button class="btn soft" onclick="resetRun()">↻ איפוס</button><button class="btn primary" onclick="finishRun()">סיימתי</button></div></div>
+      <div class="run-shell">
+        <div class="run-panel">
+          <div class="run-heading"><div class="emoji" id="runEmoji">🏖️</div><div><h2 id="runTitle">יום בבריכה</h2><p id="runMeta">0 פריטים · reusable</p></div></div>
+          <div class="items" id="runItems"></div>
+          <div class="add-inline"><input id="addItemInput" placeholder="הוסף משהו ששכחת הפעם..."><button onclick="addRunItem()">＋</button></div>
+        </div>
+        <div class="run-side">
+          <div class="run-side-card"><div class="eyebrow">PROGRESS</div><div class="progress-ring" id="ring"><b id="runPercent">0%</b></div><button class="btn primary" onclick="finishRun()">סיים את ההרצה</button></div>
+          <div class="run-side-card"><div class="eyebrow">MAKE IT REAL</div><h3>רוצה את זה על המקרר?</h3><p>הפוך את הרשימה ללוח A4, PDF או דף שאפשר לסמן בטוש.</p><button class="btn soft" onclick="openStudio(activeListId,'checklist')">עצב A4</button></div>
+          <div class="run-side-card"><div class="eyebrow">PACKY LEARNS</div><h3>מה שהוספת נשמר לפעם הבאה.</h3><p>בגרסה המלאה ה־AI ילמד אילו פריטים אתה מוסיף שוב ושוב ויציע אותם אוטומטית.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="studioScreen" class="screen">
+      <div class="topbar"><div><button class="btn ghost" onclick="go('home')">→ חזרה</button><div class="eyebrow">PRINTABLE STUDIO</div><h1>הופכים רשימה למשהו אמיתי.</h1></div><div class="top-actions"><button class="btn primary" onclick="window.print()">הדפס / שמור PDF</button></div></div>
+      <div class="studio">
+        <div class="controls">
+          <div class="eyebrow">FORMAT</div>
+          <div class="seg"><button id="segChecklist" class="active" onclick="setStudioFormat('checklist')">Checklist</button><button id="segLabels" onclick="setStudioFormat('labels')">מדבקות שם</button></div>
+          <label>כותרת / שם</label><input id="studioTitle" value="יום בבריכה" oninput="renderPaper()">
+          <label id="studioSubLabel">שורת משנה</label><input id="studioSubtitle" value="הרשימה הקבועה שלנו" oninput="renderPaper()">
+          <label>סגנון</label><select id="studioStyle" onchange="renderPaper()"><option value="clean">נקי</option><option value="kids">ילדים</option><option value="playful">שובב</option></select>
+          <label id="labelCountLabel" style="display:none">כמות מדבקות</label><input id="labelCount" style="display:none" type="number" min="6" max="30" value="18" oninput="renderPaper()">
+          <button class="btn soft" style="width:100%;margin-top:16px" onclick="toast('בהמשך: צבעים, אייקונים ותמונות אישיות')">＋ עוד התאמה אישית</button>
+        </div>
+        <div class="paper-wrap"><div class="paper clean" id="paper"></div></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<nav class="mobile-nav"><button onclick="go('home')"><b>⌂</b>בית</button><button onclick="go('lists')"><b>✓</b>רשימות</button><button class="create-mobile" onclick="openCreate()"><b>＋</b>צור</button><button onclick="go('templates')"><b>✦</b>תבניות</button><button onclick="openStudio(null,'labels')"><b>▧</b>הדפסה</button></nav>
+
+<div class="modal" id="createModal"><div class="modal-card"><div class="eyebrow">CREATE WITH AI · PROTOTYPE</div><h3>מה אתה מתכנן?</h3><p>כתוב רגיל. כרגע האב־טיפוס מדמה את ה־AI ומייצר רשימה לפי הסיטואציה; בשלב הבא נחבר מנוע אמיתי.</p><textarea id="createText" placeholder="למשל: אנחנו נוסעים לסופ״ש בצפון עם שני ילדים, צריך גם דברים לאוטו וגם ללינה"></textarea><div class="chips"><button class="chip" onclick="fillPrompt('יום בבריכה עם שני ילדים בני 3 ו־5')">🏖️ בריכה עם ילדים</button><button class="chip" onclick="fillPrompt('רוטינת בוקר לילדים לפני הגן')">🌤️ בוקר</button><button class="chip" onclick="fillPrompt('סופ״ש משפחתי מחוץ לבית')">🚗 סופ״ש</button><button class="chip" onclick="fillPrompt('תכין מדבקות עם השם נועם')">🏷️ מדבקות שם</button></div><div class="modal-actions"><button class="btn primary" onclick="generateFromPrompt()">צור רשימה ✦</button><button class="btn ghost" onclick="closeCreate()">ביטול</button></div></div></div>
+<div class="toast" id="toast"></div>
+
+<script src="packy.js"></script>
+</body>
+</html>
