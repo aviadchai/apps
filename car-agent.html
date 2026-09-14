@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<title>סוכן רכב — Aviad</title>
+<meta name="theme-color" content="#0b1220">
+<style>
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:#f4f7fb;color:#152033}body{padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+.wrap{max-width:1060px;margin:0 auto;padding:20px 16px 64px}.hero{background:linear-gradient(135deg,#0b1220,#1b2d49);color:#fff;border-radius:24px;padding:22px;box-shadow:0 18px 45px rgba(15,23,42,.18)}
+.heroTop{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}.hero h1{font-size:28px;margin:0 0 6px}.hero p{margin:0;color:#cbd5e1;line-height:1.5}.live{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.12);padding:8px 11px;border-radius:999px;font-size:12px;white-space:nowrap}.dot{width:8px;height:8px;border-radius:50%;background:#37d67a;box-shadow:0 0 0 5px rgba(55,214,122,.13)}
+.criteria{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}.chip{font-size:12px;padding:7px 10px;border-radius:999px;background:rgba(255,255,255,.08);color:#e7eef8;border:1px solid rgba(255,255,255,.1)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0}.stat{background:#fff;border:1px solid #e4eaf2;border-radius:16px;padding:14px}.stat b{display:block;font-size:22px;margin-bottom:3px}.stat span{font-size:12px;color:#6b7280}
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:18px 0 12px;position:sticky;top:8px;z-index:5;background:rgba(244,247,251,.9);backdrop-filter:blur(14px);padding:8px;border-radius:16px}.tabs{display:flex;gap:7px;overflow:auto}.tab{border:0;background:#e9eef5;color:#475569;padding:9px 12px;border-radius:12px;font-weight:700;cursor:pointer;white-space:nowrap}.tab.active{background:#17233a;color:#fff}.updateBtn{border:0;background:#2563eb;color:white;padding:10px 14px;border-radius:12px;font-weight:800;cursor:pointer;white-space:nowrap}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.card{background:#fff;border:1px solid #e2e8f0;border-radius:20px;padding:17px;box-shadow:0 7px 22px rgba(15,23,42,.05)}.card.top{border-color:#cfe2ff}.cardHead{display:flex;justify-content:space-between;gap:12px}.name{font-size:20px;font-weight:850}.trim{font-size:13px;color:#64748b;margin-top:3px}.score{min-width:58px;height:58px;border-radius:17px;background:#edf5ff;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#1d4ed8}.score b{font-size:20px;line-height:1}.score span{font-size:10px;margin-top:2px}.meta{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0}.metaItem{background:#f8fafc;border-radius:12px;padding:9px;text-align:center}.metaItem b{display:block;font-size:14px}.metaItem span{font-size:10px;color:#7b8798}.badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.badge{font-size:11px;padding:6px 8px;border-radius:999px;background:#eef2f7;color:#42526a}.badge.good{background:#e9f9ef;color:#12753a}.badge.warn{background:#fff5df;color:#9a5d00}.note{font-size:13px;line-height:1.55;color:#334155;background:#f8fafc;padding:10px 12px;border-radius:12px;margin-bottom:12px}.cols{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}.smallTitle{font-size:11px;font-weight:800;color:#718096;margin-bottom:6px}.mini{font-size:12px;line-height:1.45;margin:4px 0}.mini.good:before{content:"✓ ";color:#159447;font-weight:bold}.mini.bad:before{content:"! ";color:#d97706;font-weight:bold}.actions{display:flex;gap:8px}.link{flex:1;text-align:center;text-decoration:none;padding:10px;border-radius:12px;font-size:13px;font-weight:800;background:#17233a;color:#fff}.secondary{background:#eef2f7;color:#334155;border:0;cursor:pointer}
+.sectionTitle{font-size:18px;margin:28px 0 10px}.watchlist{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.watch{background:#fff;border:1px solid #e3e8ef;border-radius:14px;padding:13px}.watch b{display:block;margin-bottom:4px}.watch span{font-size:12px;color:#64748b;line-height:1.45}.empty{display:none;text-align:center;color:#64748b;padding:38px;background:#fff;border-radius:18px;border:1px dashed #cbd5e1}
+.modal{position:fixed;inset:0;background:rgba(11,18,32,.55);display:none;align-items:flex-end;justify-content:center;z-index:20}.modal.show{display:flex}.sheet{background:#fff;width:min(620px,100%);border-radius:24px 24px 0 0;padding:20px;padding-bottom:calc(20px + env(safe-area-inset-bottom));box-shadow:0 -20px 60px rgba(0,0,0,.2)}.sheet h2{margin:0 0 6px}.sheet p{color:#64748b;font-size:13px;line-height:1.5}.prompt{width:100%;height:120px;border:1px solid #d8e0ea;border-radius:14px;padding:12px;font:inherit;resize:none;direction:rtl;background:#f8fafc}.sheetActions{display:flex;gap:8px;margin-top:10px}.sheetActions button,.sheetActions a{flex:1;border:0;border-radius:12px;padding:11px;font-weight:800;text-align:center;text-decoration:none;cursor:pointer}.primary{background:#2563eb;color:#fff}.ghost{background:#eef2f7;color:#334155}.footer{margin-top:28px;text-align:center;font-size:11px;color:#94a3b8;line-height:1.6}
+@media(max-width:760px){.heroTop{display:block}.live{margin-top:12px}.stats{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr}.watchlist{grid-template-columns:1fr}.meta{grid-template-columns:repeat(2,1fr)}.toolbar{align-items:stretch;flex-direction:column}.updateBtn{width:100%}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <section class="hero">
+    <div class="heroTop">
+      <div><h1>סוכן רכב</h1><p>מודעות שעברו סינון לפי מה שבאמת חשוב לך — אמינות קודם, קרוסאובר אחר כך.</p></div>
+      <div class="live"><span class="dot"></span> סריקה יומית פעילה</div>
+    </div>
+    <div class="criteria" id="criteria"></div>
+  </section>
+
+  <section class="stats">
+    <div class="stat"><b id="countTop">—</b><span>מועמדים חזקים</span></div>
+    <div class="stat"><b id="countAll">—</b><span>מודעות בדשבורד</span></div>
+    <div class="stat"><b>30K</b><span>תקציב מקסימלי</span></div>
+    <div class="stat"><b>180K</b><span>ק״מ מקסימלי</span></div>
+  </section>
+
+  <div class="toolbar">
+    <div class="tabs"><button class="tab active" data-filter="all">הכול</button><button class="tab" data-filter="top">רק מומלצים</button><button class="tab" data-filter="watch">במעקב</button></div>
+    <button class="updateBtn" id="requestUpdate">בקש סריקה נוספת</button>
+  </div>
+
+  <main class="grid" id="cards"></main>
+  <div class="empty" id="empty">אין כרגע מודעות בקטגוריה הזאת.</div>
+
+  <h2 class="sectionTitle">דגמים שהסוכן ממשיך לצוד</h2>
+  <section class="watchlist" id="watchlist"></section>
+
+  <div class="footer">הציון הוא כלי סינון, לא תחליף לבדיקה במכון/מוסך ולהיסטוריית טיפולים. מודעות יכולות להימחק או להשתנות.</div>
+</div>
+
+<div class="modal" id="modal">
+  <div class="sheet">
+    <h2>בקש עדכון עכשיו</h2>
+    <p>העמוד סטטי ב-GitHub Pages, לכן הכפתור מכין עבורך בקשת סריקה מדויקת. העתק אותה ופתח ChatGPT; אחרי הסריקה אפשר לעדכן את הדשבורד.</p>
+    <textarea class="prompt" id="promptText">תריץ עכשיו סריקה חדשה לסוכן הרכב לפי הקריטריונים המעודכנים: עד 30,000 ₪, אוטומטי, פחות מ-180,000 ק״מ, עדיפות ברורה לאמינות ולקרוסאובר, תא מטען 450 ליטר ומעלה מספיק, אזור ירושלים–תל אביב והסביבה. בדוק יד2 ופייסבוק מרקטפלייס ככל שנגיש ציבורית, אמת ק״מ/יד/מחיר במודעות עצמן, והשווה למה שכבר נמצא. עדכן גם את דף סוכן הרכב עם מודעות חדשות וירידות מחיר.</textarea>
+    <div class="sheetActions"><button class="primary" id="copyPrompt">העתק בקשה</button><a class="ghost" href="https://chatgpt.com/" target="_blank" rel="noopener">פתח ChatGPT</a></div>
+    <div class="sheetActions"><button class="ghost" id="closeModal">סגור</button></div>
+  </div>
+</div>
+
+<script>
+const money=n=>new Intl.NumberFormat('he-IL').format(n)+' ₪';
+const num=n=>new Intl.NumberFormat('he-IL').format(n);
+let DATA=null, filter='all';
+function badge(text,cls=''){return `<span class="badge ${cls}">${text}</span>`}
+function render(){
+ const list=DATA.listings.filter(x=>filter==='all'||x.status===filter);
+ const box=document.getElementById('cards'); box.innerHTML='';
+ document.getElementById('empty').style.display=list.length?'none':'block';
+ list.sort((a,b)=>b.score-a.score).forEach(x=>{
+   const el=document.createElement('article'); el.className='card '+(x.status==='top'?'top':'');
+   const trunkOk=x.trunk>=450;
+   el.innerHTML=`<div class="cardHead"><div><div class="name">${x.make} ${x.model} ${x.year}</div><div class="trim">${x.trim} · ${x.body} · ${x.source}</div></div><div class="score"><b>${x.score}</b><span>מתוך 100</span></div></div>
+   <div class="meta"><div class="metaItem"><b>${money(x.price)}</b><span>מחיר</span></div><div class="metaItem"><b>${num(x.km)}</b><span>ק״מ</span></div><div class="metaItem"><b>יד ${x.hand}</b><span>בעלות</span></div><div class="metaItem"><b>${x.location}</b><span>מיקום</span></div></div>
+   <div class="badges">${badge('אמינות: '+x.reliability,'good')}${badge(x.trunk+' ל׳ תא מטען',trunkOk?'good':'warn')}${badge(x.status==='top'?'מועמד חזק':'במעקב',x.status==='top'?'good':'warn')}</div>
+   <div class="note">${x.note}</div>
+   <div class="cols"><div><div class="smallTitle">למה כן</div>${x.pros.map(v=>`<div class="mini good">${v}</div>`).join('')}</div><div><div class="smallTitle">מה לבדוק</div>${x.cons.map(v=>`<div class="mini bad">${v}</div>`).join('')}</div></div>
+   <div class="actions"><a class="link" href="${x.url}" target="_blank" rel="noopener">פתח מודעה</a><button class="link secondary" data-copy="${x.make} ${x.model} ${x.year} ${x.url}">העתק לבדיקה</button></div>`;
+   box.appendChild(el);
+ });
+ document.querySelectorAll('[data-copy]').forEach(b=>b.onclick=async()=>{await navigator.clipboard.writeText('בדוק לי את המודעה הזאת לעומק: '+b.dataset.copy);b.textContent='הועתק ✓';setTimeout(()=>b.textContent='העתק לבדיקה',1200)});
+}
+async function load(){
+ try{const r=await fetch('car-agent-data.json?ts='+Date.now()); DATA=await r.json();}
+ catch(e){document.getElementById('cards').innerHTML='<div class="card">לא הצלחתי לטעון את נתוני הסריקה.</div>';return}
+ const c=DATA.criteria; document.getElementById('criteria').innerHTML=[`עד ${money(c.budgetMax)}`,`פחות מ-${num(c.kmMax)} ק״מ`,'אוטומטי','אמינות בעדיפות ראשונה','קרוסאובר בעדיפות','450 ל׳ תא מטען מספיק'].map(x=>`<span class="chip">${x}</span>`).join('');
+ document.getElementById('countAll').textContent=DATA.listings.length; document.getElementById('countTop').textContent=DATA.listings.filter(x=>x.status==='top').length;
+ document.getElementById('watchlist').innerHTML=DATA.watchModels.map(x=>`<div class="watch"><b>${x.model}</b><span>${x.reason}</span></div>`).join('');
+ render();
+}
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');filter=b.dataset.filter;render()});
+const modal=document.getElementById('modal'); document.getElementById('requestUpdate').onclick=()=>modal.classList.add('show'); document.getElementById('closeModal').onclick=()=>modal.classList.remove('show'); modal.onclick=e=>{if(e.target===modal)modal.classList.remove('show')};
+document.getElementById('copyPrompt').onclick=async()=>{await navigator.clipboard.writeText(document.getElementById('promptText').value);const b=document.getElementById('copyPrompt');b.textContent='הועתק ✓';setTimeout(()=>b.textContent='העתק בקשה',1400)};
+load();
+</script>
+</body>
+</html>
