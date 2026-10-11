@@ -67,7 +67,17 @@ header{display:flex;align-items:center;gap:10px;padding:12px 16px;padding-top:ca
 .cat-items.hidden{display:none;}
 .cat-complete{transition:background .28s ease;}
 .cat-complete .cat-label{background:var(--accent-dim);transition:background .28s ease;}
-.cat-complete-mark{color:var(--accent);font-size:11px;}
+.cat-status{min-width:36px;display:inline-flex;align-items:center;justify-content:center;}
+.cat-progress{font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums;}
+.cat-complete-mark{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;
+  border-radius:50%;background:rgba(48,209,88,.13);color:var(--accent);
+  animation:categoryCheckReveal .38s cubic-bezier(.2,.85,.25,1) both;}
+.cat-complete-mark svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}
+@keyframes categoryCheckReveal {
+  from{opacity:0;transform:scale(.82);}
+  to{opacity:1;transform:scale(1);}
+}
+[data-theme=light] .cat-complete .cat-label{background:var(--accent-dim);}
 .item{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border);transition:background .28s ease;}
 .item.entering{animation:itemIn .28s cubic-bezier(.22,1,.36,1) both;}
 @keyframes itemIn{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:translateX(0)}}
@@ -158,42 +168,36 @@ header{display:flex;align-items:center;gap:10px;padding:12px 16px;padding-top:ca
 .item-note{cursor:text;outline:none;border-radius:5px;padding:1px 4px;min-width:8px;margin-inline-start:4px;}
 .item-note:empty::before{content:'הערה';color:var(--border2);}
 .item-note:focus{background:var(--surface2);color:var(--text);}
-/* Small, tactile feedback while shopping — no layout shifts or long transitions */
-.item.fx-done { animation: boughtSlide .45s cubic-bezier(.2,.8,.2,1) both; }
-.item.fx-done .chk.done { animation: checkPop .46s cubic-bezier(.2,1.8,.35,1) both; }
-.item.fx-done .chk.done::after { animation: checkAppear .28s ease-out .08s both; }
-.item.fx-missing { animation: missingNudge .42s ease-out both; }
-.item.fx-missing .miss-btn.on { animation: missingPop .46s ease-out both; }
-.item.fx-unmissing .miss-btn, .item.fx-uncheck .chk { animation: checkPop .3s ease-out both; }
-@keyframes boughtSlide {
-  0% { transform:translateX(-12px);background:rgba(34,197,94,.14); }
-  60% { transform:translateX(2px);background:rgba(34,197,94,.06); }
-  100% { transform:translateX(0);background:transparent; }
+/* Quiet, Apple-like check feedback: the row never translates or scales. */
+.item.fx-done .item-content{animation:boughtTint .36s ease-out both;}
+.item.fx-done .chk.done{animation:checkSettle .3s cubic-bezier(.2,.85,.2,1) both;}
+.item.fx-done .chk.done::after{animation:checkAppear .25s ease-out .04s both;}
+.item.fx-uncheck .chk{animation:checkSettle .25s ease-out both;}
+.item.fx-missing .miss-btn.on{animation:missingPop .35s ease-out both;}
+.item.fx-unmissing .miss-btn{animation:checkSettle .28s ease-out both;}
+@keyframes boughtTint{
+  0%,100%{background:var(--bg);}
+  42%{background:color-mix(in srgb,var(--accent) 8%,var(--bg));}
 }
-@keyframes checkPop {
-  0% { transform:scale(.68); }
-  55% { transform:scale(1.22); }
-  100% { transform:scale(1); }
+@keyframes checkSettle{
+  0%{transform:scale(.9);}
+  65%{transform:scale(1.055);}
+  100%{transform:scale(1);}
 }
-@keyframes checkAppear {
-  from { opacity:0;transform:rotate(45deg) translate(-1px,-1px) scale(.2); }
-  to { opacity:1;transform:rotate(45deg) translate(-1px,-1px) scale(1); }
+@keyframes checkAppear{
+  from{opacity:0;transform:rotate(45deg) translate(-1px,-1px) scale(.55);}
+  to{opacity:1;transform:rotate(45deg) translate(-1px,-1px) scale(1);}
 }
-@keyframes missingNudge {
-  0% { transform:translateY(2px) scale(.992);background:rgba(245,158,11,.10); }
-  65% { transform:translateY(0) scale(1.003);background:rgba(245,158,11,.045); }
-  100% { transform:translateY(0) scale(1);background:transparent; }
+@keyframes missingPop{
+  0%{transform:scale(.92);}
+  65%{transform:scale(1.06);}
+  100%{transform:scale(1);}
 }
-@keyframes missingPop {
-  0% { transform:scale(.85);box-shadow:0 0 0 0 rgba(245,158,11,.45); }
-  60% { transform:scale(1.1);box-shadow:0 0 0 6px rgba(245,158,11,0); }
-  100% { transform:scale(1);box-shadow:0 0 0 0 rgba(245,158,11,0); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .item, .item.entering, .item.fx-done, .item.fx-missing,
-  .item.fx-done .chk.done, .item.fx-done .chk.done::after,
+@media (prefers-reduced-motion: reduce){
+  .item, .item.entering, .item.fx-done .item-content, .item.fx-done .chk.done,
+  .item.fx-done .chk.done::after, .item.fx-uncheck .chk,
   .item.fx-missing .miss-btn.on, .item.fx-unmissing .miss-btn,
-  .item.fx-uncheck .chk { animation:none!important; transition:none!important; }
+  .cat-complete-mark{animation:none!important;transition:none!important;}
 }
 /* "missing at store" toggle chip (replaces the old did-you-know button) */
 .miss-btn{background:none;border:1px solid var(--border2);color:var(--muted);font-family:inherit;font-size:11px;font-weight:600;padding:3px 9px;border-radius:12px;cursor:pointer;flex-shrink:0;transition:all 0.15s;}
@@ -637,11 +641,14 @@ function render() {
     const doneCount = catItems.filter(i => i.done).length;
     const total = catItems.length;
     const allDone = doneCount === total && total > 0;
-    return `<div class="cat-group${allDone?' cat-complete':''}" data-cat="${esc(cat)}">
+    const completeShown = allDone && !categoryFolds.get(cat)?.celebrate;
+    return `<div class="cat-group${completeShown?' cat-complete':''}" data-cat="${esc(cat)}">
       <div class="cat-label" onclick="catClick(event,'${cat}')">
         <span class="drag-handle"></span>
         <span class="cat-lbl-text">${icon} ${cat}</span>
-        ${allDone ? `<span class="cat-complete-mark">✓</span>` : `<span style="font-size:10px;color:var(--muted)">${doneCount}/${total}</span>`}
+        <span class="cat-status">${completeShown
+          ? `<span class="cat-complete-mark" aria-label="הקטגוריה הושלמה"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.6 4.5L19 7"/></svg></span>`
+          : `<span class="cat-progress">${doneCount}/${total}</span>`}</span>
         <span class="cat-arrow${collapsed?' col':''}">▾</span>
       </div>
       <div class="cat-items${collapsed?' hidden':''}">
@@ -744,7 +751,7 @@ function reconcileShoppingDOM(scroll, markup) {
   }
 
   // FLIP animates actual reordering; a checkbox does not move other rows.
-  if (!_finishingShopping && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  if (!_finishingShopping && !_suppressListFLIP && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     for (const row of scroll.querySelectorAll('.item[data-id]')) {
       const previous = positions.get(row.dataset.id);
       if (previous === undefined) continue;
