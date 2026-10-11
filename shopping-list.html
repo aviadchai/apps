@@ -1495,11 +1495,16 @@ function showAddedFeedback(names, edited = false) {
       if (Math.abs(height - previousHeight) >= 2) {
         previousHeight = height;
         root.setProperty('--visible-height', height+'px');
-        root.setProperty('--visible-center', Math.round(height / 2)+'px');
       }
+      // Only the floating messages follow the visual viewport's scroll offset.
+      // The composer itself never does, avoiding the iOS caret-jumping loop.
+      const top = Math.round(viewport ? viewport.offsetTop : 0);
+      root.setProperty('--visible-top', top+'px');
+      root.setProperty('--visible-center', Math.round(top + height/2)+'px');
     });
   }
   viewport?.addEventListener('resize', update);
+  viewport?.addEventListener('scroll', update);
   window.addEventListener('resize', update);
   window.addEventListener('orientationchange', update);
   update();
