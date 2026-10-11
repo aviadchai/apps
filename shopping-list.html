@@ -972,23 +972,89 @@ function delItem(id) {
     persistItems(); render();
   });
 }
-// Finish a shopping trip: bought items leave; remaining and unavailable items
-// carry forward as unmarked items, with their names, quantities and notes intact.
-function finishShoppingList() {
-  const bought = items.filter(i => i.done).length;
-  items = items.filter(i => !i.done).map(i => ({ ...i, done: false, missing: false }));
-  itemAnimations.clear();
-  persistItems(); render();
-  return bought;
+// Visually finish a trip: each purchased row slides out and collapses.
+// Only after that, unavailable items smoothly return to their normal state.
+const shoppingPause = ms => new Promise(resolve => setTimeout(resolve, ms));
+async function animatePurchasedRow(row) {
+  if (!row?.isConnected) return;
+  const group = row.closest('.cat-group');
+  const holder = row.parentElement;
+  const height = row.getBoundingClientRect().height;
+  if (!height) {
+    row.remove();
+    if (group?.isConnected && !holder.querySelector('.item')) group.remove();
+    return;
+  }
+  const style = getComputedStyle(row);
+  row.style.minHeight = '0px';
+  row.style.overflow = 'hidden';
+  const movement = row.animate([
+    {height:height+'px',opacity:1,transform:'translateX(0)',
+     paddingTop:style.paddingTop,paddingBottom:style.paddingBottom,
+     borderBottomWidth:style.borderBottomWidth},
+    {height:'0px',opacity:0,transform:'translateX(-20px)',
+     paddingTop:'0px',paddingBottom:'0px',borderBottomWidth:'0px'}
+  ], {duration:310,easing:'cubic-bezier(.32,0,.2,1)',fill:'forwards'});
+  await movement.finished.catch(() => {});
+  row.remove();
+
+  // No sudden jump when the last purchased product empties a category.
+  if (group?.isConnected && !holder.querySelector('.item')) {
+    const groupHeight = group.getBoundingClientRect().height;
+    group.style.overflow = 'hidden';
+    const fold = group.animate(
+      [{height:groupHeight+'px',opacity:1},{height:'0px',opacity:0}],
+      {duration:195,easing:'cubic-bezier(.32,0,.2,1)',fill:'forwards'});
+    await fold.finished.catch(() => {});
+    group.remove();
+  }
+}
+async function finishShoppingList() {
+  if (_finishingShopping || !items.length) return 0;
+  _finishingShopping = true;
+  document.getElementById('list-panel').classList.add('shopping-finishing');
+  const purchased = items.filter(it => it.done);
+  const missing = items.filter(it => !it.done && it.missing);
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  try {
+    if (!reduced) {
+      const rows = purchased.map(it => findItemRow(it.id)).filter(Boolean);
+      // Even with a long shopping list, the entire cascade starts in < 600ms.
+      const stagger = Math.max(24, Math.min(74, 560 / Math.max(rows.length-1, 1)));
+      await Promise.all(rows.map((row, index) =>
+        shoppingPause(index * stagger).then(() => animatePurchasedRow(row))));
+
+      await Promise.all(missing.map((it, index) =>
+        shoppingPause(index * 55).then(() => {
+          const row = findItemRow(it.id);
+          if (!row) return;
+          row.classList.remove('missing');
+          row.querySelector('.miss-btn')?.classList.remove('on');
+          row.querySelector('.chk')?.classList.remove('miss');
+          markItemAnimation(it.id, 'unmissing');
+        })));
+      if (missing.length) await shoppingPause(290);
+    }
+    // No item is re-created: existing notes, quantities and category are retained.
+    items = items.filter(it => !it.done)
+      .map(it => ({...it,done:false,missing:false}));
+    render();
+    await persistItems();
+    return purchased.length;
+  } finally {
+    _finishingShopping = false;
+    document.getElementById('list-panel').classList.remove('shopping-finishing');
+  }
 }
 function finishShopping() {
+  if (_finishingShopping) return;
   if (!items.length) { showToast('הרשימה כבר ריקה'); return; }
   const bought = items.filter(i => i.done).length;
   const left = items.length - bought;
   showConfirm(
     `לסיים קנייה? ${bought} מוצרים שנקנו יימחקו, ו־${left} מוצרים שלא נקנו יישארו לרשימה הבאה ללא סימונים.`,
-    () => {
-      const removed = finishShoppingList();
+    async () => {
+      const removed = await finishShoppingList();
       addBot(`הקנייה הסתיימה! ${removed} מוצרים שנקנו הוסרו, והשאר מוכנים לקנייה הבאה.`);
     },
     'סיים קנייה'
@@ -1145,7 +1211,7 @@ function applyCmd(cmd) {
     const it = items.find(i => i.name.toLowerCase().includes(q));
     if (it) { it.done = !it.done; persistItems(); render(); }
   } else if (a === 'finish_shopping') {
-    finishShoppingList();
+    result._finish = true;
   } else if (a === 'clear_done') {
     items = items.filter(i=>!i.done);
     persistItems(); render();
@@ -1215,7 +1281,8 @@ async function sendMsg() {
       enrichNewItems(res.newIds); // ברקע — לא מחכים
     } else {
       const res = applyCmd(cmd);
-    skipped = res.skipped || [];
+      skipped = res.skipped || [];
+      if (res._finish) await finishShoppingList();
     }
 
     if (cmd.reply) addBot(cmd.reply);
