@@ -65,9 +65,11 @@ header{display:flex;align-items:center;gap:10px;padding:12px 16px;padding-top:ca
 .cat-arrow{font-size:11px;transition:transform 0.2s;display:inline-block;color:var(--muted);}
 .cat-arrow.col{transform:rotate(-90deg);}
 .cat-items.hidden{display:none;}
-.cat-complete{opacity:0.35;transition:opacity 0.4s;}
+.cat-complete{transition:background .28s ease;}
+.cat-complete .cat-label{background:var(--accent-dim);transition:background .28s ease;}
 .cat-complete-mark{color:var(--accent);font-size:11px;}
-.item{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border);transition:background 0.15s;animation:itemIn 0.2s ease;}
+.item{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border);transition:background .28s ease;}
+.item.entering{animation:itemIn .28s cubic-bezier(.22,1,.36,1) both;}
 @keyframes itemIn{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:translateX(0)}}
 .item:last-child{border-bottom:none;}
 .item:hover{background:var(--surface2);}
@@ -91,7 +93,7 @@ header{display:flex;align-items:center;gap:10px;padding:12px 16px;padding-top:ca
 .del-btn:hover{color:var(--danger);}
 #item-popup{display:none;position:fixed;z-index:400;background:var(--surface);border:1px solid var(--border2);border-radius:16px;padding:14px 16px 14px 34px;max-width:240px;font-size:13px;line-height:1.6;color:var(--text);box-shadow:0 12px 40px rgba(0,0,0,0.6);}
 [data-theme=light] #item-popup{box-shadow:0 6px 20px rgba(0,0,0,0.12);}
-#item-popup.open{display:block;animation:toastIn 0.18s ease;}
+#item-popup.open{display:block;animation:popoverIn .22s cubic-bezier(.2,.8,.2,1);}
 .popup-close{position:absolute;top:8px;left:10px;background:none;border:none;cursor:pointer;color:var(--muted);font-size:18px;line-height:1;padding:0;}
 .info-btn{width:18px;height:18px;flex-shrink:0;border:1.5px solid var(--info);border-radius:50%;background:none;cursor:pointer;padding:0;color:var(--info);font-size:10px;font-style:italic;font-weight:700;font-family:Georgia,serif;display:inline-flex;align-items:center;justify-content:center;transition:all 0.15s;opacity:0.7;}
 .info-btn:hover,.info-btn.active{background:var(--info);color:#fff;opacity:1;}
@@ -140,7 +142,10 @@ header{display:flex;align-items:center;gap:10px;padding:12px 16px;padding-top:ca
 .toast-msg{flex:1;}.toast-close{background:none;border:none;cursor:pointer;color:var(--muted);font-size:18px;line-height:1;flex-shrink:0;padding:0;}
 /* Confirm dialog */
 .conf-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);z-index:500;align-items:center;justify-content:center;}
-.conf-overlay.open{display:flex;animation:toastIn 0.15s ease;}
+.conf-overlay.open{display:flex;animation:overlayFade .18s ease both;}
+.conf-overlay.open .conf-dialog{animation:dialogLift .32s cubic-bezier(.2,.9,.2,1) both;}
+@keyframes overlayFade{from{opacity:0}to{opacity:1}}
+@keyframes dialogLift{from{opacity:0;transform:translateY(12px) scale(.965)}to{opacity:1;transform:translateY(0) scale(1)}}
 .conf-dialog{background:var(--surface);border:1px solid var(--border2);border-radius:18px;padding:22px 20px 16px;width:min(300px,88vw);box-shadow:0 16px 48px rgba(0,0,0,0.6);text-align:center;}
 [data-theme=light] .conf-dialog{box-shadow:0 8px 24px rgba(0,0,0,0.15);}
 .conf-dialog p{font-size:14px;line-height:1.5;margin-bottom:18px;color:var(--text);}
@@ -175,10 +180,9 @@ header{display:flex;align-items:center;gap:10px;padding:12px 16px;padding-top:ca
   to { opacity:1;transform:rotate(45deg) translate(-1px,-1px) scale(1); }
 }
 @keyframes missingNudge {
-  0%,100% { transform:translateX(0); }
-  25% { transform:translateX(-5px); }
-  55% { transform:translateX(3px); }
-  80% { transform:translateX(-1px); }
+  0% { transform:translateY(2px) scale(.992);background:rgba(245,158,11,.10); }
+  65% { transform:translateY(0) scale(1.003);background:rgba(245,158,11,.045); }
+  100% { transform:translateY(0) scale(1);background:transparent; }
 }
 @keyframes missingPop {
   0% { transform:scale(.85);box-shadow:0 0 0 0 rgba(245,158,11,.45); }
@@ -186,7 +190,7 @@ header{display:flex;align-items:center;gap:10px;padding:12px 16px;padding-top:ca
   100% { transform:scale(1);box-shadow:0 0 0 0 rgba(245,158,11,0); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .item, .item.fx-done, .item.fx-missing,
+  .item, .item.entering, .item.fx-done, .item.fx-missing,
   .item.fx-done .chk.done, .item.fx-done .chk.done::after,
   .item.fx-missing .miss-btn.on, .item.fx-unmissing .miss-btn,
   .item.fx-uncheck .chk { animation:none!important; transition:none!important; }
@@ -195,6 +199,10 @@ header{display:flex;align-items:center;gap:10px;padding:12px 16px;padding-top:ca
 .miss-btn{background:none;border:1px solid var(--border2);color:var(--muted);font-family:inherit;font-size:11px;font-weight:600;padding:3px 9px;border-radius:12px;cursor:pointer;flex-shrink:0;transition:all 0.15s;}
 .miss-btn.on{background:rgba(245,158,11,0.15);border-color:var(--warn);color:var(--warn);}
 .item.missing .item-name{color:var(--warn);text-decoration:line-through;}
+.item-name{transition:color .3s ease,text-decoration-color .3s ease;}
+.miss-btn{transition:background-color .28s ease,border-color .28s ease,color .28s ease,transform .28s ease;}
+#list-panel.shopping-finishing #items-scroll{pointer-events:none;}
+#list-panel.shopping-finishing .panel-head button{pointer-events:none;opacity:.65;}
 /* add-quantity button for items without a quantity */
 .qty-add{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--border2);background:none;color:var(--muted);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0;}
 .qty-add:hover{border-color:var(--accent);color:var(--accent);}
@@ -210,7 +218,8 @@ header{display:flex;align-items:center;gap:10px;padding:12px 16px;padding-top:ca
 .cat-chip{background:none;border:none;cursor:pointer;padding:0;display:flex;align-items:center;}
 #cat-picker{display:none;position:fixed;z-index:300;background:var(--surface);border:1px solid var(--border2);border-radius:16px;padding:8px;min-width:180px;max-height:320px;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.4);}
 [data-theme=light] #cat-picker{box-shadow:0 4px 16px rgba(0,0,0,0.12);}
-#cat-picker.open{display:flex;flex-direction:column;gap:2px;animation:toastIn 0.15s ease;}
+#cat-picker.open{display:flex;flex-direction:column;gap:2px;animation:popoverIn .22s cubic-bezier(.2,.8,.2,1);}
+@keyframes popoverIn{from{opacity:0;transform:translateY(5px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
 .cat-pick-item{background:none;border:none;color:var(--text);font-family:inherit;font-size:13px;padding:8px 12px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:8px;text-align:right;}
 .cat-pick-item:hover,.cat-pick-item.current{background:var(--accent-dim);color:var(--accent);}
 /* ── Shared mobile + desktop centered styles ── */
@@ -405,10 +414,20 @@ function saveCfgKey(key) {
 }
 let db = null, unsubscribe = null;
 let items = [];
-const itemAnimations = new Map();
+let _finishingShopping = false;
+function findItemRow(id) {
+  return [...document.querySelectorAll('#items-scroll .item[data-id]')]
+    .find(el => el.dataset.id === id);
+}
 function markItemAnimation(id, type) {
-  itemAnimations.set(id, type);
-  setTimeout(() => { if (itemAnimations.get(id) === type) itemAnimations.delete(id); }, 650);
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const row = findItemRow(id);
+  if (!row) return;
+  const cls = 'fx-' + type;
+  row.classList.remove('fx-done','fx-uncheck','fx-missing','fx-unmissing');
+  void row.offsetWidth;
+  row.classList.add(cls);
+  setTimeout(() => row.classList.remove(cls), 520);
 }
 let chatHistory = [];
 let recog = null, isRec = false;
@@ -434,17 +453,26 @@ function initFirebase() {
 
   // Load once first
   getDoc(docRef).then(snap => {
-    if (snap.exists()) items = snap.data().items || [];
-    render();
+    if (snap.exists() && !_finishingShopping) {
+      const incoming = snap.data().items || [];
+      if (JSON.stringify(incoming) !== JSON.stringify(items)) {
+        items = incoming;
+        render();
+      }
+    }
     setSyncStatus('synced', '✓ מסונכרן');
   }).catch(() => setSyncStatus('', '✗ שגיאה'));
 
   // Live listener
   if (unsubscribe) unsubscribe();
   unsubscribe = onSnapshot(docRef, snap => {
-    if (snap.exists()) {
-      items = snap.data().items || [];
-      render();
+    if (snap.exists() && !_finishingShopping) {
+      const incoming = snap.data().items || [];
+      // Firestore echoes local writes: skip redundant re-renders during motion.
+      if (JSON.stringify(incoming) !== JSON.stringify(items)) {
+        items = incoming;
+        render();
+      }
     }
     setSyncStatus('synced', '✓ מסונכרן');
   }, () => setSyncStatus('', '✗ שגיאה'));
@@ -532,9 +560,14 @@ function render() {
   const count = document.getElementById('item-count');
   const undone = items.filter(i => !i.done);
   count.textContent = undone.length;
+  const completed = items.filter(i => i.done).length;
+  const fill = document.getElementById('list-progress-fill');
+  if (fill) fill.style.width = (items.length ? (completed / items.length * 100) : 0) + '%';
+  const pctEl = document.getElementById('list-progress-pct');
+  if (pctEl) pctEl.textContent = items.length ? `${completed}/${items.length}` : '';
 
   if (!items.length) {
-    scroll.innerHTML = '<div class="empty-list"><svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--border2)"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg><span>הרשימה ריקה</span></div>';
+    if (!scroll.querySelector('.empty-list')) scroll.innerHTML = '<div class="empty-list"><svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--border2)"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg><span>הרשימה ריקה</span></div>';
     return;
   }
 
@@ -553,15 +586,7 @@ function render() {
     ];
   }
 
-  // Update single list progress bar
-  const totalAll = items.length, doneAll = items.filter(i=>i.done).length;
-  const pctAll = totalAll ? Math.round(doneAll/totalAll*100) : 0;
-  const fill = document.getElementById('list-progress-fill');
-  if (fill) fill.style.width = pctAll + '%';
-  const pctEl = document.getElementById('list-progress-pct');
-  if (pctEl) pctEl.textContent = totalAll ? `${doneAll}/${totalAll}` : '';
-
-  scroll.innerHTML = catOrder.map(cat => {
+  const nextMarkup = catOrder.map(cat => {
     const icon = getCatIcon(cat);
     const catItems = byCat[cat];
     const collapsed = collapsedCats.has(cat);
@@ -584,7 +609,7 @@ function render() {
             : (it.qty
                 ? `<span class="item-qty">${esc(it.qty)}</span>`
                 : `<button class="qty-add" onclick="changeQty('${it.id}',1)" title="הוסף כמות">+</button>`);
-          return `<div class="item${it.missing?' missing':''}${itemAnimations.has(it.id)?' fx-'+itemAnimations.get(it.id):''}">
+          return `<div class="item${it.missing?' missing':''}" data-id="${esc(it.id)}" data-view="${encodeURIComponent(JSON.stringify([it.name,it.note,it.qty,it.health]))}">
             <div class="chk ${it.done?'done':''}${it.missing&&!it.done?' miss':''}" onclick="toggle('${it.id}')"></div>
             ${it.health ? `<span class="health-dot h${it.health}"></span>` : ''}
             <div class="item-name-wrap">
@@ -601,7 +626,93 @@ function render() {
     </div>`;
   }).join('');
 
+  reconcileShoppingDOM(scroll, nextMarkup);
   initAllDrags();
+}
+
+// Reuse DOM rows so status changes never reset layout, focus or animations.
+function reconcileShoppingDOM(scroll, markup) {
+  const nextTree = document.createElement('div');
+  nextTree.innerHTML = markup;
+  const oldGroups = new Map([...scroll.children]
+    .filter(el => el.classList.contains('cat-group'))
+    .map(el => [el.dataset.cat, el]));
+  const positions = new Map([...scroll.querySelectorAll('.item[data-id]')]
+    .map(el => [el.dataset.id, el.getBoundingClientRect().top]));
+  const wantedGroups = new Set();
+  let groupCursor = scroll.firstElementChild;
+
+  for (const freshGroup of [...nextTree.children]) {
+    const key = freshGroup.dataset.cat;
+    let group = oldGroups.get(key);
+    if (!group) {
+      group = freshGroup;
+      for (const row of group.querySelectorAll('.item')) animateEntrance(row);
+    } else {
+      const label = group.querySelector('.cat-label');
+      const newLabel = freshGroup.querySelector('.cat-label');
+      if (label.innerHTML !== newLabel.innerHTML) label.innerHTML = newLabel.innerHTML;
+      group.classList.toggle('cat-complete', freshGroup.classList.contains('cat-complete'));
+
+      const holder = group.querySelector('.cat-items');
+      const nextHolder = freshGroup.querySelector('.cat-items');
+      holder.classList.toggle('hidden', nextHolder.classList.contains('hidden'));
+      const oldRows = new Map([...holder.children].map(row => [row.dataset.id, row]));
+      const wantedRows = new Set();
+      let cursor = holder.firstElementChild;
+      for (const freshRow of [...nextHolder.children]) {
+        let row = oldRows.get(freshRow.dataset.id);
+        if (row) {
+          if (row.dataset.view !== freshRow.dataset.view) {
+            const editing = row.contains(document.activeElement) &&
+              document.activeElement?.classList.contains('item-note');
+            if (!editing) {
+              row.innerHTML = freshRow.innerHTML;
+              row.dataset.view = freshRow.dataset.view;
+            }
+          } else {
+            row.querySelector('.chk').className = freshRow.querySelector('.chk').className;
+            row.querySelector('.item-name').className = freshRow.querySelector('.item-name').className;
+            row.querySelector('.miss-btn').className = freshRow.querySelector('.miss-btn').className;
+          }
+          row.classList.toggle('missing', freshRow.classList.contains('missing'));
+        } else {
+          row = freshRow;
+          animateEntrance(row);
+        }
+        wantedRows.add(row.dataset.id);
+        if (row === cursor) cursor = cursor.nextElementSibling;
+        else holder.insertBefore(row, cursor);
+      }
+      for (const stale of [...holder.children]) {
+        if (!wantedRows.has(stale.dataset.id)) stale.remove();
+      }
+    }
+    wantedGroups.add(key);
+    if (group === groupCursor) groupCursor = groupCursor.nextElementSibling;
+    else scroll.insertBefore(group, groupCursor);
+  }
+  for (const old of [...scroll.children]) {
+    if (!wantedGroups.has(old.dataset.cat)) old.remove();
+  }
+
+  // FLIP animates actual reordering; a checkbox does not move other rows.
+  if (!_finishingShopping && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    for (const row of scroll.querySelectorAll('.item[data-id]')) {
+      const previous = positions.get(row.dataset.id);
+      if (previous === undefined) continue;
+      const delta = previous - row.getBoundingClientRect().top;
+      if (Math.abs(delta) > 3 && Math.abs(delta) < 700) {
+        row.animate([{transform:`translateY(${delta}px)`},{transform:'translateY(0)'}],
+          {duration:280,easing:'cubic-bezier(.22,1,.36,1)'});
+      }
+    }
+  }
+}
+function animateEntrance(row) {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  row.classList.add('entering');
+  setTimeout(() => row.classList.remove('entering'), 350);
 }
 
 function esc(s) {
@@ -619,12 +730,14 @@ function changeQty(id, delta) {
 
 // ── Simple inline actions: "missing" toggle + tap-to-edit note ──
 function toggleMissing(id) {
+  if (_finishingShopping) return;
   const it = items.find(i => i.id === id);
   if (!it) return;
   it.missing = !it.missing;
-  if (it.missing) it.done = false; // An unavailable item cannot be bought as well
+  if (it.missing) it.done = false;
+  render();
   markItemAnimation(id, it.missing ? 'missing' : 'unmissing');
-  persistItems(); render();
+  persistItems();
 }
 function saveNote(id, el) {
   const it = items.find(i => i.id === id);
@@ -677,7 +790,8 @@ function catClick(e, cat) {
 
 // ── Category drag to reorder ──────────────────────────────
 function initAllDrags() {
-  document.querySelectorAll('#items-scroll .drag-handle').forEach(h => {
+  document.querySelectorAll('#items-scroll .drag-handle:not([data-drag-bound])').forEach(h => {
+    h.dataset.dragBound = 'true';
     h.addEventListener('pointerdown', startCatDrag);
   });
 }
@@ -826,15 +940,16 @@ function checkCatComplete(prevItems) {
 }
 
 function toggle(id) {
+  if (_finishingShopping) return;
   const it = items.find(i => i.id === id);
-  if (it) {
-    const prev = items.map(i => ({...i}));
-    it.done = !it.done;
-    if (it.done) it.missing = false;
-    markItemAnimation(id, it.done ? 'done' : 'uncheck');
-    if (it.done) checkCatComplete(prev);
-    persistItems(); render();
-  }
+  if (!it) return;
+  const prev = items.map(i => ({...i}));
+  it.done = !it.done;
+  if (it.done) it.missing = false;
+  render();
+  markItemAnimation(id, it.done ? 'done' : 'uncheck');
+  if (it.done) checkCatComplete(prev);
+  persistItems();
 }
 let _confirmCb = null;
 function showConfirm(msg, onOk, okLabel = 'מחק') {
