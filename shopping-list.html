@@ -55,7 +55,7 @@ header{display:flex;align-items:center;gap:10px;padding:12px 16px;padding-top:ca
 .clear-done-btn:hover{color:var(--danger);border-color:var(--danger);}
 .list-progress-bar{flex:1;height:3px;background:var(--border);border-radius:4px;overflow:hidden;}
 .list-progress-bar>div{height:100%;background:var(--accent);transition:width 0.5s ease;border-radius:4px;width:0%;}
-#items-scroll{flex:1;overflow-y:auto;}
+#items-scroll{flex:1;overflow-y:auto;overflow-anchor:none;}
 .empty-list{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--muted);font-size:13px;gap:10px;}
 .empty-list .big{font-size:44px;}
 .cat-group{border-bottom:1px solid var(--border);}
@@ -480,6 +480,19 @@ function markItemAnimation(id, type) {
 let chatHistory = [];
 let recog = null, isRec = false;
 let collapsedCats = new Set(JSON.parse(localStorage.getItem('collapsed_cats') || '[]'));
+const categoryFolds = new Map(); // running delayed/category closing/opening animations
+let _suppressListFLIP = false;
+function renderWithoutListFLIP() {
+  _suppressListFLIP = true;
+  try { render(); } finally { _suppressListFLIP = false; }
+}
+function saveCollapsedCats() {
+  localStorage.setItem('collapsed_cats', JSON.stringify([...collapsedCats]));
+}
+function findCategoryGroup(cat) {
+  return [...document.querySelectorAll('#items-scroll .cat-group')]
+    .find(el => el.dataset.cat === cat);
+}
 let catOrderOverride = JSON.parse(localStorage.getItem('cat_order') || 'null');
 
 // ── Firebase init ─────────────────────────────────────────
@@ -788,7 +801,10 @@ function toggleMissing(id) {
   const it = items.find(i => i.id === id);
   if (!it) return;
   it.missing = !it.missing;
-  if (it.missing) it.done = false;
+  if (it.missing) {
+    it.done = false;
+    cancelCategoryFold(it.category || 'אחר');
+  }
   render();
   markItemAnimation(id, it.missing ? 'missing' : 'unmissing');
   persistItems();
@@ -833,13 +849,99 @@ document.addEventListener('click', e => {
   if (!e.target.closest('#item-popup') && !e.target.closest('.dyk-btn')) closePopup();
 });
 
-// ── Category collapse ─────────────────────────────────────
+// ── Smooth category folding ───────────────────────────────────────────────
+// Keep category contents mounted during the height animation, then apply
+// the collapsed state. This prevents layout jumps on the last checkmark.
+function cancelCategoryFold(cat) {
+  const state = categoryFolds.get(cat);
+  if (!state) return;
+  clearTimeout(state.timer);
+  state.animation?.cancel();
+  state.rowAnimations?.forEach(animation => animation.cancel());
+  state.holder?.style.removeProperty('overflow');
+  categoryFolds.delete(cat);
+}
+function startCategoryFold(cat, { celebrate = false, delay = 0 } = {}) {
+  cancelCategoryFold(cat);
+  const state = { celebrate, holder: null, animation: null, rowAnimations: [], timer: null };
+  categoryFolds.set(cat, state);
+  state.timer = setTimeout(() => finishCategoryFold(cat, state), delay);
+}
+async function finishCategoryFold(cat, state) {
+  if (categoryFolds.get(cat) !== state) return;
+  if (state.celebrate) {
+    const belonging = items.filter(item => (item.category || 'אחר') === cat);
+    if (!belonging.length || belonging.some(item => !item.done)) {
+      cancelCategoryFold(cat);
+      renderWithoutListFLIP();
+      return;
+    }
+  }
+
+  const group = findCategoryGroup(cat);
+  const holder = group?.querySelector('.cat-items');
+  state.holder = holder;
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (holder && !holder.classList.contains('hidden') && !reduced) {
+    const height = holder.getBoundingClientRect().height;
+    if (height > 0) {
+      holder.style.overflow = 'hidden';
+      const rows = [...holder.querySelectorAll('.item')];
+      state.rowAnimations = rows.map((row, index) => row.animate(
+        [{ opacity:1, transform:'translateY(0)' },
+         { opacity:0, transform:'translateY(-5px)' }],
+        { duration:205, delay:Math.min(index, 7)*28,
+          easing:'cubic-bezier(.32,0,.2,1)', fill:'both' }
+      ));
+      state.animation = holder.animate(
+        [{ height:height+'px', opacity:1 },
+         { height:'0px', opacity:.3 }],
+        { duration:420, easing:'cubic-bezier(.3,0,.16,1)', fill:'forwards' }
+      );
+      try { await state.animation.finished; } catch (_) { return; }
+      if (categoryFolds.get(cat) !== state) return;
+    }
+  }
+
+  collapsedCats.add(cat);
+  saveCollapsedCats();
+  categoryFolds.delete(cat);
+  // Render while the old height=0 animation still holds its last frame.
+  // The hidden class replaces it without ever showing the open height.
+  renderWithoutListFLIP();
+  state.animation?.cancel();
+  state.rowAnimations.forEach(animation => animation.cancel());
+  holder?.style.removeProperty('overflow');
+}
+
 function catClick(e, cat) {
   if (e.target.closest('.drag-handle')) return;
-  if (collapsedCats.has(cat)) collapsedCats.delete(cat);
-  else collapsedCats.add(cat);
-  localStorage.setItem('collapsed_cats', JSON.stringify([...collapsedCats]));
-  render();
+  cancelCategoryFold(cat);
+  if (!collapsedCats.has(cat)) {
+    startCategoryFold(cat);
+    return;
+  }
+
+  collapsedCats.delete(cat);
+  saveCollapsedCats();
+  renderWithoutListFLIP();
+  const holder = findCategoryGroup(cat)?.querySelector('.cat-items');
+  if (!holder || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const height = holder.scrollHeight;
+  if (!height) return;
+  holder.style.overflow = 'hidden';
+  const state = { celebrate:false, holder, animation:null, rowAnimations:[], timer:null };
+  categoryFolds.set(cat, state);
+  state.animation = holder.animate(
+    [{ height:'0px', opacity:.3 }, { height:height+'px', opacity:1 }],
+    { duration:320, easing:'cubic-bezier(.22,1,.36,1)', fill:'both' }
+  );
+  state.animation.finished.then(() => {
+    if (categoryFolds.get(cat) !== state) return;
+    categoryFolds.delete(cat);
+    state.animation.cancel();
+    holder.style.removeProperty('overflow');
+  }).catch(() => {});
 }
 
 // ── Category drag to reorder ──────────────────────────────
@@ -934,61 +1036,27 @@ document.addEventListener('click', e => {
   }
 });
 
-// ── Confetti ──────────────────────────────────────────────
-function launchConfetti(labelEl) {
-  const canvas = document.createElement('canvas');
-  canvas.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:999;';
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-  document.body.appendChild(canvas);
-  const ctx = canvas.getContext('2d');
-  const rect = labelEl.getBoundingClientRect();
-  const cx = rect.left + rect.width / 2;
-  const cy = rect.top + rect.height / 2;
-  const colors = ['#22c55e','#3b82f6','#f59e0b','#ef4444','#a855f7','#06b6d4','#fff'];
-  const pts = Array.from({length: 55}, () => ({
-    x: cx, y: cy,
-    vx: (Math.random() - 0.5) * 10,
-    vy: -(Math.random() * 9 + 3),
-    color: colors[Math.floor(Math.random() * colors.length)],
-    w: Math.random() * 7 + 3,
-    h: Math.random() * 4 + 2,
-    alpha: 1,
-    rot: Math.random() * 360,
-    rotV: (Math.random() - 0.5) * 12
-  }));
-  (function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    let alive = false;
-    pts.forEach(p => {
-      p.x += p.vx; p.y += p.vy; p.vy += 0.35;
-      p.vx *= 0.99; p.alpha -= 0.016; p.rot += p.rotV;
-      if (p.alpha <= 0) return;
-      alive = true;
-      ctx.save();
-      ctx.globalAlpha = p.alpha;
-      ctx.fillStyle = p.color;
-      ctx.translate(p.x, p.y);
-      ctx.rotate(p.rot * Math.PI / 180);
-      ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
-      ctx.restore();
-    });
-    if (alive) requestAnimationFrame(draw);
-    else canvas.remove();
-  })();
-}
-
+// When the final item is checked, wait for its check animation to settle.
+// Then fold the rows together, reveal the category completion check and
+// remember the collapsed state. No confetti/canvas or sudden display:none.
 function checkCatComplete(prevItems) {
-  const prev = {};
-  prevItems.forEach(i => { const c = i.category||'אחר'; (prev[c]=prev[c]||[]).push(i); });
-  const curr = {};
-  items.forEach(i => { const c = i.category||'אחר'; (curr[c]=curr[c]||[]).push(i); });
-  for (const cat in curr) {
-    if (curr[cat].every(i=>i.done) && !prev[cat]?.every(i=>i.done)) {
-      setTimeout(() => {
-        const el = document.querySelector(`.cat-group[data-cat="${cat}"] .cat-label`);
-        if (el) launchConfetti(el);
-      }, 120);
+  const previous = new Map();
+  for (const item of prevItems) {
+    const cat = item.category || 'אחר';
+    if (!previous.has(cat)) previous.set(cat, []);
+    previous.get(cat).push(item);
+  }
+  const current = new Map();
+  for (const item of items) {
+    const cat = item.category || 'אחר';
+    if (!current.has(cat)) current.set(cat, []);
+    current.get(cat).push(item);
+  }
+  for (const [cat, group] of current) {
+    const prior = previous.get(cat) || [];
+    if (group.length && group.every(item => item.done) &&
+        !(prior.length && prior.every(item => item.done))) {
+      startCategoryFold(cat, { celebrate:true, delay:280 });
     }
   }
 }
@@ -1000,9 +1068,11 @@ function toggle(id) {
   const prev = items.map(i => ({...i}));
   it.done = !it.done;
   if (it.done) it.missing = false;
+  const cat = it.category || 'אחר';
+  if (it.done) checkCatComplete(prev); // register before render delays the header check
+  else cancelCategoryFold(cat);
   render();
   markItemAnimation(id, it.done ? 'done' : 'uncheck');
-  if (it.done) checkCatComplete(prev);
   persistItems();
 }
 let _confirmCb = null;
@@ -1263,7 +1333,7 @@ function applyCmd(cmd) {
   } else if (a === 'toggle_done' && cmd.target) {
     const q = cmd.target.toLowerCase();
     const it = items.find(i => i.name.toLowerCase().includes(q));
-    if (it) { it.done = !it.done; persistItems(); render(); }
+    if (it) toggle(it.id);
   } else if (a === 'finish_shopping') {
     result._finish = true;
   } else if (a === 'clear_done') {
