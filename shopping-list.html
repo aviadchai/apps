@@ -153,6 +153,44 @@ header{display:flex;align-items:center;gap:10px;padding:12px 16px;padding-top:ca
 .item-note{cursor:text;outline:none;border-radius:5px;padding:1px 4px;min-width:8px;margin-inline-start:4px;}
 .item-note:empty::before{content:'הערה';color:var(--border2);}
 .item-note:focus{background:var(--surface2);color:var(--text);}
+/* Small, tactile feedback while shopping — no layout shifts or long transitions */
+.item.fx-done { animation: boughtSlide .45s cubic-bezier(.2,.8,.2,1) both; }
+.item.fx-done .chk.done { animation: checkPop .46s cubic-bezier(.2,1.8,.35,1) both; }
+.item.fx-done .chk.done::after { animation: checkAppear .28s ease-out .08s both; }
+.item.fx-missing { animation: missingNudge .42s ease-out both; }
+.item.fx-missing .miss-btn.on { animation: missingPop .46s ease-out both; }
+.item.fx-unmissing .miss-btn, .item.fx-uncheck .chk { animation: checkPop .3s ease-out both; }
+@keyframes boughtSlide {
+  0% { transform:translateX(-12px);background:rgba(34,197,94,.14); }
+  60% { transform:translateX(2px);background:rgba(34,197,94,.06); }
+  100% { transform:translateX(0);background:transparent; }
+}
+@keyframes checkPop {
+  0% { transform:scale(.68); }
+  55% { transform:scale(1.22); }
+  100% { transform:scale(1); }
+}
+@keyframes checkAppear {
+  from { opacity:0;transform:rotate(45deg) translate(-1px,-1px) scale(.2); }
+  to { opacity:1;transform:rotate(45deg) translate(-1px,-1px) scale(1); }
+}
+@keyframes missingNudge {
+  0%,100% { transform:translateX(0); }
+  25% { transform:translateX(-5px); }
+  55% { transform:translateX(3px); }
+  80% { transform:translateX(-1px); }
+}
+@keyframes missingPop {
+  0% { transform:scale(.85);box-shadow:0 0 0 0 rgba(245,158,11,.45); }
+  60% { transform:scale(1.1);box-shadow:0 0 0 6px rgba(245,158,11,0); }
+  100% { transform:scale(1);box-shadow:0 0 0 0 rgba(245,158,11,0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .item, .item.fx-done, .item.fx-missing,
+  .item.fx-done .chk.done, .item.fx-done .chk.done::after,
+  .item.fx-missing .miss-btn.on, .item.fx-unmissing .miss-btn,
+  .item.fx-uncheck .chk { animation:none!important; transition:none!important; }
+}
 /* "missing at store" toggle chip (replaces the old did-you-know button) */
 .miss-btn{background:none;border:1px solid var(--border2);color:var(--muted);font-family:inherit;font-size:11px;font-weight:600;padding:3px 9px;border-radius:12px;cursor:pointer;flex-shrink:0;transition:all 0.15s;}
 .miss-btn.on{background:rgba(245,158,11,0.15);border-color:var(--warn);color:var(--warn);}
@@ -313,7 +351,7 @@ header{display:flex;align-items:center;gap:10px;padding:12px 16px;padding-top:ca
           <span class="badge" id="item-count">0</span>
           <div class="list-progress-bar"><div id="list-progress-fill"></div></div>
           <span id="list-progress-pct" style="font-size:10px;color:var(--muted);flex-shrink:0"></span>
-          <button class="clear-done-btn" onclick="clearDone()">נקה ✓</button>
+          <button class="clear-done-btn" onclick="finishShopping()" title="מחק נקנו והעבר חסרים לקנייה הבאה">סיים קנייה</button>
           <button class="clear-done-btn" style="color:var(--danger);border-color:var(--danger)" onclick="clearAll()">מחק הכל</button>
         </div>
         <div id="items-scroll">
@@ -367,6 +405,11 @@ function saveCfgKey(key) {
 }
 let db = null, unsubscribe = null;
 let items = [];
+const itemAnimations = new Map();
+function markItemAnimation(id, type) {
+  itemAnimations.set(id, type);
+  setTimeout(() => { if (itemAnimations.get(id) === type) itemAnimations.delete(id); }, 650);
+}
 let chatHistory = [];
 let recog = null, isRec = false;
 let collapsedCats = new Set(JSON.parse(localStorage.getItem('collapsed_cats') || '[]'));
@@ -541,7 +584,7 @@ function render() {
             : (it.qty
                 ? `<span class="item-qty">${esc(it.qty)}</span>`
                 : `<button class="qty-add" onclick="changeQty('${it.id}',1)" title="הוסף כמות">+</button>`);
-          return `<div class="item${it.missing?' missing':''}">
+          return `<div class="item${it.missing?' missing':''}${itemAnimations.has(it.id)?' fx-'+itemAnimations.get(it.id):''}">
             <div class="chk ${it.done?'done':''}${it.missing&&!it.done?' miss':''}" onclick="toggle('${it.id}')"></div>
             ${it.health ? `<span class="health-dot h${it.health}"></span>` : ''}
             <div class="item-name-wrap">
@@ -579,6 +622,8 @@ function toggleMissing(id) {
   const it = items.find(i => i.id === id);
   if (!it) return;
   it.missing = !it.missing;
+  if (it.missing) it.done = false; // An unavailable item cannot be bought as well
+  markItemAnimation(id, it.missing ? 'missing' : 'unmissing');
   persistItems(); render();
 }
 function saveNote(id, el) {
@@ -785,13 +830,16 @@ function toggle(id) {
   if (it) {
     const prev = items.map(i => ({...i}));
     it.done = !it.done;
+    if (it.done) it.missing = false;
+    markItemAnimation(id, it.done ? 'done' : 'uncheck');
     if (it.done) checkCatComplete(prev);
     persistItems(); render();
   }
 }
 let _confirmCb = null;
-function showConfirm(msg, onOk) {
+function showConfirm(msg, onOk, okLabel = 'מחק') {
   document.getElementById('conf-msg').textContent = msg;
+  document.getElementById('conf-ok').textContent = okLabel;
   _confirmCb = onOk;
   document.getElementById('conf-ok').onclick = () => { hideConfirm(); onOk(); };
   document.getElementById('conf-overlay').classList.add('open');
@@ -808,6 +856,28 @@ function delItem(id) {
     items = items.filter(i => i.id !== id);
     persistItems(); render();
   });
+}
+// Finish a shopping trip: bought items leave; remaining and unavailable items
+// carry forward as unmarked items, with their names, quantities and notes intact.
+function finishShoppingList() {
+  const bought = items.filter(i => i.done).length;
+  items = items.filter(i => !i.done).map(i => ({ ...i, done: false, missing: false }));
+  itemAnimations.clear();
+  persistItems(); render();
+  return bought;
+}
+function finishShopping() {
+  if (!items.length) { showToast('הרשימה כבר ריקה'); return; }
+  const bought = items.filter(i => i.done).length;
+  const left = items.length - bought;
+  showConfirm(
+    `לסיים קנייה? ${bought} מוצרים שנקנו יימחקו, ו־${left} מוצרים שלא נקנו יישארו לרשימה הבאה ללא סימונים.`,
+    () => {
+      const removed = finishShoppingList();
+      addBot(`הקנייה הסתיימה! ${removed} מוצרים שנקנו הוסרו, והשאר מוכנים לקנייה הבאה.`);
+    },
+    'סיים קנייה'
+  );
 }
 function clearDone() {
   const n = items.filter(i=>i.done).length;
@@ -829,7 +899,7 @@ function clearAll() {
 
 // ── Claude API ────────────────────────────────────────────
 const SYSTEM = `ניהול רשימת קניות. החזר JSON בלבד.
-פעולות: add | remove | update | toggle_done | clear_done | clear_all | chat
+פעולות: add | remove | update | toggle_done | finish_shopping | clear_done | clear_all | chat
 מחלקות: ירקות ופירות, מאפייה, חלב וביצים, בשר ודגים, מוצרי ניקיון, שימורים ויבשים, משקאות, קפואים, ממתקים וחטיפים, אחר
 פורמט: {"action":"...","items":[{"name":"...","qty":"...","category":"...","note":"..."}],"target":"...","new_name":"...","category":"...","reply":"..."}
 כללים:
@@ -837,6 +907,7 @@ const SYSTEM = `ניהול רשימת קניות. החזר JSON בלבד.
 - שם הפריט כולל צבע/גודל/מותג אם צוין. note לאדם/הוראה ספציפית
 - מילות כמות עמומות שאינן מספר (קצת, הרבה, מעט, כמה, חצי) — שמור אותן ב-note ואל תשמיט. למשל "קצת עגבניות" → name:"עגבניות", note:"קצת"
 - מתכון = חלץ רק מרכיבים (שם+כמות), דלג הוראות הכנה
+- "סיימתי קנייה" או "תתחיל רשימת קניות חדשה" → finish_shopping. פריטים שנקנו מוסרים; פריטים חסרים ושלא נקנו נשארים ומסומנים מחדש כלא נקנו ולא חסרים.
 - chat: המלצות ועצות ישירות ואמינות
 - reply קצר ונעים בעברית`;
 
@@ -958,6 +1029,8 @@ function applyCmd(cmd) {
     const q = cmd.target.toLowerCase();
     const it = items.find(i => i.name.toLowerCase().includes(q));
     if (it) { it.done = !it.done; persistItems(); render(); }
+  } else if (a === 'finish_shopping') {
+    finishShoppingList();
   } else if (a === 'clear_done') {
     items = items.filter(i=>!i.done);
     persistItems(); render();
