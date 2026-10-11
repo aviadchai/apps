@@ -36,8 +36,8 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 html,body{height:100%;height:100dvh;font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);overflow:hidden;}
 #app{display:flex;flex-direction:column;height:100dvh;}
-header{display:flex;align-items:center;gap:10px;padding:12px 16px;padding-top:calc(12px + env(safe-area-inset-top));background:rgba(28,28,30,0.88);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border);flex-shrink:0;}
-[data-theme=light] header{background:rgba(255,255,255,0.88);}
+header{display:flex;align-items:center;gap:10px;padding:12px 16px;padding-top:calc(12px + env(safe-area-inset-top));background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;}
+[data-theme=light] header{background:var(--surface);}
 .logo{display:flex;align-items:center;color:#3b82f6;}
 [data-theme=light] .logo{color:#2563eb;}.header-text{flex:1;}
 .header-text h1{font-size:16px;font-weight:700;letter-spacing:-0.3px;}
@@ -145,9 +145,10 @@ header{display:flex;align-items:center;gap:10px;padding:12px 16px;padding-top:ca
 }
 #send-btn{background:linear-gradient(145deg,#5b9fff,#1d4ed8);border:none;color:#fff;border-radius:50%;padding:0;cursor:pointer;height:42px;width:42px;flex-shrink:0;transition:opacity 0.2s;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 12px rgba(29,78,216,0.5),inset 0 1px 0 rgba(255,255,255,0.25);}
 #send-btn:hover{opacity:0.82;}
-#toast{display:none;position:fixed;top:62px;left:50%;transform:translateX(-50%);background:rgba(44,44,46,0.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--border2);border-radius:16px;padding:10px 14px 10px 18px;font-size:13px;color:var(--text);line-height:1.5;max-width:88vw;align-items:flex-start;gap:10px;z-index:200;box-shadow:0 8px 32px rgba(0,0,0,0.6);}
-[data-theme=light] #toast{background:rgba(255,255,255,0.95);color:#000;}
-#toast.show{display:flex;animation:toastIn 0.2s ease;}
+#toast{display:none;position:fixed;top:var(--visible-center,50dvh);left:50%;transform:translate(-50%,-50%);background:var(--surface);border:1px solid var(--border2);border-radius:18px;padding:14px 16px;font-size:14px;color:var(--text);line-height:1.5;width:max-content;max-width:min(360px,88vw);align-items:center;gap:10px;z-index:460;box-shadow:0 12px 36px rgba(0,0,0,0.28);text-align:center;}
+[data-theme=light] #toast{background:var(--surface);color:var(--text);}
+#toast.show{display:flex;animation:toastCenterIn .25s cubic-bezier(.22,1,.36,1) both;}
+@keyframes toastCenterIn{from{opacity:0;transform:translate(-50%,calc(-50% + 8px)) scale(.97)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
 #toast.processing{border-color:var(--warn);color:var(--warn);}
 .toast-msg{flex:1;}.toast-close{background:none;border:none;cursor:pointer;color:var(--muted);font-size:18px;line-height:1;flex-shrink:0;padding:0;}
 /* Confirm dialog */
@@ -251,8 +252,8 @@ header{display:flex;align-items:center;gap:10px;padding:12px 16px;padding-top:ca
     background:rgba(255,255,255,0.65);
     box-shadow:0 0 0 0.5px rgba(255,255,255,0.9),0 8px 36px rgba(0,0,0,0.08);
   }
-  #input-row:focus-within{animation:blueGlow 2s ease-in-out infinite;}
-  [data-theme=light] #input-row:focus-within{animation:blueGlow 2s ease-in-out infinite;}
+  #input-row:focus-within{animation:none;}
+  [data-theme=light] #input-row:focus-within{animation:none;}
   #input-wrap{background:transparent;border-color:transparent;padding:8px 6px;}
   .btn-circle{width:44px;height:44px;font-size:20px;border:none;background:none;}
   #send-btn{height:44px;width:44px;}
@@ -289,8 +290,8 @@ header{display:flex;align-items:center;gap:10px;padding:12px 16px;padding-top:ca
     background:rgba(255,255,255,0.65);
     box-shadow:0 0 0 0.5px rgba(255,255,255,0.9),0 8px 36px rgba(0,0,0,0.08);
   }
-  #input-row:focus-within{animation:blueGlow 2s ease-in-out infinite;}
-  [data-theme=light] #input-row:focus-within{animation:blueGlow 2s ease-in-out infinite;}
+  #input-row:focus-within{animation:none;}
+  [data-theme=light] #input-row:focus-within{animation:none;}
   #input-wrap{background:transparent;border-color:transparent;padding:8px 6px;}
   .btn-circle{width:44px;height:44px;font-size:20px;border:none;background:none;}
   #send-btn{height:44px;width:44px;}
@@ -311,10 +312,20 @@ header{display:flex;align-items:center;gap:10px;padding:12px 16px;padding-top:ca
 #add-feedback.show .add-check path{animation:feedbackCheck .32s .06s ease forwards;}
 #add-feedback-detail{font-size:13px;color:var(--muted);line-height:1.5;margin-top:6px;max-height:30vh;overflow:hidden;overflow-wrap:anywhere;}
 @keyframes feedbackCheck{to{stroke-dashoffset:0}}
-#app{height:var(--visible-height,100dvh);min-height:0;}
+/* A single viewport coordinate system: the app shrinks with the visual
+   viewport, and the composer follows its bottom once (never twice). */
+#app{height:var(--visible-height,100dvh);min-height:0;position:relative;}
 .body,#main-screen,#list-panel{min-height:0;}
-#chat-panel{bottom:calc(var(--keyboard-inset,0px) + max(8px,env(safe-area-inset-bottom)));}
-#input-row:focus-within{backdrop-filter:none;-webkit-backdrop-filter:none;background:var(--surface);animation:none;}
+#main-screen{position:relative;}
+#chat-panel{position:absolute;bottom:max(8px,env(safe-area-inset-bottom));}
+#input-row{background:var(--surface);backdrop-filter:none;-webkit-backdrop-filter:none;
+  box-shadow:0 8px 30px rgba(0,0,0,.19);transition:none;}
+[data-theme=light] #input-row{background:var(--surface);box-shadow:0 8px 24px rgba(0,0,0,.09);}
+#input-row:focus-within,[data-theme=light] #input-row:focus-within{
+  background:var(--surface);backdrop-filter:none;-webkit-backdrop-filter:none;
+  box-shadow:0 8px 30px rgba(0,0,0,.19);animation:none;}
+#chat-panel,#input-row,#txt{scroll-behavior:auto;}
+@media (prefers-reduced-motion:reduce){#toast.show{animation:none;}}
 .item{position:relative;padding:0;overflow:hidden;touch-action:pan-y;}
 .item-content{position:relative;z-index:1;display:flex;align-items:center;gap:10px;padding:12px 14px;width:100%;min-width:0;background:var(--bg);transition:transform .22s cubic-bezier(.22,1,.36,1);}
 .item-name-wrap{min-width:0;}
@@ -1471,22 +1482,26 @@ function showAddedFeedback(names, edited = false) {
 }
 (function trackKeyboard() {
   const viewport = window.visualViewport;
-  let frame;
+  let frame = 0, previousHeight = 0;
   function update() {
     cancelAnimationFrame(frame);
     frame = requestAnimationFrame(() => {
       if (viewport && Math.abs(viewport.scale - 1) > .05) return;
-      const height = viewport ? viewport.height : window.innerHeight;
-      const top = viewport ? viewport.offsetTop : 0;
+      const height = Math.round(viewport ? viewport.height : window.innerHeight);
+      if (!height) return;
       const root = document.documentElement.style;
-      root.setProperty('--visible-height', height+'px');
-      root.setProperty('--visible-top', top+'px');
-      root.setProperty('--keyboard-inset', Math.max(0, window.innerHeight-height-top)+'px');
+      // Don't chase visualViewport.scroll/offsetTop when iOS pans the caret:
+      // those changes previously sent the focused input bar up and down.
+      if (Math.abs(height - previousHeight) >= 2) {
+        previousHeight = height;
+        root.setProperty('--visible-height', height+'px');
+        root.setProperty('--visible-center', Math.round(height / 2)+'px');
+      }
     });
   }
   viewport?.addEventListener('resize', update);
-  viewport?.addEventListener('scroll', update);
   window.addEventListener('resize', update);
+  window.addEventListener('orientationchange', update);
   update();
 })();
 
@@ -1652,7 +1667,8 @@ async function toggleMic() {
 <script>
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js');
-  navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
+  // Apply an updated shell on the next normal visit, never by unexpectedly
+  // reloading the page during typing or a shopping interaction.
 }
 </script>
 
