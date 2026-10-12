@@ -99,20 +99,33 @@ const home=[
 {id:"hhinge",name:"כפיפת ירך עם משקולות",sub:"ישבן וירך אחורית",reps:"8–12 חזרות",img:"Stiff-Legged_Dumbbell_Deadlift",steps:["עמוד זקוף, ברכיים מעט כפופות, משקולות קלות לצד הגוף.","הזז את האגן לאחור והטה את הגוף קדימה תוך שמירה על גב ניטרלי ומשקולות קרובות לרגליים.","חזור לעמידה תוך יישור האגן והידוק קל של הישבן. אין צורך להגיע לרצפה."],tip:"הצילום מדגים דדליפט עם משקולות. למתחילים עדיפה כפיפה קטנה ונוחה של הברכיים, בלי לנעול אותן."},
 {id:"hfloor",name:"לחיצת חזה על הרצפה",sub:"חזה ויד אחורית",reps:"8–12 חזרות",img:"Dumbbell_Floor_Press",steps:["שכב על מזרן עם ברכיים כפופות והבא משקולות קלות למנח מעל החזה.","הורד בזהירות עד שהזרועות העליונות נוגעות קלות ברצפה.","לחץ כלפי מעלה בשליטה ונשוף בשלב הדחיפה."],tip:"הצילום נעשה בסביבת מכון, אבל אפשר לבצע על מזרן בבית ללא ספסל."},
 {id:"hrow",name:"חתירה ביד אחת",sub:"גב ויד קדמית",reps:"8–12 לכל צד",img:"One-Arm_Dumbbell_Row",steps:["הישען ביד אחת על רהיט כבד ויציב, ושמור על גב ניטרלי.","משוך את המשקולת ביד הנגדית לעבר האגן כשהמרפק נע לאחור.","החזר באיטיות והחלף צד. נסה לשמור על אותו מספר חזרות לכל צד."],tip:"הצילום משתמש בספסל. בבית אפשר להשתמש במשטח יציב בגובה נוח שאינו מתנדנד."},
-{id:"hplank",name:"פלאנק",sub:"בטן ושרירי ליבה",reps:"20–30 שניות",img:"Plank",steps:["התמקם על האמות וקצות האצבעות על משטח נוח.","שמור על בטן אסופה בעדינות ועל גוף יציב; המשך לנשום.","עצור כשמרגישים שהיציבה מתחילה להיפגע. אפשר להניח ברכיים על המזרן."],tip:"לא צריך משקולות בתרגיל זה."},
+{id:"hcurl",name:"כפיפת מרפקים עם משקולות",sub:"יד קדמית (בייספס)",reps:"10–12 חזרות",img:"Dumbbell_Bicep_Curl",steps:["עמוד זקוף עם משקולת בכל יד, זרועות לצד הגוף וכפות הידיים פונות קדימה.","כופף את המרפקים והעלה את המשקולות לכיוון הכתפיים, בלי להניע את הכתפיים או להתנדנד.","החזר את המשקולות באיטיות לצד הגוף ונשום באופן טבעי."],tip:"השתמש במשקולות שאפשר לשלוט בהן בלי תנופה. המרפקים נשארים קרובים לצדי הגוף לאורך התנועה."},
 {id:"hpress",name:"לחיצת כתפיים עם משקולות",sub:"כתפיים ויד אחורית",reps:"8–10 חזרות",img:"Seated_Dumbbell_Press",steps:["שב על כיסא יציב והחזק משקולות קלות סמוך לכתפיים.","לחץ כלפי מעלה בטווח תנועה נוח בלי לקשת את הגב.","הורד באיטיות. הפסק אם מופיע כאב בכתפיים."],tip:"עדיף להתחיל ממשקולות קלות וללמוד תנועה חלקה לפני הוספת משקל."},
-{id:"hcurl",name:"כפיפת מרפקים",sub:"יד קדמית",reps:"8–12 חזרות",img:"Hammer_Curls",steps:["עמוד זקוף עם משקולת בכל יד וכפות ידיים הפונות פנימה.","כופף את המרפקים תוך שמירה על זרועות עליונות קרוב לגוף.","הורד לאט בלי להתנדנד או להניע את הגב."],tip:"משקל קל שאפשר להרים ללא תנופה הוא נקודת פתיחה טובה."}
+{id:"hplank",name:"פלאנק",sub:"בטן ושרירי ליבה",reps:"20–30 שניות",img:"Plank",steps:["התמקם על האמות וקצות האצבעות על משטח נוח.","שמור על בטן אסופה בעדינות ועל גוף יציב; המשך לנשום.","עצור כשמרגישים שהיציבה מתחילה להיפגע. אפשר להניח ברכיים על המזרן."],tip:"לא צריך משקולות בתרגיל זה."}
 ];
 const $=id=>document.getElementById(id);
 const KEY="aviad-workout-v6";
 const safeGet=()=>{try{return JSON.parse(localStorage.getItem(KEY)||"{}")}catch(e){return {}}};
 let saved=safeGet(),place=saved.place==="home"?"home":"gym",size=saved.size===7?7:5,plans=saved.plans&&typeof saved.plans==="object"?saved.plans:{};
+
+if(saved.homeCurlV1!==true){
+ const previousOrder=["hsquat","hhinge","hfloor","hrow","hplank","hpress","hcurl"];
+ for(const count of [5,7]){
+  const existing=plans["home-"+count];
+  if(!existing||!Array.isArray(existing.done))continue;
+  const targetOrder=["hsquat","hhinge","hfloor","hrow","hcurl","hpress","hplank"].slice(0,count);
+  const oldOrder=previousOrder.slice(0,count);
+  const oldDone=existing.done.slice(),oldDur=Array.isArray(existing.dur)?existing.dur.slice():[];
+  existing.done=targetOrder.flatMap(id=>{const at=oldOrder.indexOf(id);return at<0?[false,false]:[Boolean(oldDone[2*at]),Boolean(oldDone[2*at+1])]});
+  existing.dur=targetOrder.flatMap(id=>{const at=oldOrder.indexOf(id);return at<0?[0,0]:[Number(oldDur[2*at])||0,Number(oldDur[2*at+1])||0]});
+ }
+}
 let restSeconds=[60,90,120].includes(saved.restSeconds)?saved.restSeconds:90;
 let voice=false,sessionMs=0,exerciseMs=0,setMs=0,sessionRunning=false,setRunning=false,restMs=0,last=performance.now();
 function code(){return place+"-"+size}
 function list(){return (place==="home"?home:gym).slice(0,size)}
 function plan(){let p=plans[code()];if(!p||!Array.isArray(p.done)||p.done.length!==size*2){p={done:Array(size*2).fill(false),dur:Array(size*2).fill(0)};plans[code()]=p}return p}
-function save(){try{localStorage.setItem(KEY,JSON.stringify({place:place,size:size,plans:plans,restSeconds:restSeconds}))}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({place:place,size:size,plans:plans,restSeconds:restSeconds,homeCurlV1:true}))}catch(e){}}
 function index(){return plan().done.findIndex(v=>!v)}
 function nDone(){return plan().done.filter(Boolean).length}
 function fmt(ms){const sec=Math.floor(Math.max(0,ms)/1000);return String(Math.floor(sec/60)).padStart(2,"0")+":"+String(sec%60).padStart(2,"0")}
