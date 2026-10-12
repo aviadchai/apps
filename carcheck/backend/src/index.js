@@ -66,13 +66,13 @@ async function storeObservation(db,plate,governmentMileage,vehicle){
 async function getHistory(db,plate){
   if(!db)return [];
   const r=await db.prepare(
-    "SELECT mileage_km,reading_date,date_type,source,first_seen_at,last_seen_at"+
+    "SELECT mileage_km,reading_date,date_type,source,source_url,evidence_type,first_seen_at,last_seen_at"+
     " FROM odometer_observations WHERE plate=?1 ORDER BY reading_date ASC,first_seen_at ASC LIMIT 60"
   ).bind(plate).all();
   return (r.results||[]).map(row=>({
     value:row.mileage_km,date:row.reading_date,
     dateType:row.date_type,source:row.source,
-    verified:row.source==="mot_open_data",
+    verified:row.source==="mot_open_data",sourceUrl:row.source_url||null,evidenceType:row.evidence_type||null,
     firstSeenAt:row.first_seen_at,lastSeenAt:row.last_seen_at
   }));
 }
