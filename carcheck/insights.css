@@ -1,0 +1,22 @@
+
+#carscope-insights{margin-top:30px;color:#22354b}
+#carscope-insights *{box-sizing:border-box}
+.ins-header{margin:26px 0 19px}.ins-header h2{font-size:25px;letter-spacing:-.8px;margin:4px 0}.ins-header p{font-size:13px;color:#75879a;line-height:1.8;margin:5px 0}.ins-eyebrow{color:#13a681;font-size:11px;font-weight:900}
+.ins-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px}.ins-box{background:white;border:1px solid #e2eaf0;border-radius:18px;padding:22px;min-width:0}.ins-full{margin-top:16px}
+.ins-title{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}.ins-title h3{font-size:18px;letter-spacing:-.5px;margin:0}.ins-title span{font-size:11px;border-radius:40px;border:1px solid #c2e9dc;color:#10886e;background:#eefbf6;padding:5px 10px}
+.ins-copy{font-size:12px;color:#78899b;line-height:1.85;margin:14px 0}.ins-chart{width:100%;height:auto;direction:ltr;display:block}
+.ins-notice{background:#f3f7fa;border:1px solid #dfe8ee;border-radius:11px;padding:11px 13px;margin:12px 0;line-height:1.7;color:#5c6e7e;font-size:12px}
+.ins-notice.good{background:#eafbf3;color:#147f62;border-color:#c5eddb}.ins-notice.warn{background:#fff9e8;color:#8b6018;border-color:#f0dfaf}.ins-notice.danger{background:#fff0ec;color:#a34034;border-color:#f5c8bc}
+.ins-row{display:flex;align-items:center;justify-content:space-between;gap:8px;border-bottom:1px solid #edf1f5;padding:10px 2px}.ins-row:last-child{border:0}.ins-row b{font-size:13px}.ins-row small{display:block;margin-top:4px;color:#7f8d9c;font-size:11px;line-height:1.5;overflow-wrap:anywhere}
+.ins-row small a{color:#117f66;text-decoration:underline}.ins-row button{background:white;color:#ad4646;border:1px solid #f0dad5;border-radius:8px;padding:5px 11px;font-family:inherit;font-size:11px;cursor:pointer}.ins-row.nonprivate{background:#fff7ee;border-radius:8px;padding:9px}
+.ins-risk{font-size:11px;font-weight:800;border:1px solid #f2caa5;color:#a66a28;background:#fff0df;border-radius:20px;padding:5px 9px;white-space:nowrap}
+.ins-details{background:#f5f9fa;border:1px solid #e2eaf0;border-radius:11px;padding:13px;margin-top:15px}.ins-details summary{color:#118b6f;cursor:pointer;font-weight:800;font-size:13px}
+.ins-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:13px}.ins-form label{display:flex;flex-direction:column;gap:6px;color:#52687b;font-weight:700;font-size:11px}
+.ins-form input,.ins-form select,.ins-compare input{width:100%;min-width:0;border:1px solid #d9e5ec;border-radius:9px;background:white;color:#1d3246;padding:10px;font-family:inherit;font-size:13px}
+.ins-form input:focus,.ins-form select:focus,.ins-compare input:focus{outline:2px solid #b0e9d5}.ins-primary{grid-column:1/-1;background:#25c99c;border:0;border-radius:10px;font-size:13px;color:#163c32;padding:12px;font-weight:800;cursor:pointer}.ins-wide{grid-column:1/-1}
+.ins-compare{margin-top:18px}.ins-compare label{font-size:12px;font-weight:700}.ins-compare>div:nth-child(2){display:flex;gap:7px;margin-top:7px}.ins-compare button{border:1px solid #bbe8d8;background:#e5f8ef;border-radius:9px;padding:8px 16px;color:#14765d;font-weight:800;cursor:pointer}
+.ins-ownergrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:17px 0}.ins-ownergrid>div{border:1px solid #e5edf3;background:#f7fafc;border-radius:11px;padding:10px;min-width:0}.ins-ownergrid small{display:block;color:#8999a8;font-size:10px}.ins-ownergrid b{display:block;margin-top:6px;font-size:13px;overflow-wrap:anywhere}
+.ins-links{display:flex;gap:9px;flex-wrap:wrap;margin:18px 0}.ins-links a{display:inline-block;border:1px solid #b9e7d5;background:#e9fbf4;color:#167359;border-radius:10px;padding:10px 13px;font-size:12px;font-weight:800;text-decoration:none}
+@media(max-width:760px){.ins-grid{grid-template-columns:1fr}.ins-box{padding:16px}.ins-header h2{font-size:22px}}
+@media(max-width:385px){.ins-form{grid-template-columns:1fr}.ins-ownergrid{grid-template-columns:1fr 1fr}}
+@media print{.ins-details,.ins-compare,.ins-links,.ins-row button{display:none!important}}
