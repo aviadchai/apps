@@ -33,10 +33,10 @@
 </div><form class="search-card" id="searchForm">
 <h2>איזה רכב נבדוק?</h2><p>הזנת מספר רישוי ישראלי, 7 או 8 ספרות</p>
 <label class="fieldlabel" for="plate">מספר רכב</label>
-<div class="plate-group"><span class="plate-tag">IL</span><input id="plate" name="plate" aria-label="מספר רכב" inputmode="numeric" maxlength="10" autocomplete="off" value="4870037" placeholder="00-000-00"></div>
+<div class="plate-group"><span class="plate-tag">IL</span><input id="plate" name="plate" aria-label="מספר רכב" inputmode="numeric" maxlength="10" autocomplete="off" value="" placeholder="מספר רישוי"></div>
 <button class="search-btn" type="submit" id="submit">בדוק את הרכב ←</button>
 <div class="error" id="error" role="alert"></div>
-<div class="helper">מוכן לבדוק? מספר לדוגמה: <button type="button" id="sample">48-700-37</button> (יונדאי טוסון 2016). <br>לא נמצאו נתונים? נראה בדיוק איזה מאגר לא החזיר תשובה.</div>
+<div class="helper">החיפוש מתבצע לפי מספר הרישוי שתזין. הנתונים נלקחים ממאגרים ציבוריים של משרד התחבורה, ככל שהם זמינים.</div>
 </form></div></section>
 <main class="wrap content">
 <div class="values"><div class="value"><div class="valueicon">◈</div><div><b>מידע רשמי</b><small>נתונים המגיעים ישירות ממאגרים ציבוריים</small></div></div><div class="value"><div class="valueicon">↗</div><div><b>עבר בעלויות</b><small>תאריכים וסוגי בעלות, כשהם זמינים</small></div></div><div class="value"><div class="valueicon">≋</div><div><b>קילומטראז׳</b><small>קריאת הטסט האחרון, כשקיימת</small></div></div></div>
@@ -56,53 +56,199 @@
 <footer class="footer"><div class="wrap footer-inner"><span>CarScope · כלי עזר עצמאי לבדיקה ראשונית של רכב משומש</span><span>נתונים: <a href="https://data.gov.il/he/datasets/ministry_of_transport/private-and-commercial-vehicles/053cea08-09bc-40ec-8f7a-156f0677aff3" target="_blank" rel="noopener">מפרט</a> · <a href="https://data.gov.il/he/datasets/ministry_of_transport/shinui_mivne" target="_blank" rel="noopener">היסטוריית רכב</a> | לא אתר ממשלתי</span></div></footer>
 <script>
 (function(){
-const $=id=>document.getElementById(id);
-const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const val=v=>v===null||v===undefined||v===''?'לא זמין':String(v);
-const fmt=n=>Number(n).toLocaleString('he-IL');
-const niceDate=s=>{if(!s)return 'לא זמין';let t=String(s);if(/^\d{6}$/.test(t))return t.slice(4,6)+'/'+t.slice(0,4);let d=new Date(t);return isNaN(d)?t:d.toLocaleDateString('he-IL')};
+"use strict";
+const $ = id => document.getElementById(id);
+const esc = s => String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const val = v => v===null||v===undefined||v===""?"לא זמין":String(v);
+const fmt = n => Number(n).toLocaleString("he-IL");
+const niceDate = s => {
+ if(!s)return "לא זמין";
+ const t=String(s);
+ if(/^\d{6}$/.test(t))return t.slice(4,6)+"/"+t.slice(0,4);
+ const d=new Date(t);
+ return isNaN(d) ? t : d.toLocaleDateString("he-IL");
+};
+const RESOURCES={
+ registration:"053cea08-09bc-40ec-8f7a-156f0677aff3",
+ mileage:"56063a99-8a3e-4ff4-912e-5966c0279bad",
+ ownership:"bb2355dc-9ec7-4f06-9c3f-3344672171da"
+};
+const ENDPOINT="https://data.gov.il/api/3/action/datastore_search";
+const IS_GITHUB_PAGES=location.hostname.endsWith(".github.io");
 let current=null;
-$('sample').addEventListener('click',()=>{$('plate').value='4870037';$('plate').focus()});
-$('plate').addEventListener('input',e=>{e.target.value=e.target.value.replace(/[^0-9]/g,'').slice(0,8)});
-function showError(message){$('error').textContent=message;$('error').classList.add('visible')}
-function hideError(){$('error').classList.remove('visible')}
+function showError(message){$("error").textContent=message;$("error").classList.add("visible")}
+function hideError(){$("error").classList.remove("visible")}
 function addDetail(label,value){return '<div class="detail"><label>'+esc(label)+'</label><b>'+esc(val(value))+'</b></div>'}
-function showResult(j){
- current=j; const v=j.vehicle||{};let h=j.history||{};const owners=h.ownership||[];const mileage=h.lastMileage;
- $('report').classList.add('visible');$('welcome').classList.add('hidden');
- let title=[v.manufacturer,v.model].filter(Boolean).join(' ');$('carTitle').textContent=title||'רכב מספר '+j.plate;
- $('reportSub').textContent='מספר רישוי '+j.plate.replace(/(\d{2})(\d{3})(\d{2})$/,'$1-$2-$3')+' · נתונים לפי המידע הציבורי הזמין';
- $('metricKm').textContent=Number.isFinite(mileage)?fmt(mileage):'לא זמין';
- $('kmNote').textContent=Number.isFinite(mileage)?'הקריאה האחרונה שמופיעה במאגר':'לא התקבל נתון ממאגר הנסועה';
- $('metricOwners').textContent=owners.length?fmt(owners.length):'לא זמין';
- $('metricYear').textContent=v.year||'לא זמין';
- $('details').innerHTML=[
- ['יצרן',v.manufacturer],['דגם',v.model],['רמת גימור',v.trim],['שנה',v.year],
- ['מנוע (קוד)',v.engineCode],['סוג דלק',v.fuel],['צבע',v.color],['בעלות נוכחית (סוג)',v.currentOwnership],
- ['תאריך טסט אחרון',niceDate(v.lastTestDate)],['תוקף רישיון',niceDate(v.registrationExpiry)],
- ['מועד עלייה לכביש',v.firstOnRoad],['צמיג קדמי',v.frontTire]
- ].map(x=>addDetail(x[0],x[1])).join('');
- $('owners').innerHTML=owners.length ? owners.map((o,i)=>'<div class="timeline-item"><strong>'+esc(niceDate(o.date))+' — '+esc(val(o.type))+'</strong><small>רשומה מס׳ '+(i+1)+' מתוך הנתונים המפורסמים</small></div>').join('') : '<p>לא נמצאו רשומות בעלות במאגר הציבורי עבור הרכב. אין בכך אישור שהוא יד ראשונה.</p>';
- const old=v.year&&Number(v.year)<2017;
- const noHist=(!owners.length&&!Number.isFinite(mileage));
- $('coverage').classList.toggle('hidden',!(old||noHist));
- if(old||noHist){$('coverage').innerHTML='<span style="font-size:23px">ⓘ</span><div><b>'+ (old?'כיסוי היסטורי מוגבל לרכב משנת '+esc(v.year):'לא נמצאו נתוני היסטוריה')+'</b>מאגרי ההיסטוריה הממשלתיים מיועדים בעיקר לרכבים פעילים משנת 2017 ואילך. אין להסיק מחוסר נתונים לגבי מספר הידיים או אמינות הקילומטראז׳.</div>'}
- const names={registration:'מאגר רישוי ומפרט',mileage:'מאגר ק״מ בטסט האחרון',ownership:'מאגר היסטוריית בעלויות'};
- $('sourceList').innerHTML=Object.entries(names).map(([key,name])=>{let state=j.sources[key];const labels={found:'נמצאו נתונים',empty:'אין רשומה',error:'המקור לא זמין'};let cls=state==='found'?'ok':state==='error'?'bad':'missing';return '<div class="srcrow"><span>'+name+'</span><span class="'+cls+'">'+(labels[state]||'לא ידוע')+'</span></div>'}).join('');
- $('checkedAt').textContent='נבדק '+new Date(j.checkedAt).toLocaleString('he-IL');
- $('report').scrollIntoView({behavior:'smooth',block:'start'});
+function getGovURL(kind,plate){
+ const u=new URL(ENDPOINT);
+ u.searchParams.set("resource_id",RESOURCES[kind]);
+ u.searchParams.set("filters",JSON.stringify({mispar_rechev:Number(plate)}));
+ u.searchParams.set("limit",kind==="ownership"?"150":"3");
+ return u;
 }
-$('searchForm').addEventListener('submit',async function(e){
- e.preventDefault();hideError();
- const plate=$('plate').value.replace(/\D/g,'');if(!/^\d{7,8}$/.test(plate))return showError('יש להזין מספר רכב ישראלי בן 7 או 8 ספרות.');
- const btn=$('submit');btn.disabled=true;btn.textContent='בודקים מול המאגרים...';
- try{const r=await fetch('/api/vehicle?plate='+encodeURIComponent(plate),{headers:{Accept:'application/json'}});const j=await r.json();
- if(!r.ok)throw Error(j.error||'לא ניתן להשלים את הבדיקה');
- if(!j.vehicle&&!Number.isFinite(j.history?.lastMileage)&&!j.history?.ownership?.length){$('report').classList.remove('visible');$('welcome').classList.remove('hidden');showError('לא נמצאה רשומה במסדי הנתונים שנענו לבקשה. ייתכן שמדובר ברכב לא פעיל או בכיסוי מוגבל.');return}
- showResult(j);
- }catch(err){showError(err.message||'תקלה זמנית. נסה שוב בעוד מספר דקות.')}
- finally{btn.disabled=false;btn.textContent='בדוק את הרכב ←'}
+function validateGov(json){
+ if(!json||json.success!==true||!Array.isArray(json.result?.records))throw new Error("מאגר הממשלה החזיר תשובה שאינה תקינה.");
+ return json.result.records;
+}
+async function directGov(kind,plate){
+ const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),9000);
+ try{
+   const resp=await fetch(getGovURL(kind,plate).toString(),{signal:ctl.signal,mode:"cors",headers:{Accept:"application/json"}});
+   if(!resp.ok)throw new Error("משרד התחבורה החזיר שגיאה "+resp.status);
+   return validateGov(await resp.json());
+ } finally{clearTimeout(tm)}
+}
+function govJsonp(kind,plate){
+ // CKAN government API supports JSONP for browser clients on origins without CORS.
+ // Only numeric plate and whitelisted resource IDs are sent to this trusted endpoint.
+ return new Promise((resolve,reject)=>{
+   const callback="__carscopeGov_"+Math.random().toString(36).slice(2);
+   const url=getGovURL(kind,plate);
+   url.searchParams.set("callback",callback);
+   const el=document.createElement("script");
+   let finished=false;
+   const timer=setTimeout(()=>finish(new Error("פג זמן ההמתנה למאגר הממשלה.")),10000);
+   function finish(error,data){
+     if(finished)return;
+     finished=true;clearTimeout(timer);el.remove();
+     try{delete window[callback]}catch(e){window[callback]=undefined}
+     if(error)reject(error);else resolve(data);
+   }
+   window[callback]=payload=>{try{finish(null,validateGov(payload))}catch(e){finish(e)}};
+   el.src=url.toString();el.async=true;
+   el.onerror=()=>finish(new Error("הדפדפן לא הצליח להתחבר למאגר משרד התחבורה."));
+   document.head.appendChild(el);
+ });
+}
+async function govRecords(kind,plate){
+ try{return await directGov(kind,plate)}
+ catch(error){
+   // A cross-origin browser request may be blocked by CORS. CKAN also
+   // supports JSONP: use it as an alternative rather than fabricate records.
+   try{return await govJsonp(kind,plate)}
+   catch(e){throw new Error(e.message+" מקור: "+kind)}
+ }
+}
+function mapVehicle(r){
+ if(!r)return null;
+ return {
+   manufacturer:r.tozeret_nm||null,
+   model:r.kinuy_mishari||null,
+   trim:r.ramat_gimur||null,
+   year:r.shnat_yitzur||null,
+   engineCode:r.degem_manoa||null,
+   fuel:r.sug_delek_nm||null,
+   color:r.tzeva_rechev||null,
+   currentOwnership:r.baalut||null,
+   lastTestDate:r.mivchan_acharon_dt||null,
+   registrationExpiry:r.tokef_dt||null,
+   firstOnRoad:r.moed_aliya_lakvish||null,
+   frontTire:r.zmig_kidmi||null
+ };
+}
+async function searchDirect(plate){
+ const keys=Object.keys(RESOURCES);
+ const settled=await Promise.allSettled(keys.map(k=>govRecords(k,plate)));
+ const sources={},records={};
+ keys.forEach((k,i)=>{
+   const s=settled[i];
+   records[k]=s.status==="fulfilled"?s.value:[];
+   sources[k]=s.status==="rejected"?"error":s.value.length?"found":"empty";
+ });
+ if(keys.every(k=>sources[k]==="error")){
+   throw new Error("לא הצלחתי להתחבר למאגרי משרד התחבורה. ייתכן שהגישה נחסמה מהדפדפן. כדאי לנסות שוב מאוחר יותר.");
+ }
+ const r=records.mileage[0];
+ const raw=r?.kilometer_test_aharon;
+ const km=raw==null||raw===""?null:Number(raw);
+ const owners=records.ownership.map(o=>({date:o.baalut_dt==null?null:String(o.baalut_dt),type:o.baalut||null})).sort((a,b)=>(a.date||"").localeCompare(b.date||""));
+ return {plate,checkedAt:new Date().toISOString(),vehicle:mapVehicle(records.registration[0]),
+  history:{lastMileage:Number.isFinite(km)?km:null,ownership:owners},sources,coverage:{historyStartYear:2017,mileageSeriesAvailable:false}};
+}
+function showResult(j){
+ current=j;
+ const v=j.vehicle||{},h=j.history||{},owners=h.ownership||[];
+ $("report").classList.add("visible");$("welcome").classList.add("hidden");
+ const title=[v.manufacturer,v.model].filter(Boolean).join(" ");
+ $("carTitle").textContent=title||"רכב מספר "+j.plate;
+ $("reportSub").textContent="מספר רישוי "+j.plate+" · נתונים לפי המידע הציבורי הזמין";
+ $("metricKm").textContent=Number.isFinite(h.lastMileage)?fmt(h.lastMileage):"לא זמין";
+ $("kmNote").textContent=Number.isFinite(h.lastMileage)?"הקריאה האחרונה שמופיעה במאגר":"לא התקבל נתון ממאגר הנסועה";
+ $("metricOwners").textContent=owners.length?fmt(owners.length):"לא זמין";
+ $("metricYear").textContent=v.year||"לא זמין";
+ $("details").innerHTML=[
+  ["יצרן",v.manufacturer],["דגם",v.model],["רמת גימור",v.trim],
+  ["שנה",v.year],["מנוע (קוד)",v.engineCode],["סוג דלק",v.fuel],
+  ["צבע",v.color],["בעלות נוכחית (סוג)",v.currentOwnership],
+  ["תאריך טסט אחרון",niceDate(v.lastTestDate)],
+  ["תוקף רישיון",niceDate(v.registrationExpiry)],
+  ["מועד עלייה לכביש",v.firstOnRoad],["צמיג קדמי",v.frontTire]
+ ].map(x=>addDetail(x[0],x[1])).join("");
+ $("owners").innerHTML=owners.length?
+  owners.map((o,i)=>'<div class="timeline-item"><strong>'+esc(niceDate(o.date))+' — '+esc(val(o.type))+'</strong><small>רשומה מס׳ '+(i+1)+" מתוך הנתונים המפורסמים</small></div>").join(""):
+  "<p>לא נמצאו רשומות בעלות במאגר הציבורי עבור הרכב. אין בכך אישור שהוא יד ראשונה.</p>";
+ const old=v.year&&Number(v.year)<2017;
+ const noHist=!owners.length&&!Number.isFinite(h.lastMileage);
+ const warn=old||noHist;
+ $("coverage").classList.toggle("hidden",!warn);
+ if(warn){
+  $("coverage").innerHTML='<span style="font-size:23px">ⓘ</span><div><b>'+
+   (old?"כיסוי היסטורי מוגבל לרכב משנת "+esc(v.year):"אין נתוני היסטוריה זמינים")+
+   "</b>מאגרי ההיסטוריה הממשלתיים מכסים בעיקר רכבים פעילים משנת 2017 ואילך. היעדר נתונים אינו מעיד על מספר הידיים או על אמינות הקילומטראז׳.</div>";
+ }
+ const names={registration:"מאגר רישוי ומפרט",mileage:"מאגר ק״מ בטסט האחרון",ownership:"מאגר היסטוריית בעלויות"};
+ $("sourceList").innerHTML=Object.entries(names).map(([key,name])=>{
+  const state=j.sources[key];
+  const labels={found:"נמצאו נתונים",empty:"אין רשומה",error:"המקור לא זמין"};
+  return '<div class="srcrow"><span>'+name+'</span><span class="'+(state==="found"?"ok":state==="error"?"bad":"missing")+'">'+labels[state]+"</span></div>"
+ }).join("");
+ $("checkedAt").textContent="נבדק "+new Date(j.checkedAt).toLocaleString("he-IL");
+ $("report").scrollIntoView({behavior:"smooth",block:"start"});
+}
+$("plate").addEventListener("input",e=>{
+ const digits=e.target.value.replace(/[^0-9]/g,"").slice(0,8);
+ e.target.value=digits;
 });
-$('copyBtn').addEventListener('click',async()=>{if(!current)return;const v=current.vehicle||{},h=current.history||{};const text=['CarScope — דוח '+current.plate,[v.manufacturer,v.model,v.year].filter(Boolean).join(' '),'ק״מ בטסט האחרון: '+(Number.isFinite(h.lastMileage)?fmt(h.lastMileage):'לא זמין'),'רשומות בעלות: '+(h.ownership?.length||'לא זמינות'),'מקור: data.gov.il','מידע חלקי, לא תחליף לבדיקה מקצועית'].join('\n');try{await navigator.clipboard.writeText(text);$('copyBtn').textContent='הועתק ✓';setTimeout(()=>$('copyBtn').textContent='העתק סיכום',2000)}catch(e){$('copyBtn').textContent='לא ניתן להעתיק'}});
+$("searchForm").addEventListener("submit",async e=>{
+ e.preventDefault();hideError();
+ const plate=$("plate").value.replace(/\D/g,"");
+ if(!/^\d{7,8}$/.test(plate))return showError("יש להזין מספר רכב ישראלי בן 7 או 8 ספרות.");
+ const btn=$("submit");btn.disabled=true;btn.textContent="בודקים מול משרד התחבורה...";
+ try{
+  let j;
+  if(IS_GITHUB_PAGES) j=await searchDirect(plate);
+  else {
+   // Server-backed deployments use the local backend; static hosting
+   // falls back to the public API.
+   try{
+    const r=await fetch("./api/vehicle?plate="+encodeURIComponent(plate),{headers:{Accept:"application/json"}});
+    if(!r.ok)throw Error("API "+r.status);
+    j=await r.json();
+   }catch(_){j=await searchDirect(plate)}
+  }
+  if(!j.vehicle&&!Number.isFinite(j.history?.lastMileage)&&!j.history?.ownership?.length){
+   $("report").classList.remove("visible");
+   $("welcome").classList.remove("hidden");
+   const unavailable=Object.values(j.sources).some(s=>s==="error");
+   showError(unavailable?"חלק ממקורות המידע אינם זמינים, ולא נמצאה רשומה במקורות שהשיבו. נסה שוב מאוחר יותר.":"לא נמצאה רשומה למספר הרכב במאגרים הציבוריים. ייתכן שהרכב ישן או אינו פעיל.");
+   return;
+  }
+  showResult(j);
+ }catch(err){showError(err.message||"תקלה זמנית. נסה שוב מאוחר יותר.")}
+ finally{btn.disabled=false;btn.textContent="בדוק את הרכב ←";}
+});
+$("copyBtn").addEventListener("click",async()=>{
+ if(!current)return;
+ const v=current.vehicle||{},h=current.history||{};
+ const text=["CarScope — דוח "+current.plate,[v.manufacturer,v.model,v.year].filter(Boolean).join(" "),
+ "ק״מ בטסט האחרון: "+(Number.isFinite(h.lastMileage)?fmt(h.lastMileage):"לא זמין"),
+ "רשומות בעלות: "+(h.ownership?.length||"לא זמינות"),"מקור: data.gov.il",
+ "מידע חלקי, לא תחליף לבדיקה מקצועית"].join("\n");
+ try{
+  await navigator.clipboard.writeText(text);
+  $("copyBtn").textContent="הועתק ✓";
+  setTimeout(()=>$("copyBtn").textContent="העתק סיכום",2000);
+ }catch(e){$("copyBtn").textContent="לא ניתן להעתיק";}
+});
 })();
 </script></body></html>
