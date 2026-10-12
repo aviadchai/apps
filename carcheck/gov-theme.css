@@ -1,0 +1,31 @@
+:root{--navy:#092e63;--mint:#246add;--muted:#627793;--line:#d9e4ef;background:#f0f5fb;color:#152d52}
+body{background:#f0f5fb;color:#152d52}
+.top{background:#072957;border-bottom-color:#ffffff26}
+.brandlogo{background:#fff;color:#0951a6;border-radius:10px;transform:none}
+.brand span{color:#e0ebfb}
+.source-pill .dot,.dot{background:#f0c53e;box-shadow:0 0 0 4px #f0c53e19}
+.hero{background:radial-gradient(ellipse at 15% 15%,#215a9e 0,transparent 55%),linear-gradient(120deg,#0e438c,#062e65 66%,#061f47)}
+.hero:after{border-color:#ffffff14}
+.eyebrow{background:#bad8ff17;border-color:#c1d9ff4b;color:#eaf4ff}
+.hero h1 em{color:#f5cb33}
+.hero-details .check{color:#ffc934}
+.search-card{border:1px solid #bfd2e6;box-shadow:0 22px 50px #041c4490}
+.plate-group{border:3px solid #202733;background:#ffdd29;box-shadow:inset 0 1px #fff6a0}
+.plate-group:focus-within{border-color:#084c9a;box-shadow:0 0 0 3px #95baf6}
+.plate-group input{background:#ffdf31;color:#121a26;font-weight:900;letter-spacing:3px}
+.plate-group input::placeholder{color:#7b6c31;letter-spacing:0;font-size:17px;font-weight:600}
+.plate-tag{background:#f8d528;border-left:3px solid #1f252e;color:#111c2a;font-size:13px;letter-spacing:0}
+.search-btn,.ins-primary{background:#0d61c6;color:#fff}
+.search-btn:hover,.ins-primary:hover{background:#0b76df}
+.valueicon{background:#e7efff;color:#1a5eaf}
+.tag{background:#e4f0ff;border:1px solid #b8d4f7;color:#145a9e}
+.feature .symbol{background:#e9f0fc;color:#1c5ca8}
+.disclaimer{background:#e5eef9;border-color:#cadbec}
+.disclaimer strong{color:#13447a}
+.ins-info-button{border:1px solid #9bbcdf;background:#e6f1ff;color:#104b96;font-size:11px;border-radius:50%;font-weight:900;display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;padding:0;margin-inline-start:6px;vertical-align:middle;line-height:1;cursor:pointer}
+.ins-info-button:hover,.ins-info-button:focus{background:#1764b6;color:white}
+.ins-help-dialog{position:fixed;bottom:18px;left:18px;right:18px;max-width:430px;margin:0 auto;background:white;box-shadow:0 18px 60px #0a316a5e;border:1px solid #bcd4eb;border-radius:15px;padding:18px 20px;z-index:999;color:#173d70;line-height:1.8;font-size:13px}
+.ins-help-dialog[hidden]{display:none}
+.ins-help-dialog b{display:block;margin-bottom:4px;font-size:15px}
+.ins-help-dialog button{border:0;background:#ebf2fb;color:#204d80;font-size:19px;float:left;border-radius:9px;padding:0 10px;cursor:pointer}
+.ins-blue-footer{color:#768dab;font-size:11px;margin-top:18px}
