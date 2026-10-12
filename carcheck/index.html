@@ -6,6 +6,7 @@
 <title>CarScope | מידע שקוף לפני שקונים רכב</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./insights.css?v=3">
 <style>
 :root{font-family:Heebo,Arial,sans-serif;color:#152137;background:#f4f7fa;font-synthesis:none;--navy:#111d30;--mint:#52e0b6;--muted:#728095;--line:#e3eaf1;--radius:20px}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;min-height:100vh}button,input{font:inherit}a{color:inherit;text-decoration:none}button{cursor:pointer}button:disabled{opacity:.65;cursor:wait}
@@ -163,7 +164,7 @@ async function searchDirect(plate){
  const km=raw==null||raw===""?null:Number(raw);
  const owners=records.ownership.map(o=>({date:o.baalut_dt==null?null:String(o.baalut_dt),type:o.baalut||null})).sort((a,b)=>(a.date||"").localeCompare(b.date||""));
  return {plate,checkedAt:new Date().toISOString(),vehicle:mapVehicle(records.registration[0]),
-  history:{lastMileage:Number.isFinite(km)?km:null,ownership:owners},sources,coverage:{historyStartYear:2017,mileageSeriesAvailable:false}};
+  history:{lastMileage:Number.isFinite(km)?km:null,ownership:owners,origin:records.mileage[0]?.mkoriut_nm||null},sources,coverage:{historyStartYear:2017,mileageSeriesAvailable:false}};
 }
 function showResult(j){
  current=j;
@@ -203,6 +204,7 @@ function showResult(j){
   return '<div class="srcrow"><span>'+name+'</span><span class="'+(state==="found"?"ok":state==="error"?"bad":"missing")+'">'+labels[state]+"</span></div>"
  }).join("");
  $("checkedAt").textContent="נבדק "+new Date(j.checkedAt).toLocaleString("he-IL");
+ document.dispatchEvent(new CustomEvent("carscope:report",{detail:j}));
  $("report").scrollIntoView({behavior:"smooth",block:"start"});
 }
 $("plate").addEventListener("input",e=>{
@@ -251,4 +253,6 @@ $("copyBtn").addEventListener("click",async()=>{
  }catch(e){$("copyBtn").textContent="לא ניתן להעתיק";}
 });
 })();
-</script></body></html>
+</script>
+<script defer src="./insights.js?v=3"></script>
+</body></html>
