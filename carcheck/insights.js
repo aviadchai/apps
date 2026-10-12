@@ -87,16 +87,16 @@ function kmView(){
  if(!flags.length&&uniq.length>1)flags.push(notice("לא נמצאה נסיגה בנתונים הקיימים. זה אינו אישור שמד האוץ לא שונה.","good"));
  el("insKmAlerts").innerHTML=flags.join("");
  el("insKmRows").innerHTML=uniq.map(x=>'<div class="ins-row"><span><b>'+number(x.value)+' ק״מ</b><small>'+safe(x.date)+" · "+safe(x.source)+(x.kind==="gov"?" · מאגר ממשלתי":" · הוזן ידנית")+'</small></span>'+(x.kind==="gov"?"":'<button data-delk="'+safe(x.id)+'">מחק</button>')+"</div>").join("");
- var seller=load("seller")[0],current=Number(report.history?.lastMileage);
+ var seller=load("seller")[0],current=report.history?.lastMileage==null?null:Number(report.history.lastMileage);
  el("insSeller").value=seller?.value??"";
- el("insSellerAlert").innerHTML=seller&&Number.isFinite(current)?(seller.value+1000<current?notice("הצהרת המוכר ("+number(seller.value)+") נמוכה מקריאת הטסט ("+number(current)+"). יש לאמת את מד האוץ.","danger"):notice("הפער מהטסט האחרון: "+number(seller.value-current)+" ק״מ. הבדל חיובי עשוי להיות טבעי.","good")):"";
+ el("insSellerAlert").innerHTML=seller&&current!==null&&Number.isFinite(current)?(seller.value+1000<current?notice("הצהרת המוכר ("+number(seller.value)+") נמוכה מקריאת הטסט ("+number(current)+"). יש לאמת את מד האוץ.","danger"):notice("הפער מהטסט האחרון: "+number(seller.value-current)+" ק״מ. הבדל חיובי עשוי להיות טבעי.","good")):"";
 }
 function ownerView(){
  var h=report.history||{},v=report.vehicle||{},a=h.ownership||[],origin=String(h.origin||"").trim();
- var fleet=a.filter(x=>isFleet(x.type)),non=a.filter(x=>isNotPrivate(x.type));
- var risk=fleet.length||isFleet(origin);
+ var fleet=a.filter(x=>isFleet(x.type)),non=a.filter(x=>isNotPrivate(x.type)),currentType=String(v.currentOwnership||"").trim();
+ var risk=fleet.length||isFleet(origin)||isFleet(currentType);
  el("insOwnerInfo").innerHTML='<div class="ins-ownergrid"><div><small>רשומות בעלות</small><b>'+a.length+'</b></div><div><small>מקוריות</small><b>'+safe(origin||"לא זמינה")+'</b></div><div><small>בעלות נוכחית</small><b>'+safe(v.currentOwnership||"לא זמינה")+"</b></div></div>";
- var msg=risk?notice("נמצאה אינדיקציה להשכרה, ליסינג או בעלות מוסדית. חובה לבדוק ברישיון הרכב.","danger"):non.length||isNotPrivate(origin)?notice("קיימת בעלות שאינה פרטית (ייתכן סוחר). יש לבחון את משמעותה.","warn"):a.length?notice("הרשומות הזמינות מציגות בעלויות פרטיות בלבד. עדיין אין כאן אישור לכל ההיסטוריה.","good"):notice("לא התקבלו רשומות בעלות — אי אפשר להסיק שהרכב היה רק בבעלות פרטית.");
+ var msg=risk?notice("נמצאה אינדיקציה להשכרה, ליסינג או בעלות מוסדית. חובה לבדוק ברישיון הרכב.","danger"):non.length||isNotPrivate(origin)||isNotPrivate(currentType)?notice("קיימת בעלות שאינה פרטית (ייתכן סוחר). יש לבחון את משמעותה.","warn"):a.length?notice("הרשומות הזמינות מציגות בעלויות פרטיות בלבד. עדיין אין כאן אישור לכל ההיסטוריה.","good"):notice("לא התקבלו רשומות בעלות — אי אפשר להסיק שהרכב היה רק בבעלות פרטית.");
  el("insOwnerAlerts").innerHTML=msg;
  el("insOwnerRows").innerHTML=a.map(x=>'<div class="ins-row '+(isNotPrivate(x.type)?"nonprivate":"")+'"><span><b>'+safe(x.type||"לא ידוע")+'</b><small>'+safe(String(x.date||""))+'</small></span>'+(isNotPrivate(x.type)?'<span class="ins-risk">לא פרטי</span>':"")+"</div>").join("");
 }
