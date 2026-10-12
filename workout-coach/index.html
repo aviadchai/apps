@@ -1,358 +1,225 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="he" dir="rtl">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<meta name="theme-color" content="#101a2a" />
-<meta name="description" content="האימון שלי: מדריך אינטראקטיבי לשבעה תרגילי כוח עם תמונות, סימון סטים ומעקב התקדמות." />
-<title>האימון שלי • כוח לכל הגוף</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0e1c30">
+<meta name="description" content="אימון כוח מודרך ופשוט למכון ולבית. סטים לפי סדר, שעון שמתחיל בלחיצה והדגמות מצולמות לכל תרגיל.">
+<title>האימון שלי | אימון כוח מודרך</title>
 <style>
-:root { --bg:#f5f7fb; --surface:#ffffff; --text:#102037; --muted:#64748b; --line:#e4eaf1; --primary:#2864e9; --navy:#101a2a; --accent:#eaf1ff; --green:#078b65; --greenwash:#ddf8ea; --card:#fff; --radius:22px; --shadow:0 11px 35px rgba(23,45,80,.055); }
-* { box-sizing:border-box; }
-html { scroll-behavior:smooth; }
-body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif; margin:0; background:var(--bg); color:var(--text); font-size:15px; line-height:1.48; }
-button,input { font:inherit; }
-button { cursor:pointer; -webkit-tap-highlight-color:transparent; }
-button:focus-visible, input:focus-visible { outline:3px solid #89aafa; outline-offset:3px; }
-a { color:#245acf; }
-.shell { width:min(1110px,calc(100% - 36px)); margin:0 auto; }
-header { background:var(--navy); color:white; padding:32px 0 94px; position:relative; }
-.headrow { display:flex; justify-content:space-between; align-items:center; gap:14px; }
-.eyebrow { color:#c4d6ff; font-weight:750; font-size:12px; letter-spacing:.01em; display:flex; align-items:center; gap:8px; }
-.logo { border-radius:10px; width:32px; height:32px; background:#3276ff; display:grid; place-items:center; color:white; font-weight:800; font-size:20px; }
-h1 { font-size:clamp(30px,4.5vw,47px); line-height:1.1; margin:20px 0 8px; letter-spacing:-.06em; }
-.intro { color:#d1dbea; font-size:15px; max-width:600px; margin:0; }
-.topreset { color:#e9eefc; background:#ffffff12; border:1px solid #ffffff24; border-radius:12px; padding:9px 13px; display:flex; gap:7px; align-items:center; font-size:13px; }
-.page { margin-top:-62px; position:relative; padding-bottom:55px; }
-.progress-card { background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:22px 26px; display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:22px; }
-.ring { --p:0%; width:104px; height:104px; flex-shrink:0; border-radius:50%; background:conic-gradient(var(--primary) var(--p),#e8edf4 0); display:grid; place-items:center; }
-.ring-inner { background:white; height:81px; width:81px; border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; }
-.ring-number { font-size:27px; font-weight:850; line-height:1.1; letter-spacing:-.04em; }
-.ring-label { color:var(--muted); font-size:11px; }
-.overline { font-size:12px; font-weight:750; color:#536782; }
-.progress-title { font-size:24px; margin:1px 0 4px; font-weight:850; letter-spacing:-.045em; }
-.progress-sub { color:var(--muted); margin:0 0 14px; font-size:13px; }
-.track { height:9px; background:#e8eef7; border-radius:999px; overflow:hidden; }
-.track > span { height:100%; width:0; display:block; background:linear-gradient(90deg,#306aea,#56a2ff); border-radius:999px; transition:width .32s ease; }
-.mode { text-align:center; border-right:1px solid var(--line); padding-right:20px; min-width:152px; }
-.mode label { display:block; font-size:12px; color:var(--muted); font-weight:750; margin-bottom:8px; }
-.segment { border:1px solid #dbe4f0; background:#f2f6fb; border-radius:12px; display:flex; padding:3px; }
-.segment button { min-width:58px; flex:1; border:0; padding:9px 6px; font-size:12px; font-weight:700; border-radius:9px; background:transparent; color:#64748b; }
-.segment button.active { background:white; color:#124cc8; box-shadow:0 2px 8px #213d661e; }
-.small-foot { margin-top:7px; color:#8290a4; font-size:11px; }
-.main-cols { display:grid; grid-template-columns:minmax(0,1.7fr) minmax(290px,.95fr); gap:22px; margin-top:23px; align-items:start; }
-.panel { border:1px solid var(--line); background:var(--card); box-shadow:var(--shadow); border-radius:var(--radius); overflow:hidden; }
-.panel-header { display:flex; align-items:center; justify-content:space-between; padding:23px 25px 15px; gap:15px; }
-.panel-header h2 { margin:0; font-size:20px; letter-spacing:-.035em; }
-.section-kicker { font-size:12px; font-weight:800; color:var(--primary); margin-bottom:4px; }
-.head-nav { display:flex; gap:7px; }
-.navbtn { background:#f4f7fb; border:1px solid #e7ecf3; border-radius:10px; min-width:37px; height:37px; color:#365174; font-size:20px; }
-.navbtn:disabled { opacity:.35; cursor:not-allowed; }
-.hero-images { margin:0 24px; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
-.imagebox { border-radius:15px; overflow:hidden; background:#edf2f8; aspect-ratio: 1.52; position:relative; border:1px solid #e5ebf2; }
-.imagebox img { width:100%; height:100%; display:block; object-fit:cover; object-position:center; }
-.imagebox .imgfallback { position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center; align-items:center; background:linear-gradient(145deg,#eef3fa,#dce8f8); color:#607c9f; gap:3px; padding:14px; font-weight:750; }
-.imagebox .imgfallback svg { width:54px; opacity:.6; }
-.imagebox img:not([hidden]) + .imgfallback { display:none; }
-.imagebox span { position:absolute; right:10px; bottom:10px; color:#263b5d; background:#fffffff0; border-radius:8px; padding:4px 8px; font-size:11px; font-weight:800; box-shadow:0 2px 9px #00000017; }
-.ex-detail { padding:18px 25px 25px; }
-.tagline { display:flex; flex-wrap:wrap; gap:7px; margin-bottom:16px; }
-.tag { border:1px solid #e0e9f4; background:#f5f8fc; border-radius:8px; color:#47617d; padding:5px 10px; font-weight:700; font-size:12px; }
-.tag.blue { color:#205bd0; background:#eaf2ff; border-color:#d9e7fd; }
-.divider { height:1px; background:var(--line); margin:18px 0; }
-.ex-detail h3 { font-size:15px; margin:0 0 8px; letter-spacing:-.02em; }
-.steps { padding:0 22px 0 0; margin:0; color:#364b63; }
-.steps li { padding:0 0 7px; line-height:1.55; }
-.tip { margin-top:12px; border:1px solid #dce9ff; background:#f0f6ff; border-radius:12px; padding:12px 13px; color:#285486; font-size:13px; }
-.sets-label { display:flex; justify-content:space-between; gap:12px; align-items:center; margin-bottom:11px; }
-.sets-label h3 { margin:0; }
-.sets-label span { font-size:12px; color:var(--muted); }
-.sets-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
-.set-btn { display:flex; justify-content:center; align-items:center; gap:9px; background:#f7f9fc; border:1px solid #dce5ef; border-radius:13px; padding:14px 10px; color:#45607d; font-weight:800; transition:background .16s,border .16s; }
-.set-btn .check { width:23px; height:23px; border:2px solid #adc0d9; border-radius:7px; display:grid; place-items:center; font-size:16px; color:transparent; background:white; }
-.set-btn.done { background:var(--greenwash); border-color:#9be3c2; color:#076e4c; }
-.set-btn.done .check { background:var(--green); border-color:var(--green); color:white; }
-.action-row { display:grid; grid-template-columns:1fr auto; gap:10px; margin-top:14px; }
-.primary { border:0; background:var(--primary); color:white; border-radius:13px; padding:14px 18px; font-weight:800; font-size:14px; min-height:50px; box-shadow:0 6px 15px #2a62df29; }
-.primary:disabled { background:#a7b5c6; box-shadow:none; cursor:not-allowed; }
-.secondary { background:white; border:1px solid #d9e4f0; color:#375472; padding:12px 15px; min-height:50px; border-radius:13px; font-size:13px; font-weight:750; }
-.sidebar { padding:20px; }
-.sidebar-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; gap:10px; }
-.sidebar-top h2 { font-size:18px; margin:0; letter-spacing:-.04em; }
-.sidebar-top span { color:#74849a; font-size:12px; }
-.ex-list { display:grid; gap:8px; }
-.list-card { display:grid; grid-template-columns:63px minmax(0,1fr) auto; gap:10px; align-items:center; text-align:right; padding:9px; width:100%; background:#fff; border:1px solid #e9eef5; border-radius:14px; color:var(--text); }
-.list-card.active { background:#f0f5ff; border-color:#9ab9fc; box-shadow:0 0 0 1px #aec6ff; }
-.list-card.complete { background:#f6fcf9; border-color:#d9efe3; }
-.thumb { width:63px; height:57px; border-radius:9px; overflow:hidden; background:#e5eefa; display:flex; align-items:center; justify-content:center; color:#8292a8; font-size:21px; }
-.thumb img { width:100%; height:100%; object-fit:cover; }
-.list-name { font-size:13px; font-weight:800; display:block; line-height:1.32; }
-.list-detail { color:#7b8ca2; font-size:11px; display:block; margin-top:4px; }
-.mini-dots { display:flex; gap:4px; margin-top:7px; }
-.mini-dots span { width:10px; height:5px; border-radius:3px; background:#d6dfea; }
-.mini-dots span.done { background:#0eaa76; }
-.list-index { color:#90a0b6; font-size:12px; font-weight:850; padding-left:2px; }
-.list-card.active .list-index { color:#2564ea; }
-.list-card.complete .list-index { color:#078b65; }
-.sidebar-note { margin-top:16px; border-radius:12px; padding:12px 14px; background:#f5f8fc; font-size:12px; color:#60738b; line-height:1.55; }
-.rest-card { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 15px; border:1px solid #e7edf5; background:#fff; border-radius:16px; margin-top:14px; }
-.rest-card strong { display:block; font-size:14px; }
-.rest-card p { font-size:11px; color:var(--muted); margin:2px 0 0; }
-.rest-time { font-size:24px; font-weight:850; letter-spacing:.03em; font-variant-numeric:tabular-nums; }
-.timerbtn { border:1px solid #cfdbeb; border-radius:10px; padding:7px 12px; background:#f5f8fc; color:#235bd1; font-size:12px; font-weight:750; }
-.footer { text-align:center; font-size:12px; color:#71829a; padding:23px 14px 0; line-height:1.8; }
-.footer a { text-decoration:underline; text-underline-offset:3px; }
-.toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(25px); color:white; background:#14243c; border-radius:13px; padding:12px 20px; font-size:13px; font-weight:750; opacity:0; pointer-events:none; transition:.25s; z-index:100; white-space:nowrap; box-shadow:0 6px 20px #14243c3b; }
-.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
-.finished { padding:12px 16px; margin:15px 0 0; border-radius:12px; border:1px solid #abdec5; background:#e9f9f0; color:#086a4d; font-weight:750; display:none; }
-.finished.show { display:block; }
-footer .warn { max-width:770px; margin:5px auto 0; }
-@media(max-width:860px){ .main-cols { grid-template-columns:1fr; } .sidebar { order:2; } }
-@media(max-width:630px){
- .shell { width:calc(100% - 24px); }
- header { padding:22px 0 89px; }
- h1 { font-size:35px; }
- .topreset { font-size:12px; }
- .page { margin-top:-58px; }
- .progress-card { padding:16px; gap:13px; grid-template-columns:auto 1fr; }
- .ring { width:79px; height:79px; }
- .ring-inner { width:62px; height:62px; }
- .ring-number { font-size:22px; }
- .progress-title { font-size:21px; }
- .progress-sub { margin-bottom:9px; font-size:12px; }
- .mode { grid-column:1/-1; border-right:0; border-top:1px solid var(--line); padding:12px 0 0; display:flex; align-items:center; justify-content:space-between; gap:13px; }
- .mode label { margin:0; text-align:right; }
- .segment { min-width:166px; }
- .small-foot { display:none; }
- .main-cols { gap:16px; margin-top:16px; }
- .panel-header { padding:17px 17px 13px; }
- .panel-header h2 { font-size:19px; }
- .hero-images { margin:0 13px; gap:7px; }
- .imagebox { aspect-ratio:1.22; }
- .ex-detail { padding:17px; }
- .sets-grid { gap:8px; }
- .set-btn { padding:12px 8px; }
- .sidebar { padding:15px; }
-}
-@media(prefers-reduced-motion:reduce){*,*:before,*:after{transition:none !important;scroll-behavior:auto !important;}}
-</style>
-<style>
-.place-chooser{display:flex;gap:10px;margin-top:18px;max-width:420px}
-.place-chooser button{flex:1;background:#ffffff18;color:#fff;border:1px solid #ffffff45;border-radius:13px;min-height:47px;font-size:14px;font-weight:800}
-.place-chooser button.active{background:white;color:#1958c7}
-.coachbar{margin:0 24px 16px;padding:15px;border-radius:16px;background:#edf4ff;border:1px solid #cbdcf5}
-.coachbar h3{margin:0 0 9px;font-size:15px}
-.clocks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.clock{background:white;border:1px solid #d8e4f5;border-radius:12px;text-align:center;padding:9px 3px}
-.clock small{display:block;color:#7286a2;font-size:11px}
-.clock b{display:block;direction:ltr;font-size:22px;font-variant-numeric:tabular-nums}
-.coach-actions{display:flex;gap:8px;margin-top:12px}
-.coach-actions button{flex:1;border:1px solid #bed2ec;border-radius:10px;background:#fff;color:#2258a5;padding:10px 7px;font-weight:800;font-size:12px}
-.coach-actions button.active{background:#1e64df;color:#fff}
-.coachbar p{font-size:12px;color:#496485;margin:10px 0 0}
-.imagebox img{object-fit:contain;background:#edf4ff;padding:3px}
-.thumb img{object-fit:contain}
-.checkarea{background:#fff;border:1px solid #dce5f2;padding:15px;margin-top:13px;border-radius:16px;font-size:12px}
-.checkarea button{padding:9px 12px;border:1px solid #ccddef;background:#f6f9ff;border-radius:10px;font-weight:750;color:#315f99}
-#selfResult{color:#536985;line-height:1.7;margin:8px 0 0}
-@media(max-width:630px){.coachbar{margin:0 13px 12px;padding:12px}.clock b{font-size:18px}.clocks{gap:5px}.coach-actions{gap:5px}.place-chooser{width:100%}}
+:root{color-scheme:light;--bg:#f5f7fa;--ink:#11243c;--muted:#718094;--line:#e4eaf1;--blue:#2467e9;--dark:#0e1c30;--green:#098566;--pale:#eaf2ff}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;font-size:15px;-webkit-font-smoothing:antialiased}
+button{font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}button:focus-visible{outline:3px solid #93b9ff;outline-offset:2px}
+header{background:var(--dark);color:white;padding:28px max(18px,env(safe-area-inset-right)) 31px}
+.head-inner{max-width:800px;margin:auto}.eyebrow{color:#99b7e9;letter-spacing:.6px;font-size:12px;font-weight:850}.hero-row{display:flex;align-items:start;justify-content:space-between;gap:12px}.brand{font-size:29px;letter-spacing:-.6px;font-weight:850;margin:6px 0 5px}.subtitle{color:#b7c7dd;font-size:13px;line-height:1.6;margin:0}
+.iconbutton{border:1px solid #ffffff36;color:inherit;background:#ffffff14;width:40px;height:40px;display:grid;place-items:center;border-radius:12px;font-size:20px}
+.switchers{display:flex;gap:10px;margin:22px 0 0;align-items:center;flex-wrap:wrap}.seg{display:flex;background:#ffffff16;border:1px solid #ffffff18;padding:4px;gap:3px;border-radius:13px}
+.seg button{padding:9px 15px;border:0;border-radius:10px;background:transparent;color:#bdcbe0;font-weight:780;font-size:13px}
+.seg button.sel{background:white;color:#123c79;box-shadow:0 2px 6px #0001}.seg.small button{padding:9px 12px}
+.topmeta{display:flex;align-items:center;gap:10px;margin-top:21px}.bar{height:6px;background:#ffffff22;border-radius:20px;overflow:hidden;flex:1}.bar span{display:block;width:0;background:#69b7ff;height:100%;transition:width .25s;border-radius:20px}.topmeta span{font-size:12px;color:#c2d0e2;font-weight:700;white-space:nowrap}
+main{max-width:800px;margin:0 auto;padding:17px 16px 80px}
+.clockbar{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));background:white;border:1px solid var(--line);border-radius:17px;box-shadow:0 5px 18px #192a4107;padding:14px 3px;margin-bottom:18px}
+.clockbar .clock{text-align:center;position:relative}.clock+.clock:before{content:"";position:absolute;right:0;top:7px;bottom:7px;width:1px;background:var(--line)}
+.clock label{display:block;color:#8796a7;font-size:11px;font-weight:760}.clock strong{display:block;color:var(--ink);font-size:24px;font-weight:840;font-variant-numeric:tabular-nums;direction:ltr;margin-top:5px}
+.sectionline{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:20px 2px 10px}
+.sectionline h2{font-size:17px;margin:0;letter-spacing:-.2px}.caption{font-size:12px;color:var(--muted)}
+.exercise{background:white;border:1px solid var(--line);border-radius:16px;margin:0 0 10px;overflow:hidden;box-shadow:0 2px 12px #172b4505;transition:border-color .2s}
+.exercise.current{border-color:#a8c7ff;box-shadow:0 4px 20px #2467e912}
+.exhead{padding:14px;display:flex;align-items:center;gap:11px}
+.number{width:35px;height:35px;flex:none;display:grid;place-items:center;border-radius:11px;background:#f0f4fa;color:#72849c;font-size:13px;font-weight:850}
+.current .number{background:#e8f0ff;color:#2667db}.completed .number{background:#e0f7ed;color:#087c60}
+.exname{min-width:0;flex:1}.exname strong{display:block;font-size:15px;font-weight:840}.exname small{display:block;color:var(--muted);font-size:11px;margin-top:4px}
+.pill{font-size:11px;padding:5px 9px;border-radius:30px;background:#edf5ff;color:#2e6bbd;font-weight:800;white-space:nowrap}.pill.done{background:#e4f7ed;color:#078565}.pill.muted{background:#f2f4f8;color:#8090a3}
+.infobtn{width:29px;height:29px;border:1px solid #ced9e8;background:#f8faff;color:#53728d;border-radius:50%;font-family:Georgia,serif;font-size:17px;font-weight:700;flex:none;display:grid;place-items:center}
+.exbody{border-top:1px solid var(--line);padding:10px 13px 13px}
+.mini-done{font-size:12px;color:#4e927a;background:#f3fbf7;border-radius:9px;padding:9px 11px;margin:1px 0 0;display:flex;align-items:center;justify-content:space-between}
+.set{border:1px solid #e5eaf1;border-radius:12px;min-height:53px;background:#f8fafc;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 13px;margin:6px 0}
+.set .setlabel{display:flex;align-items:center;gap:10px;font-weight:790;font-size:13px}.seticon{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:#edf1f6;color:#8091a4;font-size:12px;font-weight:800}
+.set.done{background:#f5fbf8;border-color:#e1f2e9;padding:9px 12px;min-height:39px;color:#547d70}.set.done .seticon{background:#dcf6e8;color:#087e5d}.set small{font-size:11px;color:#8795a5;white-space:nowrap}
+.set.active{background:#f0f6ff;border-color:#afceff;display:block;padding:14px 13px}
+.activehead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.activehead .setlabel{font-size:14px}
+.timing{font-size:12px;font-weight:780;color:#3765a3;background:white;border:1px solid #d9e7fc;border-radius:20px;padding:5px 10px;font-variant-numeric:tabular-nums;direction:ltr}
+.activehint{font-size:12px;color:#526c8d;line-height:1.65;margin:0 0 12px}
+.rowbuttons{display:flex;gap:8px}.primary{border:0;border-radius:11px;background:#2367e8;color:#fff;padding:12px 18px;font-weight:850;font-size:13px;flex:1;min-height:44px}
+.primary:disabled{background:#bccbdd;cursor:default}.secondary{border:1px solid #d2dfef;border-radius:11px;background:white;color:#2b5e9e;padding:12px 13px;font-weight:780;font-size:13px;min-height:44px}
+.restchip{display:inline-flex;gap:6px;align-items:center;background:#e7f4fd;color:#17669c;border-radius:8px;padding:7px 9px;font-size:12px;font-weight:800;margin-bottom:9px}
+.future{color:#8c9db1}.introarea{background:#fff;border:1px solid var(--line);padding:14px 16px;border-radius:15px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.introarea p{margin:0;font-size:12px;color:#607388;line-height:1.65}
+.introarea strong{font-size:14px}.introarea .primary{flex:none;white-space:nowrap}
+.bottom{margin:21px 3px 0;display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12px;color:var(--muted)}
+.linkbtn{background:none;border:0;color:#5f799b;text-decoration:underline;font-size:12px;padding:9px 0}
+.completed-screen{background:#eaf9f1;color:#13684d;border:1px solid #c9ecd8;border-radius:16px;padding:24px;text-align:center;margin-bottom:16px}.completed-screen h2{font-size:20px;margin:0 0 7px}
+dialog{border:0;padding:0;max-width:620px;width:min(92vw,620px);max-height:min(89dvh,850px);border-radius:19px;overflow:auto;box-shadow:0 24px 80px #0004;color:var(--ink)}
+dialog::backdrop{background:#0a1e36a9;backdrop-filter:blur(3px)}
+.modalhead{padding:20px 20px 16px;display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff;z-index:2}
+.modalhead small{color:#6e87a3;font-size:12px;font-weight:750}.modalhead h3{font-size:19px;margin:5px 0 0}.closebtn{border:0;background:#f0f4f9;border-radius:10px;font-size:21px;width:34px;height:34px;flex:none;color:#58708e}
+.modalcontent{padding:17px 20px 23px}.photos{display:grid;grid-template-columns:1fr 1fr;gap:10px}.photo{overflow:hidden;background:#f1f4f8;border-radius:12px;border:1px solid #e1e7ee;margin:0}
+.photo img{width:100%;aspect-ratio:4/3;object-fit:contain;display:block}.photo figcaption{font-size:12px;text-align:center;color:#5d7189;padding:8px;background:white}
+.modalcontent h4{margin:21px 0 9px;font-size:15px}.modalcontent ol{padding-right:20px;margin:0;line-height:1.75;font-size:14px}.modalcontent li{padding-right:4px;margin-bottom:7px}
+.tip{background:#eef5ff;color:#3c587d;border-radius:10px;padding:13px 15px;font-size:13px;line-height:1.7;margin-top:15px}
+.tip b{color:#234c7e}.tiny{font-size:11px;color:#8997a7;line-height:1.6}
+#settingsDialog .modalcontent{display:grid;gap:12px}
+.settingline{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--line);border-radius:11px;padding:12px;font-size:13px;font-weight:700}
+.switch{border:1px solid #cbdaf0;border-radius:10px;background:#f3f7fe;color:#3366aa;padding:8px 12px;font-size:12px;font-weight:750}
+#testReport{background:#f1f6fd;color:#4e6b8d;border-radius:11px;padding:12px;line-height:1.8;font-size:12px;white-space:pre-line}
+.hidden{display:none!important}
+@media(max-width:570px){header{padding:22px 16px 25px}.brand{font-size:27px}.seg button{padding:8px 12px}.seg.small button{padding:8px 10px}.switchers{gap:8px}main{padding:12px 12px 75px}.clock strong{font-size:20px}.introarea{display:block}.introarea .primary{margin-top:10px;width:100%}.exhead{padding:12px 11px;gap:9px}.exname strong{font-size:14px}.pill{font-size:10px}.rowbuttons .primary{padding:12px 8px}.modalhead{padding:16px}.modalcontent{padding:14px}.photos{gap:7px}.photo figcaption{font-size:11px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 </style>
 </head>
 <body>
-<header><div class="shell">
- <div class="headrow"><div class="eyebrow"><span class="logo">↗</span> תוכנית כוח • למתחילים</div><button class="topreset" id="resetBtn" type="button">↺ אימון חדש</button></div>
- <h1>האימון שלי<span style="color:#79aaff">.</span></h1>
- <p class="intro">מכון או בית: תרגילים מאוירים, טיימר לכל סט, סימון התקדמות והנחיות בזמן אימון.</p>
-<div class="place-chooser" role="group" aria-label="סוג אימון"><button class="active" id="placeGym" type="button">מכון כושר</button><button id="placeHome" type="button">בית · שתי משקולות</button></div>
+<header><div class="head-inner">
+ <div class="hero-row"><div><div class="eyebrow">STRENGTH COACH</div><h1 class="brand">האימון שלי</h1><p class="subtitle">כל סט בתורו. פשוט להתחיל, קל לעקוב.</p></div><button class="iconbutton" id="settingsBtn" type="button" aria-label="הגדרות ובדיקת מערכת">⋯</button></div>
+ <div class="switchers"><div class="seg" role="group" aria-label="מיקום אימון"><button id="gymTab" class="sel" type="button">מכון כושר</button><button id="homeTab" type="button">בבית · משקולות יד</button></div><div class="seg small" role="group" aria-label="משך אימון"><button id="fiveBtn" class="sel" type="button">5 תרגילים</button><button id="sevenBtn" type="button">7 תרגילים</button></div></div>
+ <div class="topmeta"><div class="bar"><span id="progressBar"></span></div><span id="progressTxt">0 מתוך 10 סטים</span></div>
 </div></header>
-<main class="shell page">
- <section class="progress-card" aria-label="התקדמות האימון">
-  <div class="ring" id="ring"><div class="ring-inner"><strong class="ring-number" id="percentText">0%</strong><span class="ring-label">הושלם</span></div></div>
-  <div><div class="overline">ההתקדמות שלך היום</div><div class="progress-title" id="progressTitle">יוצאים לדרך</div><p class="progress-sub" id="progressSub">0 מתוך 10 סטים הושלמו</p><div class="track"><span id="progressFill"></span></div></div>
-  <div class="mode"><label>איזה אימון עושים היום?</label><div class="segment" role="group" aria-label="מספר התרגילים"><button id="basicMode" type="button">5 בסיסיים</button><button id="fullMode" type="button">7 מלא</button></div><div class="small-foot">אפשר לשנות בכל רגע</div></div>
- </section>
- <div class="main-cols">
-  <section class="panel" id="focusSection" aria-label="תרגיל נוכחי">
-   <div class="panel-header"><div><div class="section-kicker" id="stepNumber">תרגיל 1 מתוך 7</div><h2 id="exerciseTitle">לחיצת רגליים</h2></div><div class="head-nav"><button class="navbtn" id="prevBtn" type="button" aria-label="תרגיל קודם">→</button><button class="navbtn" id="nextBtn" type="button" aria-label="תרגיל הבא">←</button></div></div>
-   <div class="coachbar"><h3>מאמן אימון · ליווי בזמן אמת</h3><div class="clocks"><div class="clock"><small>זמן אימון</small><b id="sessionClock">0:00</b></div><div class="clock"><small>זמן בתרגיל</small><b id="exerciseClock">0:00</b></div><div class="clock"><small>זמן הסט</small><b id="setClock">0:00</b></div></div><div class="coach-actions"><button id="startSetBtn" type="button">▶ התחל סט</button><button id="pauseSetBtn" type="button">⏸ השהה</button><button id="voiceBtn" type="button" aria-pressed="false">🔈 קול כבוי</button></div><p id="coachStatus" aria-live="polite">מוכנים? לחץ על ״התחל סט״, ובסיום סמן את הסט שביצעת.</p><p>האתר מלווה באמצעות שעונים והנחיות, אבל לא בודק תנועות גוף או טכניקה דרך מצלמה.</p></div>
-<div class="hero-images"><div class="imagebox"><img id="img0" alt="תחילת התנועה" loading="eager" /><div class="imgfallback">תמונת התחלה</div><span>מצב התחלתי</span></div><div class="imagebox"><img id="img1" alt="סיום התנועה" loading="eager" /><div class="imgfallback">תמונת סיום</div><span>מצב סיום</span></div></div>
-   <div class="ex-detail"><div class="tagline"><span class="tag blue" id="muscleTag">רגליים</span><span class="tag" id="targetTag">2 סטים × 12 חזרות</span><span class="tag">מכונה / תרגיל בסיסי</span></div>
-    <h3>איך עושים נכון?</h3><ol class="steps" id="instructions"></ol>
-    <div class="tip" id="tipText"></div>
-    <div class="divider"></div>
-    <div class="sets-label"><h3>סמן את הסטים שסיימת</h3><span id="setsStatus">0 מתוך 2 הושלמו</span></div>
-    <div class="sets-grid"><button type="button" class="set-btn" id="set0" aria-pressed="false"><span class="check">✓</span>סט ראשון</button><button type="button" class="set-btn" id="set1" aria-pressed="false"><span class="check">✓</span>סט שני</button></div>
-    <div class="action-row"><button class="primary" type="button" id="mainAction">✓ סיימתי סט ראשון</button><button class="secondary" type="button" id="skipBtn">לתרגיל הבא ←</button></div>
-    <div class="finished" id="finished">כל הכבוד על ההתמדה! כל הסטים בתוכנית סומנו כהושלמו. אפשר להתחיל אימון חדש כשתרצה.</div>
-   </div>
-  </section>
-  <aside><section class="panel sidebar"><div class="sidebar-top"><h2>רשימת התרגילים</h2><span id="listStatus">0/7 הושלמו</span></div><div class="ex-list" id="exerciseList"></div><div class="sidebar-note">💡 התרגילים 1–5 הם בסיס טוב להתחלה. את לחיצת הכתפיים והפלאנק אפשר להוסיף כשמרגישים בנוח.</div></section>
-   <section class="rest-card" aria-label="טיימר מנוחה"><div><strong>מנוחה בין סטים</strong><p>טיימר של 90 שניות, לא חובה</p></div><div style="display:flex;align-items:center;gap:11px"><span class="rest-time" id="timerText">1:30</span><button class="timerbtn" id="timerBtn" type="button">הפעל</button></div></section>
-  <div class="checkarea"><button id="testBtn" type="button">בדוק שהכול פועל ✓</button><p id="selfResult" aria-live="polite">בדיקת איורים, שמירה וטיימרים</p></div></aside>
- </div>
- <footer class="footer"><p class="warn">האיורים הם הסבר חזותי כללי, לא תחליף להדרכה. בחר משקל נוח, נוח לפי הצורך ועצור במקרה של כאב. האתר לא יכול לאמת ביצוע פיזי או להעריך טכניקה.</p><p>איורי התרגילים מוטמעים באתר, בלי קישורים חיצוניים. התקדמות נשמרת בדפדפן במכשיר כל עוד האחסון זמין.</p></footer>
+<main>
+<div class="clockbar" aria-label="טיימרים"><div class="clock"><label>זמן אימון</label><strong id="sessionClock">00:00</strong></div><div class="clock"><label>זמן בתרגיל</label><strong id="exerciseClock">00:00</strong></div><div class="clock"><label>זמן בסט</label><strong id="setClock">00:00</strong></div></div>
+<div id="intro"></div>
+<div class="sectionline"><h2>התרגילים שלך</h2><span class="caption" id="sectionHint">2 סטים לכל תרגיל</span></div>
+<div id="exerciseList" aria-live="polite"></div>
+<div class="bottom"><span>הסברים ותמונות בכפתור ⓘ</span><button class="linkbtn" id="newWorkoutBtn" type="button">התחל אימון חדש</button></div>
 </main>
-<div class="toast" id="toast" aria-live="polite"></div>
+<dialog id="infoDialog" aria-labelledby="modalTitle"><div class="modalhead"><div><small id="modalMuscle"></small><h3 id="modalTitle"></h3></div><button id="closeInfo" class="closebtn" type="button" aria-label="סגור">×</button></div><div class="modalcontent"><div class="photos"><figure class="photo"><img id="photo0" loading="lazy" alt="הדגמת תחילת התנועה"><figcaption>שלב 1 · נקודת פתיחה</figcaption></figure><figure class="photo"><img id="photo1" loading="lazy" alt="הדגמת סיום התנועה"><figcaption>שלב 2 · נקודת סיום</figcaption></figure></div><h4>איך לבצע נכון?</h4><ol id="modalSteps"></ol><div class="tip" id="modalTip"></div><p class="tiny">התמונות להמחשה בלבד. התאימו את התנועה ליכולת שלכם ובקשו ממדריך לבדוק את הטכניקה אם אינכם בטוחים.</p></div></dialog>
+<dialog id="settingsDialog" aria-labelledby="settingsTitle"><div class="modalhead"><h3 id="settingsTitle">הגדרות</h3><button id="closeSettings" class="closebtn" type="button" aria-label="סגור">×</button></div><div class="modalcontent"><div class="settingline"><span>הנחיות קוליות בזמן אימון</span><button id="voiceToggle" class="switch" type="button">כבוי</button></div><div class="settingline"><span>מנוחה בין סטים</span><select id="restSelect" aria-label="משך מנוחה" style="border:1px solid #d2dfed;background:white;border-radius:9px;padding:7px;font:inherit"><option value="60">60 שניות</option><option value="90" selected>90 שניות</option><option value="120">120 שניות</option></select></div><div class="settingline"><span>בדיקת רכיבי האפליקציה</span><button id="testBtn" class="switch" type="button">בדוק עכשיו</button></div><div id="testReport">השעונים מתחילים רק לאחר לחיצה על ״התחל״. ההתקדמות נשמרת במכשיר.</div><p class="tiny">האתר אינו משתמש במצלמה ולכן אינו יכול לבדוק אוטומטית טכניקה או חזרות. סמנו סיום של כל סט באופן ידני.</p><button class="secondary" id="settingsReset" type="button">איפוס האימון הנוכחי</button></div></dialog>
 <script>
-(()=>{
-'use strict';
-const IMG='';
-const exercises=[
- {id:'legpress',name:'לחיצת רגליים',en:'Leg Press',photo:'Leg_Press',muscle:'ירכיים וישבן',reps:'12 חזרות',steps:['כוון את המושב כך שהגב נשאר צמוד למשענת והברכיים כפופות בנוחות.','הנח את כפות הרגליים בערך ברוחב הכתפיים ודחוף את המשטח בשליטה.','חזור לאט לטווח שבו הגב נשאר יציב, בלי לנעול את הברכיים.'],tip:'במכונת לחיצת רגליים עם משטח נע יש לוודא שהמעצורים מכוונים. בקש מהמדריך להראות לך לפני השימוש.'},
- {id:'legcurl',name:'כפיפת ברכיים',en:'Seated Leg Curl',photo:'Seated_Leg_Curl',muscle:'ירך אחורית',reps:'12 חזרות',steps:['התאם את המושב והכריות לאורך הרגליים כך שהברכיים מיושרות עם ציר המכונה.','שמור על הגב צמוד למשענת וכופף את הברכיים באיטיות כנגד ההתנגדות.','חזור בתנועה מבוקרת בלי לתת למשקולות להיטרק.'],tip:'אם המכונה במכון שלך היא כפיפה בשכיבה ולא בישיבה, בקש מהמדריך להראות את הגרסה המתאימה.'},
- {id:'chest',name:'לחיצת חזה',en:'Chest Press',photo:'Machine_Bench_Press',muscle:'חזה ויד אחורית',reps:'12 חזרות',steps:['שב עם הגב למשענת, וכוון את גובה המושב כך שהידיות בערך בגובה החזה.','דחוף את הידיות קדימה באיטיות, בלי להרים את הכתפיים.','חזור בשליטה עד למתיחה נוחה, ללא כאב בכתף.'],tip:'הגב נשאר על המשענת. אין צורך לנעול מרפקים בסוף התנועה.'},
- {id:'row',name:'חתירה בישיבה',en:'Seated Cable Row',photo:'Seated_Cable_Rows',muscle:'גב ויד קדמית',reps:'12 חזרות',steps:['שב מול הכבל, מקם את כפות הרגליים על המשטח והשאר כפיפה קלה בברכיים.','משוך את הידיות לכיוון הבטן עם מרפקים שנעים לאחור קרוב לגוף.','החזר את הידיות לאט, ושמור על גב יציב בלי לזרוק את הגוף.'],tip:'תחשוב שהמרפקים נמשכים לאחור — לא שצריך לנענע את הגב כדי להזיז את המשקל.'},
- {id:'lat',name:'פולי עליון',en:'Lat Pulldown',photo:'Wide-Grip_Lat_Pulldown',muscle:'גב ויד קדמית',reps:'12 חזרות',steps:['שב עם הירכיים מתחת לכריות האחיזה ואחוז במוט מעט מעבר לרוחב הכתפיים.','משוך את המוט לכיוון החזה העליון תוך הורדת המרפקים מטה.','החזר לאט למעלה בלי להישען אחורה בתנופה.'],tip:'מושכים את המוט לפני הגוף, לא מאחורי העורף.'},
- {id:'shoulder',name:'לחיצת כתפיים',en:'Shoulder Press',photo:'Machine_Shoulder_Military_Press',muscle:'כתפיים ויד אחורית',reps:'10 חזרות',steps:['כוון את המושב כך שהידיות מתחילות סמוך לגובה הכתפיים.','דחוף כלפי מעלה בתנועה יציבה ונוחה לכתפיים.','הורד את הידיות לאט, תוך שמירה על גב נתמך.'],tip:'כדאי להוסיף את התרגיל הזה רק לאחר שאתה מרגיש בנוח עם חמש המכונות הראשונות.'},
- {id:'plank',name:'פלאנק',en:'Plank',photo:'Plank',muscle:'בטן וליבה',reps:'20–30 שניות',steps:['הישען על האמות וקצות האצבעות; המרפקים בערך מתחת לכתפיים.','שמור על קו יחסית ישר מהראש לאגן, ונשום באופן רגיל.','עצור כשהגב מתחיל לשקוע או כשהטכניקה כבר לא נוחה.'],tip:'אפשר לבצע גרסה קלה יותר עם הברכיים על המזרן — איכות עדיפה על משך ארוך.'}
+"use strict";
+const gym=[
+{id:"legpress",name:"לחיצת רגליים",sub:"ירכיים וישבן",reps:"10–12 חזרות",img:"Leg_Press",steps:["כוון את המושב כך שהגב נשאר צמוד למשענת והברכיים כפופות בטווח נוח.","הנח את כפות הרגליים בערך ברוחב הכתפיים ולחץ את המשטח קדימה בשליטה.","החזר באיטיות והימנע מנעילת הברכיים. בדוק עם מדריך את המעצורים לפני שימוש במכונה."],tip:"נשוף בשלב הדחיפה ושאף בחזרה. שמור על הגב צמוד למושב."},
+{id:"legcurl",name:"כפיפת ברכיים",sub:"ירך אחורית",reps:"10–12 חזרות",img:"Seated_Leg_Curl",steps:["כוון את המושב והכריות כך שהברך ממוקמת מול ציר המכונה.","כופף את הברכיים וקרב את השוקיים לאחור בשליטה, בלי לנתר עם המשקל.","החזר באיטיות עד כמעט יישור הברך, בלי שהמשקולות ייטרקו."],tip:"שמור על גב יציב. אם זו מכונת שכיבה, בקש מהמדריך להראות את הכוונון המתאים."},
+{id:"chest",name:"לחיצת חזה",sub:"חזה ויד אחורית",reps:"10–12 חזרות",img:"Machine_Bench_Press",steps:["שב עם גב נתמך, והידיות בערך בגובה החזה.","לחץ את הידיות קדימה בלי להרים את הכתפיים ובלי להקשת את הגב.","החזר בשליטה עד לטווח נוח שאינו גורם לכאב בכתפיים."],tip:"נשוף בלחיצה. שמור על מרפקים נוחים, בלי לנעול אותם בחוזקה."},
+{id:"row",name:"חתירה בישיבה",sub:"גב ויד קדמית",reps:"10–12 חזרות",img:"Seated_Cable_Rows",steps:["שב מול הכבל, כפות הרגליים נתמכות וברכיים בכפיפה קלה.","משוך את הידיות לכיוון הבטן כשמרפקיך נעים לאחור.","החזר באיטיות בלי להתנדנד או למשוך בעזרת הגב התחתון."],tip:"חשוב על קירוב השכמות בעדינות ולא על תנופה."},
+{id:"lat",name:"פולי עליון",sub:"גב ויד קדמית",reps:"10–12 חזרות",img:"Wide-Grip_Lat_Pulldown",steps:["שב כשהירכיים נתמכות בכריות ואחוז במוט מעט מעבר לרוחב הכתפיים.","משוך את המוט לכיוון החזה העליון, והובל את המרפקים מטה.","החזר לאט למעלה. הימנע מהטיית הגוף לאחור בתנופה."],tip:"המוט יורד לפני הגוף, ולא מאחורי העורף."},
+{id:"shoulder",name:"לחיצת כתפיים",sub:"כתפיים ויד אחורית",reps:"8–10 חזרות",img:"Machine_Shoulder_Military_Press",steps:["כוון את מושב המכונה כך שהידיות מתחילות ליד גובה הכתפיים.","לחץ כלפי מעלה בטווח נוח והשתדל לשמור על גב נתמך.","החזר בשליטה והימנע מתנופה או מכאב בכתפיים."],tip:"אפשר להוסיף את התרגיל אחרי שהתרגילים הראשונים מרגישים מוכרים."},
+{id:"plank",name:"פלאנק",sub:"בטן ושרירי ליבה",reps:"20–30 שניות",img:"Plank",steps:["הישען על האמות וקצות האצבעות, כשהמרפקים מתחת לכתפיים.","שמור על גוף יציב ונשום בצורה רגועה.","עצור לפני שהגב שוקע; ניתן לבצע גרסה קלה יותר עם הברכיים על הרצפה."],tip:"התמקד ביציבה נוחה ולא בזמן הארוך ביותר."}
 ];
-
-const gymExercises=exercises.slice();
-const homeExercises=[
- {id:"hsquat",name:"סקוואט לכיסא עם משקולות",en:"Chair Squat",muscle:"ירכיים וישבן",reps:"8–12 חזרות",steps:["עמוד מול כיסא יציב כשהמשקולות מוחזקות לצדי הגוף.","הזז את האגן לאחור וכופף ברכיים עד לנגיעה קלה בכיסא.","קום בחזרה בשליטה. אפשר להתחיל גם בלי משקולות."],tip:"ודא שהכיסא לא יכול לזוז. איכות התנועה חשובה יותר מכמות החזרות."},
- {id:"hhinge",name:"כפיפת ירך עם משקולות",en:"Hip Hinge",muscle:"ישבן וירך אחורית",reps:"8–12 חזרות",steps:["החזק משקולת בכל יד, ברכיים מעט כפופות.","שלח את האגן לאחור והטה את הגו עם גב יציב.","חזור לעמידה זקופה תוך השארת המשקולות קרוב לרגליים."],tip:"נסה את התנועה ללא משקולות לפני שמוסיפים התנגדות."},
- {id:"hfloor",name:"לחיצת חזה בשכיבה על הרצפה",en:"Floor Press",muscle:"חזה ויד אחורית",reps:"8–12 חזרות",steps:["שכב על הגב על מזרן, ברכיים כפופות.","החזק את המשקולות מעל החזה ולחץ אותן מעלה בשליטה.","הורד עד שהזרועות העליונות נוגעות קלות ברצפה."],tip:"בחר משקולות שאפשר להעביר בבטחה לתנוחת ההתחלה והסיום."},
- {id:"hrow",name:"חתירה ביד אחת עם תמיכה",en:"One-arm Row",muscle:"גב ויד קדמית",reps:"8–12 לכל צד",steps:["הנח יד אחת על כיסא יציב ושמור על שתי כפות הרגליים על הרצפה.","משוך את המשקולת שביד השנייה לכיוון האגן עם המרפק.","הורד בשליטה וחזור גם בצד השני."],tip:"אל תסובב את כל הגוף כדי למשוך את המשקולת."},
- {id:"hbird",name:"בירד דוג",en:"Bird Dog",muscle:"ליבה וגב",reps:"6–10 לכל צד",steps:["עמוד על שש על מזרן, ידיים מתחת לכתפיים.","הושט יד ורגל נגדית ושמור על האגן יציב.","חזור בשליטה והחלף צד. אין צורך במשקולות."],tip:"אפשר להתחיל בהושטת יד בלבד או רגל בלבד."},
- {id:"hpress",name:"לחיצת כתפיים עם משקולות",en:"Shoulder Press",muscle:"כתפיים ויד אחורית",reps:"8–10 חזרות",steps:["שב על כיסא יציב עם משקולות קלות סמוך לכתפיים.","דחוף כלפי מעלה בטווח נוח, בלי להקשת את הגב.","החזר למטה באיטיות."],tip:"אם יש כאב או אי־נוחות בכתף, עצור ובקש הדרכה."},
- {id:"hcurl",name:"כפיפת מרפקים עם משקולות",en:"Hammer Curl",muscle:"יד קדמית",reps:"8–12 חזרות",steps:["עמוד זקוף עם משקולת בכל יד לצד הגוף.","כופף מרפקים בלי לנענע את הגוף.","הורד באיטיות."],tip:"בחר התנגדות שמאפשרת תנועה חלקה וללא תנופה."}
+const home=[
+{id:"hsquat",name:"סקוואט עם משקולות",sub:"ירכיים וישבן",reps:"8–12 חזרות",img:"Dumbbell_Squat",steps:["עמוד בפיסוק נוח עם משקולת בכל יד לצדי הגוף. אפשר למקם כיסא יציב מאחור לציון עומק.","שלח את האגן לאחור וכופף את הברכיים בטווח נוח, עם עקבים על הרצפה.","חזור לעמידה בשליטה. ניתן להתחיל ללא משקולות."],tip:"הצילום מדגים סקוואט עם משקולות ללא כיסא. אם משתמשים בכיסא, הוא רק כנקודת ייחוס יציבה."},
+{id:"hhinge",name:"כפיפת ירך עם משקולות",sub:"ישבן וירך אחורית",reps:"8–12 חזרות",img:"Stiff-Legged_Dumbbell_Deadlift",steps:["עמוד זקוף, ברכיים מעט כפופות, משקולות קלות לצד הגוף.","הזז את האגן לאחור והטה את הגוף קדימה תוך שמירה על גב ניטרלי ומשקולות קרובות לרגליים.","חזור לעמידה תוך יישור האגן והידוק קל של הישבן. אין צורך להגיע לרצפה."],tip:"הצילום מדגים דדליפט עם משקולות. למתחילים עדיפה כפיפה קטנה ונוחה של הברכיים, בלי לנעול אותן."},
+{id:"hfloor",name:"לחיצת חזה על הרצפה",sub:"חזה ויד אחורית",reps:"8–12 חזרות",img:"Dumbbell_Floor_Press",steps:["שכב על מזרן עם ברכיים כפופות והבא משקולות קלות למנח מעל החזה.","הורד בזהירות עד שהזרועות העליונות נוגעות קלות ברצפה.","לחץ כלפי מעלה בשליטה ונשוף בשלב הדחיפה."],tip:"הצילום נעשה בסביבת מכון, אבל אפשר לבצע על מזרן בבית ללא ספסל."},
+{id:"hrow",name:"חתירה ביד אחת",sub:"גב ויד קדמית",reps:"8–12 לכל צד",img:"One-Arm_Dumbbell_Row",steps:["הישען ביד אחת על רהיט כבד ויציב, ושמור על גב ניטרלי.","משוך את המשקולת ביד הנגדית לעבר האגן כשהמרפק נע לאחור.","החזר באיטיות והחלף צד. נסה לשמור על אותו מספר חזרות לכל צד."],tip:"הצילום משתמש בספסל. בבית אפשר להשתמש במשטח יציב בגובה נוח שאינו מתנדנד."},
+{id:"hplank",name:"פלאנק",sub:"בטן ושרירי ליבה",reps:"20–30 שניות",img:"Plank",steps:["התמקם על האמות וקצות האצבעות על משטח נוח.","שמור על בטן אסופה בעדינות ועל גוף יציב; המשך לנשום.","עצור כשמרגישים שהיציבה מתחילה להיפגע. אפשר להניח ברכיים על המזרן."],tip:"לא צריך משקולות בתרגיל זה."},
+{id:"hpress",name:"לחיצת כתפיים עם משקולות",sub:"כתפיים ויד אחורית",reps:"8–10 חזרות",img:"Seated_Dumbbell_Press",steps:["שב על כיסא יציב והחזק משקולות קלות סמוך לכתפיים.","לחץ כלפי מעלה בטווח תנועה נוח בלי לקשת את הגב.","הורד באיטיות. הפסק אם מופיע כאב בכתפיים."],tip:"עדיף להתחיל ממשקולות קלות וללמוד תנועה חלקה לפני הוספת משקל."},
+{id:"hcurl",name:"כפיפת מרפקים",sub:"יד קדמית",reps:"8–12 חזרות",img:"Hammer_Curls",steps:["עמוד זקוף עם משקולת בכל יד וכפות ידיים הפונות פנימה.","כופף את המרפקים תוך שמירה על זרועות עליונות קרוב לגוף.","הורד לאט בלי להתנדנד או להניע את הגב."],tip:"משקל קל שאפשר להרים ללא תנופה הוא נקודת פתיחה טובה."}
 ];
-function sceneData(id,phase){
- const L=(x1,y1,x2,y2,color="#2458a0",w=12)=>'<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+color+'" stroke-width="'+w+'" stroke-linecap="round"/>';
- const C=(x,y,r=16,color="#eeba96")=>'<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="'+color+'"/>';
- const R=(x,y,w,h,color="#8fa7c0")=>'<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="5" fill="'+color+'"/>';
- const D=(x,y)=>R(x-13,y-5,26,10,"#445c79")+R(x-18,y-14,8,28,"#334865")+R(x+10,y-14,8,28,"#334865");
- let art="";
- if(["hsquat","hhinge","hpress","hcurl","shoulder"].includes(id)){
-  let x=180,y=60,shoulderX=180,shoulderY=102,hipX=180,hipY=156,kx=173,ky=187;
-  if(id==="hsquat"&&phase){y=88;shoulderY=127;hipY=172;kx=219;ky=197;}
-  if(id==="hhinge"&&phase){x=242;y=103;shoulderX=224;shoulderY=128;}
-  art=C(x,y)+L(shoulderX,shoulderY,hipX,hipY,"#265caa",19)+L(hipX,hipY,kx,ky)+L(kx,ky,165,216)+L(hipX,hipY,209,188)+L(209,188,222,216);
-  if(["hpress","shoulder"].includes(id)){const hy=phase?45:135;art+=L(shoulderX-14,110,144,hy,"#eeba96")+L(shoulderX+14,110,216,hy,"#eeba96")+D(144,hy)+D(216,hy);}
-  else if(id==="hcurl"){const hy=phase?110:183;art+=L(168,111,144,151,"#eeba96")+L(144,151,141,hy,"#eeba96")+L(192,111,221,151,"#eeba96")+L(221,151,224,hy,"#eeba96")+D(141,hy)+D(224,hy);}
-  else {const hx=id==="hhinge"&&phase?252:141,hy=id==="hhinge"&&phase?187:181;art+=L(shoulderX-12,shoulderY+9,hx,hy,"#eeba96")+L(shoulderX+12,shoulderY+9,hx+72,hy,"#eeba96")+D(hx,hy)+D(hx+72,hy);}
-  if(id==="hsquat")art+=R(236,179,86,10)+R(245,189,7,33)+R(311,189,7,33);
- } else if(["hfloor","plank","hbird"].includes(id)){
-  art=R(49,210,276,8,"#adcae8");
-  if(id==="hfloor"){const hy=phase?81:152;art+=C(84,181)+L(104,181,238,181,"#2458a0",19)+L(238,181,270,153)+L(270,153,290,204)+L(140,178,165,hy,"#eeba96")+L(203,178,228,hy,"#eeba96")+D(165,hy)+D(228,hy);}
-  if(id==="plank"){art+=C(294,127)+L(278,138,155,156,"#2458a0",18)+L(155,156,66,171)+L(279,147,255,190,"#eeba96")+L(255,190,208,190,"#eeba96")+L(66,171,64,209);}
-  if(id==="hbird"){art+=C(256,109)+L(242,123,157,144,"#2458a0",18)+L(157,144,145,205)+L(235,144,phase?308:250,phase?138:202,"#eeba96")+L(157,144,phase?66:148,phase?149:204);}
- }else if(id==="hrow"){art=R(261,151,72,10)+R(271,159,7,60)+C(157,86)+L(166,104,213,145,"#2458a0",18)+L(213,145,164,200)+L(164,200,130,219)+L(211,148,252,206)+L(252,206,285,217)+L(190,119,274,157,"#eeba96")+L(170,117,phase?170:211,phase?135:181,"#eeba96")+D(phase?170:211,phase?135:181);}
- else if(id==="legpress"){const px=phase?313:264;art=R(66,164,48,56)+C(158,81)+L(149,101,105,171,"#2458a0",18)+L(105,171,185,phase?165:144)+L(185,phase?165:144,px,118)+L(154,112,185,162,"#eeba96")+R(px-7,67,14,115);}
- else if(id==="legcurl"){art=R(108,146,109,12)+R(101,153,9,65)+C(138,68)+L(138,89,138,147,"#2458a0",18)+L(138,147,215,161)+L(215,161,phase?173:246,phase?200:204)+C(phase?173:246,phase?200:204,12,"#98a9bc");}
- else if(id==="chest"){art=R(94,91,15,115)+R(105,182,94,12)+C(139,70)+L(140,91,140,167,"#2458a0",18)+L(140,167,208,203)+L(145,104,185,125,"#eeba96")+L(185,125,phase?278:202,phase?124:152,"#eeba96")+R(phase?278:202,phase?113:139,9,37);}
- else if(id==="row"){art=R(100,179,118,9)+C(134,87)+L(134,108,132,178,"#2458a0",18)+L(132,178,223,204)+L(223,204,271,208)+L(140,115,180,149,"#eeba96")+L(180,149,phase?187:266,phase?150:136,"#eeba96")+L(phase?187:266,phase?150:136,322,135,"#90a5bd",3)+R(320,86,12,126);}
- else if(id==="lat"){const hy=phase?134:53;art=R(147,191,85,10)+C(187,95)+L(187,116,188,184,"#2458a0",18)+L(188,184,150,218)+L(188,184,230,218)+L(176,129,115,hy,"#eeba96")+L(199,129,254,hy,"#eeba96")+L(108,hy,261,hy,"#8fa7c0",8)+L(186,hy,186,20,"#8fa7c0",3);}
- const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 240"><rect width="360" height="240" fill="#f0f6ff"/><path d="M0 222H360" stroke="#cfdfef" stroke-width="2"/><circle cx="307" cy="42" r="25" fill="#e3effe"/>'+art+'<rect x="11" y="11" width="75" height="27" rx="13" fill="#fff" stroke="#d4e3f4"/><text x="48" y="29" text-anchor="middle" font-size="14" font-weight="bold" fill="#275ca5" font-family="Arial">'+(phase?"סיום":"התחלה")+'</text></svg>';
- return "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg);
-}
-
-let KEY='my-strength-session-v3-gym';
-const initial=()=>({mode:5,selected:0,sets:Object.fromEntries(exercises.map(x=>[x.id,[false,false]]))});
-let state;
-try{const loaded=JSON.parse(localStorage.getItem(KEY));state=loaded&&loaded.sets?{...initial(),...loaded}:initial();}catch(e){state=initial();}
-state.mode=state.mode===7?7:5;
-state.selected=Number.isInteger(state.selected)?Math.min(state.mode-1,Math.max(0,state.selected)):0;
-for(const e of exercises)if(!Array.isArray(state.sets[e.id])||state.sets[e.id].length!==2)state.sets[e.id]=[false,false];
 const $=id=>document.getElementById(id);
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}};
-let toastTimer;
-function toast(msg){$('toast').textContent=msg;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),2100);}
-const activeExercises=()=>exercises.slice(0,state.mode);
-const doneCount=()=>activeExercises().reduce((n,e)=>n+state.sets[e.id].filter(Boolean).length,0);
-const total=()=>state.mode*2;
+const KEY="aviad-workout-v6";
+const safeGet=()=>{try{return JSON.parse(localStorage.getItem(KEY)||"{}")}catch(e){return {}}};
+let saved=safeGet(),place=saved.place==="home"?"home":"gym",size=saved.size===7?7:5,plans=saved.plans&&typeof saved.plans==="object"?saved.plans:{};
+let restSeconds=[60,90,120].includes(saved.restSeconds)?saved.restSeconds:90;
+let voice=false,sessionMs=0,exerciseMs=0,setMs=0,sessionRunning=false,setRunning=false,restMs=0,last=performance.now();
+function code(){return place+"-"+size}
+function list(){return (place==="home"?home:gym).slice(0,size)}
+function plan(){let p=plans[code()];if(!p||!Array.isArray(p.done)||p.done.length!==size*2){p={done:Array(size*2).fill(false),dur:Array(size*2).fill(0)};plans[code()]=p}return p}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({place:place,size:size,plans:plans,restSeconds:restSeconds}))}catch(e){}}
+function index(){return plan().done.findIndex(v=>!v)}
+function nDone(){return plan().done.filter(Boolean).length}
+function fmt(ms){const sec=Math.floor(Math.max(0,ms)/1000);return String(Math.floor(sec/60)).padStart(2,"0")+":"+String(sec%60).padStart(2,"0")}
+function clean(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function say(s){if(!voice||!("speechSynthesis" in window))return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(s);u.lang="he-IL";u.rate=.95;speechSynthesis.speak(u)}catch(e){}}
+function resetClocks(){sessionMs=0;exerciseMs=0;setMs=0;sessionRunning=false;setRunning=false;restMs=0;last=performance.now();updateClocks()}
+function updateClocks(){$("sessionClock").textContent=fmt(sessionMs);$("exerciseClock").textContent=fmt(exerciseMs);$("setClock").textContent=fmt(setMs)}
+function updateTicker(){
+ const now=performance.now(),delta=Math.max(0,now-last);last=now;
+ if(sessionRunning){sessionMs+=delta;if(setRunning){setMs+=delta;exerciseMs+=delta}else if(restMs>0){const was=restMs;restMs=Math.max(0,restMs-delta);if(was>0&&restMs===0){say("המנוחה הסתיימה. אפשר להתחיל.");render()}}}
+ updateClocks();
+ if(restMs>0){const r=$("restNow");if(r)r.textContent="מנוחה · "+fmt(restMs)}
+ const cur=$("setNow");if(cur&&setRunning)cur.textContent=fmt(setMs);
+}
+function statusLabel(i,cur){const p=plan();return p.done[i]?"בוצע":i===cur?"עכשיו":"בהמשך"}
 function render(){
- const list=activeExercises(); const done=doneCount();const p=Math.round(done/total()*100);const all=done===total();
- $('percentText').textContent=p+'%';$('ring').style.setProperty('--p',p+'%');$('progressFill').style.width=p+'%';
- $('progressTitle').textContent=all?'האימון הושלם!':done===0?'יוצאים לדרך':p<50?'ממשיכים בקצב שלך':'מתקדמים יפה';
- $('progressSub').textContent=`${done} מתוך ${total()} סטים הושלמו`;
- $('basicMode').classList.toggle('active',state.mode===5);$('fullMode').classList.toggle('active',state.mode===7);
- $('basicMode').setAttribute('aria-pressed',String(state.mode===5));$('fullMode').setAttribute('aria-pressed',String(state.mode===7));
- $('listStatus').textContent=`${list.filter(e=>state.sets[e.id].every(Boolean)).length}/${list.length} תרגילים הושלמו`;
- $('finished').classList.toggle('show',all);
- $('exerciseList').innerHTML=list.map((e,i)=>{
-   const n=state.sets[e.id].filter(Boolean).length;
-   return `<button type="button" class="list-card ${i===state.selected?'active':''} ${n===2?'complete':''}" data-index="${i}" aria-label="מעבר לתרגיל ${i+1}, ${e.name}, ${n} מתוך 2 סטים הושלמו" ${i===state.selected?'aria-current="step"':''}><span class="thumb"><img loading="lazy" src="${sceneData(e.id,0)}" alt="" onerror="this.style.display='none'" /></span><span><span class="list-name">${e.name}</span><span class="list-detail" dir="ltr" style="text-align:right">${e.en}</span><span class="mini-dots"><span class="${state.sets[e.id][0]?'done':''}"></span><span class="${state.sets[e.id][1]?'done':''}"></span></span></span><span class="list-index">${n===2?'✓':String(i+1).padStart(2,'0')}</span></button>`;
- }).join('');
- const ex=list[state.selected];const marked=state.sets[ex.id];const nd=marked.filter(Boolean).length;
- $('stepNumber').textContent=`תרגיל ${state.selected+1} מתוך ${state.mode}`;
- $('exerciseTitle').textContent=ex.name;
- $('muscleTag').textContent=ex.muscle;
- $('targetTag').textContent=`2 סטים × ${ex.reps}`;
- $('instructions').innerHTML=ex.steps.map(s=>`<li>${s}</li>`).join('');
- $('tipText').textContent='טיפ: '+ex.tip;
- for(let i=0;i<2;i++){
-    const image=$('img'+i);image.hidden=false;image.src=sceneData(ex.id,i);
-    image.onerror=()=>{image.hidden=true;};
-    const b=$('set'+i);b.classList.toggle('done',marked[i]);b.setAttribute('aria-pressed',String(marked[i]));
+ const items=list(),p=plan(),cur=index(),completed=cur<0,total=size*2;
+ const progress=Math.round(nDone()/total*100);
+ $("gymTab").classList.toggle("sel",place==="gym");$("homeTab").classList.toggle("sel",place==="home");$("fiveBtn").classList.toggle("sel",size===5);$("sevenBtn").classList.toggle("sel",size===7);
+ $("progressBar").style.width=progress+"%";$("progressTxt").textContent=nDone()+" מתוך "+total+" סטים";
+ $("sectionHint").textContent=place==="home"?"שתי משקולות יד · 2 סטים לתרגיל":"מכונות כוח · 2 סטים לתרגיל";
+ if(completed){$("intro").innerHTML='<div class="completed-screen"><h2>✓ האימון הושלם</h2><div>כל '+total+' הסטים סומנו. אפשר לסיים כאן ולהתאושש.</div></div>';}
+ else{let button="",label="סט "+(cur%2+1)+" בתרגיל "+(Math.floor(cur/2)+1);
+  if(nDone()===0&&!sessionRunning&&!setRunning&&!sessionMs){button='<button class="primary" data-action="start">▶ התחל אימון</button>';}
+  $("intro").innerHTML='<div class="introarea"><div><strong>'+ (sessionRunning?"האימון שלך בתהליך":sessionMs?"ממשיכים בקצב שלך":"מוכן להתחלה?")+'</strong><p>'+label+'. '+(setRunning?"השעון פועל. סיים את הסט בקצב שלך.":restMs>0?"אפשר לנוח או להתחיל את הסט הבא.":"כל השעונים מתחילים רק כשאתה לוחץ על התחלה.")+'</p></div>'+button+'</div>';
  }
- $('setsStatus').textContent=`${nd} מתוך 2 הושלמו`;
- $('prevBtn').disabled=state.selected===0;$('nextBtn').disabled=state.selected===state.mode-1;
- const next=marked.findIndex(x=>!x);
- $('mainAction').textContent=next===-1?'✓ שני הסטים הושלמו':`✓ סיימתי סט ${next+1===1?'ראשון':'שני'}`;
- $('mainAction').disabled=next===-1;
- $('skipBtn').textContent=state.selected===state.mode-1?'חזרה להתחלה ↶':'לתרגיל הבא ←';
+ $("exerciseList").innerHTML=items.map(function(e,j){
+ const first=j*2,done=p.done[first]&&p.done[first+1],current=cur>=first&&cur<first+2;
+ const tag=done?'<span class="pill done">הושלם ✓</span>':current?'<span class="pill">בתהליך</span>':'<span class="pill muted">ממתין</span>';
+ let body="";
+ if(done){body='<div class="exbody"><div class="mini-done"><span>✓ סט ראשון &nbsp; ✓ סט שני</span><span>'+fmt(p.dur[first]+p.dur[first+1])+'</span></div></div>';}
+ else if(current){
+ let sets="";
+ for(let k=0;k<2;k++){
+ const i=first+k; const sn=k===0?"ראשון":"שני";
+ if(p.done[i]){
+ sets+='<div class="set done"><span class="setlabel"><span class="seticon">✓</span>סט '+sn+' הושלם</span><span><small>'+fmt(p.dur[i])+'</small> <button data-action="undo" data-index="'+i+'" style="border:0;background:transparent;color:#7d998f;font-size:11px;padding:3px">בטל</button></span></div>';
+ }else if(i===cur){
+ const hint=setRunning?"הסט רץ. בצע את התנועה בשליטה וסמן כשתסיים.":setMs>0?"הסט מושהה. אפשר להמשיך או לסיים.":restMs>0?"המנוחה התחילה אחרי הסט הקודם. אפשר להתחיל מתי שנוח.":"מוכן? לחץ על התחל סט. השעון לא פועל עדיין.";
+ let btn='<button class="primary" data-action="start">'+(setMs>0&&!setRunning?"▶ המשך סט":"▶ התחל סט")+'</button>';
+ if(setRunning||setMs>0){btn='<button class="primary" data-action="finish">✓ סיימתי סט</button><button class="secondary" data-action="'+(setRunning?"pause":"start")+'">'+(setRunning?"⏸ השהה":"▶ המשך")+'</button>';}
+ sets+='<div class="set active" id="activeSet"><div class="activehead"><span class="setlabel"><span class="seticon" style="background:#d9e9ff;color:#2467e9">'+(k+1)+'</span> סט '+sn+'</span><span class="timing" id="setNow">'+fmt(setMs)+'</span></div>'+(restMs>0?'<span class="restchip" id="restNow">מנוחה · '+fmt(restMs)+'</span>':'')+'<p class="activehint">'+hint+'</p><div class="rowbuttons">'+btn+'</div></div>';
+ }else{sets+='<div class="set future"><span class="setlabel"><span class="seticon">'+(k+1)+'</span> סט '+sn+'</span><small>בהמשך</small></div>'}
+ }
+ body='<div class="exbody">'+sets+'</div>';
+ }
+ return '<article class="exercise '+(current?"current":done?"completed":"")+'" id="exercise-'+j+'"><div class="exhead"><span class="number">'+(done?"✓":j+1)+'</span><span class="exname"><strong>'+clean(e.name)+'</strong><small>'+clean(e.sub)+' · '+clean(e.reps)+'</small></span>'+tag+'<button class="infobtn" type="button" data-info="'+j+'" aria-label="מידע על '+clean(e.name)+'" title="הסבר ותמונות">i</button></div>'+body+'</article>';
+ }).join("");
+ updateClocks();
 }
-function select(i,scroll=false){state.selected=Math.max(0,Math.min(state.mode-1,i));save();render();if(scroll) $('focusSection').scrollIntoView({behavior:'smooth',block:'start'});}
-function toggleSet(i){const ex=exercises[state.selected];const arr=state.sets[ex.id];arr[i]=!arr[i];save();render();if(arr.every(Boolean)){if(doneCount()===total())toast('השלמת את כל סטי האימון!');else toast('התרגיל הושלם — אפשר להתקדם');}else if(arr[i])toast('הסט סומן כהושלם');}
-$('exerciseList').addEventListener('click',e=>{const b=e.target.closest('[data-index]');if(b)select(Number(b.dataset.index),true);});
-$('set0').addEventListener('click',()=>toggleSet(0));$('set1').addEventListener('click',()=>toggleSet(1));
-$('mainAction').addEventListener('click',()=>{const index=state.sets[exercises[state.selected].id].findIndex(x=>!x);if(index!==-1)toggleSet(index);});
-$('prevBtn').addEventListener('click',()=>select(state.selected-1));$('nextBtn').addEventListener('click',()=>select(state.selected+1));
-$('skipBtn').addEventListener('click',()=>select(state.selected===state.mode-1?0:state.selected+1));
-$('basicMode').addEventListener('click',()=>{state.mode=5;if(state.selected>=5)state.selected=4;save();render();});
-$('fullMode').addEventListener('click',()=>{state.mode=7;save();render();});
-$('resetBtn').addEventListener('click',()=>{if(confirm('להתחיל אימון חדש ולמחוק את הסימונים מהאימון הנוכחי?')){const mode=state.mode;state=initial();state.mode=mode;save();render();stopTimer();toast('האימון החדש מוכן');}});
-let timer=90,until=null,ticker=null;
-const tformat=n=>`${Math.floor(n/60)}:${String(n%60).padStart(2,'0')}`;
-function paintTimer(){let remaining=until===null?timer:Math.max(0,Math.ceil((until-Date.now())/1000));$('timerText').textContent=tformat(remaining);if(remaining<=0&&until!==null){stopTimer(true);toast('המנוחה הסתיימה');}}
-function stopTimer(finished=false){clearInterval(ticker);ticker=null;until=null;timer=90;$('timerBtn').textContent='הפעל';$('timerText').textContent=finished?'0:00':'1:30';}
-$('timerBtn').addEventListener('click',()=>{if(until!==null){stopTimer();}else{timer=90;until=Date.now()+90000;$('timerBtn').textContent='אפס';ticker=setInterval(paintTimer,300);paintTimer();}});
-render();
-
-let activePlace="gym";
-function changePlace(place){
- activePlace=place;exercises.splice(0,exercises.length,...(place==="gym"?gymExercises:homeExercises));
- KEY="my-strength-session-v3-"+place;
- try{const s=JSON.parse(localStorage.getItem(KEY));state=s&&s.sets?{...initial(),...s}:initial();}catch(e){state=initial();}
- for(const ex of exercises)if(!Array.isArray(state.sets[ex.id]))state.sets[ex.id]=[false,false];
- state.selected=Math.min(state.mode-1,Math.max(0,state.selected||0));save();render();
- $("placeGym").classList.toggle("active",place==="gym");$("placeHome").classList.toggle("active",place==="home");
- document.querySelector(".sidebar-note").textContent=place==="home"?"בבית: חמשת התרגילים הראשונים הם בסיס טוב. הכתפיים והידיים הם תוספת אפשרית.":"במכון: חמישה תרגילים בסיסיים להתחלה, ושניים נוספים בהמשך.";
+function startSet(){
+ const i=index();if(i<0)return;
+ if(!setRunning){sessionRunning=true;setRunning=true;restMs=0;last=performance.now();say("מתחילים סט "+(i%2+1)+". עבודה מבוקרת.");render()}
 }
-$("placeGym").addEventListener("click",()=>changePlace("gym"));
-$("placeHome").addEventListener("click",()=>changePlace("home"));
-
-})();
-</script>
-
-<script>
-(function(){
-let start=Date.now(),exerciseAt=Date.now(),setElapsed=0,setAt=0,running=false,voice=false,restWas=false;
-const $=id=>document.getElementById(id);
-const f=s=>Math.floor(s/60)+":"+String(Math.floor(s%60)).padStart(2,"0");
-function speak(t){if(!voice||!window.speechSynthesis)return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang="he-IL";u.rate=.95;speechSynthesis.speak(u);}catch(e){}}
-function clock(){const elapsed=setElapsed+(running?(Date.now()-setAt)/1000:0);$("sessionClock").textContent=f((Date.now()-start)/1000);$("exerciseClock").textContent=f((Date.now()-exerciseAt)/1000);$("setClock").textContent=f(elapsed);$("startSetBtn").textContent=running?"● סט מתבצע":elapsed?"▶ המשך סט":"▶ התחל סט";$("pauseSetBtn").disabled=!running&&elapsed===0;
- const rt=$("timerText").textContent;
- if(restWas&&rt==="0:00"){restWas=false;speak("המנוחה הסתיימה. אפשר להתחיל את הסט הבא.");$("coachStatus").textContent="המנוחה הסתיימה. התחל את הסט הבא כשאתה מוכן.";}
+function pauseSet(){if(setRunning){setRunning=false;sessionRunning=false;render()}}
+function finishSet(){
+ const i=index();if(i<0||(!setRunning&&setMs<=0))return;
+ const p=plan(),oldExercise=Math.floor(i/2);
+ p.done[i]=true;p.dur[i]=Math.max(1000,Math.round(setMs));
+ const next=index();
+ sessionRunning=next>=0;setRunning=false;setMs=0;
+ if(next<0){restMs=0;sessionRunning=false;say("כל הכבוד. האימון הסתיים.");}
+ else{restMs=restSeconds*1000;if(Math.floor(next/2)!==oldExercise)exerciseMs=0;say("הסט הושלם. זמן מנוחה.");}
+ save();render();
+ if(next>=0){const e=$("exercise-"+Math.floor(next/2));if(e)e.scrollIntoView({behavior:"smooth",block:"nearest"})}
 }
-function setReset(){setElapsed=0;setAt=0;running=false;exerciseAt=Date.now();$("coachStatus").textContent="מוכנים? לחץ על התחל סט, וסמן בסיום.";clock();}
-function restAuto(){if($("timerBtn").textContent==="הפעל"){$("timerBtn").click();restWas=true;}}
-function completed(){const done=$("set0").classList.contains("done")||$("set1").classList.contains("done");if(done){setElapsed=0;running=false;setAt=0;restAuto();$("coachStatus").textContent="הסט סומן כהושלם. זמן לנוח לפני הסט הבא.";speak("הסט הושלם. זמן למנוחה.");clock();}}
-$("startSetBtn").addEventListener("click",()=>{if(running)return;running=true;setAt=Date.now();$("coachStatus").textContent="הסט התחיל. בצע חזרות באיטיות ובשליטה, וסמן כשסיימת.";speak("הסט מתחיל.");clock();});
-$("pauseSetBtn").addEventListener("click",()=>{if(running){setElapsed+=(Date.now()-setAt)/1000;running=false;$("coachStatus").textContent="הסט הושהה.";}else if(setElapsed>0){setAt=Date.now();running=true;$("coachStatus").textContent="ממשיכים בסט.";}clock();});
-$("voiceBtn").addEventListener("click",()=>{voice=!voice;$("voiceBtn").classList.toggle("active",voice);$("voiceBtn").setAttribute("aria-pressed",String(voice));$("voiceBtn").textContent=voice?"🔊 קול פועל":"🔈 קול כבוי";speak("ההנחיות הקוליות פעילות.");});
-["set0","set1","mainAction"].forEach(id=>$(id).addEventListener("click",completed));
-["prevBtn","nextBtn","skipBtn","basicMode","fullMode","placeGym","placeHome","resetBtn"].forEach(id=>$(id).addEventListener("click",setReset));
-$("exerciseList").addEventListener("click",e=>{if(e.target.closest("[data-index]"))setReset();});
-$("testBtn").addEventListener("click",()=>{
- let lines=[];const img=$("img0");lines.push((img.src.startsWith("data:image/svg+xml")?"✓":"⚠")+" איורי תרגילים מוטמעים");
- let ok=false;try{localStorage.setItem("workout-self-test","1");ok=localStorage.getItem("workout-self-test")==="1";localStorage.removeItem("workout-self-test");}catch(e){}
- lines.push((ok?"✓":"⚠")+" שמירה מקומית");lines.push("✓ שעוני אימון, תרגיל וסט");lines.push((window.speechSynthesis?"✓":"ℹ")+" קול "+(window.speechSynthesis?"זמין":"לא נתמך בדפדפן"));
- $("selfResult").textContent=lines.join(" · ");
+function undoSet(i){
+ const p=plan();p.done[i]=false;p.dur[i]=0;
+ for(let j=i+1;j<p.done.length;j++){p.done[j]=false;p.dur[j]=0}
+ resetClocks();save();render();
+}
+function changePlan(newPlace,newSize){
+ place=newPlace;size=newSize;resetClocks();plan();save();render();
+}
+function resetPlan(){if(!confirm("להתחיל אימון חדש? סימוני הסטים של התוכנית הנוכחית יימחקו."))return;plans[code()]={done:Array(size*2).fill(false),dur:Array(size*2).fill(0)};resetClocks();save();render();$("settingsDialog").close()}
+function openInfo(j){
+ const e=list()[j];if(!e)return;
+ $("modalTitle").textContent=e.name;$("modalMuscle").textContent=e.sub+" · "+e.reps;
+ $("modalSteps").innerHTML=e.steps.map(s=>'<li>'+clean(s)+'</li>').join("");
+ $("modalTip").innerHTML="<b>נקודה חשובה: </b>"+clean(e.tip);
+ for(let x=0;x<2;x++){const im=$("photo"+x);im.src="img/"+e.img+"-"+x+".jpg";im.alt=e.name+" – "+(x===0?"תנוחת התחלה":"תנוחת סיום");im.onerror=function(){this.alt="התמונה אינה זמינה";this.style.background="#f3f5f9"}}
+ $("infoDialog").showModal();
+}
+document.addEventListener("click",e=>{
+ const i=e.target.closest("[data-info]");if(i){openInfo(Number(i.dataset.info));return}
+ const a=e.target.closest("[data-action]");if(!a)return;
+ switch(a.dataset.action){case "start":startSet();break;case "pause":pauseSet();break;case "finish":finishSet();break;case "undo":undoSet(Number(a.dataset.index));break;}
 });
-setInterval(clock,250);clock();
-})();
+$("gymTab").onclick=()=>changePlan("gym",size);$("homeTab").onclick=()=>changePlan("home",size);
+$("fiveBtn").onclick=()=>changePlan(place,5);$("sevenBtn").onclick=()=>changePlan(place,7);
+$("newWorkoutBtn").onclick=resetPlan;$("settingsReset").onclick=resetPlan;
+$("settingsBtn").onclick=()=>$("settingsDialog").showModal();$("closeSettings").onclick=()=>$("settingsDialog").close();
+$("closeInfo").onclick=()=>$("infoDialog").close();
+$("infoDialog").addEventListener("click",e=>{if(e.target===$("infoDialog"))$("infoDialog").close()});
+$("settingsDialog").addEventListener("click",e=>{if(e.target===$("settingsDialog"))$("settingsDialog").close()});
+$("voiceToggle").onclick=()=>{voice=!voice;$("voiceToggle").textContent=voice?"מופעל":"כבוי";if(voice)say("ההנחיות הופעלו.")};
+$("restSelect").value=String(restSeconds);$("restSelect").onchange=e=>{restSeconds=Number(e.target.value);save()};
+$("testBtn").onclick=async()=>{
+ const results=[];let storage=false;try{localStorage.setItem("avtest","ok");storage=localStorage.getItem("avtest")==="ok";localStorage.removeItem("avtest")}catch(e){}
+ results.push((storage?"✓":"⚠")+" שמירה מקומית");
+ const pics=list().map(e=>e.img);const loaded=await Promise.all(pics.map(name=>new Promise(resolve=>{const im=new Image();im.onload=()=>resolve(true);im.onerror=()=>resolve(false);im.src="img/"+name+"-0.jpg"})));
+ results.push((loaded.every(Boolean)?"✓":"⚠")+" תמונות: "+loaded.filter(Boolean).length+" מתוך "+loaded.length+" נטענו");
+ results.push("✓ שעונים ממתינים להפעלת סט");
+ results.push(("speechSynthesis" in window?"✓":"ℹ")+" הנחיות קוליות");
+ $("testReport").textContent=results.join("\n");
+};
+window.setInterval(updateTicker,200);
+plan();render();
 </script>
-</body>
-</html>
+</body></html>
