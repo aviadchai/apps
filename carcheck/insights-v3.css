@@ -1,0 +1,33 @@
+
+#carscope-v3{margin-top:32px;color:#173a67}
+#carscope-v3 *{box-sizing:border-box}
+.ins-v3-intro{margin:30px 0 17px}.ins-v3-intro span{font-size:10px;letter-spacing:1px;color:#135fc0;font-weight:900}
+.ins-v3-intro h2{font-size:25px;letter-spacing:-.7px;margin:6px 0 5px}.ins-v3-intro p{font-size:13px;color:#7387a1;line-height:1.7;margin:0}
+.ins-v3-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.ins-v3-panel{background:white;border:1px solid #d8e4f0;border-radius:17px;padding:22px;min-width:0;margin-bottom:16px}
+.ins-v3-panel h3{margin:0 0 16px;font-size:18px;letter-spacing:-.3px}
+.ins-v3-chart{display:block;width:100%;height:auto;direction:ltr}
+.ins-v3-chart-empty{min-height:210px;background:repeating-linear-gradient(0deg,transparent 0,transparent 49px,#e0ebf7 50px),linear-gradient(#fbfdff,#f5f9ff);border:1px solid #e0eaf6;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;gap:8px;padding:20px}
+.ins-v3-empty-symbol{font-size:32px;color:#2768bd}
+.ins-v3-chart-empty strong{font-size:14px}
+.ins-v3-chart-empty small{color:#778ba3;line-height:1.7;font-size:12px;max-width:360px}
+.ins-v3-notice{font-size:12px;color:#426383;background:#edf4fc;border:1px solid #cbdfee;border-radius:10px;line-height:1.75;padding:12px 14px;margin:14px 0}
+.ins-v3-notice.review{background:#fff7eb;border-color:#f3d7a6;color:#93631e}
+.ins-v3-notice.good{background:#eaf7f4;border-color:#c0e7dc;color:#166b62}
+.ins-v3-timeline{display:grid;gap:8px;margin:15px 0}
+.ins-v3-reading{display:flex;gap:8px;align-items:center;justify-content:space-between;border-bottom:1px solid #e8eff7;padding:8px 0}
+.ins-v3-reading strong{font-size:13px}.ins-v3-reading span{font-size:12px;color:#547397}.ins-v3-reading small{font-size:10px;color:#8195ac}
+.ins-v3-explain{color:#7d8ea3;font-size:11px;line-height:1.85;margin:15px 0 0}
+.ins-v3-ownership-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.ins-v3-ownership-metrics>div{border:1px solid #dde9f4;background:#f5f9ff;border-radius:10px;padding:11px;min-width:0}
+.ins-v3-ownership-metrics small{display:block;color:#7188a5;font-size:10px;white-space:normal}
+.ins-v3-ownership-metrics strong{display:block;margin-top:6px;font-size:13px;overflow-wrap:anywhere}
+.ins-v3-ownerlist{margin-top:12px}
+.ins-v3-owner{border-bottom:1px solid #e5edf6;display:flex;align-items:center;gap:8px;padding:10px 0}
+.ins-v3-owner>div{flex:1;min-width:0;display:flex;gap:5px;align-items:center}.ins-v3-owner strong{font-size:13px}
+.ins-v3-owner span{font-size:11px;color:#7089a2}.ins-v3-flag{font-size:10px;color:#9a6c15;border-radius:11px;background:#fff4dc;padding:4px 7px}
+.ins-v3-price-info{font-size:12px;color:#536c85;line-height:1.8;margin-top:12px}
+.ins-blue-footer a{color:#125fad;text-decoration:underline}
+@media(max-width:790px){.ins-v3-grid{grid-template-columns:1fr}.ins-v3-panel{padding:17px}.ins-v3-intro h2{font-size:22px}}
+@media(max-width:410px){.ins-v3-ownership-metrics{grid-template-columns:1fr 1fr}.ins-v3-reading{flex-wrap:wrap}}
+@media print{.ins-v3-panel{break-inside:avoid}.ins-help-dialog{display:none}}
