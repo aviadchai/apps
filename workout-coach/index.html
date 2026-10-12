@@ -146,10 +146,10 @@ function plan(){
 }
 function timedExercise(e){return /שניות/.test(e.reps)}
 function targetReps(e){return parseInt(e.reps,10)||10}
-function totalReps(p){return p.actual.reduce((n,r,i)=>n+(p.done[i]&&!timedExercise(list()[Math.floor(i/2)])?Number(r)||0:0),0)}
+function totalReps(p){return p.actual.reduce((n,r,i)=>{const e=list()[Math.floor(i/2)];const count=p.done[i]&&!timedExercise(e)?Number(r)||0:0;return n+count*(/לכל צד/.test(e.reps)?2:1)},0)}
 function setDetails(e,p,i){
  if(timedExercise(e))return "משך: "+fmt(p.dur[i]);
- return (p.actual[i]||targetReps(e))+" חזרות"+(/לכל צד/.test(e.reps)?" לכל צד":"")+(place==="home"&&p.weights[i]!=null?" · "+p.weights[i]+" ק״ג ליד":"");
+ return (p.actual[i]==null?"חזרות לא נרשמו":p.actual[i]+" חזרות"+(/לכל צד/.test(e.reps)?" לכל צד":""))+(place==="home"&&p.weights[i]!=null?" · "+p.weights[i]+" ק״ג ליד":"");
 }
 function energyEstimate(ms){
  const minutes=ms/60000;
