@@ -1,0 +1,16 @@
+{
+  "name": "carscope-history-api",
+  "main": "src/index.js",
+  "compatibility_date": "2026-10-01",
+  "triggers": {
+    "crons": [
+      "0 3 * * *"
+    ]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "carscope-history"
+    }
+  ]
+}
