@@ -54,7 +54,7 @@ async function handler(req,res){
   return res.status(200).json({
     plate,checkedAt:new Date().toISOString(),
     vehicle:vehicleData(found.registration[0]),
-    history:{lastMileage:Number.isFinite(km)?km:null,ownership:owners},
+    history:{lastMileage:Number.isFinite(km)?km:null,ownership:owners,origin:found.mileage[0]?.mkoriut_nm||null},
     sources,
     coverage:{historyStartYear:2017,mileageSeriesAvailable:false},
     disclaimer:'מידע ציבורי חלקי; אין לראות בו אישור למצב מכני, היעדר תאונות או מספר ידיים סופי.'
