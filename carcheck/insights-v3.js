@@ -133,10 +133,30 @@ function install(){
   }else if(e.target.id==="insHelpClose"||(!pop.contains(e.target)&&!pop.hidden)){pop.hidden=true}
  });
 }
+function annotateBasicReport(){
+ const fields=document.querySelectorAll("#details .detail label, #report .metric label");
+ const terms=[
+  [/בעלות נוכחית/,"בעלות נוכחית"],
+  [/רמת גימור/,"רמת גימור"],
+  [/טסט אחרון/,"טסט"],
+  [/ק״מ/,"ק״מ בטסט האחרון"]
+ ];
+ fields.forEach(label=>{
+   if(label.querySelector(".ins-info-button"))return;
+   const hit=terms.find(([pattern])=>pattern.test(label.textContent||""));
+   if(hit)label.insertAdjacentHTML("beforeend",info(hit[1]));
+ });
+ const owners=document.querySelectorAll("#owners .timeline-item strong");
+ owners.forEach(item=>{
+   if(item.querySelector(".ins-info-button"))return;
+   const found=["החכרה","החכר","השכרה","סוחר"].find(t=>(item.textContent||"").includes(t));
+   if(found)item.insertAdjacentHTML("beforeend",info(found));
+ });
+}
 document.addEventListener("carscope:report",e=>{
  if(!e.detail?.plate)return;
  latest=e.detail;
  install();
- odometer(latest);ownership(latest);prices(latest);
+ odometer(latest);ownership(latest);prices(latest);annotateBasicReport();
 });
 })();
