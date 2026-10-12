@@ -21,25 +21,25 @@
 
 נדרש Node.js 20 ומעלה:
 
-\`\`\`bash
+```bash
 npm install
 npx vercel dev
-\`\`\`
+```
 
 פתח http://localhost:3000 והזן מספר רכב. ההרצה דרך Vercel Dev מפעילה גם את API Route שבנתיב api/vehicle.js.
 
 בדיקות יחידה:
 
-\`\`\`bash
+```bash
 npm test
-\`\`\`
+```
 
 ## פריסה
 
-בחר ב-Vercel את המאגר \`aviadchai/apps\`, את Root Directory \`carcheck\`, ואת Framework Preset \`Other\`. אין צורך במפתח API. הקבצים \`index.html\` ו-\`api/vehicle.js\` מוכנים לפריסה.
+בחר ב-Vercel את המאגר `aviadchai/apps`, את Root Directory `carcheck`, ואת Framework Preset `Other`. אין צורך במפתח API. הקבצים `index.html` ו-`api/vehicle.js` מוכנים לפריסה.
 
 ## גישה למקורות
 
-קריאות שרת מבוצעות מול \`https://data.gov.il/api/3/action/datastore_search\`, עם filter לפי \`mispar_rechev\`, timeout לכל מקור ושמירת Cache קצרה. אם כל המקורות אינם זמינים, הבקשה נכשלת בגלוי, במקום להמציא נתונים.
+קריאות שרת מבוצעות מול `https://data.gov.il/api/3/action/datastore_search`, עם filter לפי `mispar_rechev`, timeout לכל מקור ושמירת Cache קצרה. אם כל המקורות אינם זמינים, הבקשה נכשלת בגלוי, במקום להמציא נתונים.
 
 המערכת אינה אתר ממשלתי ואינה מחליפה בדיקת רכב מקצועית. שימוש במאגרים כפוף לתנאי המקור ולכללי הגנת הפרטיות.
