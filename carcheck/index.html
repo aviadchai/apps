@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#101b2d"><meta name="description" content="בדיקת נתוני רכב בישראל על בסיס מאגרי משרד התחבורה — בחינם וללא ניחושים.">
+<title>CarScope | מידע שקוף לפני שקונים רכב</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{font-family:Heebo,Arial,sans-serif;color:#152137;background:#f4f7fa;font-synthesis:none;--navy:#111d30;--mint:#52e0b6;--muted:#728095;--line:#e3eaf1;--radius:20px}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;min-height:100vh}button,input{font:inherit}a{color:inherit;text-decoration:none}button{cursor:pointer}button:disabled{opacity:.65;cursor:wait}
+.wrap{max-width:1120px;margin:auto;padding:0 24px}.top{background:var(--navy);color:white;border-bottom:1px solid #ffffff19}.topinner{height:74px;display:flex;align-items:center;justify-content:space-between}.brand{display:flex;align-items:center;gap:11px;font-size:23px;font-weight:900;letter-spacing:-.9px}.brandlogo{width:39px;height:39px;display:grid;place-items:center;border-radius:12px;color:#112139;background:var(--mint);font-weight:900;font-size:21px;transform:skew(-6deg)}.brand span{color:var(--mint)}.nav{display:flex;align-items:center;gap:28px;font-size:13px;color:#c7d1df}.nav a:hover{color:white}.source-pill{border:1px solid #ffffff32;border-radius:20px;padding:7px 12px;display:flex;align-items:center;gap:8px;color:#dce8f3}.dot{width:7px;height:7px;border-radius:100%;background:var(--mint);box-shadow:0 0 0 4px #52e0b61c}
+.hero{background:radial-gradient(ellipse at 14% 5%,#24455d 0,transparent 45%),linear-gradient(124deg,#17283e,#101b2d 65%);color:white;padding:60px 0 92px;position:relative;overflow:hidden}.hero:after{content:"";position:absolute;left:-7%;bottom:-180px;width:450px;height:450px;border:1px solid #ffffff12;border-radius:100%;box-shadow:0 0 0 50px #ffffff06,0 0 0 100px #ffffff05;pointer-events:none}.hero-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:52px;align-items:center;position:relative;z-index:1}.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12px;letter-spacing:.2px;font-weight:700;color:#a5efda;background:#52e0b611;padding:7px 12px;border:1px solid #52e0b62a;border-radius:50px}.hero h1{font-size:clamp(36px,4.8vw,60px);line-height:1.22;margin:22px 0 16px;letter-spacing:-2.5px;font-weight:900}.hero h1 em{color:var(--mint);font-style:normal}.subhead{font-size:16px;color:#bed0df;line-height:1.9;max-width:555px;margin:0}.hero-details{display:flex;gap:24px;margin-top:30px;flex-wrap:wrap}.hero-details span{color:#d7e3ef;display:inline-flex;align-items:center;gap:9px;font-size:13px}.check{color:var(--mint);font-size:17px;font-weight:900}
+.search-card{padding:29px;background:#fff;border-radius:24px;color:#162137;box-shadow:0 28px 70px #060e1f65;border:1px solid #fff}.search-card h2{font-size:22px;letter-spacing:-.6px;margin:0}.search-card p{color:var(--muted);font-size:13px;margin:6px 0 24px}.fieldlabel{display:block;font-size:13px;font-weight:700;margin-bottom:8px}.plate-group{display:flex;align-items:center;height:67px;direction:ltr;border:2px solid #dce5ec;border-radius:13px;overflow:hidden;transition:border-color .2s}.plate-group:focus-within{border-color:#19b88a}.plate-group input{width:100%;flex:1;min-width:0;text-align:center;direction:ltr;border:0;outline:0;background:white;font-size:32px;font-weight:800;letter-spacing:2px;color:#111c2d;unicode-bidi:plaintext}.plate-tag{align-self:stretch;width:41px;display:flex;align-items:center;justify-content:center;writing-mode:vertical-rl;background:#2156ba;color:white;font-size:11px;font-weight:800;letter-spacing:.4px}.search-btn{width:100%;background:#20c89a;color:#0b2730;font-weight:900;border:0;border-radius:12px;padding:16px;margin-top:14px;font-size:16px;transition:transform .2s,background .2s}.search-btn:hover{background:#42e1b4;transform:translateY(-1px)}.helper{font-size:12px;color:#7b8797;margin-top:17px;line-height:1.75}.helper button{background:none;border:0;text-decoration:underline;color:#116b75;font-size:12px;font-weight:800;padding:0}.error{display:none;margin-top:13px;color:#9e2e33;background:#fff2f2;border:1px solid #f7d9d9;padding:10px 13px;border-radius:10px;font-size:13px}.error.visible{display:block}
+.content{margin-top:-41px;position:relative;z-index:2;padding-bottom:65px}.values{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.value{background:#fff;border:1px solid #e7edf3;padding:20px 23px;border-radius:16px;box-shadow:0 9px 30px #162b4110;display:flex;gap:15px;align-items:center}.valueicon{width:48px;height:48px;border-radius:13px;background:#e6faf3;display:grid;place-items:center;color:#169a76;font-size:23px;flex-shrink:0}.value b{font-size:17px;display:block}.value small{color:var(--muted);font-size:12px;display:block;line-height:1.5}
+.section-title{font-size:23px;letter-spacing:-.7px;margin:41px 0 6px}.section-desc{margin:0 0 21px;color:#78869a;font-size:14px}.features{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.feature{background:white;border:1px solid var(--line);border-radius:18px;padding:23px}.feature .symbol{font-size:24px;background:#f0f5fa;border-radius:12px;display:grid;place-items:center;width:45px;height:45px;margin-bottom:17px}.feature h3{font-size:17px;margin:0 0 6px}.feature p{font-size:13px;color:#7a8799;line-height:1.8;margin:0}
+.disclaimer{background:#edf3f8;border:1px solid #dae6ef;border-radius:15px;padding:17px 20px;margin-top:24px;color:#54657a;line-height:1.9;font-size:13px}.disclaimer strong{color:#233b55}
+.result{display:none;margin-top:37px}.result.visible{display:block}.result-top{display:flex;justify-content:space-between;gap:15px;align-items:center;flex-wrap:wrap}.tag{font-size:11px;font-weight:800;color:#18775e;border:1px solid #c3ede0;background:#e9f9f3;padding:6px 11px;border-radius:40px}.titleline{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.titleline h2{font-size:27px;letter-spacing:-.8px;margin:0}.actions{display:flex;gap:8px}.ghostbtn{background:#fff;border:1px solid #d7e2eb;color:#263d54;border-radius:10px;padding:10px 15px;font-size:12px;font-weight:800}.ghostbtn:hover{border-color:#149d7d}
+.result-meta{color:#78869a;font-size:13px;margin:8px 0 22px}.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.metric{background:white;border:1px solid var(--line);padding:19px 22px;border-radius:16px;min-height:115px}.metric label{font-size:12px;color:#8390a0;display:block}.metric strong{font-size:25px;letter-spacing:-.5px;display:block;margin:8px 0 2px}.metric small{font-size:11px;color:#8b98a7}.panel{background:#fff;border:1px solid var(--line);border-radius:19px;margin-top:17px;overflow:hidden}.panel-head{padding:20px 23px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px}.panel h3{margin:0;font-size:17px}.panel p{font-size:13px;color:#7b8899;line-height:1.75}.details{display:grid;grid-template-columns:repeat(3,1fr);gap:0}.detail{padding:17px 22px;border-bottom:1px solid #edf1f5}.detail label{display:block;color:#8492a2;font-size:11px}.detail b{display:block;margin-top:4px;font-size:15px}.timeline{padding:20px 24px}.timeline-item{position:relative;padding:2px 23px 21px 0;border-right:2px solid #dceae8;margin-right:9px}.timeline-item:last-child{border-right:2px solid transparent;padding-bottom:0}.timeline-item:before{content:"";width:11px;height:11px;border-radius:50%;background:#2acc9f;position:absolute;right:-7px;top:5px;box-shadow:0 0 0 5px #e9faf4}.timeline-item strong{display:block;font-size:14px}.timeline-item small{color:#8393a5;font-size:12px}.warning{display:flex;gap:11px;align-items:flex-start;background:#fffaed;color:#795c22;border:1px solid #f0dfb0;padding:16px 20px;border-radius:13px;margin-top:17px;font-size:13px;line-height:1.8}.warning b{display:block;color:#674b1b}.src-list{padding:15px 22px}.srcrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid #edf0f3;font-size:13px}.srcrow:last-child{border:0}.srcrow span:last-child{font-size:12px;font-weight:800}.ok{color:#0d9e79}.missing{color:#aa751d}.bad{color:#c44545}
+.footer{background:#121f32;color:#afbed1;padding:27px 0;font-size:12px}.footer-inner{display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap}.footer a{text-decoration:underline}.hidden{display:none!important}
+@media(max-width:780px){.nav{display:none}.hero{padding:34px 0 75px}.hero-grid{grid-template-columns:1fr;gap:27px}.hero h1{font-size:37px;letter-spacing:-1.4px}.hero-details{margin-top:18px;gap:12px}.hero-details span{font-size:12px}.search-card{padding:22px}.values{grid-template-columns:1fr;gap:10px}.value{padding:13px 15px}.valueicon{width:40px;height:40px}.features{grid-template-columns:1fr;gap:12px}.feature{padding:20px}.metric{padding:15px}.metrics{gap:8px}.metric strong{font-size:20px}.details{grid-template-columns:repeat(2,1fr)}.wrap{padding:0 16px}.section-title{margin-top:29px}.result-top{align-items:flex-start}.search-card h2{font-size:20px}}
+@media(max-width:390px){.metrics{grid-template-columns:1fr}.metric{min-height:75px}.details{grid-template-columns:1fr}}
+@media print{.top,.hero,.values,.footer,.actions,#welcome{display:none!important}.content{margin:0}.result{display:block!important}.panel,.metric{break-inside:avoid}body{background:white}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap topinner"><a href="/" class="brand"><div class="brandlogo">C</div>Car<span>Scope</span></a><nav class="nav"><a href="#welcome">מה בודקים</a><a href="#sources">מקורות מידע</a><span class="source-pill"><span class="dot"></span> נתונים ממשלתיים</span></nav></div></header>
+<section class="hero"><div class="wrap hero-grid"><div>
+<div class="eyebrow">מידע שקוף לפני שקונים רכב</div>
+<h1>המספר על הלוחית.<br><em>הסיפור מאחוריה.</em></h1>
+<p class="subhead">בדיקת רכב חינמית המבוססת על מאגרי משרד התחבורה: פרטי רישוי, נסועה בטסט האחרון והעברות בעלות — רק כאשר הנתונים קיימים במקור.</p>
+<div class="hero-details"><span><b class="check">✓</b> ללא הרשמה</span><span><b class="check">✓</b> ללא תשלום</span><span><b class="check">✓</b> מקורות שקופים</span></div>
+</div><form class="search-card" id="searchForm">
+<h2>איזה רכב נבדוק?</h2><p>הזנת מספר רישוי ישראלי, 7 או 8 ספרות</p>
+<label class="fieldlabel" for="plate">מספר רכב</label>
+<div class="plate-group"><span class="plate-tag">IL</span><input id="plate" name="plate" aria-label="מספר רכב" inputmode="numeric" maxlength="10" autocomplete="off" value="4870037" placeholder="00-000-00"></div>
+<button class="search-btn" type="submit" id="submit">בדוק את הרכב ←</button>
+<div class="error" id="error" role="alert"></div>
+<div class="helper">מוכן לבדוק? מספר לדוגמה: <button type="button" id="sample">48-700-37</button> (יונדאי טוסון 2016). <br>לא נמצאו נתונים? נראה בדיוק איזה מאגר לא החזיר תשובה.</div>
+</form></div></section>
+<main class="wrap content">
+<div class="values"><div class="value"><div class="valueicon">◈</div><div><b>מידע רשמי</b><small>נתונים המגיעים ישירות ממאגרים ציבוריים</small></div></div><div class="value"><div class="valueicon">↗</div><div><b>עבר בעלויות</b><small>תאריכים וסוגי בעלות, כשהם זמינים</small></div></div><div class="value"><div class="valueicon">≋</div><div><b>קילומטראז׳</b><small>קריאת הטסט האחרון, כשקיימת</small></div></div></div>
+<section id="report" class="result" aria-live="polite">
+<div class="result-top"><div><div class="titleline"><h2 id="carTitle">דוח רכב</h2><span class="tag">נתונים ממאגרים פתוחים</span></div><div class="result-meta" id="reportSub"></div></div><div class="actions"><button class="ghostbtn" id="copyBtn">העתק סיכום</button><button class="ghostbtn" onclick="window.print()">הדפס / שמור PDF</button></div></div>
+<div class="metrics"><div class="metric"><label>ק״מ בטסט האחרון</label><strong id="metricKm">—</strong><small id="kmNote">אין מידע מאומת</small></div><div class="metric"><label>רשומות בעלות זמינות</label><strong id="metricOwners">—</strong><small>לא בהכרח מספר היד ברישיון</small></div><div class="metric"><label>שנת ייצור</label><strong id="metricYear">—</strong><small>לפי רישום משרד התחבורה</small></div></div>
+<div id="coverage" class="warning hidden"></div>
+<div class="panel"><div class="panel-head"><h3>פרטי הרכב</h3><span class="tag">משרד התחבורה</span></div><div id="details" class="details"></div></div>
+<div class="panel"><div class="panel-head"><h3>היסטוריית בעלויות זמינה</h3></div><div class="timeline" id="owners"></div></div>
+<div class="panel" id="sources"><div class="panel-head"><h3>בדיקת מקורות</h3><span id="checkedAt" style="font-size:12px;color:#8a97a6"></span></div><div id="sourceList" class="src-list"></div></div>
+<div class="disclaimer"><strong>מה הדוח לא מכסה?</strong> אין כאן מידע על תאונות, תביעות ביטוח, טיפולים, שעבודים או מצב מכני. המאגר נותן קריאת ק״מ אחרונה בלבד — לא סדרת קריאות מכל הטסטים. אין להסתמך על הדוח במקום בדיקה מקצועית ומסמכי המוכר.</div>
+</section>
+<section id="welcome"><h2 class="section-title">מה אפשר לגלות בבדיקה?</h2><p class="section-desc">שלושה מקורות ממשלתיים, עם הסבר ברור לגבי מקורו של כל נתון</p>
+<div class="features"><div class="feature"><div class="symbol">▤</div><h3>זהות ומפרט</h3><p>יצרן, דגם, שנת ייצור, רמת גימור, צבע, דלק ומועדי רישוי — מתוך מאגר כלי רכב פרטיים ומסחריים.</p></div><div class="feature"><div class="symbol">≋</div><h3>ק״מ בטסט האחרון</h3><p>קריאת נסועה רשמית, כשקיימת במאגר ההיסטוריה. אין הבטחה לקבלת רצף קילומטראז׳ לאורך שנים.</p></div><div class="feature"><div class="symbol">↗</div><h3>רשומות העברת בעלות</h3><p>תאריכי בעלויות וסוגי בעלות ככל שפורסמו במאגר. אין לבלבל בין מספר הרשומות לבין היד הרשומה ברישיון.</p></div></div>
+<div class="disclaimer"><strong>לגבי רכבים ישנים:</strong> מאגרי היסטוריית כלי הרכב הפרטיים מציגים בעיקר רכבים פעילים משנת 2017 ואילך. ברכב משנת 2016, היעדר רשומות היסטוריה אינו מעיד שלא היו החלפות בעלות או טסטים.</div>
+</section></main>
+<footer class="footer"><div class="wrap footer-inner"><span>CarScope · כלי עזר עצמאי לבדיקה ראשונית של רכב משומש</span><span>נתונים: <a href="https://data.gov.il/he/datasets/ministry_of_transport/private-and-commercial-vehicles/053cea08-09bc-40ec-8f7a-156f0677aff3" target="_blank" rel="noopener">מפרט</a> · <a href="https://data.gov.il/he/datasets/ministry_of_transport/shinui_mivne" target="_blank" rel="noopener">היסטוריית רכב</a> | לא אתר ממשלתי</span></div></footer>
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const val=v=>v===null||v===undefined||v===''?'לא זמין':String(v);
+const fmt=n=>Number(n).toLocaleString('he-IL');
+const niceDate=s=>{if(!s)return 'לא זמין';let t=String(s);if(/^\d{6}$/.test(t))return t.slice(4,6)+'/'+t.slice(0,4);let d=new Date(t);return isNaN(d)?t:d.toLocaleDateString('he-IL')};
+let current=null;
+$('sample').addEventListener('click',()=>{$('plate').value='4870037';$('plate').focus()});
+$('plate').addEventListener('input',e=>{e.target.value=e.target.value.replace(/[^0-9]/g,'').slice(0,8)});
+function showError(message){$('error').textContent=message;$('error').classList.add('visible')}
+function hideError(){$('error').classList.remove('visible')}
+function addDetail(label,value){return '<div class="detail"><label>'+esc(label)+'</label><b>'+esc(val(value))+'</b></div>'}
+function showResult(j){
+ current=j; const v=j.vehicle||{};let h=j.history||{};const owners=h.ownership||[];const mileage=h.lastMileage;
+ $('report').classList.add('visible');$('welcome').classList.add('hidden');
+ let title=[v.manufacturer,v.model].filter(Boolean).join(' ');$('carTitle').textContent=title||'רכב מספר '+j.plate;
+ $('reportSub').textContent='מספר רישוי '+j.plate.replace(/(\d{2})(\d{3})(\d{2})$/,'$1-$2-$3')+' · נתונים לפי המידע הציבורי הזמין';
+ $('metricKm').textContent=Number.isFinite(mileage)?fmt(mileage):'לא זמין';
+ $('kmNote').textContent=Number.isFinite(mileage)?'הקריאה האחרונה שמופיעה במאגר':'לא התקבל נתון ממאגר הנסועה';
+ $('metricOwners').textContent=owners.length?fmt(owners.length):'לא זמין';
+ $('metricYear').textContent=v.year||'לא זמין';
+ $('details').innerHTML=[
+ ['יצרן',v.manufacturer],['דגם',v.model],['רמת גימור',v.trim],['שנה',v.year],
+ ['מנוע (קוד)',v.engineCode],['סוג דלק',v.fuel],['צבע',v.color],['בעלות נוכחית (סוג)',v.currentOwnership],
+ ['תאריך טסט אחרון',niceDate(v.lastTestDate)],['תוקף רישיון',niceDate(v.registrationExpiry)],
+ ['מועד עלייה לכביש',v.firstOnRoad],['צמיג קדמי',v.frontTire]
+ ].map(x=>addDetail(x[0],x[1])).join('');
+ $('owners').innerHTML=owners.length ? owners.map((o,i)=>'<div class="timeline-item"><strong>'+esc(niceDate(o.date))+' — '+esc(val(o.type))+'</strong><small>רשומה מס׳ '+(i+1)+' מתוך הנתונים המפורסמים</small></div>').join('') : '<p>לא נמצאו רשומות בעלות במאגר הציבורי עבור הרכב. אין בכך אישור שהוא יד ראשונה.</p>';
+ const old=v.year&&Number(v.year)<2017;
+ const noHist=(!owners.length&&!Number.isFinite(mileage));
+ $('coverage').classList.toggle('hidden',!(old||noHist));
+ if(old||noHist){$('coverage').innerHTML='<span style="font-size:23px">ⓘ</span><div><b>'+ (old?'כיסוי היסטורי מוגבל לרכב משנת '+esc(v.year):'לא נמצאו נתוני היסטוריה')+'</b>מאגרי ההיסטוריה הממשלתיים מיועדים בעיקר לרכבים פעילים משנת 2017 ואילך. אין להסיק מחוסר נתונים לגבי מספר הידיים או אמינות הקילומטראז׳.</div>'}
+ const names={registration:'מאגר רישוי ומפרט',mileage:'מאגר ק״מ בטסט האחרון',ownership:'מאגר היסטוריית בעלויות'};
+ $('sourceList').innerHTML=Object.entries(names).map(([key,name])=>{let state=j.sources[key];const labels={found:'נמצאו נתונים',empty:'אין רשומה',error:'המקור לא זמין'};let cls=state==='found'?'ok':state==='error'?'bad':'missing';return '<div class="srcrow"><span>'+name+'</span><span class="'+cls+'">'+(labels[state]||'לא ידוע')+'</span></div>'}).join('');
+ $('checkedAt').textContent='נבדק '+new Date(j.checkedAt).toLocaleString('he-IL');
+ $('report').scrollIntoView({behavior:'smooth',block:'start'});
+}
+$('searchForm').addEventListener('submit',async function(e){
+ e.preventDefault();hideError();
+ const plate=$('plate').value.replace(/\D/g,'');if(!/^\d{7,8}$/.test(plate))return showError('יש להזין מספר רכב ישראלי בן 7 או 8 ספרות.');
+ const btn=$('submit');btn.disabled=true;btn.textContent='בודקים מול המאגרים...';
+ try{const r=await fetch('/api/vehicle?plate='+encodeURIComponent(plate),{headers:{Accept:'application/json'}});const j=await r.json();
+ if(!r.ok)throw Error(j.error||'לא ניתן להשלים את הבדיקה');
+ if(!j.vehicle&&!Number.isFinite(j.history?.lastMileage)&&!j.history?.ownership?.length){$('report').classList.remove('visible');$('welcome').classList.remove('hidden');showError('לא נמצאה רשומה במסדי הנתונים שנענו לבקשה. ייתכן שמדובר ברכב לא פעיל או בכיסוי מוגבל.');return}
+ showResult(j);
+ }catch(err){showError(err.message||'תקלה זמנית. נסה שוב בעוד מספר דקות.')}
+ finally{btn.disabled=false;btn.textContent='בדוק את הרכב ←'}
+});
+$('copyBtn').addEventListener('click',async()=>{if(!current)return;const v=current.vehicle||{},h=current.history||{};const text=['CarScope — דוח '+current.plate,[v.manufacturer,v.model,v.year].filter(Boolean).join(' '),'ק״מ בטסט האחרון: '+(Number.isFinite(h.lastMileage)?fmt(h.lastMileage):'לא זמין'),'רשומות בעלות: '+(h.ownership?.length||'לא זמינות'),'מקור: data.gov.il','מידע חלקי, לא תחליף לבדיקה מקצועית'].join('\n');try{await navigator.clipboard.writeText(text);$('copyBtn').textContent='הועתק ✓';setTimeout(()=>$('copyBtn').textContent='העתק סיכום',2000)}catch(e){$('copyBtn').textContent='לא ניתן להעתיק'}});
+})();
+</script></body></html>
