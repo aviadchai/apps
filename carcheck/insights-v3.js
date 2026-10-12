@@ -57,7 +57,7 @@ const makeLayout=()=>'<div class="ins-v3-intro"><span>CAR SCOPE / DATA INSIGHTS<
  '<div class="ins-v3-grid">'+panel('קילומטראז׳ בטסטים '+tip("ק״מ בטסט האחרון"))+'<div id="v3Odo"></div></div>'+
  panel('בעלויות ומקוריות '+tip("מקוריות"))+'<div id="v3Ownership"></div></div></div>'+
  panel('גרף מחירי דגם ומחירון '+tip("מחירון"))+'<div id="v3Prices"></div><div class="ins-blue-footer">מחירונים מסחריים אינם נגישים כרגע ב־API מורשה. <a href="https://www.yad2.co.il/price-list" target="_blank" rel="noopener noreferrer">מחירון יד2</a> · <a href="https://levi-itzhak.co.il/" target="_blank" rel="noopener noreferrer">לוי יצחק</a></div></div>';
-const ownerDate=v=>{const t=String(v||"");return /^\\d{6}$/.test(t)?t.slice(4,6)+"/"+t.slice(0,4):t};
+const ownerDate=v=>{const t=String(v||"");return /^\d{6}$/.test(t)?t.slice(4,6)+"/"+t.slice(0,4):t};
 const fleet=t=>/השכר|החכר|ליסינג|מונית|חברה|תאגיד|בית ספר|נהיגה/i.test(String(t||""));
 const nonPrivate=t=>String(t||"").trim()&&!/^(פרטי|פרטית)$/.test(String(t).trim());
 let latest=null,mount=null;
