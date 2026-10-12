@@ -57,6 +57,7 @@ const makeLayout=()=>'<div class="ins-v3-intro"><span>CAR SCOPE / DATA INSIGHTS<
  '<div class="ins-v3-grid">'+panel('קילומטראז׳ בטסטים '+tip("ק״מ בטסט האחרון"))+'<div id="v3Odo"></div></div>'+
  panel('בעלויות ומקוריות '+tip("מקוריות"))+'<div id="v3Ownership"></div></div></div>'+
  panel('גרף מחירי דגם ומחירון '+tip("מחירון"))+'<div id="v3Prices"></div><div class="ins-blue-footer">מחירונים מסחריים אינם נגישים כרגע ב־API מורשה. <a href="https://www.yad2.co.il/price-list" target="_blank" rel="noopener noreferrer">מחירון יד2</a> · <a href="https://levi-itzhak.co.il/" target="_blank" rel="noopener noreferrer">לוי יצחק</a></div></div>';
+const ownerDate=v=>{const t=String(v||"");return /^\\d{6}$/.test(t)?t.slice(4,6)+"/"+t.slice(0,4):t};
 const fleet=t=>/השכר|החכר|ליסינג|מונית|חברה|תאגיד|בית ספר|נהיגה/i.test(String(t||""));
 const nonPrivate=t=>String(t||"").trim()&&!/^(פרטי|פרטית)$/.test(String(t).trim());
 let latest=null,mount=null;
@@ -73,7 +74,7 @@ function odometer(j){
  const messages=j.history?.odometerAlerts||[];
  html+=messages.map(f=>warning(f.text,"review")).join("");
  if(!messages.length&&valid.length>=2)html+=warning("לא זוהתה נסיגה בקריאות הזמינות. אין בכך אישור שלא היה שינוי במד האוץ.","good");
- html+=valid.length?'<div class="ins-v3-timeline">'+valid.map(r=>'<div class="ins-v3-reading"><strong>'+fmt(r.value)+' ק״מ</strong><span>'+esc(r.date||"")+'</span><small>'+(r.source==="mot_open_data"?"משרד התחבורה":"מקור ארכיוני")+'</small></div>').join("")+'</div>':"";
+ html+=valid.length?'<div class="ins-v3-timeline">'+valid.map(r=>'<div class="ins-v3-reading"><strong>'+fmt(r.value)+' ק״מ</strong><span>'+esc(r.date||"")+'</span><small>'+(r.source==="mot_open_data"?(r.dateType==="first_observed_date"?"קריאה ממשלתית · תאריך תצפית":"משרד התחבורה · טסט"):"מקור ארכיוני")+'</small></div>').join("")+'</div>':"";
  html+='<p class="ins-v3-explain">ה־API הממשלתי מפרסם את הקריאה האחרונה. השירות העצמאי ישמור קריאות לאורך זמן לאחר הפעלת מסד הנתונים.</p>';
  const state=j.backend?.storageStatus;
  if(state==="not_connected"||!state)html+=warning("היסטוריית השרת המרכזי עדיין אינה מחוברת. מוצגים נתוני המקור הממשלתי הנוכחיים בלבד.");
@@ -90,7 +91,7 @@ function ownership(j){
  else if(non.length||nonPrivate(origin)||nonPrivate(current))html+=warning("זוהה לפחות רישום שאינו פרטי. בדוק את סוג הבעלות והאם הוא נחשב במניין הידיים.","review");
  else if(!items.length)html+=warning("אין די רשומות כדי לקבוע שכל הידיים היו פרטיות.");
  else html+=warning("הרשומות הזמינות מצביעות על בעלויות פרטיות, אך ייתכן שהכיסוי אינו מלא.","good");
- html+=items.length?'<div class="ins-v3-ownerlist">'+items.map(o=>'<div class="ins-v3-owner"><div><strong>'+esc(o.type||"לא ידוע")+'</strong>'+info(o.type||"בעלות נוכחית")+'</div><span>'+esc(o.date||"אין תאריך")+'</span>'+(nonPrivate(o.type)?'<b class="ins-v3-flag">לא פרטי</b>':"")+'</div>').join("")+'</div>':"";
+ html+=items.length?'<div class="ins-v3-ownerlist">'+items.map(o=>'<div class="ins-v3-owner"><div><strong>'+esc(o.type||"לא ידוע")+'</strong>'+info(o.type||"בעלות נוכחית")+'</div><span>'+esc(ownerDate(o.date)||"אין תאריך")+'</span>'+(nonPrivate(o.type)?'<b class="ins-v3-flag">לא פרטי</b>':"")+'</div>').join("")+'</div>':"";
  html+='<p class="ins-v3-explain">סוחר רכב עשוי להופיע ברצף בלי להוסיף בהכרח יד. אל תסיק ממספר הרשומות את מניין הידיים ברישיון.</p>';
  $("v3Ownership").innerHTML=html;
 }
