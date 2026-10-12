@@ -66,6 +66,15 @@ dialog::backdrop{background:#0a1e36a9;backdrop-filter:blur(3px)}
 .hidden{display:none!important}
 @media(max-width:570px){header{padding:22px 16px 25px}.brand{font-size:27px}.seg button{padding:8px 12px}.seg.small button{padding:8px 10px}.switchers{gap:8px}main{padding:12px 12px 75px}.clock strong{font-size:20px}.introarea{display:block}.introarea .primary{margin-top:10px;width:100%}.exhead{padding:12px 11px;gap:9px}.exname strong{font-size:14px}.pill{font-size:10px}.rowbuttons .primary{padding:12px 8px}.modalhead{padding:16px}.modalcontent{padding:14px}.photos{gap:7px}.photo figcaption{font-size:11px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+.setting-num{width:90px;max-width:42%;min-height:39px;border:1px solid #cbd8e8;border-radius:9px;padding:7px 10px;font:inherit;font-weight:750;text-align:center;color:#243e61;background:white;direction:ltr}
+.rep-line{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 10px;flex-wrap:wrap;color:#50698b;font-size:12px;font-weight:750}
+.repinput{width:76px;height:38px;border:1px solid #b5cbed;background:white;color:#1c4785;border-radius:10px;text-align:center;direction:ltr;font-size:15px;font-weight:800}
+.metricline{display:flex;gap:6px;flex-wrap:wrap;align-items:center;color:#66839f;font-size:11px;margin:0 0 9px}
+.metricline span{background:#f1f5fa;border-radius:8px;padding:5px 8px}
+.summarycard{background:#fff;border:1px solid var(--line);border-radius:13px;padding:12px 14px;margin:-5px 0 16px;font-size:12px;color:#5b718b}
+.summarycard strong{color:#234b83}.summarycard small{display:block;color:#8595a7;line-height:1.6;margin-top:5px}
+@media(max-width:570px){.rep-line{font-size:11px}.setting-num{width:82px}}
 </style>
 </head>
 <body>
@@ -76,13 +85,15 @@ dialog::backdrop{background:#0a1e36a9;backdrop-filter:blur(3px)}
 </div></header>
 <main>
 <div class="clockbar" aria-label="טיימרים"><div class="clock"><label>זמן אימון</label><strong id="sessionClock">00:00</strong></div><div class="clock"><label>זמן בתרגיל</label><strong id="exerciseClock">00:00</strong></div><div class="clock"><label>זמן בסט</label><strong id="setClock">00:00</strong></div></div>
+<div id="workoutSummary" class="summarycard hidden" aria-live="polite"></div>
 <div id="intro"></div>
 <div class="sectionline"><h2>התרגילים שלך</h2><span class="caption" id="sectionHint">2 סטים לכל תרגיל</span></div>
 <div id="exerciseList" aria-live="polite"></div>
 <div class="bottom"><span>הסברים ותמונות בכפתור ⓘ</span><button class="linkbtn" id="newWorkoutBtn" type="button">התחל אימון חדש</button></div>
 </main>
 <dialog id="infoDialog" aria-labelledby="modalTitle"><div class="modalhead"><div><small id="modalMuscle"></small><h3 id="modalTitle"></h3></div><button id="closeInfo" class="closebtn" type="button" aria-label="סגור">×</button></div><div class="modalcontent"><div class="photos"><figure class="photo"><img id="photo0" loading="lazy" alt="הדגמת תחילת התנועה"><figcaption>שלב 1 · נקודת פתיחה</figcaption></figure><figure class="photo"><img id="photo1" loading="lazy" alt="הדגמת סיום התנועה"><figcaption>שלב 2 · נקודת סיום</figcaption></figure></div><h4>איך לבצע נכון?</h4><ol id="modalSteps"></ol><div class="tip" id="modalTip"></div><p class="tiny">התמונות להמחשה בלבד. התאימו את התנועה ליכולת שלכם ובקשו ממדריך לבדוק את הטכניקה אם אינכם בטוחים.</p></div></dialog>
-<dialog id="settingsDialog" aria-labelledby="settingsTitle"><div class="modalhead"><h3 id="settingsTitle">הגדרות</h3><button id="closeSettings" class="closebtn" type="button" aria-label="סגור">×</button></div><div class="modalcontent"><div class="settingline"><span>הנחיות קוליות בזמן אימון</span><button id="voiceToggle" class="switch" type="button">כבוי</button></div><div class="settingline"><span>מנוחה בין סטים</span><select id="restSelect" aria-label="משך מנוחה" style="border:1px solid #d2dfed;background:white;border-radius:9px;padding:7px;font:inherit"><option value="60">60 שניות</option><option value="90" selected>90 שניות</option><option value="120">120 שניות</option></select></div><div class="settingline"><span>בדיקת רכיבי האפליקציה</span><button id="testBtn" class="switch" type="button">בדוק עכשיו</button></div><div id="testReport">השעונים מתחילים רק לאחר לחיצה על ״התחל״. ההתקדמות נשמרת במכשיר.</div><p class="tiny">האתר אינו משתמש במצלמה ולכן אינו יכול לבדוק אוטומטית טכניקה או חזרות. סמנו סיום של כל סט באופן ידני.</p><button class="secondary" id="settingsReset" type="button">איפוס האימון הנוכחי</button></div></dialog>
+<dialog id="settingsDialog" aria-labelledby="settingsTitle"><div class="modalhead"><h3 id="settingsTitle">הגדרות</h3><button id="closeSettings" class="closebtn" type="button" aria-label="סגור">×</button></div><div class="modalcontent"><div class="settingline"><span>הנחיות קוליות בזמן אימון</span><button id="voiceToggle" class="switch" type="button">כבוי</button></div><div class="settingline"><label for="dumbbellWeight">משקל כל משקולת בבית</label><div style="display:flex;align-items:center;gap:5px"><input id="dumbbellWeight" class="setting-num" type="number" inputmode="decimal" min="0.5" max="40" step="0.5" placeholder="לא הוגדר" aria-label="קילוגרמים לכל משקולת"><span style="color:#71879f;font-size:12px">ק"ג</span></div></div>
+<div class="settingline"><span>מנוחה בין סטים</span><select id="restSelect" aria-label="משך מנוחה" style="border:1px solid #d2dfed;background:white;border-radius:9px;padding:7px;font:inherit"><option value="60">60 שניות</option><option value="90" selected>90 שניות</option><option value="120">120 שניות</option></select></div><div class="settingline"><span>בדיקת רכיבי האפליקציה</span><button id="testBtn" class="switch" type="button">בדוק עכשיו</button></div><p class="tiny">המשקל הוא של משקולת אחת, לא של שתיהן יחד. הוא מיועד לתיעוד בלבד ולא לחישוב קלוריות מכל חזרה.</p><div id="testReport">השעונים מתחילים רק לאחר לחיצה על ״התחל״. ההתקדמות נשמרת במכשיר.</div><p class="tiny">האתר אינו משתמש במצלמה ולכן אינו יכול לבדוק אוטומטית טכניקה או חזרות. סמנו סיום של כל סט באופן ידני.</p><button class="secondary" id="settingsReset" type="button">איפוס האימון הנוכחי</button></div></dialog>
 <script>
 "use strict";
 const gym=[
@@ -121,11 +132,46 @@ if(saved.homeCurlV1!==true){
  }
 }
 let restSeconds=[60,90,120].includes(saved.restSeconds)?saved.restSeconds:90;
+let dumbbellWeight=Number.isFinite(Number(saved.dumbbellWeight))&&Number(saved.dumbbellWeight)>0?Number(saved.dumbbellWeight):null;
 let voice=false,sessionMs=0,exerciseMs=0,setMs=0,sessionRunning=false,setRunning=false,restMs=0,last=performance.now();
 function code(){return place+"-"+size}
 function list(){return (place==="home"?home:gym).slice(0,size)}
-function plan(){let p=plans[code()];if(!p||!Array.isArray(p.done)||p.done.length!==size*2){p={done:Array(size*2).fill(false),dur:Array(size*2).fill(0)};plans[code()]=p}return p}
-function save(){try{localStorage.setItem(KEY,JSON.stringify({place:place,size:size,plans:plans,restSeconds:restSeconds,homeCurlV1:true}))}catch(e){}}
+function plan(){
+ let p=plans[code()];
+ if(!p||!Array.isArray(p.done)||p.done.length!==size*2){p={done:Array(size*2).fill(false),dur:Array(size*2).fill(0),actual:Array(size*2).fill(null),weights:Array(size*2).fill(null),totalMs:0};plans[code()]=p}
+ if(!Array.isArray(p.actual)||p.actual.length!==size*2)p.actual=Array(size*2).fill(null);
+ if(!Array.isArray(p.weights)||p.weights.length!==size*2)p.weights=Array(size*2).fill(null);
+ if(!Number.isFinite(p.totalMs))p.totalMs=0;
+ return p;
+}
+function timedExercise(e){return /שניות/.test(e.reps)}
+function targetReps(e){return parseInt(e.reps,10)||10}
+function totalReps(p){return p.actual.reduce((n,r,i)=>n+(p.done[i]&&!timedExercise(list()[Math.floor(i/2)])?Number(r)||0:0),0)}
+function setDetails(e,p,i){
+ if(timedExercise(e))return "משך: "+fmt(p.dur[i]);
+ return (p.actual[i]||targetReps(e))+" חזרות"+(/לכל צד/.test(e.reps)?" לכל צד":"")+(place==="home"&&p.weights[i]!=null?" · "+p.weights[i]+" ק״ג ליד":"");
+}
+function energyEstimate(ms){
+ const minutes=ms/60000;
+ if(minutes<10)return null;
+ // Broad, non-personal illustrative interval: no body mass, heart rate or intensity data.
+ const lower=Math.round(minutes*2/10)*10,upper=Math.round(minutes*6/10)*10;
+ return Math.max(10,lower)+"–"+Math.max(20,upper);
+}
+function renderSummary(){
+ const p=plan(),elapsed=Math.max(sessionMs,p.totalMs||0),estimate=energyEstimate(elapsed),done=nDone();
+ const total=totalReps(p);
+ const el=$("workoutSummary");
+ el.classList.toggle("hidden",!done&&!sessionMs);
+ if(!done&&!sessionMs)return;
+ let content='<strong>סיכום אימון:</strong> '+done+" סטים · "+total+" חזרות רשומות";
+ if(place==="home"&&dumbbellWeight)content+=' · '+dumbbellWeight+' ק״ג לכל משקולת';
+ content+=' · '+fmt(elapsed);
+ content+='<small>'+(estimate?'הוצאה אנרגטית משוערת מאוד לכל האימון: כ־'+estimate+' קק״ל.':'אומדן קלוריות כללי יופיע אחרי 10 דקות אימון.');
+ content+=' אין דרך אמינה להעריך קלוריות לכל סט רק לפי משקל וחזרות.</small>';
+ el.innerHTML=content;
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({place:place,size:size,plans:plans,restSeconds:restSeconds,homeCurlV1:true,dumbbellWeight:dumbbellWeight}))}catch(e){}}
 function index(){return plan().done.findIndex(v=>!v)}
 function nDone(){return plan().done.filter(Boolean).length}
 function fmt(ms){const sec=Math.floor(Math.max(0,ms)/1000);return String(Math.floor(sec/60)).padStart(2,"0")+":"+String(sec%60).padStart(2,"0")}
@@ -144,10 +190,11 @@ function statusLabel(i,cur){const p=plan();return p.done[i]?"בוצע":i===cur?"
 function render(){
  const items=list(),p=plan(),cur=index(),completed=cur<0,total=size*2;
  const progress=Math.round(nDone()/total*100);
+ renderSummary();
  $("gymTab").classList.toggle("sel",place==="gym");$("homeTab").classList.toggle("sel",place==="home");$("fiveBtn").classList.toggle("sel",size===5);$("sevenBtn").classList.toggle("sel",size===7);
  $("progressBar").style.width=progress+"%";$("progressTxt").textContent=nDone()+" מתוך "+total+" סטים";
  $("sectionHint").textContent=place==="home"?"שתי משקולות יד · 2 סטים לתרגיל":"מכונות כוח · 2 סטים לתרגיל";
- if(completed){$("intro").innerHTML='<div class="completed-screen"><h2>✓ האימון הושלם</h2><div>כל '+total+' הסטים סומנו. אפשר לסיים כאן ולהתאושש.</div></div>';}
+ if(completed){$("intro").innerHTML='<div class="completed-screen"><h2>✓ האימון הושלם</h2><div>כל '+total+' הסטים סומנו. סך הכול '+totalReps(p)+' חזרות רשומות.</div></div>';}
  else{let button="",label="סט "+(cur%2+1)+" בתרגיל "+(Math.floor(cur/2)+1);
   if(nDone()===0&&!sessionRunning&&!setRunning&&!sessionMs){button='<button class="primary" data-action="start">▶ התחל אימון</button>';}
   $("intro").innerHTML='<div class="introarea"><div><strong>'+ (sessionRunning?"האימון שלך בתהליך":sessionMs?"ממשיכים בקצב שלך":"מוכן להתחלה?")+'</strong><p>'+label+'. '+(setRunning?"השעון פועל. סיים את הסט בקצב שלך.":restMs>0?"אפשר לנוח או להתחיל את הסט הבא.":"כל השעונים מתחילים רק כשאתה לוחץ על התחלה.")+'</p></div>'+button+'</div>';
@@ -156,19 +203,22 @@ function render(){
  const first=j*2,done=p.done[first]&&p.done[first+1],current=cur>=first&&cur<first+2;
  const tag=done?'<span class="pill done">הושלם ✓</span>':current?'<span class="pill">בתהליך</span>':'<span class="pill muted">ממתין</span>';
  let body="";
- if(done){body='<div class="exbody"><div class="mini-done"><span>✓ סט ראשון &nbsp; ✓ סט שני</span><span>'+fmt(p.dur[first]+p.dur[first+1])+'</span></div></div>';}
+ if(done){body='<div class="exbody"><div class="mini-done"><span>✓ '+setDetails(e,p,first)+' &nbsp; · &nbsp; ✓ '+setDetails(e,p,first+1)+'</span><span>'+fmt(p.dur[first]+p.dur[first+1])+'</span></div></div>';}
  else if(current){
  let sets="";
  for(let k=0;k<2;k++){
  const i=first+k; const sn=k===0?"ראשון":"שני";
  if(p.done[i]){
- sets+='<div class="set done"><span class="setlabel"><span class="seticon">✓</span>סט '+sn+' הושלם</span><span><small>'+fmt(p.dur[i])+'</small> <button data-action="undo" data-index="'+i+'" style="border:0;background:transparent;color:#7d998f;font-size:11px;padding:3px">בטל</button></span></div>';
+ sets+='<div class="set done"><span class="setlabel"><span class="seticon">✓</span>סט '+sn+' · '+setDetails(e,p,i)+'</span><span><small>'+fmt(p.dur[i])+'</small> <button data-action="undo" data-index="'+i+'" style="border:0;background:transparent;color:#7d998f;font-size:11px;padding:3px">בטל</button></span></div>';
  }else if(i===cur){
  const hint=setRunning?"הסט רץ. בצע את התנועה בשליטה וסמן כשתסיים.":setMs>0?"הסט מושהה. אפשר להמשיך או לסיים.":restMs>0?"המנוחה התחילה אחרי הסט הקודם. אפשר להתחיל מתי שנוח.":"מוכן? לחץ על התחל סט. השעון לא פועל עדיין.";
  let btn='<button class="primary" data-action="start">'+(setMs>0&&!setRunning?"▶ המשך סט":"▶ התחל סט")+'</button>';
  if(setRunning||setMs>0){btn='<button class="primary" data-action="finish">✓ סיימתי סט</button><button class="secondary" data-action="'+(setRunning?"pause":"start")+'">'+(setRunning?"⏸ השהה":"▶ המשך")+'</button>';}
- sets+='<div class="set active" id="activeSet"><div class="activehead"><span class="setlabel"><span class="seticon" style="background:#d9e9ff;color:#2467e9">'+(k+1)+'</span> סט '+sn+'</span><span class="timing" id="setNow">'+fmt(setMs)+'</span></div>'+(restMs>0?'<span class="restchip" id="restNow">מנוחה · '+fmt(restMs)+'</span>':'')+'<p class="activehint">'+hint+'</p><div class="rowbuttons">'+btn+'</div></div>';
- }else{sets+='<div class="set future"><span class="setlabel"><span class="seticon">'+(k+1)+'</span> סט '+sn+'</span><small>בהמשך</small></div>'}
+ const repEditor=timedExercise(e)?'<div class="rep-line"><span>יעד: '+clean(e.reps)+'</span><span>השעון מודד את משך הסט</span></div>':
+'<div class="rep-line"><span>יעד: '+clean(e.reps)+'</span><label for="actualReps">חזרות שביצעת: <input id="actualReps" class="repinput" type="number" inputmode="numeric" min="1" max="100" step="1" value="'+(p.actual[i]||targetReps(e))+'"></label></div>';
+const weightInfo=place==="home"&&dumbbellWeight&&!timedExercise(e)?'<div class="metricline"><span>כל משקולת: '+dumbbellWeight+' ק״ג</span></div>':'';
+sets+='<div class="set active" id="activeSet"><div class="activehead"><span class="setlabel"><span class="seticon" style="background:#d9e9ff;color:#2467e9">'+(k+1)+'</span> סט '+sn+'</span><span class="timing" id="setNow">'+fmt(setMs)+'</span></div>'+repEditor+weightInfo+(restMs>0?'<span class="restchip" id="restNow">מנוחה · '+fmt(restMs)+'</span>':'')+'<p class="activehint">'+hint+'</p><div class="rowbuttons">'+btn+'</div></div>';
+ }else{sets+='<div class="set future"><span class="setlabel"><span class="seticon">'+(k+1)+'</span> סט '+sn+'</span><small>יעד: '+clean(e.reps)+'</small></div>'}
  }
  body='<div class="exbody">'+sets+'</div>';
  }
@@ -185,6 +235,13 @@ function finishSet(){
  const i=index();if(i<0||(!setRunning&&setMs<=0))return;
  const p=plan(),oldExercise=Math.floor(i/2);
  p.done[i]=true;p.dur[i]=Math.max(1000,Math.round(setMs));
+ const e=list()[Math.floor(i/2)];
+ if(!timedExercise(e)){
+  const fld=$("actualReps"),typed=fld?Number(fld.value):NaN;
+  p.actual[i]=Number.isInteger(typed)&&typed>=1&&typed<=100?typed:(p.actual[i]||targetReps(e));
+ }else p.actual[i]=null;
+ p.weights[i]=place==="home"&&!timedExercise(e)?dumbbellWeight:null;
+ p.totalMs=sessionMs;
  const next=index();
  sessionRunning=next>=0;setRunning=false;setMs=0;
  if(next<0){restMs=0;sessionRunning=false;say("כל הכבוד. האימון הסתיים.");}
@@ -193,14 +250,14 @@ function finishSet(){
  if(next>=0){const e=$("exercise-"+Math.floor(next/2));if(e)e.scrollIntoView({behavior:"smooth",block:"nearest"})}
 }
 function undoSet(i){
- const p=plan();p.done[i]=false;p.dur[i]=0;
- for(let j=i+1;j<p.done.length;j++){p.done[j]=false;p.dur[j]=0}
+ const p=plan();p.done[i]=false;p.dur[i]=0;p.actual[i]=null;p.weights[i]=null;
+ for(let j=i+1;j<p.done.length;j++){p.done[j]=false;p.dur[j]=0;p.actual[j]=null;p.weights[j]=null}
  resetClocks();save();render();
 }
 function changePlan(newPlace,newSize){
- place=newPlace;size=newSize;resetClocks();plan();save();render();
+ place=newPlace;size=newSize;resetClocks();sessionMs=plan().totalMs||0;save();render();
 }
-function resetPlan(){if(!confirm("להתחיל אימון חדש? סימוני הסטים של התוכנית הנוכחית יימחקו."))return;plans[code()]={done:Array(size*2).fill(false),dur:Array(size*2).fill(0)};resetClocks();save();render();$("settingsDialog").close()}
+function resetPlan(){if(!confirm("להתחיל אימון חדש? סימוני הסטים של התוכנית הנוכחית יימחקו."))return;plans[code()]={done:Array(size*2).fill(false),dur:Array(size*2).fill(0),actual:Array(size*2).fill(null),weights:Array(size*2).fill(null),totalMs:0};resetClocks();save();render();$("settingsDialog").close()}
 function openInfo(j){
  const e=list()[j];if(!e)return;
  $("modalTitle").textContent=e.name;$("modalMuscle").textContent=e.sub+" · "+e.reps;
@@ -209,6 +266,12 @@ function openInfo(j){
  for(let x=0;x<2;x++){const im=$("photo"+x);im.src="img/"+e.img+"-"+x+".jpg";im.alt=e.name+" – "+(x===0?"תנוחת התחלה":"תנוחת סיום");im.onerror=function(){this.alt="התמונה אינה זמינה";this.style.background="#f3f5f9"}}
  $("infoDialog").showModal();
 }
+document.addEventListener("change",e=>{
+ if(e.target&&e.target.id==="actualReps"){
+  const i=index(),n=Number(e.target.value);
+  if(i>=0&&Number.isInteger(n)&&n>=1&&n<=100){plan().actual[i]=n;save();}
+ }
+});
 document.addEventListener("click",e=>{
  const i=e.target.closest("[data-info]");if(i){openInfo(Number(i.dataset.info));return}
  const a=e.target.closest("[data-action]");if(!a)return;
@@ -217,11 +280,23 @@ document.addEventListener("click",e=>{
 $("gymTab").onclick=()=>changePlan("gym",size);$("homeTab").onclick=()=>changePlan("home",size);
 $("fiveBtn").onclick=()=>changePlan(place,5);$("sevenBtn").onclick=()=>changePlan(place,7);
 $("newWorkoutBtn").onclick=resetPlan;$("settingsReset").onclick=resetPlan;
-$("settingsBtn").onclick=()=>$("settingsDialog").showModal();$("closeSettings").onclick=()=>$("settingsDialog").close();
+$("settingsBtn").onclick=()=>{
+ $("dumbbellWeight").value=dumbbellWeight==null?"":String(dumbbellWeight);
+ $("settingsDialog").showModal();
+};$("closeSettings").onclick=()=>$("settingsDialog").close();
 $("closeInfo").onclick=()=>$("infoDialog").close();
 $("infoDialog").addEventListener("click",e=>{if(e.target===$("infoDialog"))$("infoDialog").close()});
 $("settingsDialog").addEventListener("click",e=>{if(e.target===$("settingsDialog"))$("settingsDialog").close()});
 $("voiceToggle").onclick=()=>{voice=!voice;$("voiceToggle").textContent=voice?"מופעל":"כבוי";if(voice)say("ההנחיות הופעלו.")};
+$("dumbbellWeight").value=dumbbellWeight==null?"":String(dumbbellWeight);
+$("dumbbellWeight").addEventListener("change",e=>{
+ const value=String(e.target.value).trim(),n=Number(value);
+ if(value&&Number.isFinite(n)&&n>=0.5&&n<=40){dumbbellWeight=Math.round(n*2)/2;}
+ else if(!value){dumbbellWeight=null;}
+ else{e.target.value=dumbbellWeight==null?"":String(dumbbellWeight);return;}
+ e.target.value=dumbbellWeight==null?"":String(dumbbellWeight);
+ save();render();
+});
 $("restSelect").value=String(restSeconds);$("restSelect").onchange=e=>{restSeconds=Number(e.target.value);save()};
 $("testBtn").onclick=async()=>{
  const results=[];let storage=false;try{localStorage.setItem("avtest","ok");storage=localStorage.getItem("avtest")==="ok";localStorage.removeItem("avtest")}catch(e){}
@@ -233,6 +308,6 @@ $("testBtn").onclick=async()=>{
  $("testReport").textContent=results.join("\n");
 };
 window.setInterval(updateTicker,200);
-plan();render();
+plan();sessionMs=plan().totalMs||0;render();
 </script>
 </body></html>
