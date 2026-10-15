@@ -85,7 +85,7 @@
  </div>
 </div>
 <div id="toast" class="toast" role="status"></div>
-<script src="./enhance.js"></script><script>
+<script src="./enhance.js?v=3"></script><script>
 (function(){
 'use strict';
 var statuses={new:'חדש',checking:'בבדיקה',waiting:'ממתין למוכר',ready:'מתקדם לבדיקה',hold:'מושהה',rejected:'נפסל',bought:'נרכש'};
@@ -98,8 +98,13 @@ var str=function(id){return $(id).value.trim()};
 var numeric=function(id){return str(id)===''?null:Number(str(id))};
 var date=function(d){if(!d)return 'תאריך לא ידוע';return new Date(d+'T12:00:00').toLocaleDateString('he-IL',{day:'numeric',month:'short',year:'numeric'})};
 var today=function(){return new Date().toLocaleDateString('en-CA')};
-var linkOk=function(x){try{var u=new URL(x);return ['http:','https:'].includes(u.protocol)?u.href:''}catch(e){return ''}};
+var linkOk=function(x){try{var u=new URL(x,window.location.href);return ['http:','https:'].includes(u.protocol)?u.href:''}catch(e){return ''}};
 var makeId=function(){return 'car-'+Date.now()+'-'+Math.random().toString(36).slice(2,7)};
+if(!window.CarBoardMedia){window.CarBoardMedia={
+ thumb:function(){return '<div class="car-picture" aria-hidden="true">🚙</div>'},
+ plate:function(p){var d=String(p||'').replace(/\\D/g,'');return d?'<span style="background:#ffdf32;border-radius:6px;padding:4px 7px;font-weight:900;direction:ltr;display:inline-block">IL '+d+'</span>':'—'},
+ detail:function(){return ''}
+};}
 var toastTimer;
 function toast(s){$('toast').textContent=s;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(function(){$('toast').classList.remove('show')},3500)}
 function readLocal(){try{changes=JSON.parse(localStorage.getItem(localKey)||'{}')}catch(e){changes={}}}
