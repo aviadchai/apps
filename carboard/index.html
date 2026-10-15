@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f7f8fb">
+<meta name="description" content="לוח ניהול ומעקב אחר מודעות רכב, דוחות, שיחות ומשימות">
+<title>CarBoard | מעקב רכבים</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f7f8fb;--ink:#192338;--muted:#778297;--border:#e8ecf2;--primary:#3167e9;--primarysoft:#edf2ff;--shadow:0 14px 42px rgba(28,45,77,.05)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:Heebo,Arial,sans-serif;color:var(--ink);font-size:14px}button,input,select,textarea{font:inherit}button{cursor:pointer}a{text-decoration:none;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid #8ab5ff;outline-offset:2px}
+.shell{display:flex;min-height:100vh}.sidebar{width:235px;background:#fff;border-left:1px solid var(--border);padding:35px 18px 24px;position:sticky;top:0;height:100vh;flex-shrink:0;display:flex;flex-direction:column}.brand{display:flex;align-items:center;gap:10px;padding:0 12px 36px}.brandmark{background:#1c2e52;color:#fff;border-radius:13px;width:38px;height:38px;display:grid;place-items:center;font-weight:900;font-size:19px}.brand strong{display:block;font-size:19px;line-height:1.1;letter-spacing:-.7px}.brand small{font-size:11px;color:#96a0ad}.nav{display:grid;gap:6px}.nav button,.nav a{border:0;background:transparent;text-align:right;padding:12px 13px;border-radius:12px;font-weight:700;color:#69758a;display:flex;align-items:center;gap:11px;width:100%}.nav .active{background:#eff4ff;color:#2563eb}.nav .ico{font-size:18px;display:inline-flex;justify-content:center;width:22px}.sidebox{margin-top:auto;border:1px solid #e8edf5;border-radius:15px;padding:14px;background:#fafbfe;color:#6c788a;font-size:12px;line-height:1.8}.sidebox strong{display:block;color:#273751;font-size:13px}
+.main{flex:1;min-width:0;max-width:1550px;padding:32px 40px 90px;margin:0 auto;width:100%}.topline{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:25px}.eyebrow{font-size:12px;color:#8c97aa;font-weight:700}.topline h1{font-size:30px;letter-spacing:-1px;margin:4px 0 4px;line-height:1.35}.sub{color:#8b95a6;font-size:13px;margin:0}.topactions{display:flex;gap:9px;align-items:center}.btn{border:1px solid #e3e8f0;background:#fff;color:#41516c;border-radius:11px;padding:10px 15px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap}.btn.primary{background:var(--primary);border-color:var(--primary);color:#fff;box-shadow:0 6px 18px #3167e924}.btn:disabled{opacity:.4;cursor:not-allowed}.btn.ghost{background:transparent}.btn.small{padding:7px 12px;font-size:12px}.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px;margin-bottom:22px}.metric{border:1px solid var(--border);background:#fff;border-radius:17px;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;min-height:110px;box-shadow:var(--shadow)}.metric small{display:block;color:#8590a2;font-size:12px;font-weight:600;margin-bottom:7px}.metric strong{font-size:28px;line-height:1;font-weight:800;letter-spacing:-1px}.metric .stat-icon{border-radius:13px;background:#f1f4fc;color:#4674eb;display:grid;place-items:center;width:44px;height:44px;font-size:20px}.metric:nth-child(2) .stat-icon{background:#fff7e7;color:#d8921c}.metric:nth-child(3) .stat-icon{background:#f0faf5;color:#2caa70}.metric:nth-child(4) .stat-icon{background:#f4f1fc;color:#8d6cbd}
+.banner{border:1px solid #dce8ff;background:#f0f5ff;border-radius:15px;padding:15px 18px;margin-bottom:24px;display:flex;gap:12px;align-items:center;justify-content:space-between;color:#466389}.banner b{color:#26488a}.banner .muted{font-size:12px}.banner button{border:0;background:#fff;color:#2860ce;padding:9px 12px;border-radius:9px;font-weight:800;white-space:nowrap}
+.sectionhead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:5px 0 14px}.sectionhead h2{font-size:18px;margin:0;letter-spacing:-.5px}.sectionhead small{color:#8995a6;margin-right:8px;font-weight:500}.filters{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:18px}.search{flex:1;min-width:190px;display:flex;align-items:center;gap:10px;background:white;padding:0 13px;border:1px solid var(--border);border-radius:11px;height:44px;color:#98a3b3}.search input{border:none;outline:0;background:none;min-width:0;width:100%;color:var(--ink)}.filters select{border:1px solid var(--border);background:white;border-radius:11px;height:44px;padding:0 12px;color:#506078;min-width:135px}.seg{display:flex;gap:3px;background:#e9edf5;border-radius:11px;padding:4px}.seg button{border:0;background:transparent;color:#748097;border-radius:8px;padding:7px 12px;font-weight:800;white-space:nowrap}.seg button.active{background:#fff;color:#243550;box-shadow:0 1px 7px #24355012}
+.cards{display:grid;gap:13px}.carcard{display:grid;grid-template-columns:9px minmax(0,1fr);background:white;border:1px solid var(--border);border-radius:17px;box-shadow:var(--shadow);overflow:hidden}.edge{background:#dae3f2}.edge.checking{background:#eab454}.edge.waiting{background:#93a8db}.edge.ready{background:#35b986}.edge.hold{background:#acb3bf}.edge.rejected{background:#f28d8d}.edge.bought{background:#20a76c}.carinside{padding:20px 24px}.car-row{display:flex;align-items:flex-start;justify-content:space-between;gap:20px}.car-main{display:flex;align-items:flex-start;gap:14px;min-width:0}.car-picture{width:77px;height:72px;flex-shrink:0;border-radius:13px;background:linear-gradient(155deg,#edf1f8,#e3eaf6);display:grid;place-items:center;font-size:32px;color:#798da9}.carname{font-size:18px;line-height:1.35;letter-spacing:-.4px;margin:0 0 4px;font-weight:800}.carsecondary{color:#8996a8;font-size:12px;line-height:1.5}.pills{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.pill{font-size:11px;font-weight:800;padding:5px 9px;border-radius:8px;background:#f0f3f8;color:#6b7688}.pill.checking{background:#fff6e7;color:#b97e17}.pill.waiting{background:#edf2fc;color:#5276c3}.pill.ready{background:#eaf8f0;color:#23945c}.pill.hold{background:#f0f1f5;color:#777f8b}.pill.rejected{background:#feeeee;color:#c84e4e}.pill.bought{background:#e7f7ef;color:#168d59}.pill.danger{background:#fff0ef;color:#bf6053}.price{text-align:left;min-width:125px}.price b{display:block;font-size:24px;line-height:1.2;letter-spacing:-.8px;white-space:nowrap}.price small{color:#96a0af;font-size:11px}.details{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:18px 0 13px}.detail{border-left:1px solid #eef0f5;padding:0 10px 0 6px;min-width:0}.detail:first-child{padding-right:0}.detail:last-child{border-left:0}.detail small{display:block;color:#9aa5b3;font-size:11px;margin-bottom:3px}.detail b{display:block;color:#3a4a64;font-weight:700;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.car-note{margin:0;color:#6a7688;font-size:12px;line-height:1.75;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.cardfoot{border-top:1px solid #eff1f5;margin-top:15px;padding-top:13px;display:flex;align-items:center;justify-content:space-between;gap:9px}.updated{font-size:11px;color:#9aa4b2}.actions{display:flex;align-items:center;gap:8px}.openlink{font-size:12px;font-weight:800;color:#3167e9;border:0;background:#edf3ff;padding:8px 13px;border-radius:9px}.cardfoot .btn{font-size:12px;padding:7px 12px}.empty{text-align:center;background:white;border:1px dashed #d5dce7;border-radius:17px;padding:45px 12px;color:#8590a1}.empty strong{display:block;color:#253753;font-size:16px;margin:8px}
+.timeline-board{display:grid;gap:12px}.timelineitem{background:#fff;border:1px solid var(--border);border-radius:13px;padding:16px 18px;display:flex;gap:14px}.tl-dot{height:11px;width:11px;background:#4779e9;border-radius:50%;margin-top:8px;flex-shrink:0}.timelineitem b{display:block;color:#253956}.timelineitem p{margin:4px 0;font-size:13px;line-height:1.6;color:#6d7c90}.timelineitem small{color:#9ba6b5}
+.modal{position:fixed;inset:0;background:rgba(13,24,44,.53);z-index:50;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)}.modal.show{display:flex}.dialog{background:white;width:min(750px,100%);max-height:94vh;overflow:auto;border-radius:19px;box-shadow:0 25px 75px #0c14283d}.dialog-head{display:flex;justify-content:space-between;align-items:center;padding:21px 25px;border-bottom:1px solid var(--border);position:sticky;top:0;background:#fff;z-index:2}.dialog-head h2{margin:0;font-size:20px}.close{border:0;background:#f0f3f7;border-radius:10px;font-size:20px;width:34px;height:34px;color:#69778d}.dialog-body{padding:22px 25px}.form-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin:0 0 14px}.field{display:grid;gap:6px;min-width:0}.field.span2{grid-column:span 2}.field.span3{grid-column:span 3}.field label{font-size:12px;font-weight:800;color:#56657b}.field input,.field select,.field textarea{width:100%;border:1px solid #e1e7f0;border-radius:10px;padding:11px;color:#203148;background:#fbfcfe;min-width:0}.field textarea{resize:vertical;min-height:80px}.modal-section{margin:20px 0 11px;font-size:14px;font-weight:900}.tasks{display:grid;gap:8px}.task{display:flex;align-items:center;gap:8px;padding:9px 11px;border:1px solid #edf0f6;border-radius:9px;color:#56667f;font-size:12px}.task input{accent-color:#3975e6}.task.done span{text-decoration:line-through;color:#a2acb8}.inline-form{display:flex;gap:8px;margin:11px 0 18px}.inline-form input{flex:1;min-width:0;padding:10px;border:1px solid #dfe5ef;border-radius:10px}.mini-line{padding:10px 12px;border-right:2px solid #c7d5f4;background:#fafbfe;border-radius:6px;margin:9px 0;font-size:12px;color:#5b6a7d;line-height:1.7}.mini-line small{display:block;color:#a0abba}.warning{background:#fff8e9;color:#91661d;border-radius:11px;padding:11px 13px;line-height:1.7;font-size:12px;margin:15px 0}.dialog-foot{display:flex;justify-content:space-between;gap:9px;padding:15px 25px;border-top:1px solid var(--border);position:sticky;bottom:0;background:white}.muted{color:#94a1b2}.notice{font-size:12px;color:#8a95a7;line-height:1.6}.hidden{display:none!important}.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);z-index:90;background:#243b61;color:#fff;border-radius:12px;padding:12px 20px;box-shadow:0 8px 26px #0003;display:none}.toast.show{display:block}.mobile-nav{display:none}
+@media(max-width:1100px){.main{padding:25px 24px 85px}.sidebar{width:200px}.stats{gap:9px}.metric{padding:15px}}
+@media(max-width:850px){.sidebar{display:none}.main{padding:20px 15px 105px}.topline h1{font-size:26px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.metric{min-height:89px}.metric strong{font-size:25px}.mobile-nav{display:flex;position:fixed;bottom:0;left:0;right:0;padding:7px 9px calc(7px + env(safe-area-inset-bottom));background:#fff;z-index:10;border-top:1px solid #e5e9f0;justify-content:space-around}.mobile-nav button{border:0;background:transparent;color:#8792a6;padding:6px;font-weight:800;font-size:11px}.mobile-nav button.active{color:#326bea}.mobile-nav span{display:block;font-size:18px}.topactions .export{display:none}}
+@media(max-width:620px){.topline{align-items:flex-start;gap:5px}.topline h1{font-size:23px}.topactions{padding-top:6px}.topactions .btn{font-size:12px;padding:9px}.banner{display:block;padding:12px}.banner button{margin-top:8px}.filters{gap:7px}.filters select{flex:1;min-width:110px}.seg{width:100%;justify-content:space-between}.seg button{flex:1}.carinside{padding:14px}.car-picture{width:52px;height:53px;font-size:24px}.car-main{gap:10px}.carname{font-size:16px}.price{min-width:94px}.price b{font-size:19px}.details{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:13px}.detail:nth-child(3){border-left:0}.cardfoot{align-items:flex-start}.updated{max-width:110px}.actions{gap:5px}.form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.field.span3{grid-column:span 2}.dialog{max-height:96vh}.dialog-body{padding:15px}.dialog-head,.dialog-foot{padding:15px}.dialog-foot .btn{font-size:12px;padding:9px}.modal{padding:5px;align-items:flex-end}.dialog{border-radius:18px 18px 0 0}.topline .eyebrow{font-size:10px}}
+</style>
+</head>
+<body>
+<div class="shell">
+<aside class="sidebar">
+ <div class="brand"><div class="brandmark">C</div><div><strong>CarBoard</strong><small>סוכן הרכב שלנו</small></div></div>
+ <nav class="nav"><button class="active" data-nav="all"><span class="ico">▦</span> כל המודעות</button><button data-nav="progress"><span class="ico">◷</span> יומן התקדמות</button><a href="../carcheck/" target="_blank" rel="noopener"><span class="ico">▣</span> בדיקת רכב CarScope ↗</a><button data-nav="export"><span class="ico">⇩</span> ייצוא וגיבוי</button></nav>
+ <div class="sidebox"><strong>מסננים חכם, קונים בטוח.</strong>תקציב יעד: עד 45,000 ₪<br>רכב אוטומטי • עד 180 אלף ק״מ<br>שני כיסאות ילדים • אמינות לפני הכול</div>
+</aside>
+<main class="main">
+ <header class="topline">
+  <div><div class="eyebrow">החניה הדיגיטלית שלנו / 2026</div><h1>הרכבים שעל הכוונת</h1><p class="sub">כל מודעה, שיחה ובדיקה במקום אחד</p></div>
+  <div class="topactions"><button class="btn export" id="exportTop">↓ גיבוי</button><button class="btn primary" id="addTop">＋ הוסף רכב</button></div>
+ </header>
+ <section class="stats" id="stats"></section>
+ <div class="banner"><div><b id="syncTitle">מאגר משותף + טיוטות מקומיות</b><div class="muted" id="syncDesc">הכרטיסים המשותפים מתעדכנים מגיטהאב. עריכות מהמכשיר נשמרות מקומית עד לפרסום.</div></div><button id="publish">פרסם שינוי בגיטהאב ↗</button></div>
+ <div class="sectionhead"><h2 id="sectionTitle">מודעות במעקב <small id="totalLabel"></small></h2><button class="btn small" id="refresh">↻ רענון</button></div>
+ <div id="filters" class="filters">
+   <div class="search">⌕ <input id="search" placeholder="חיפוש דגם, מספר רכב, מיקום..." aria-label="חיפוש"></div>
+   <select id="statusFilter" aria-label="סינון לפי סטטוס"><option value="all">כל הסטטוסים</option><option value="new">חדש</option><option value="checking">בבדיקה</option><option value="waiting">ממתין למוכר</option><option value="ready">מתקדם לבדיקה</option><option value="hold">מושהה</option><option value="rejected">נפסל</option><option value="bought">נרכש</option></select>
+   <select id="sort" aria-label="מיון"><option value="priority">מיון: עדיפות</option><option value="updated">עדכון אחרון</option><option value="price">מחיר מהנמוך</option><option value="km">ק״מ מהנמוך</option></select>
+   <div class="seg"><button data-filter="all" class="active">הכול</button><button data-filter="active">פעילים</button><button data-filter="hold">בהמתנה</button></div>
+ </div>
+ <div id="cards" class="cards"></div>
+ <div id="progress" class="timeline-board hidden"></div>
+ <p class="notice">המאגר המשותף נשמר ב-GitHub ציבורי. אין להזין מספרי טלפון, שמות מוכרים, מסמכים מזהים או מידע פרטי. נתוני מודעות אינם תחליף לדוח רכב או לבדיקה מקצועית.</p>
+</main>
+</div>
+<nav class="mobile-nav"><button class="active" data-mobile="all"><span>▦</span>מודעות</button><button data-mobile="progress"><span>◷</span>התקדמות</button><button data-mobile="add"><span>＋</span>הוספה</button><button data-mobile="publish"><span>⇧</span>סנכרון</button></nav>
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-label="פרטי מודעה">
+ <div class="dialog">
+  <div class="dialog-head"><h2 id="dialogTitle">הוספת מודעה</h2><button class="close" id="closeModal" aria-label="סגור">×</button></div>
+  <div class="dialog-body">
+   <form id="carForm">
+    <div class="form-grid">
+      <div class="field span2"><label>דגם הרכב *</label><input id="fTitle" required placeholder="לדוגמה: מיצובישי ASX"></div>
+      <div class="field"><label>שנתון</label><input id="fYear" type="number" min="1990" max="2035"></div>
+      <div class="field"><label>מחיר מבוקש (₪)</label><input id="fPrice" type="number" min="0" placeholder="טרם ידוע"></div>
+      <div class="field"><label>קילומטרים</label><input id="fKm" type="number" min="0" placeholder="טרם ידוע"></div>
+      <div class="field"><label>יד נוכחית</label><input id="fHand" type="number" min="1" max="30"></div>
+      <div class="field"><label>מספר רכב</label><input id="fPlate" inputmode="numeric" placeholder="1234567 / 12345678"></div>
+      <div class="field"><label>מנוע</label><input id="fEngine" placeholder="2.0 בנזין"></div>
+      <div class="field"><label>מיקום</label><input id="fLocation" placeholder="ירושלים"></div>
+      <div class="field"><label>סטטוס</label><select id="fStatus"></select></div>
+      <div class="field"><label>החלטה</label><select id="fVerdict"><option value="pending">טרם הוחלט</option><option value="good">מעניין</option><option value="caution">דורש זהירות</option><option value="bad">לא מומלץ</option></select></div>
+      <div class="field"><label>עדיפות (1 גבוהה)</label><input id="fPriority" type="number" min="1" max="99"></div>
+      <div class="field span3"><label>קישור למודעה</label><input id="fUrl" type="url" placeholder="https://www.facebook.com/..."></div>
+      <div class="field span3"><label>ממצאים והערות</label><textarea id="fNotes" placeholder="מה מצאנו, מה אומר המוכר ומה צריך לבדוק?"></textarea></div>
+    </div>
+   </form>
+   <div id="existingExtras" class="hidden">
+     <div class="modal-section">משימות לבירור</div><div class="tasks" id="tasks"></div>
+     <div class="inline-form"><input id="newTask" placeholder="הוספת משימה חדשה..." aria-label="משימה חדשה"><button class="btn small" id="addTask">＋ הוסף</button></div>
+     <div class="modal-section">דיווח התקדמות</div><div class="field"><textarea id="newUpdate" placeholder="לדוגמה: דיברתי עם המוכר. מתחייב על מנוע, גיר ושלדה..." rows="3"></textarea></div>
+     <div class="inline-form"><button class="btn small primary" id="addUpdate">＋ הוסף דיווח ליומן</button></div><div id="modalTimeline"></div>
+   </div>
+   <div class="warning">השינויים נשמרים במכשיר מיד. כדי שיעברו למאגר המשותף, יש ללחוץ על ״פרסם בגיטהאב״ ולאשר פתיחת בקשת עדכון (Issue). רק עדכונים מחשבון הבעלים יכולים להתפרסם.</div>
+  </div>
+  <div class="dialog-foot"><button class="btn ghost" id="deleteBtn" style="color:#bf5960">הסר מהמכשיר</button><div style="display:flex;gap:8px"><button class="btn" id="cancelBtn">ביטול</button><button class="btn primary" id="saveBtn">שמור שינויים</button></div></div>
+ </div>
+</div>
+<div id="toast" class="toast" role="status"></div>
+<script>
+(function(){
+'use strict';
+var statuses={new:'חדש',checking:'בבדיקה',waiting:'ממתין למוכר',ready:'מתקדם לבדיקה',hold:'מושהה',rejected:'נפסל',bought:'נרכש'};
+var localKey='carboard-local-v1', changes={}, central=[], all=[], filter='all', page='all', editor=null, dataLoaded=false;
+var $=function(id){return document.getElementById(id)};
+var esc=function(v){return String(v===null||v===undefined?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+var money=function(n){return n===null||n===undefined||n===''?'לא ידוע':new Intl.NumberFormat('he-IL').format(Number(n))+' ₪'};
+var fmt=function(n){return n===null||n===undefined||n===''?'לא ידוע':new Intl.NumberFormat('he-IL').format(Number(n))};
+var str=function(id){return $(id).value.trim()};
+var numeric=function(id){return str(id)===''?null:Number(str(id))};
+var date=function(d){if(!d)return 'תאריך לא ידוע';return new Date(d+'T12:00:00').toLocaleDateString('he-IL',{day:'numeric',month:'short',year:'numeric'})};
+var today=function(){return new Date().toLocaleDateString('en-CA')};
+var linkOk=function(x){try{var u=new URL(x);return ['http:','https:'].includes(u.protocol)?u.href:''}catch(e){return ''}};
+var makeId=function(){return 'car-'+Date.now()+'-'+Math.random().toString(36).slice(2,7)};
+var toastTimer;
+function toast(s){$('toast').textContent=s;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(function(){$('toast').classList.remove('show')},3500)}
+function readLocal(){try{changes=JSON.parse(localStorage.getItem(localKey)||'{}')}catch(e){changes={}}}
+function writeLocal(){localStorage.setItem(localKey,JSON.stringify(changes))}
+function merge(){var m={};central.forEach(function(l){m[l.id]=l});Object.keys(changes).forEach(function(id){var override=changes[id];var server=m[id];if(server&&server.syncedAt&&override.savedAt&&new Date(server.syncedAt)>=new Date(override.savedAt)){delete changes[id];return}if(override.deleted){delete m[id];return}m[id]=override});all=Object.values(m);writeLocal();updateSync();render()}
+function save(l){l.updatedAt=today();l.savedAt=new Date().toISOString();changes[l.id]=l;writeLocal();merge()}
+function updateSync(){var n=Object.keys(changes).length;$('syncTitle').textContent=n?n+' שינויים מקומיים ממתינים לפרסום':'המאגר המשותף מעודכן';$('syncDesc').textContent=n?'השינויים נשמרו במכשיר. לפרסום משותף יש לפתוח בקשת עדכון בגיטהאב.':'המודעות נמשכות מהמאגר המשותף. עריכה חדשה תישמר מקומית עד הפרסום.';$('publish').disabled=!n;$('publish').textContent=n?'פרסם שינוי ('+n+') ↗':'אין שינויים לפרסום'}
+function stat(k,v,ico){return '<div class="metric"><div><small>'+k+'</small><strong>'+v+'</strong></div><span class="stat-icon">'+ico+'</span></div>'}
+function badge(s,kind){return '<span class="pill '+esc(kind||'')+'">'+esc(s)+'</span>'}
+function latest(l){return (l.timeline||[]).slice().sort(function(a,b){return (b.date||'').localeCompare(a.date||'')})[0]}
+function card(l){var last=latest(l),n=(l.tasks||[]).filter(function(t){return !t.done}).length;
+var subtitle=[l.year||'',l.engine||''].filter(Boolean).join(' • ');
+var href=linkOk(l.url);
+return '<article class="carcard"><div class="edge '+esc(l.status)+'"></div><div class="carinside"><div class="car-row"><div class="car-main"><div class="car-picture" aria-hidden="true">🚙</div><div><h3 class="carname">'+esc(l.title)+'</h3><div class="carsecondary">'+esc(subtitle||'פרטים להשלמה')+'</div><div class="pills">'+badge(statuses[l.status]||'חדש',l.status)+(l.verdict==='caution'?badge('דורש זהירות','danger'):'')+(l.verdict==='good'?badge('מעניין','ready'):'')+(l.verdict==='bad'?badge('לא מומלץ','rejected'):'')+'</div></div></div><div class="price"><b>'+money(l.price)+'</b><small>מחיר מבוקש</small></div></div>'+
+'<div class="details">'+
+'<div class="detail"><small>קילומטרז׳</small><b>'+fmt(l.km)+'</b></div><div class="detail"><small>יד</small><b>'+(l.hand?esc(l.hand):'—')+'</b></div><div class="detail"><small>מספר רכב</small><b>'+esc(l.plate||'—')+'</b></div><div class="detail"><small>מיקום</small><b>'+esc(l.location||'לא צוין')+'</b></div><div class="detail"><small>משימות פתוחות</small><b>'+n+'</b></div></div>'+
+'<p class="car-note">'+esc(l.notes||'עדיין לא הוזנו הערות על המודעה.')+'</p>'+
+'<div class="cardfoot"><div class="updated">עדכון אחרון: '+esc(date(l.updatedAt))+(last?' • '+esc(last.author||''):'')+'</div><div class="actions">'+(href?'<a class="openlink" href="'+esc(href)+'" target="_blank" rel="noopener noreferrer">↗ מודעה</a>':'')+'<button class="btn" data-open="'+esc(l.id)+'">פרטים והתקדמות ←</button></div></div></div></article>'}
+function render(){var active=all.filter(function(l){return !['rejected','bought','hold'].includes(l.status)});var waiting=all.filter(function(l){return ['waiting','checking'].includes(l.status)});var progressed=all.reduce(function(n,l){return n+(l.timeline||[]).length},0);
+$('stats').innerHTML=stat('מודעות במעקב',all.length,'▣')+stat('ממתינים / בבדיקה',waiting.length,'◷')+stat('מועמדים פעילים',active.length,'✓')+stat('דיווחי התקדמות',progressed,'☷');
+var q=$('search').value.trim().toLowerCase(),s=$('statusFilter').value,sort=$('sort').value;
+var list=all.filter(function(l){var text=[l.title,l.year,l.plate,l.location,l.engine,l.notes].join(' ').toLowerCase();return (!q||text.includes(q))&&(s==='all'||l.status===s)&&(filter==='all'||(filter==='active'?!['rejected','hold','bought'].includes(l.status):['hold','waiting'].includes(l.status)))});
+list.sort(function(a,b){if(sort==='price')return (a.price===null?Infinity:a.price)-(b.price===null?Infinity:b.price);if(sort==='km')return (a.km===null?Infinity:a.km)-(b.km===null?Infinity:b.km);if(sort==='updated')return String(b.updatedAt).localeCompare(String(a.updatedAt));return (a.priority||99)-(b.priority||99)});
+$('totalLabel').textContent=list.length+' תוצאות';
+$('cards').innerHTML=list.length?list.map(card).join(''):'<div class="empty"><div style="font-size:32px">⌕</div><strong>לא נמצאו מודעות</strong>אפשר לשנות את הסינון או להוסיף רכב.</div>';
+var timeline=[];all.forEach(function(l){(l.timeline||[]).forEach(function(e){timeline.push({title:l.title,text:e.text,date:e.date,author:e.author})})});timeline.sort(function(a,b){return String(b.date).localeCompare(String(a.date))});
+$('progress').innerHTML=timeline.length?timeline.map(function(e){return '<div class="timelineitem"><span class="tl-dot"></span><div><b>'+esc(e.title)+'</b><p>'+esc(e.text)+'</p><small>'+esc(date(e.date))+' • '+esc(e.author||'')+'</small></div></div>'}).join(''):'<div class="empty">עדיין אין דיווחים.</div>';
+$('cards').classList.toggle('hidden',page!=='all');$('progress').classList.toggle('hidden',page!=='progress');$('filters').classList.toggle('hidden',page!=='all');$('sectionTitle').innerHTML=page==='all'?'מודעות במעקב <small id="totalLabel">'+list.length+' תוצאות</small>':'יומן התקדמות';
+}
+function setPage(p){page=p;document.querySelectorAll('[data-nav]').forEach(function(x){x.classList.toggle('active',x.dataset.nav===p)});document.querySelectorAll('[data-mobile]').forEach(function(x){x.classList.toggle('active',x.dataset.mobile===p)});render();window.scrollTo({top:0,behavior:'smooth'})}
+function val(id,v){$(id).value=v===null||v===undefined?'':v}
+function openModal(id){var found=all.find(function(x){return x.id===id});editor=found?JSON.parse(JSON.stringify(found)):null;
+$('dialogTitle').textContent=editor?'פרטי רכב ודיווחי התקדמות':'מודעה חדשה';
+['Title','Year','Price','Km','Hand','Plate','Engine','Location','Url','Notes','Priority'].forEach(function(k){var key=k.charAt(0).toLowerCase()+k.slice(1);val('f'+k,editor?editor[key]:'')});
+if(!editor)val('fPriority',all.length+1);
+val('fStatus',editor?editor.status:'new');val('fVerdict',editor?editor.verdict:'pending');
+$('existingExtras').classList.toggle('hidden',!editor);$('deleteBtn').classList.toggle('hidden',!editor);renderExtras();$('modal').classList.add('show');document.body.style.overflow='hidden'}
+function closeModal(){$('modal').classList.remove('show');document.body.style.overflow='';editor=null}
+function editFromFields(){var o=editor||{id:makeId(),timeline:[],tasks:[],positives:[],risks:[],source:'ידני',createdAt:today()};o.title=str('fTitle');o.year=numeric('fYear');o.price=numeric('fPrice');o.km=numeric('fKm');o.hand=numeric('fHand');o.plate=str('fPlate').replace(/\D/g,'');o.engine=str('fEngine');o.location=str('fLocation');o.url=linkOk(str('fUrl'));o.notes=str('fNotes');o.status=str('fStatus');o.verdict=str('fVerdict');o.priority=numeric('fPriority')||99;if(!o.title){toast('נא להזין שם דגם');return null}return o}
+function renderExtras(){if(!editor)return;$('tasks').innerHTML=(editor.tasks||[]).map(function(t,i){return '<label class="task '+(t.done?'done':'')+'"><input type="checkbox" data-task="'+i+'" '+(t.done?'checked':'')+'><span>'+esc(t.label)+'</span></label>'}).join('')||'<div class="muted">אין משימות פתוחות.</div>';$('modalTimeline').innerHTML=(editor.timeline||[]).slice().reverse().map(function(t){return '<div class="mini-line">'+esc(t.text)+'<small>'+esc(date(t.date))+' • '+esc(t.author||'עדכון')+'</small></div>'}).join('')||'<div class="muted">אין דיווחים עדיין.</div>'}
+function saveEditor(){var o=editFromFields();if(!o)return;save(o);closeModal();toast('נשמר במכשיר — אפשר לפרסם לשיתוף')}
+function publish(){var keys=Object.keys(changes);if(!keys.length){toast('אין עדכונים לפרסום');return}var value=changes[keys[0]];var payload={type:'carboard-sync',version:1,listing:value};var json=JSON.stringify(payload);
+if(json.length>7200){toast('העדכון ארוך מדי. קצר את ההערות ונסה שוב.');return}
+var url='https://github.com/aviadchai/apps/issues/new?title='+encodeURIComponent('carboard-sync: '+(value.title||'עדכון'))+'&body='+encodeURIComponent(json);window.open(url,'_blank','noopener,noreferrer');toast('יש לאשר פתיחת Issue בגיטהאב. לאחר מכן לרענן.');}
+async function load(){readLocal();try{var r=await fetch('./data.json?ts='+Date.now(),{cache:'no-store'});if(!r.ok)throw Error('server unavailable');var d=await r.json();if(!Array.isArray(d.listings))throw Error('invalid data');central=d.listings;dataLoaded=true;merge()}catch(e){central=[];dataLoaded=false;merge();$('syncTitle').textContent='אין כרגע חיבור למאגר המשותף';$('syncDesc').textContent='אפשר להמשיך לעבוד על שינויים מקומיים. רענן לאחר חידוש החיבור.'}}
+function download(){var file=new Blob([JSON.stringify({exportedAt:new Date().toISOString(),listings:all},null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(file);a.download='carboard-backup-'+today()+'.json';a.click();setTimeout(function(){URL.revokeObjectURL(a.href)},1500);toast('הגיבוי ירד למכשיר')}
+$('addTop').onclick=function(){openModal(null)};$('closeModal').onclick=closeModal;$('cancelBtn').onclick=closeModal;$('saveBtn').onclick=saveEditor;$('publish').onclick=publish;$('exportTop').onclick=download;$('refresh').onclick=load;
+$('modal').addEventListener('click',function(e){if(e.target===$('modal'))closeModal()});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeModal()});
+$('cards').addEventListener('click',function(e){var b=e.target.closest('[data-open]');if(b)openModal(b.dataset.open)});
+document.querySelectorAll('[data-nav]').forEach(function(e){e.onclick=function(){if(e.dataset.nav==='export')return download();setPage(e.dataset.nav)}});
+document.querySelectorAll('[data-mobile]').forEach(function(e){e.onclick=function(){if(e.dataset.mobile==='add')return openModal(null);if(e.dataset.mobile==='publish')return publish();setPage(e.dataset.mobile)}});
+document.querySelectorAll('[data-filter]').forEach(function(e){e.onclick=function(){filter=e.dataset.filter;document.querySelectorAll('[data-filter]').forEach(function(n){n.classList.toggle('active',n===e)});render()}});
+['search','statusFilter','sort'].forEach(function(id){$(id).addEventListener(id==='search'?'input':'change',render)});
+Object.keys(statuses).forEach(function(k){var o=document.createElement('option');o.value=k;o.textContent=statuses[k];$('fStatus').appendChild(o)});
+$('tasks').onclick=function(e){var inp=e.target.closest('[data-task]');if(!inp||!editor)return;var o=editFromFields();if(!o)return;editor=o;editor.tasks[Number(inp.dataset.task)].done=inp.checked;save(editor);renderExtras()};
+$('addTask').onclick=function(){if(!editor)return;var t=str('newTask');if(!t)return;var o=editFromFields();if(!o)return;editor=o;editor.tasks=editor.tasks||[];editor.tasks.push({label:t,done:false});val('newTask','');save(editor);renderExtras()};
+$('addUpdate').onclick=function(){if(!editor)return;var t=str('newUpdate');if(!t)return;var o=editFromFields();if(!o)return;editor=o;editor.timeline=editor.timeline||[];editor.timeline.push({date:today(),text:t,author:'עדכון משתמש'});val('newUpdate','');save(editor);renderExtras();toast('הדיווח נוסף ליומן במכשיר')};
+$('deleteBtn').onclick=function(){if(!editor||!confirm('להסיר את הרכב מהלוח? לאחר סנכרון הוא יוסר גם מהמאגר המשותף.'))return;changes[editor.id]={id:editor.id,title:editor.title,deleted:true,savedAt:new Date().toISOString()};writeLocal();merge();closeModal();toast('הרכב הוסר מקומית')};
+load();
+})();
+</script>
+</body>
+</html>
