@@ -268,6 +268,12 @@ $("copyBtn").addEventListener("click",async()=>{
   setTimeout(()=>$("copyBtn").textContent="העתק סיכום",2000);
  }catch(e){$("copyBtn").textContent="לא ניתן להעתיק";}
 });
+// Deep-link from CarBoard: ?plate=12345678 pre-fills and runs the official vehicle lookup.
+const plateFromLink=new URLSearchParams(window.location.search).get("plate");
+if(/^\\d{7,8}$/.test(plateFromLink||"")){
+  $("plate").value=plateFromLink;
+  window.requestAnimationFrame(()=>$("searchForm").requestSubmit());
+}
 })();
 </script>
 <script defer src="./api-config.js?v=5"></script>
