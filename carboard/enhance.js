@@ -8,7 +8,7 @@ function plate(value){const s=String(value||'').replace(/\D/g,'');if(s.length!==
 const v=s.length===7?s.slice(0,2)+'-'+s.slice(2,5)+'-'+s.slice(5):s.slice(0,3)+'-'+s.slice(3,5)+'-'+s.slice(5);
 return '<div class="plate-inline"><span class="licenseplate"><span class="il">🇮🇱<br>IL</span><b>'+esc(v)+'</b></span></div>'}
 function images(car){return(car.photos||[]).filter(p=>p&&safe(p.url)).slice(0,15)}
-function thumb(car){let im=images(car)[0];return '<div class="car-picture" aria-hidden="true">'+(im?'<img loading="lazy" src="'+esc(safe(im.url))+'" alt="'+esc(im.label||'תמונת רכב')+'" onerror="this.style.display=\\'none\\';this.parentNode.textContent=\\'🚙\\'">':'🚙')+'</div>'}
+function thumb(car){const im=images(car)[0];return '<div class="car-picture" aria-hidden="true">'+(im?'<img loading="lazy" src="'+esc(safe(im.url))+'" alt="'+esc(im.label||'תמונת רכב')+'">':'🚙')+'</div>'}
 function links(entries){return '<div class="cb-links">'+(entries||[]).filter(x=>safe(x.url)).map(x=>'<a target="_blank" rel="noopener noreferrer" href="'+esc(safe(x.url))+'">↗ '+esc(x.label||'קישור למקור')+'</a>').join('')+'</div>'}
 function detail(car){
 let parts=[];
