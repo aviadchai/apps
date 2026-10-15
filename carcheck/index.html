@@ -270,7 +270,7 @@ $("copyBtn").addEventListener("click",async()=>{
 });
 // Deep-link from CarBoard: ?plate=12345678 pre-fills and runs the official vehicle lookup.
 const plateFromLink=new URLSearchParams(window.location.search).get("plate");
-if(/^\\d{7,8}$/.test(plateFromLink||"")){
+if(/^\d{7,8}$/.test(plateFromLink||"")){
   $("plate").value=plateFromLink;
   window.requestAnimationFrame(()=>$("searchForm").requestSubmit());
 }
