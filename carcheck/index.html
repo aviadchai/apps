@@ -25,6 +25,7 @@
 </style>
 <link rel="stylesheet" href="./gov-theme.css?v=5">
 <link rel="stylesheet" href="./insights-v3.css?v=5">
+<link rel="stylesheet" href="./carscope-extra.css?v=6">
 </head>
 <body>
 <header class="top"><div class="wrap topinner"><a href="/" class="brand"><div class="brandlogo">C</div>Car<span>Scope</span></a><nav class="nav"><a href="#welcome">מה בודקים</a><a href="#sources">מקורות מידע</a><span class="source-pill"><span class="dot"></span> נתונים ממשלתיים</span></nav></div></header>
@@ -45,18 +46,21 @@
 <div class="values"><div class="value"><div class="valueicon">◈</div><div><b>מידע רשמי</b><small>נתונים המגיעים ישירות ממאגרים ציבוריים</small></div></div><div class="value"><div class="valueicon">↗</div><div><b>עבר בעלויות</b><small>תאריכים וסוגי בעלות, כשהם זמינים</small></div></div><div class="value"><div class="valueicon">≋</div><div><b>קילומטראז׳</b><small>קריאת הטסט האחרון, כשקיימת</small></div></div></div>
 <section id="report" class="result" aria-live="polite">
 <div class="result-top"><div><div class="titleline"><h2 id="carTitle">דוח רכב</h2><span class="tag">נתונים ממאגרים פתוחים</span></div><div class="result-meta" id="reportSub"></div></div><div class="actions"><button class="ghostbtn" id="copyBtn">העתק סיכום</button><button class="ghostbtn" onclick="window.print()">הדפס / שמור PDF</button></div></div>
-<div class="metrics"><div class="metric"><label>ק״מ בטסט האחרון</label><strong id="metricKm">—</strong><small id="kmNote">אין מידע מאומת</small></div><div class="metric"><label>רשומות בעלות זמינות</label><strong id="metricOwners">—</strong><small>לא בהכרח מספר היד ברישיון</small></div><div class="metric"><label>שנת ייצור</label><strong id="metricYear">—</strong><small>לפי רישום משרד התחבורה</small></div></div>
+<div class="metrics"><div class="metric"><label>ק״מ בטסט האחרון</label><strong id="metricKm">—</strong><small id="kmNote">אין מידע מאומת</small></div><div class="metric"><label>רשומות בעלות זמינות</label><strong id="metricOwners">—</strong><small id="ownersNote">לא בהכרח מספר היד ברישיון</small></div><div class="metric"><label>שנת ייצור</label><strong id="metricYear">—</strong><small id="yearNote">לפי רישום משרד התחבורה</small></div></div>
 <div id="coverage" class="warning hidden"></div>
+<div id="csAlerts"></div>
 <div class="panel"><div class="panel-head"><h3>פרטי הרכב</h3><span class="tag">משרד התחבורה</span></div><div id="details" class="details"></div></div>
-<div class="panel"><div class="panel-head"><h3>היסטוריית בעלויות זמינה</h3></div><div class="timeline" id="owners"></div></div>
+<div class="panel"><div class="panel-head"><h3>היסטוריית בעלויות זמינה</h3><span id="ownersSrc"></span></div><div class="timeline" id="owners"></div></div>
+<section id="csExtra"></section>
 <div class="panel" id="sources"><div class="panel-head"><h3>בדיקת מקורות</h3><span id="checkedAt" style="font-size:12px;color:#8a97a6"></span></div><div id="sourceList" class="src-list"></div></div>
-<div class="disclaimer"><strong>מה הדוח לא מכסה?</strong> אין כאן מידע על תאונות, תביעות ביטוח, טיפולים, שעבודים או מצב מכני. המאגר נותן קריאת ק״מ אחרונה בלבד — לא סדרת קריאות מכל הטסטים. אין להסתמך על הדוח במקום בדיקה מקצועית ומסמכי המוכר.</div>
+<div class="disclaimer"><strong>מה הדוח לא מכסה?</strong> אין כאן מידע על תאונות, תביעות ביטוח, טיפולים, שעבודים או מצב מכני. אותות הסיכון מחושבים רק מהנתונים שהתקבלו ואינם קביעה. המאגר נותן קריאת ק״מ אחרונה בלבד — לא סדרת קריאות מכל הטסטים. אין להסתמך על הדוח במקום בדיקה מקצועית ומסמכי המוכר.</div>
 </section>
 <section id="welcome"><h2 class="section-title">מה אפשר לגלות בבדיקה?</h2><p class="section-desc">שלושה מקורות ממשלתיים, עם הסבר ברור לגבי מקורו של כל נתון</p>
 <div class="features"><div class="feature"><div class="symbol">▤</div><h3>זהות ומפרט</h3><p>יצרן, דגם, שנת ייצור, רמת גימור, צבע, דלק ומועדי רישוי — מתוך מאגר כלי רכב פרטיים ומסחריים.</p></div><div class="feature"><div class="symbol">≋</div><h3>ק״מ בטסט האחרון</h3><p>קריאת נסועה רשמית, כשקיימת במאגר ההיסטוריה. אין הבטחה לקבלת רצף קילומטראז׳ לאורך שנים.</p></div><div class="feature"><div class="symbol">↗</div><h3>רשומות העברת בעלות</h3><p>תאריכי בעלויות וסוגי בעלות ככל שפורסמו במאגר. אין לבלבל בין מספר הרשומות לבין היד הרשומה ברישיון.</p></div></div>
 <div class="disclaimer"><strong>לגבי רכבים ישנים:</strong> מאגרי היסטוריית כלי הרכב הפרטיים מציגים בעיקר רכבים פעילים משנת 2017 ואילך. ברכב משנת 2016, היעדר רשומות היסטוריה אינו מעיד שלא היו החלפות בעלות או טסטים.</div>
 </section></main>
 <footer class="footer"><div class="wrap footer-inner"><span>CarScope · כלי עזר עצמאי לבדיקה ראשונית של רכב משומש</span><span>נתונים: <a href="https://data.gov.il/he/datasets/ministry_of_transport/private-and-commercial-vehicles/053cea08-09bc-40ec-8f7a-156f0677aff3" target="_blank" rel="noopener">מפרט</a> · <a href="https://data.gov.il/he/datasets/ministry_of_transport/shinui_mivne" target="_blank" rel="noopener">היסטוריית רכב</a> | לא אתר ממשלתי</span></div></footer>
+<script src="./carscope-core.js?v=6"></script>
 <script>
 (function(){
 "use strict";
@@ -71,65 +75,54 @@ const niceDate = s => {
  const d=new Date(t);
  return isNaN(d) ? t : d.toLocaleDateString("he-IL");
 };
-const RESOURCES={
- registration:"053cea08-09bc-40ec-8f7a-156f0677aff3",
- mileage:"56063a99-8a3e-4ff4-912e-5966c0279bad",
- ownership:"bb2355dc-9ec7-4f06-9c3f-3344672171da"
-};
-const ENDPOINT="https://data.gov.il/api/3/action/datastore_search";
+const Core=window.CarScopeCore;
 const IS_GITHUB_PAGES=location.hostname.endsWith(".github.io");
 let current=null;
 function showError(message){$("error").textContent=message;$("error").classList.add("visible")}
 function hideError(){$("error").classList.remove("visible")}
-function addDetail(label,value){return '<div class="detail"><label>'+esc(label)+'</label><b>'+esc(val(value))+'</b></div>'}
-function getGovURL(kind,plate){
- const u=new URL(ENDPOINT);
- u.searchParams.set("resource_id",RESOURCES[kind]);
- u.searchParams.set("filters",JSON.stringify({mispar_rechev:Number(plate)}));
- u.searchParams.set("limit",kind==="ownership"?"150":"3");
- return u;
+const stamp=iso=>{const d=new Date(iso);return isNaN(d)?"":d.toLocaleString("he-IL",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"})};
+function srcTag(key){
+ const d=current?.datasets?.[key],name=Core.DATASETS[key]?.name||key;
+ if(!d)return '<small class="src-tag">מקור: '+esc(name)+'</small>';
+ return '<small class="src-tag">מקור: '+(d.url?'<a href="'+esc(d.url)+'" target="_blank" rel="noopener">'+esc(name)+'</a>':esc(name))+(d.fetchedAt?' · '+esc(stamp(d.fetchedAt)):"")+'</small>';
 }
-function validateGov(json){
- if(!json||json.success!==true||!Array.isArray(json.result?.records))throw new Error("מאגר הממשלה החזיר תשובה שאינה תקינה.");
- return json.result.records;
-}
-async function directGov(kind,plate){
- const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),9000);
+function addDetail(label,value,src){return '<div class="detail"><label>'+esc(label)+'</label><b>'+esc(val(value))+'</b>'+(src?srcTag(src):"")+'</div>'}
+async function directGov(params){
+ const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),8000);
  try{
-   const resp=await fetch(getGovURL(kind,plate).toString(),{signal:ctl.signal,mode:"cors",headers:{Accept:"application/json"}});
+   const resp=await fetch(Core.govUrl(params),{signal:ctl.signal,mode:"cors",headers:{Accept:"application/json"}});
    if(!resp.ok)throw new Error("משרד התחבורה החזיר שגיאה "+resp.status);
-   return validateGov(await resp.json());
+   return Core.validateGov(await resp.json());
  } finally{clearTimeout(tm)}
 }
-function govJsonp(kind,plate){
+function govJsonp(params){
  // CKAN government API supports JSONP for browser clients on origins without CORS.
- // Only numeric plate and whitelisted resource IDs are sent to this trusted endpoint.
+ // Only numeric plates and whitelisted resource IDs are sent to this trusted endpoint.
  return new Promise((resolve,reject)=>{
    const callback="__carscopeGov_"+Math.random().toString(36).slice(2);
-   const url=getGovURL(kind,plate);
+   const url=new URL(Core.govUrl(params));
    url.searchParams.set("callback",callback);
    const el=document.createElement("script");
    let finished=false;
-   const timer=setTimeout(()=>finish(new Error("פג זמן ההמתנה למאגר הממשלה.")),10000);
+   const timer=setTimeout(()=>finish(new Error("פג זמן ההמתנה למאגר הממשלה.")),8000);
    function finish(error,data){
      if(finished)return;
      finished=true;clearTimeout(timer);el.remove();
      try{delete window[callback]}catch(e){window[callback]=undefined}
      if(error)reject(error);else resolve(data);
    }
-   window[callback]=payload=>{try{finish(null,validateGov(payload))}catch(e){finish(e)}};
+   window[callback]=payload=>{try{finish(null,Core.validateGov(payload))}catch(e){finish(e)}};
    el.src=url.toString();el.async=true;
    el.onerror=()=>finish(new Error("הדפדפן לא הצליח להתחבר למאגר משרד התחבורה."));
    document.head.appendChild(el);
  });
 }
-async function govRecords(kind,plate){
- try{return await directGov(kind,plate)}
+async function govQuery(params){
+ try{return await directGov(params)}
  catch(error){
    // A cross-origin browser request may be blocked by CORS. CKAN also
    // supports JSONP: use it as an alternative rather than fabricate records.
-   try{return await govJsonp(kind,plate)}
-   catch(e){throw new Error(e.message+" מקור: "+kind)}
+   return await govJsonp(params);
  }
 }
 function mapVehicle(r){
@@ -149,24 +142,39 @@ function mapVehicle(r){
    frontTire:r.zmig_kidmi||null
  };
 }
+const statusOf=d=>d?d.status:"error";
+function buildReport(plate,datasets){
+ const reg=datasets.registration?.records||[],mil=datasets.mileage?.records||[],own=datasets.ownership?.records||[];
+ const raw=mil[0]?.kilometer_test_aharon;
+ const km=raw==null||raw===""?null:Number(raw);
+ const owners=own.map(o=>({date:o.baalut_dt==null?null:String(o.baalut_dt),type:o.baalut||null})).sort((a,b)=>(a.date||"").localeCompare(b.date||""));
+ const sources={};
+ for(const k of ["registration","mileage","ownership"])sources[k]=statusOf(datasets[k]);
+ return {plate,checkedAt:new Date().toISOString(),vehicle:mapVehicle(reg[0]),
+  history:{lastMileage:Number.isFinite(km)?km:null,ownership:owners,origin:mil[0]?.mkoriut_nm||null,firstRegistration:mil[0]?.rishum_rishon_dt||null},
+  sources,datasets,coverage:{historyStartYear:2017,mileageSeriesAvailable:false}};
+}
 async function searchDirect(plate){
- const keys=Object.keys(RESOURCES);
- const settled=await Promise.allSettled(keys.map(k=>govRecords(k,plate)));
- const sources={},records={};
- keys.forEach((k,i)=>{
-   const s=settled[i];
-   records[k]=s.status==="fulfilled"?s.value:[];
-   sources[k]=s.status==="rejected"?"error":s.value.length?"found":"empty";
- });
- if(keys.every(k=>sources[k]==="error")){
+ const datasets=await Core.lookupPlate(plate,{query:govQuery});
+ if(Object.values(datasets).every(d=>d.status==="error"||d.status==="skipped")){
    throw new Error("לא הצלחתי להתחבר למאגרי משרד התחבורה. ייתכן שהגישה נחסמה מהדפדפן. כדאי לנסות שוב מאוחר יותר.");
  }
- const r=records.mileage[0];
- const raw=r?.kilometer_test_aharon;
- const km=raw==null||raw===""?null:Number(raw);
- const owners=records.ownership.map(o=>({date:o.baalut_dt==null?null:String(o.baalut_dt),type:o.baalut||null})).sort((a,b)=>(a.date||"").localeCompare(b.date||""));
- return {plate,checkedAt:new Date().toISOString(),vehicle:mapVehicle(records.registration[0]),
-  history:{lastMileage:Number.isFinite(km)?km:null,ownership:owners,origin:records.mileage[0]?.mkoriut_nm||null},sources,coverage:{historyStartYear:2017,mileageSeriesAvailable:false}};
+ return buildReport(plate,datasets);
+}
+// The dedicated API returns the three core sources; the extra datasets are read here in parallel.
+function mergeApi(j,datasets){
+ j.datasets=datasets;
+ for(const k of ["mileage","ownership"])if(!datasets[k])datasets[k]={status:j.sources?.[k]||"error",records:[],fetchedAt:j.checkedAt,via:"api"};
+ return j;
+}
+// Backend API (3 core sources) and the extra datasets run in parallel.
+async function viaApi(url,plate,timeout){
+ const extras=Core.lookupPlate(plate,{query:govQuery,kinds:Object.keys(Core.DATASETS).filter(k=>k!=="mileage"&&k!=="ownership")});
+ extras.catch(()=>{});
+ const r=await fetch(url,{headers:{Accept:"application/json"},signal:AbortSignal.timeout(timeout)});
+ if(!r.ok)throw new Error("API "+r.status);
+ const j=await r.json();
+ return mergeApi(j,await extras);
 }
 function showResult(j){
  current=j;
@@ -176,9 +184,12 @@ function showResult(j){
  $("carTitle").textContent=title||"רכב מספר "+j.plate;
  $("reportSub").textContent="מספר רישוי "+j.plate+" · נתונים לפי המידע הציבורי הזמין";
  $("metricKm").textContent=Number.isFinite(h.lastMileage)?fmt(h.lastMileage):"לא זמין";
- $("kmNote").textContent=Number.isFinite(h.lastMileage)?"הקריאה האחרונה שמופיעה במאגר":"לא התקבל נתון ממאגר הנסועה";
+ $("kmNote").innerHTML=(Number.isFinite(h.lastMileage)?"הקריאה האחרונה שמופיעה במאגר":"לא התקבל נתון ממאגר הנסועה")+srcTag("mileage");
  $("metricOwners").textContent=owners.length?fmt(owners.length):"לא זמין";
+ $("ownersNote").innerHTML="לא בהכרח מספר היד ברישיון"+srcTag("ownership");
+ $("ownersSrc").innerHTML=srcTag("ownership");
  $("metricYear").textContent=v.year||"לא זמין";
+ $("yearNote").innerHTML="לפי רישום משרד התחבורה"+srcTag("registration");
  $("details").innerHTML=[
   ["יצרן",v.manufacturer],["דגם",v.model],["רמת גימור",v.trim],
   ["שנה",v.year],["מנוע (קוד)",v.engineCode],["סוג דלק",v.fuel],
@@ -186,12 +197,12 @@ function showResult(j){
   ["תאריך טסט אחרון",niceDate(v.lastTestDate)],
   ["תוקף רישיון",niceDate(v.registrationExpiry)],
   ["מועד עלייה לכביש",v.firstOnRoad],["צמיג קדמי",v.frontTire]
- ].map(x=>addDetail(x[0],x[1])).join("");
+ ].map(x=>addDetail(x[0],x[1],"registration")).join("");
  $("owners").innerHTML=owners.length?
   owners.map((o,i)=>'<div class="timeline-item"><strong>'+esc(niceDate(o.date))+' — '+esc(val(o.type))+'</strong><small>רשומה מס׳ '+(i+1)+" מתוך הנתונים המפורסמים</small></div>").join(""):
   "<p>לא נמצאו רשומות בעלות במאגר הציבורי עבור הרכב. אין בכך אישור שהוא יד ראשונה.</p>";
  const old=v.year&&Number(v.year)<2017;
- const noHist=!owners.length&&!Number.isFinite(h.lastMileage);
+ const noHist=!owners.length&&!Number.isFinite(h.lastMileage)&&j.sources?.ownership!=="error"&&j.sources?.mileage!=="error";
  const warn=old||noHist;
  $("coverage").classList.toggle("hidden",!warn);
  if(warn){
@@ -199,11 +210,11 @@ function showResult(j){
    (old?"כיסוי היסטורי מוגבל לרכב משנת "+esc(v.year):"אין נתוני היסטוריה זמינים")+
    "</b>מאגרי ההיסטוריה הממשלתיים מכסים בעיקר רכבים פעילים משנת 2017 ואילך. היעדר נתונים אינו מעיד על מספר הידיים או על אמינות הקילומטראז׳.</div>";
  }
- const names={registration:"מאגר רישוי ומפרט",mileage:"מאגר ק״מ בטסט האחרון",ownership:"מאגר היסטוריית בעלויות"};
- $("sourceList").innerHTML=Object.entries(names).map(([key,name])=>{
-  const state=j.sources[key];
-  const labels={found:"נמצאו נתונים",empty:"אין רשומה",error:"המקור לא זמין"};
-  return '<div class="srcrow"><span>'+name+'</span><span class="'+(state==="found"?"ok":state==="error"?"bad":"missing")+'">'+labels[state]+"</span></div>"
+ const labels={found:"נמצאו נתונים",empty:"אין רשומה",error:"המקור לא זמין",skipped:"לא נבדק"};
+ $("sourceList").innerHTML=Object.keys(Core.DATASETS).map(key=>{
+  const d=j.datasets?.[key],state=d?d.status:(j.sources?.[key]||"skipped");
+  const why=state==="skipped"&&d?.reason?" ("+d.reason+")":"";
+  return '<div class="srcrow"><span>'+esc(Core.DATASETS[key].name)+'<small class="src-id">'+esc(Core.DATASETS[key].id)+(d?.fetchedAt?" · "+esc(stamp(d.fetchedAt)):"")+'</small></span><span class="'+(state==="found"?"ok":state==="error"?"bad":"missing")+'">'+esc((labels[state]||state)+why)+"</span></div>"
  }).join("");
  $("checkedAt").textContent="נבדק "+new Date(j.checkedAt).toLocaleString("he-IL");
  document.dispatchEvent(new CustomEvent("carscope:report",{detail:j}));
@@ -223,10 +234,7 @@ $("searchForm").addEventListener("submit",async e=>{
   const dedicated=(window.CARSCOPE_API_BASE||"").trim().replace(/\/$/,"");
   if(dedicated && /^https:\/\//i.test(dedicated)){
     try{
-      const r=await fetch(dedicated+"/api/vehicle?plate="+encodeURIComponent(plate),
-        {headers:{Accept:"application/json"},signal:AbortSignal.timeout(16000)});
-      if(!r.ok)throw new Error("API "+r.status);
-      j=await r.json();
+      j=await viaApi(dedicated+"/api/vehicle?plate="+encodeURIComponent(plate),plate,16000);
     }catch(err){
       j=await searchDirect(plate);
       j.backend={storageStatus:"api_unavailable",detail:"הארכיון המרכזי אינו זמין"};
@@ -238,13 +246,11 @@ $("searchForm").addEventListener("submit",async e=>{
   else {
    // Server-backed deployments use the local backend; static hosting
    // falls back to the public API.
-   try{
-    const r=await fetch("./api/vehicle?plate="+encodeURIComponent(plate),{headers:{Accept:"application/json"}});
-    if(!r.ok)throw Error("API "+r.status);
-    j=await r.json();
-   }catch(_){j=await searchDirect(plate)}
+   try{j=await viaApi("./api/vehicle?plate="+encodeURIComponent(plate),plate,15000)}
+   catch(_){j=await searchDirect(plate)}
   }
-  if(!j.vehicle&&!Number.isFinite(j.history?.lastMileage)&&!j.history?.ownership?.length){
+  const offRoad=j.datasets?.cancelled?.status==="found"||j.datasets?.personalImport?.status==="found";
+  if(!j.vehicle&&!Number.isFinite(j.history?.lastMileage)&&!j.history?.ownership?.length&&!offRoad){
    $("report").classList.remove("visible");
    $("welcome").classList.remove("hidden");
    const unavailable=Object.values(j.sources).some(s=>s==="error");
@@ -260,7 +266,8 @@ $("copyBtn").addEventListener("click",async()=>{
  const v=current.vehicle||{},h=current.history||{};
  const text=["CarScope — דוח "+current.plate,[v.manufacturer,v.model,v.year].filter(Boolean).join(" "),
  "ק״מ בטסט האחרון: "+(Number.isFinite(h.lastMileage)?fmt(h.lastMileage):"לא זמין"),
- "רשומות בעלות: "+(h.ownership?.length||"לא זמינות"),"מקור: data.gov.il",
+ "רשומות בעלות: "+(h.ownership?.length||"לא זמינות"),
+ ...Core.computeRiskSignals(current).map(s=>"⚠ "+s.title),"מקור: data.gov.il",
  "מידע חלקי, לא תחליף לבדיקה מקצועית"].join("\n");
  try{
   await navigator.clipboard.writeText(text);
@@ -278,4 +285,5 @@ if(/^\d{7,8}$/.test(plateFromLink||"")){
 </script>
 <script defer src="./api-config.js?v=5"></script>
 <script defer src="./insights-v3.js?v=5"></script>
+<script defer src="./carscope-extra.js?v=6"></script>
 </body></html>
