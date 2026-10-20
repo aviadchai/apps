@@ -178,7 +178,7 @@ function computeRiskSignals(report,now=new Date()){
   const months=monthIndex(b)-monthIndex(a);
   if(months<3)out.push({id:"rapid_ownership",level:"medium",
    title:"החלפת בעלות מהירה",
-   detail:"בעלות שהוחזקה "+(months<=0?"פחות מחודש":months+" חודשים")+" בלבד (לפי חודשי הרישום במאגר). אצל סוחר זה נפוץ, אך כדאי לברר.",
+   detail:"בעלות שהוחזקה "+(months<=0?"פחות מחודש":months===1?"חודש אחד":months+" חודשים")+" בלבד (לפי חודשי הרישום במאגר). אצל סוחר זה נפוץ, אך כדאי לברר.",
    evidence:[{label:"רשומה "+i,value:owners[i-1].date+" · "+(owners[i-1].type||"לא ידוע"),source:"ownership"},
     {label:"רשומה "+(i+1),value:owners[i].date+" · "+(owners[i].type||"לא ידוע"),source:"ownership"}]});
  }
