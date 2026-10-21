@@ -49,3 +49,10 @@ test('market links search make/model/year without country suffix',()=>{
  assert.match(links.find(l=>l.id==='yad2').url,/year=2019-2019/);
  assert.deepEqual(core.marketLinks({manufacturer:'x'}),[]);
 });
+test('compares asking price with the official new-car list price',()=>{
+ const r=mgZs2019({datasets:{newPrice:{status:'found',records:[{mehir:100000}]}}});
+ const c=core.compareListing(core.parseListing('מחיר: 62,000 ₪'),r);
+ assert.equal(c[0].field,'price');assert.match(c[0].text,/62%/);
+ const multi=mgZs2019({datasets:{newPrice:{status:'found',records:[{mehir:100000},{mehir:110000}]}}});
+ assert.match(core.compareListing(core.parseListing('מחיר: 62,000 ₪'),multi)[0].text,/לא חושב יחס/);
+});

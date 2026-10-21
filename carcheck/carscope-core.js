@@ -20,9 +20,17 @@ const DATASETS={
  cancelled:{id:"851ecab1-0622-4dbe-a6c7-f950cf82abf9",name:"כלי רכב שבוטלו / ירדו מהכביש",plateField:"mispar_rechev",limit:3},
  disabledTag:{id:"c8b9f9c8-4612-4068-934f-d4acd2e3c06e",name:"תו חניה לנכה",plateField:null,limit:3},
  personalImport:{id:"03adc637-b6fe-402b-9937-7c3d3afc9140",name:"רכבים ביבוא אישי",plateField:null,limit:3},
- spec:{id:"142afde2-6228-49f9-8a29-9b6c3a0cbe40",name:"מפרט דגמי רכב",join:["tozeret_cd","degem_cd","shnat_yitzur"],limit:30}
+ // Queried only when the plate is missing from the active registry.
+ inactive:{id:"f6efe89a-fb3d-43a4-bb61-9bf12a9b9099",name:"כלי רכב לא פעילים (עם קוד דגם)",plateField:"mispar_rechev",limit:3,fallback:true},
+ inactiveNoModel:{id:"6f6acd03-f351-4a8f-8ecf-df792f4f573a",name:"כלי רכב לא פעילים (ללא קוד דגם)",plateField:"mispar_rechev",limit:3,fallback:true},
+ cancelled2010:{id:"4e6b9724-4c1e-43f0-909a-154d4cc4e046",name:"ביטולים סופיים — ארכיון 2010–2016",plateField:"mispar_rechev",limit:3,fallback:true},
+ cancelled2000:{id:"ec8cbc34-72e1-4b69-9c48-22821ba0bd6c",name:"ביטולים סופיים — ארכיון 2000–2009",plateField:"mispar_rechev",limit:3,fallback:true},
+ // Joined on the model codes of the vehicle record (sug_degem P/M when present).
+ spec:{id:"142afde2-6228-49f9-8a29-9b6c3a0cbe40",name:"מפרט דגמי רכב",join:["tozeret_cd","degem_cd","shnat_yitzur"],limit:30},
+ newPrice:{id:"39f455bf-6db0-4926-859d-017f34eacbcb",name:"מחירון רכב חדש — משרד התחבורה",join:["tozeret_cd","degem_cd","shnat_yitzur"],limit:30}
 };
 const PLATE_KINDS=Object.keys(DATASETS).filter(k=>!DATASETS[k].join);
+const CANCEL_KINDS=["cancelled","cancelled2010","cancelled2000"];
 
 // Field groups shown in the report. Candidates are tried in order; a group whose
 // keys are absent from the record is shown as "not published", never guessed.
@@ -108,16 +116,22 @@ async function queryByPlate(query,ds,plate){
  }
 }
 const normText=s=>String(s??"").replace(/\s+/g," ").trim().toLowerCase();
-async function querySpec(query,reg){
- const ds=DATASETS.spec;
- if(!reg)return {status:"skipped",reason:"אין רשומת רישוי לחיבור למפרט",records:[]};
+async function queryJoin(query,key,reg){
+ const ds=DATASETS[key];
+ if(!reg)return {status:"skipped",reason:"אין רשומת רכב לחיבור לפי קודי דגם",records:[]};
  const filters={};
  for(const k of ds.join){
-  if(empty(reg[k]))return {status:"skipped",reason:"ברשומת הרישוי חסר השדה "+k,records:[]};
+  if(empty(reg[k]))return {status:"skipped",reason:"ברשומת הרכב חסר השדה "+k,records:[]};
   filters[k]=reg[k];
  }
  const r=await query({resource_id:ds.id,filters,limit:ds.limit});
  let records=r.records,trimMatched=null;
+ // P (private) and M (commercial) share model codes; keep the vehicle's type when both are present.
+ if(!empty(reg.sug_degem)&&records.some(x=>!empty(x.sug_degem))){
+  const same=records.filter(x=>String(x.sug_degem)===String(reg.sug_degem));
+  if(same.length)records=same;
+ }
+ if(key!=="spec")return {status:records.length?"found":"empty",records,filters,url:govUrl({resource_id:ds.id,filters,limit:ds.limit})};
  if(!empty(reg.ramat_gimur)&&records.some(x=>"ramat_gimur" in x)){
   const same=records.filter(x=>normText(x.ramat_gimur)===normText(reg.ramat_gimur));
   trimMatched=same.length>0;
@@ -126,8 +140,10 @@ async function querySpec(query,reg){
  return {status:records.length?"found":"empty",records,trimMatched,filters,url:govUrl({resource_id:ds.id,filters,limit:ds.limit})};
 }
 
-// Runs every plate dataset in parallel; the spec join starts as soon as the
-// registration record arrives. A failing source never fails the whole lookup.
+const querySpec=(query,reg)=>queryJoin(query,"spec",reg);
+// Runs every plate dataset in parallel. When the registration answers, the
+// inactive/archive fallbacks run only if the plate is not active, then the
+// model-code joins run on the vehicle record. A failing source never fails the lookup.
 async function lookupPlate(plate,{query,kinds=Object.keys(DATASETS),now=()=>new Date()}){
  const datasets={};
  const one=async key=>{
@@ -139,16 +155,24 @@ async function lookupPlate(plate,{query,kinds=Object.keys(DATASETS),now=()=>new 
    datasets[key]={status:"error",records:[],error:String(e?.message||e),fetchedAt:now().toISOString()};
   }
  };
- const jobs=kinds.filter(k=>DATASETS[k]&&!DATASETS[k].join).map(k=>[k,one(k)]);
+ const want=k=>DATASETS[k]&&kinds.includes(k);
+ const jobs=kinds.filter(k=>want(k)&&!DATASETS[k].join&&!DATASETS[k].fallback).map(k=>[k,one(k)]);
  const regJob=jobs.find(([k])=>k==="registration");
- const spec=(regJob?regJob[1]:Promise.resolve()).then(async()=>{
-  if(!kinds.includes("spec"))return;
-  try{
-   const r=await querySpec(query,datasets.registration?.records?.[0]);
-   datasets.spec={...r,fetchedAt:now().toISOString()};
-  }catch(e){datasets.spec={status:"error",records:[],error:String(e?.message||e),fetchedAt:now().toISOString()}}
+ const fallbacks=(regJob?regJob[1]:Promise.resolve()).then(()=>{
+  const active=datasets.registration?.status==="found";
+  return Promise.all(kinds.filter(k=>want(k)&&DATASETS[k].fallback).map(k=>{
+   if(active){datasets[k]={status:"skipped",reason:"הרכב נמצא במאגר הפעיל",records:[],fetchedAt:now().toISOString()};return null}
+   return one(k);
+  }));
  });
- await Promise.all([...jobs.map(j=>j[1]),spec]);
+ const joins=fallbacks.then(()=>{
+  const base=datasets.registration?.records?.[0]||datasets.inactive?.records?.[0];
+  return Promise.all(kinds.filter(k=>want(k)&&DATASETS[k].join).map(async k=>{
+   try{datasets[k]={...await queryJoin(query,k,base),fetchedAt:now().toISOString()}}
+   catch(e){datasets[k]={status:"error",records:[],error:String(e?.message||e),fetchedAt:now().toISOString()}}
+  }));
+ });
+ await Promise.all([...jobs.map(j=>j[1]),fallbacks,joins]);
  return datasets;
 }
 
@@ -172,6 +196,7 @@ const ymd=d=>d.toISOString().slice(0,10);
 function computeRiskSignals(report,now=new Date()){
  const out=[];
  const v=report.vehicle||{},h=report.history||{},ds=report.datasets||{};
+ const vk=report.vehicleSourceKey||"registration";
  const owners=(h.ownership||[]).filter(o=>parseGovDate(o.date)).slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)));
  for(let i=1;i<owners.length;i++){
   const a=parseGovDate(owners[i-1].date),b=parseGovDate(owners[i].date);
@@ -190,8 +215,8 @@ function computeRiskSignals(report,now=new Date()){
   if(years>=1){
    const expected=years*CBS_KM_PER_YEAR,ratio=km/expected;
    const ev=[{label:"ק״מ בטסט האחרון",value:fmtNum(km),source:"mileage"},
-    {label:"תאריך הטסט האחרון",value:String(v.lastTestDate),source:"registration"},
-    {label:"עלייה לכביש",value:String(v.firstOnRoad||h.firstRegistration),source:v.firstOnRoad?"registration":"mileage"},
+    {label:"תאריך הטסט האחרון",value:String(v.lastTestDate),source:vk},
+    {label:"עלייה לכביש",value:String(v.firstOnRoad||h.firstRegistration),source:v.firstOnRoad?vk:"mileage"},
     {label:"חישוב",value:years.toFixed(1)+" שנים × "+fmtNum(CBS_KM_PER_YEAR)+" = "+fmtNum(Math.round(expected))+" ק״מ (ממוצע הלמ״ס)",source:"cbs"},
     {label:"יחס לממוצע",value:Math.round(ratio*100)+"%",source:"cbs"}];
    if(ratio<0.5)out.push({id:"odometer_low",level:"medium",title:"קילומטראז׳ נמוך בהרבה מהממוצע",
@@ -204,7 +229,7 @@ function computeRiskSignals(report,now=new Date()){
  const dealer=t=>/סוחר/.test(String(t||""));
  if(dealer(v.currentOwnership)||dealer(lastOwner?.type)){
   const ev=[];
-  if(dealer(v.currentOwnership))ev.push({label:"בעלות נוכחית ברישוי",value:String(v.currentOwnership),source:"registration"});
+  if(dealer(v.currentOwnership))ev.push({label:"בעלות נוכחית ברישוי",value:String(v.currentOwnership),source:vk});
   if(dealer(lastOwner?.type))ev.push({label:"רשומת הבעלות האחרונה",value:lastOwner.date+" · "+lastOwner.type,source:"ownership"});
   out.push({id:"dealer_owned",level:"medium",title:"הרכב רשום כרגע על סוחר",
    detail:"המוכר הוא כנראה סוחר ולא הבעלים הקודם. בקשו את פרטי הבעלים שלפני הסוחר ואת היסטוריית הטיפולים.",evidence:ev});
@@ -213,18 +238,18 @@ function computeRiskSignals(report,now=new Date()){
  if(expiry){
   const days=Math.floor((expiry-Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate()))/DAY);
   if(days<0)out.push({id:"test_expired",level:"high",title:"תוקף הרישיון (טסט) פג",
-   detail:"לפי המאגר, תוקף הרישוי פג לפני "+(-days)+" ימים.",evidence:[{label:"תוקף רישוי",value:String(v.registrationExpiry),source:"registration"}]});
+   detail:"לפי המאגר, תוקף הרישוי פג לפני "+(-days)+" ימים.",evidence:[{label:"תוקף רישוי",value:String(v.registrationExpiry),source:vk}]});
   else if(days<=60)out.push({id:"test_expiring",level:"medium",title:"הטסט פג בקרוב",
-   detail:"נותרו "+days+" ימים לתוקף הרישוי. כדאי לסכם מי מבצע ומשלם על הטסט.",evidence:[{label:"תוקף רישוי",value:String(v.registrationExpiry),source:"registration"}]});
+   detail:"נותרו "+days+" ימים לתוקף הרישוי. כדאי לסכם מי מבצע ומשלם על הטסט.",evidence:[{label:"תוקף רישוי",value:String(v.registrationExpiry),source:vk}]});
  }
  const recalls=ds.recalls?.records||[];
  if(recalls.length)out.push({id:"open_recalls",level:"high",title:recalls.length===1?"ריקול פתוח":recalls.length+" ריקולים פתוחים",
   detail:"הרכב מופיע במאגר הריקולים שלא בוצעו. יש לבדוק מול היבואן שהתיקון בוצע.",
   evidence:recalls.map(r=>({label:"ריקול "+(r.RECALL_ID??""),value:[r.TEUR_TAKALA||r.SUG_TAKALA,r.TAARICH_PTICHA].filter(x=>!empty(x)).join(" · ")||"פרטים במאגר",source:"recalls"}))});
- const cancelled=ds.cancelled?.records||[];
+ const cancelled=CANCEL_KINDS.flatMap(k=>(ds[k]?.records||[]).map(r=>({r,k})));
  if(cancelled.length)out.push({id:"cancelled",level:"high",title:"הרכב מופיע במאגר כלי רכב שבוטלו",
   detail:"רשומה במאגר הביטול הסופי (למשל אובדן גמור או הורדה מהכביש). אין לקנות לפני בירור מלא במשרד הרישוי.",
-  evidence:cancelled.map(r=>({label:"רשומת ביטול",value:[r.bitul_dt,r.bitul_nm].filter(x=>!empty(x)).join(" · ")||"נמצאה רשומה",source:"cancelled"}))});
+  evidence:cancelled.map(({r,k})=>({label:"רשומת ביטול",value:[r.bitul_dt,r.bitul_nm].filter(x=>!empty(x)).join(" · ")||"נמצאה רשומה",source:k}))});
  const order={high:0,medium:1,info:2};
  return out.sort((a,b)=>order[a.level]-order[b.level]);
 }
@@ -279,6 +304,11 @@ function compareListing(listing,report){
   else if(listing.hand>owners.length)res.push({field:"hand",level:"info",text:"במודעה יד "+listing.hand+", ובמאגר רק "+owners.length+" רשומות בעלות. ייתכן שהמאגר אינו מכסה את כל ההיסטוריה.",stated:listing.hand,gov:owners.length});
   else res.push({field:"hand",level:"ok",text:"יד "+listing.hand+" מתיישבת עם "+owners.length+" רשומות הבעלות במאגר ("+nonDealer+" שאינן סוחר).",stated:listing.hand,gov:nonDealer});
  }
+ const np=newPriceSummary(report);
+ if(listing.price!==null&&np){
+  const ref=np.single;
+  res.push({field:"price",level:"info",text:ref?"המחיר המבוקש ("+fmtNum(listing.price)+" ₪) הוא "+Math.round(listing.price/ref*100)+"% ממחיר המחירון לרכב חדש בשנת הייצור ("+fmtNum(ref)+" ₪). זו אינה הערכת שווי.":"במחירון הרכב החדש יש כמה מחירים לדגם ("+np.prices.map(fmtNum).join(" / ")+" ₪), ולכן לא חושב יחס.",stated:listing.price,gov:ref});
+ }
  if(listing.year!==null&&!empty(v.year)){
   if(Number(v.year)!==listing.year)res.push({field:"year",level:"high",text:"שנת הרכב במודעה ("+listing.year+") שונה משנת הייצור במאגר ("+v.year+"). ייתכן שהמודעה מציינת שנת עלייה לכביש — לברר.",stated:listing.year,gov:Number(v.year)});
   else res.push({field:"year",level:"ok",text:"שנת הרכב תואמת למאגר ("+v.year+").",stated:listing.year,gov:Number(v.year)});
@@ -286,6 +316,14 @@ function compareListing(listing,report){
  return res;
 }
 
+// Official new-car list price for the matched model codes. Distinct prices are all kept.
+function newPriceSummary(report){
+ const d=report.datasets?.newPrice;
+ if(!d||d.status!=="found")return null;
+ const prices=[...new Set(d.records.map(r=>Number(r.mehir)).filter(n=>Number.isFinite(n)&&n>0))].sort((a,b)=>a-b);
+ if(!prices.length)return null;
+ return {prices,single:prices.length===1?prices[0]:null,records:d.records};
+}
 // ---- marketplace deep links (no scraping, search pages only) ----
 const COUNTRY_SUFFIX=/\s+(סין|יפן|קוריאה|קוריאה דרום|גרמניה|צרפת|ספרד|צ'כיה|צ׳כיה|איטליה|ארה"ב|ארה״ב|אנגליה|בריטניה|הודו|טורקיה|תאילנד|מקסיקו|רומניה|סלובקיה|הונגריה|שוודיה|בלגיה|פולין|אוסטריה|ברזיל|דרא"פ|הולנד|פורטוגל|קנדה|מרוקו|סלובניה|טייוואן|אינדונזיה|מלזיה|ארגנטינה|אוסטרליה|יוון)$/;
 function cleanMake(name){
@@ -307,7 +345,7 @@ function marketLinks(v){
  return links;
 }
 
-return {ENDPOINT,CBS_KM_PER_YEAR,DATASETS,PLATE_KINDS,SPEC_FIELDS,TIRE_FIELDS,RECALL_FIELDS,CANCEL_FIELDS,FIELD_LABELS,
+return {ENDPOINT,CBS_KM_PER_YEAR,DATASETS,PLATE_KINDS,CANCEL_KINDS,newPriceSummary,queryJoin,SPEC_FIELDS,TIRE_FIELDS,RECALL_FIELDS,CANCEL_FIELDS,FIELD_LABELS,
  pickField,findPlateField,plateValue,govUrl,validateGov,queryByPlate,querySpec,lookupPlate,
  parseGovDate,computeRiskSignals,parseListing,compareListing,cleanMake,marketLinks};
 });

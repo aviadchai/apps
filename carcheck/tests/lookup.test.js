@@ -65,3 +65,29 @@ test('findPlateField and plateValue follow the schema',()=>{
  assert.equal(core.plateValue('1234567',{type:'text'}),'1234567');
  assert.equal(core.plateValue('1234567',{type:'int4'}),1234567);
 });
+test('new-price join keeps the vehicle type (P/M) and fallbacks are skipped for active plates',async()=>{
+ const db={
+  [D.registration.id]:{fields:f('mispar_rechev'),rows:[{mispar_rechev:1234567,tozeret_cd:1,degem_cd:2,shnat_yitzur:2025,sug_degem:'P'}]},
+  [D.newPrice.id]:{fields:f('tozeret_cd','degem_cd','shnat_yitzur'),rows:[
+   {tozeret_cd:1,degem_cd:2,shnat_yitzur:2025,sug_degem:'P',mehir:189900},
+   {tozeret_cd:1,degem_cd:2,shnat_yitzur:2025,sug_degem:'M',mehir:150000}]}
+ };
+ const ds=await core.lookupPlate('1234567',{query:fakeQuery(db),kinds:['registration','inactive','cancelled2010','newPrice']});
+ assert.deepEqual(ds.newPrice.records.map(r=>r.mehir),[189900]);
+ assert.equal(ds.inactive.status,'skipped');
+ assert.equal(ds.cancelled2010.status,'skipped');
+ assert.equal(core.newPriceSummary({datasets:ds}).single,189900);
+});
+test('plate missing from active registry: inactive record drives the joins',async()=>{
+ const db={
+  [D.registration.id]:{fields:f('mispar_rechev'),rows:[]},
+  [D.inactive.id]:{fields:f('mispar_rechev'),rows:[{mispar_rechev:7654321,tozeret_cd:9,degem_cd:8,shnat_yitzur:2012}]},
+  [D.cancelled2010.id]:{fields:f('mispar_rechev'),rows:[{mispar_rechev:7654321,bitul_dt:'2016-05-01'}]},
+  [D.spec.id]:{fields:f('tozeret_cd','degem_cd','shnat_yitzur'),rows:[{tozeret_cd:9,degem_cd:8,shnat_yitzur:2012,koah_sus:90}]}
+ };
+ const ds=await core.lookupPlate('7654321',{query:fakeQuery(db),kinds:['registration','inactive','cancelled2010','spec']});
+ assert.equal(ds.inactive.status,'found');
+ assert.equal(ds.spec.records[0].koah_sus,90);
+ const s=core.computeRiskSignals({datasets:ds},new Date('2026-10-21'));
+ assert.equal(s.find(x=>x.id==='cancelled').evidence[0].source,'cancelled2010');
+});
