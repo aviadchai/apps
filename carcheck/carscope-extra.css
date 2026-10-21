@@ -53,3 +53,4 @@
 @media(max-width:780px){.cs-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.cs-body{padding:14px 16px}}
 @media(max-width:390px){.cs-grid{grid-template-columns:1fr}}
 @media print{#csMarket{display:none}.cs-panel{break-inside:avoid}.cs-details[open] summary~*{display:table}}
+.cs-price th{width:auto}.cs-price td,.cs-price th{white-space:normal}

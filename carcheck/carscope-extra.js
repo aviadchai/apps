@@ -45,12 +45,16 @@ const panel=(title,body,id)=>'<div class="panel cs-panel"'+(id?' id="'+id+'"':""
 
 function alerts(){
  const ds=report.datasets||{},out=[];
- const cancelled=ds.cancelled?.records||[];
- if(cancelled.length){
-  const r=cancelled[0];
+ const ck=Core.CANCEL_KINDS.find(k=>(ds[k]?.records||[]).length);
+ if(ck){
+  const r=ds[ck].records[0];
   out.push('<div class="cs-alert danger" role="alert"><span class="cs-alert-icon">⛔</span><div><b>הרכב מופיע במאגר כלי הרכב שבוטלו / ירדו מהכביש</b>'+
    'רשומה זו יכולה להעיד על ביטול רישוי סופי, למשל לאחר אובדן גמור. אין לקנות את הרכב לפני בירור מלא במשרד הרישוי.'+
-   '<div class="cs-alert-data">'+Core.CANCEL_FIELDS.map(([l,c])=>{const f=Core.pickField(r,c);return f?esc(l)+": <b>"+esc(shown(f.key,f.value)??"לא פורסם")+"</b>":""}).filter(Boolean).join(" · ")+'</div>'+src("cancelled")+'</div></div>');
+   '<div class="cs-alert-data">'+Core.CANCEL_FIELDS.map(([l,c])=>{const f=Core.pickField(r,c);return f?esc(l)+": <b>"+esc(shown(f.key,f.value)??"לא פורסם")+"</b>":""}).filter(Boolean).join(" · ")+'</div>'+src(ck)+'</div></div>');
+ }
+ if(report.vehicleSourceKey==="inactive"||(ds.inactiveNoModel?.records||[]).length){
+  const k=report.vehicleSourceKey==="inactive"?"inactive":"inactiveNoModel";
+  out.push('<div class="cs-alert caution"><span class="cs-alert-icon">⏸</span><div><b>הרכב אינו במאגר כלי הרכב הפעילים</b>הוא נמצא במאגר כלי הרכב הלא פעילים. ייתכן שהרישיון לא חודש או שהרכב הורד מהכביש. יש לברר במשרד הרישוי לפני קנייה.'+src(k)+'</div></div>');
  }
  if((ds.personalImport?.records||[]).length)
   out.push('<div class="cs-alert caution"><span class="cs-alert-icon">✈</span><div><b>הרכב רשום כיבוא אישי</b>רכב ביבוא אישי לא עבר דרך היבואן הרשמי: כדאי לבדוק זמינות חלקים, אחריות, ריקולים ושירות מוסך מורשה.'+src("personalImport")+'</div></div>');
@@ -104,14 +108,22 @@ function tires(){
 }
 
 function registries(){
- const rows=[["cancelled","לא מופיע במאגר הרכבים שבוטלו"],["personalImport","לא מופיע במאגר היבוא האישי"],["disabledTag","לא מופיע במאגר תווי הנכה"]].map(([k,emptyText])=>{
+ const rows=[["cancelled","לא מופיע במאגר הרכבים שבוטלו"],["cancelled2010","לא מופיע בארכיון"],["cancelled2000","לא מופיע בארכיון"],["inactive","לא מופיע במאגר הלא פעילים"],["inactiveNoModel","לא מופיע במאגר הלא פעילים"],["personalImport","לא מופיע במאגר היבוא האישי"],["disabledTag","לא מופיע במאגר תווי הנכה"]].map(([k,emptyText])=>{
   const d=report.datasets?.[k];
-  const state=!d||d.status==="error"?'<span class="bad">המקור לא זמין — לא נבדק</span>':d.status==="found"?'<span class="bad">נמצאה רשומה</span>':'<span class="ok">'+emptyText+'</span>';
+  const state=!d||d.status==="error"?'<span class="bad">המקור לא זמין — לא נבדק</span>':d.status==="skipped"?'<span class="missing">'+esc(d.reason||"לא נבדק")+'</span>':d.status==="found"?'<span class="bad">נמצאה רשומה</span>':'<span class="ok">'+emptyText+'</span>';
   return '<div class="cs-reg"><b>'+esc(Core.DATASETS[k].name)+'</b>'+state+src(k)+(d?.status==="found"?allFields(d.records,k):"")+'</div>';
  }).join("");
  return panel("מאגרים מיוחדים",rows);
 }
 
+function newPrice(){
+ const st=statusLine("newPrice","לא נמצא מחיר במחירון הרכב החדש עבור קודי הדגם והשנה של הרכב.");
+ if(st)return panel("מחירון רכב חדש (משרד התחבורה)",st);
+ const recs=report.datasets.newPrice.records;
+ const rows=recs.map(r=>'<tr><td>'+esc([r.kinuy_mishari,r.degem_nm].filter(Boolean).join(" · "))+'</td><td>'+esc(r.shnat_yitzur??"")+'</td><td><b>'+(Number.isFinite(Number(r.mehir))?esc(fmt(r.mehir))+" ₪":"לא פורסם")+'</b></td><td>'+esc(r.shem_yevuan||"")+'</td></tr>').join("");
+ return panel("מחירון רכב חדש (משרד התחבורה)",'<table class="cs-raw cs-price"><tr><th>דגם</th><th>שנה</th><th>מחיר כחדש</th><th>יבואן</th></tr>'+rows+'</table>'+src("newPrice")+
+  '<p class="cs-explain">המחיר שהיבואן דיווח למשרד התחבורה לרכב חדש בשנת הייצור. זה לא שווי הרכב היום ולא מחיר עסקה. החיבור לפי '+esc(Object.entries(report.datasets.newPrice.filters||{}).map(([k,v])=>k+"="+v).join(", "))+'.</p>',"csNewPrice");
+}
 function market(){
  const links=Core.marketLinks(report.vehicle);
  const linkHtml=links.length?'<div class="cs-links">'+links.map(l=>'<a href="'+esc(l.url)+'" target="_blank" rel="noopener noreferrer">'+esc(l.label)+' ↗</a>').join("")+'</div><p class="cs-explain">החיפוש: "'+esc(links[0].query)+'". הקישורים פותחים את האתרים עצמם; CarScope אינו אוסף מהם נתונים. ביד2 ייתכן שיהיה צורך לבחור יצרן ודגם בסינון.</p>':
@@ -133,7 +145,7 @@ function checkListing(){
  const parsed='<div class="cs-grid">'+Object.keys(names).map(k=>'<div class="cs-cell"><label>'+names[k]+' (מהמודעה)</label><b class="'+(l[k]===null?"cs-na":"")+'">'+esc(val(k,l[k]))+'</b>'+(l.found[k]?'<small class="src-tag">זוהה מתוך: "'+esc(l.found[k])+'"</small>':"")+'</div>').join("")+'</div>';
  const cmp=Core.compareListing(l,report);
  const cls={high:"bad",info:"",ok:"good"};
- const srcFor={km:"mileage",hand:"ownership",year:"registration"};
+ const srcFor={km:"mileage",hand:"ownership",year:report.vehicleSourceKey||"registration",price:"newPrice"};
  out.innerHTML=parsed+(cmp.length?cmp.map(c=>'<div class="cs-note '+cls[c.level]+'">'+(c.level==="high"?"⚠ אי־התאמה: ":"")+esc(c.text)+src(srcFor[c.field])+'</div>').join(""):'<div class="cs-note">לא זוהו במודעה ק״מ, יד או שנה להשוואה.</div>')+
   (l.price!==null?'<p class="cs-explain">המחיר מוצג כפי שהוא במודעה. אין ל־CarScope מחירון מורשה להשוואה.</p>':"");
 }
@@ -142,7 +154,7 @@ document.addEventListener("carscope:report",e=>{
  report=e.detail;
  if(!report)return;
  alerts();
- $("csExtra").innerHTML=risks()+spec()+recalls()+tires()+registries()+market();
+ $("csExtra").innerHTML=risks()+spec()+newPrice()+recalls()+tires()+registries()+market();
  $("csCheckListing").addEventListener("click",checkListing);
 });
 })();

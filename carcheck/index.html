@@ -25,7 +25,7 @@
 </style>
 <link rel="stylesheet" href="./gov-theme.css?v=5">
 <link rel="stylesheet" href="./insights-v3.css?v=5">
-<link rel="stylesheet" href="./carscope-extra.css?v=6">
+<link rel="stylesheet" href="./carscope-extra.css?v=7">
 </head>
 <body>
 <header class="top"><div class="wrap topinner"><a href="/" class="brand"><div class="brandlogo">C</div>Car<span>Scope</span></a><nav class="nav"><a href="#welcome">מה בודקים</a><a href="#sources">מקורות מידע</a><span class="source-pill"><span class="dot"></span> נתונים ממשלתיים</span></nav></div></header>
@@ -60,7 +60,7 @@
 <div class="disclaimer"><strong>לגבי רכבים ישנים:</strong> מאגרי היסטוריית כלי הרכב הפרטיים מציגים בעיקר רכבים פעילים משנת 2017 ואילך. ברכב משנת 2016, היעדר רשומות היסטוריה אינו מעיד שלא היו החלפות בעלות או טסטים.</div>
 </section></main>
 <footer class="footer"><div class="wrap footer-inner"><span>CarScope · כלי עזר עצמאי לבדיקה ראשונית של רכב משומש</span><span>נתונים: <a href="https://data.gov.il/he/datasets/ministry_of_transport/private-and-commercial-vehicles/053cea08-09bc-40ec-8f7a-156f0677aff3" target="_blank" rel="noopener">מפרט</a> · <a href="https://data.gov.il/he/datasets/ministry_of_transport/shinui_mivne" target="_blank" rel="noopener">היסטוריית רכב</a> | לא אתר ממשלתי</span></div></footer>
-<script src="./carscope-core.js?v=6"></script>
+<script src="./carscope-core.js?v=7"></script>
 <script>
 (function(){
 "use strict";
@@ -150,7 +150,10 @@ function buildReport(plate,datasets){
  const owners=own.map(o=>({date:o.baalut_dt==null?null:String(o.baalut_dt),type:o.baalut||null})).sort((a,b)=>(a.date||"").localeCompare(b.date||""));
  const sources={};
  for(const k of ["registration","mileage","ownership"])sources[k]=statusOf(datasets[k]);
- return {plate,checkedAt:new Date().toISOString(),vehicle:mapVehicle(reg[0]),
+ // A plate missing from the active registry may still be in the inactive-vehicles registry.
+ const inactive=datasets.inactive?.records?.[0]||null;
+ const vehicleSourceKey=reg[0]?"registration":inactive?"inactive":"registration";
+ return {plate,checkedAt:new Date().toISOString(),vehicle:mapVehicle(reg[0]||inactive),vehicleSourceKey,
   history:{lastMileage:Number.isFinite(km)?km:null,ownership:owners,origin:mil[0]?.mkoriut_nm||null,firstRegistration:mil[0]?.rishum_rishon_dt||null},
   sources,datasets,coverage:{historyStartYear:2017,mileageSeriesAvailable:false}};
 }
@@ -189,7 +192,7 @@ function showResult(j){
  $("ownersNote").innerHTML="לא בהכרח מספר היד ברישיון"+srcTag("ownership");
  $("ownersSrc").innerHTML=srcTag("ownership");
  $("metricYear").textContent=v.year||"לא זמין";
- $("yearNote").innerHTML="לפי רישום משרד התחבורה"+srcTag("registration");
+ $("yearNote").innerHTML="לפי רישום משרד התחבורה"+srcTag(j.vehicleSourceKey||"registration");
  $("details").innerHTML=[
   ["יצרן",v.manufacturer],["דגם",v.model],["רמת גימור",v.trim],
   ["שנה",v.year],["מנוע (קוד)",v.engineCode],["סוג דלק",v.fuel],
@@ -197,7 +200,7 @@ function showResult(j){
   ["תאריך טסט אחרון",niceDate(v.lastTestDate)],
   ["תוקף רישיון",niceDate(v.registrationExpiry)],
   ["מועד עלייה לכביש",v.firstOnRoad],["צמיג קדמי",v.frontTire]
- ].map(x=>addDetail(x[0],x[1],"registration")).join("");
+ ].map(x=>addDetail(x[0],x[1],j.vehicleSourceKey||"registration")).join("");
  $("owners").innerHTML=owners.length?
   owners.map((o,i)=>'<div class="timeline-item"><strong>'+esc(niceDate(o.date))+' — '+esc(val(o.type))+'</strong><small>רשומה מס׳ '+(i+1)+" מתוך הנתונים המפורסמים</small></div>").join(""):
   "<p>לא נמצאו רשומות בעלות במאגר הציבורי עבור הרכב. אין בכך אישור שהוא יד ראשונה.</p>";
@@ -249,7 +252,7 @@ $("searchForm").addEventListener("submit",async e=>{
    try{j=await viaApi("./api/vehicle?plate="+encodeURIComponent(plate),plate,15000)}
    catch(_){j=await searchDirect(plate)}
   }
-  const offRoad=j.datasets?.cancelled?.status==="found"||j.datasets?.personalImport?.status==="found";
+  const offRoad=["cancelled","cancelled2010","cancelled2000","inactiveNoModel","personalImport"].some(k=>j.datasets?.[k]?.status==="found");
   if(!j.vehicle&&!Number.isFinite(j.history?.lastMileage)&&!j.history?.ownership?.length&&!offRoad){
    $("report").classList.remove("visible");
    $("welcome").classList.remove("hidden");
@@ -285,5 +288,5 @@ if(/^\d{7,8}$/.test(plateFromLink||"")){
 </script>
 <script defer src="./api-config.js?v=5"></script>
 <script defer src="./insights-v3.js?v=5"></script>
-<script defer src="./carscope-extra.js?v=6"></script>
+<script defer src="./carscope-extra.js?v=7"></script>
 </body></html>
