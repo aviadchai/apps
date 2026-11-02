@@ -371,6 +371,20 @@ header { min-height:66px; padding-inline:20px; }
 .carty-wordmark { color:#2563eb!important; }
 .carty-smile path { stroke:#22a6f2; }
 .carty-wink path { stroke:#a78bfa; }
+
+/* Separate grocery and general purchase views */
+#list-tabs{display:flex;gap:8px;padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0;}
+.list-tab{flex:1;min-height:44px;border:1px solid var(--border2);border-radius:14px;background:var(--surface);color:var(--muted);display:flex;align-items:center;justify-content:center;gap:7px;font:650 14px system-ui;cursor:pointer;}
+.list-tab[aria-selected=true]{color:var(--accent);background:var(--accent-dim);border-color:var(--accent);}
+#quick-add-form{display:flex;flex-wrap:wrap;gap:8px;padding:11px 13px;background:var(--surface);border-bottom:1px solid var(--border);align-items:center;flex-shrink:0;}
+#quick-add-name{flex:1;min-width:100px;max-width:100%;height:40px;border:1px solid var(--border2);border-radius:10px;background:var(--bg);color:var(--text);font:14px system-ui;padding:0 10px;outline:none;}
+#quick-add-name:focus{border-color:var(--accent);}
+#quick-add-category{width:118px;max-width:35%;height:40px;border-radius:10px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font:12px system-ui;padding:0 5px;}
+#quick-add-button{height:40px;padding:0 13px;border:none;border-radius:10px;background:var(--accent);color:#fff;font:700 14px system-ui;cursor:pointer;}
+#quick-add-name:disabled,#quick-add-button:disabled,#send-btn:disabled{opacity:.55;}
+.carty-wordmark{color:#72aaff!important;}
+[data-theme=light] .carty-wordmark{color:#1553c4!important;}
+@media(max-width:420px){#list-tabs{padding-inline:9px}.list-tab{font-size:13px}#quick-add-form{padding:9px;gap:6px}#quick-add-category{width:105px}}
 </style>
 </head>
 <body>
@@ -380,13 +394,17 @@ header { min-height:66px; padding-inline:20px; }
   <header>
 
     <div class="header-text">
-      <h1 class="carty-wordmark">Carty<svg class="carty-smile" viewBox="0 0 100 22" aria-hidden="true"><path d="M6 5 Q49 33 94 5" fill="none" stroke="#9660f6" stroke-width="6.5" stroke-linecap="round"/></svg><svg class="carty-wink" viewBox="0 0 31 30" aria-hidden="true"><path d="M6 15 L5 7 M16 12 L20 3 M23 20 L30 16" fill="none" stroke="#b391fa" stroke-width="6" stroke-linecap="round"/></svg></h1>
+      <h1 class="carty-wordmark">Carty<svg class="carty-smile" viewBox="0 0 100 22" aria-hidden="true"><path d="M6 5 Q49 33 94 5" fill="none" stroke="#248bea" stroke-width="6.5" stroke-linecap="round"/></svg><svg class="carty-wink" viewBox="0 0 31 30" aria-hidden="true"><path d="M6 15 L5 7 M16 12 L20 3 M23 20 L30 16" fill="none" stroke="#b391fa" stroke-width="6" stroke-linecap="round"/></svg></h1>
     </div>
     <span id="sync-status">⟳ מתחבר</span>
     <button id="theme-btn" onclick="toggleTheme()" title="מצב תצוגה"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg></button>
   </header>
 
 
+  <nav id="list-tabs" role="tablist" aria-label="סוג רשימת קניות">
+    <button id="tab-food" class="list-tab" type="button" role="tab" aria-selected="true" onclick="switchList('food')">🥑 מזון וסופר</button>
+    <button id="tab-general" class="list-tab" type="button" role="tab" aria-selected="false" onclick="switchList('general')">⌂ קניות אחרות</button>
+  </nav>
   <!-- Main screen -->
   <div id="main-screen">
     <div class="body">
@@ -417,14 +435,19 @@ header { min-height:66px; padding-inline:20px; }
       <!-- List -->
       <div id="list-panel">
         <div class="panel-head">
-          <span>רשימה</span>
+          <span id="list-title">רשימת מזון</span>
           <span class="badge" id="item-count">0</span>
           <div class="list-progress-bar"><div id="list-progress-fill"></div></div>
           <span id="list-progress-pct" style="font-size:10px;color:var(--muted);flex-shrink:0"></span>
           <button class="clear-done-btn" onclick="finishShopping()" title="מחק נקנו והעבר חסרים לקנייה הבאה">סיים קנייה</button>
           <button class="clear-done-btn" style="color:var(--danger);border-color:var(--danger)" onclick="clearAll()">מחק הכל</button>
         </div>
-        <div id="items-scroll">
+        <form id="quick-add-form" onsubmit="quickAddItem(event)">
+           <input id="quick-add-name" type="text" maxlength="120" autocomplete="off" placeholder="מוצר להוספה..." aria-label="מוצר להוספה" disabled required>
+           <select id="quick-add-category" aria-label="קטגוריית מוצר"></select>
+           <button id="quick-add-button" type="submit" disabled>+ הוסף</button>
+         </form>
+         <div id="items-scroll">
           <div class="empty-list"><svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--border2)"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg><span>הרשימה ריקה</span></div>
         </div>
       </div>
@@ -478,8 +501,26 @@ const cfg = {
   fbAppId:   _stored.fbAppId   || '1:508380767537:web:20410bed78a0ed36587c10'
 };
 
-let db = null, unsubscribe = null;
-let items = [];
+let db = null, unsubscribe = null, activeDoc = null, loadGeneration = 0, listReady = false;
+const listDocs = {food:'main', general:'general'}; // Preserve existing groceries at lists/main.
+const GENERAL_CATS = ['חשמל ואלקטרוניקה','בית וריהוט','ביגוד והנעלה','כלי עבודה','פארם וטיפוח','מתנות','סידורים','אחר'];
+const FOOD_CATS = ['ירקות ופירות','מאפייה','חלב וביצים','בשר ודגים','מוצרי ניקיון','שימורים ויבשים','משקאות','קפואים','ממתקים וחטיפים','אחר'];
+const listsByType = {food:[], general:[]};
+let activeList = window.location.hash === '#general' ? 'general' : 'food';
+let items = listsByType[activeList];
+function listCats(){return activeList === 'general' ? GENERAL_CATS : FOOD_CATS;}
+function guessGeneralCategory(name) {
+ const rules=[
+  [/מחשב|מסך|טלויז|טלוויז|טלפון|מטען|כבל|אוזני|מיקרוגל|תנור|מקרר|מכונת כביסה|USB|HDMI|חשמל|מצלמה|סוללה/i,'חשמל ואלקטרוניקה'],
+  [/שולחן|כיסא|כסא|ארון|מנורה|ספה|מיטה|וילון|שטיח|כרית|מדף|מראה/,'בית וריהוט'],
+  [/נעל|חולצה|מכנס|גרב|מעיל|שמלה|כובע|בגד/,'ביגוד והנעלה'],
+  [/מברג|מקדחה|פטיש|בורג|מסמר|כלי עבודה|מפתח שוודי/,'כלי עבודה'],
+  [/שמפו|בושם|קרם|סבון|ויטמין|משחת שיניים|פארם/,'פארם וטיפוח'],
+  [/מתנה|ברכה|זר פרחים/,'מתנות'],
+  [/לאסוף|להביא|סידור|דואר|לשלוח|לקחת/,'סידורים']
+ ];
+ return rules.find(([re])=>re.test(name))?.[1] || 'אחר';
+}
 let _finishingShopping = false;
 function findItemRow(id) {
   return [...document.querySelectorAll('#items-scroll .item[data-id]')]
@@ -497,7 +538,7 @@ function markItemAnimation(id, type) {
 }
 let chatHistory = [];
 let recog = null, isRec = false;
-let collapsedCats = new Set(JSON.parse(localStorage.getItem('collapsed_cats') || '[]'));
+let collapsedCats = new Set(JSON.parse(localStorage.getItem(activeList==='food'?'collapsed_cats':'collapsed_cats_general') || '[]'));
 const categoryFolds = new Map(); // running delayed/category closing/opening animations
 let _suppressListFLIP = false;
 function renderWithoutListFLIP() {
@@ -505,70 +546,108 @@ function renderWithoutListFLIP() {
   try { render(); } finally { _suppressListFLIP = false; }
 }
 function saveCollapsedCats() {
-  localStorage.setItem('collapsed_cats', JSON.stringify([...collapsedCats]));
+  localStorage.setItem(activeList==='food'?'collapsed_cats':'collapsed_cats_general', JSON.stringify([...collapsedCats]));
 }
 function findCategoryGroup(cat) {
   return [...document.querySelectorAll('#items-scroll .cat-group')]
     .find(el => el.dataset.cat === cat);
 }
-let catOrderOverride = JSON.parse(localStorage.getItem('cat_order') || 'null');
+let catOrderOverride = JSON.parse(localStorage.getItem(activeList==='food'?'cat_order':'cat_order_general') || 'null');
 
-// ── Firebase init ─────────────────────────────────────────
+// ── Firebase init: independent lists, existing food doc untouched ──
 function initFirebase() {
-  if (!window._fbReady) { window.addEventListener('fb-ready', initFirebase, { once: true }); return; }
-  const { initializeApp, getFirestore, doc, onSnapshot, setDoc, getDoc } = window._fbModules;
-
-  const fbApp = initializeApp({
-    apiKey: cfg.fbApiKey,
-    authDomain: `${cfg.fbProject}.firebaseapp.com`,
-    projectId: cfg.fbProject,
-    appId: cfg.fbAppId
-  }, 'shopping-app');
-
-  db = getFirestore(fbApp);
-  const docRef = doc(db, 'lists', 'main');
-
-  setSyncStatus('syncing', '⟳ מתחבר');
-
-  // Load once first
-  getDoc(docRef).then(snap => {
-    if (snap.exists() && !_finishingShopping) {
-      const incoming = snap.data().items || [];
-      if (JSON.stringify(incoming) !== JSON.stringify(items)) {
-        items = incoming;
-        render();
-      }
-    }
-    setSyncStatus('synced', '✓ מסונכרן');
-  }).catch(() => setSyncStatus('', '✗ שגיאה'));
-
-  // Live listener
-  if (unsubscribe) unsubscribe();
-  unsubscribe = onSnapshot(docRef, snap => {
-    if (snap.exists() && !_finishingShopping) {
-      const incoming = snap.data().items || [];
-      // Firestore echoes local writes: skip redundant re-renders during motion.
-      if (JSON.stringify(incoming) !== JSON.stringify(items)) {
-        items = incoming;
-        render();
-      }
-    }
-    setSyncStatus('synced', '✓ מסונכרן');
-  }, () => setSyncStatus('', '✗ שגיאה'));
-
-  window._fbDoc = docRef;
-  window._fbSetDoc = setDoc;
+ if(!window._fbReady){window.addEventListener('fb-ready',initFirebase,{once:true});return;}
+ const {initializeApp,getFirestore,setDoc}=window._fbModules;
+ const fbApp=initializeApp({
+  apiKey:cfg.fbApiKey,authDomain:`${cfg.fbProject}.firebaseapp.com`,
+  projectId:cfg.fbProject,appId:cfg.fbAppId
+ },'shopping-app');
+ db=getFirestore(fbApp);window._fbSetDoc=setDoc;
+ connectActiveList();
 }
-
+function setListReady(ready) {
+ listReady=ready;
+ for(const id of ['quick-add-name','quick-add-button','send-btn']){
+  document.getElementById(id).disabled=!ready;
+ }
+ document.getElementById('items-scroll').style.pointerEvents=ready?'':'none';
+}
+function connectActiveList() {
+ if(!db)return;
+ if(unsubscribe){unsubscribe();unsubscribe=null;}
+ const type=activeList, token=++loadGeneration;
+ const {doc,onSnapshot}=window._fbModules;
+ activeDoc=doc(db,'lists',listDocs[type]);
+ setListReady(false);
+ setSyncStatus('syncing','⟳ טוען');
+ unsubscribe=onSnapshot(activeDoc,snap=>{
+  if(token!==loadGeneration||type!==activeList)return;
+  if(!_finishingShopping){
+   const incoming=snap.exists()?(snap.data().items||[]):[];
+   if(JSON.stringify(incoming)!==JSON.stringify(items)){
+    items=incoming;listsByType[type]=items;render();
+   }
+  }
+  setListReady(true);
+  setSyncStatus('synced','✓ מסונכרן');
+ },()=>{
+  if(token!==loadGeneration||type!==activeList)return;
+  setListReady(false);setSyncStatus('','✗ שגיאת סנכרון');
+ });
+}
 async function persistItems() {
-  if (!db || !window._fbDoc) return;
-  setSyncStatus('syncing', '⟳ שומר');
-  try {
-    await window._fbSetDoc(window._fbDoc, { items }, { merge: true });
-    setSyncStatus('synced', '✓ מסונכרן');
-  } catch(e) { setSyncStatus('', '✗ שגיאה'); }
+ if(!db||!activeDoc||!listReady){showToast('הרשימה עדיין נטענת');return;}
+ const type=activeList, docRef=activeDoc;
+ const outgoing=items.map(item=>({...item}));
+ listsByType[type]=items;
+ setSyncStatus('syncing','⟳ שומר');
+ try{
+  await window._fbSetDoc(docRef,{items:outgoing},{merge:true});
+  if(type===activeList)setSyncStatus('synced','✓ מסונכרן');
+ }catch(e){if(type===activeList)setSyncStatus('','✗ שגיאת שמירה');}
 }
-
+function updateListUI(){
+ const general=activeList==='general';
+ for(const type of ['food','general']){
+  document.getElementById('tab-'+type).setAttribute('aria-selected',String(type===activeList));
+ }
+ document.getElementById('list-title').textContent=general?'רשימה כללית':'רשימת מזון';
+ document.getElementById('txt').placeholder=general?'מה צריך לקנות או להביא?':'תגיד מה לקנות...';
+ document.getElementById('quick-add-name').placeholder=general?'מה צריך לקנות או להביא?':'מוצר להוספה...';
+ document.getElementById('quick-add-category').innerHTML=listCats().map(c=>`<option value="${c}">${c}</option>`).join('');
+ document.getElementById('quick-add-category').value='אחר';
+ document.getElementById('quick-add-name').value='';
+ document.getElementById('txt').value='';
+ document.getElementById('cat-picker').classList.remove('open');
+ closePopup();
+}
+function switchList(next,navigate=true){
+ if(!(next in listDocs)||next===activeList)return;
+ if(_finishingShopping){showToast('יש להמתין לסיום הקנייה');return;}
+ hideConfirm();closeToast();
+ listsByType[activeList]=items;
+ activeList=next;items=listsByType[next];
+ collapsedCats=new Set(JSON.parse(localStorage.getItem(next==='food'?'collapsed_cats':'collapsed_cats_general')||'[]'));
+ catOrderOverride=JSON.parse(localStorage.getItem(next==='food'?'cat_order':'cat_order_general')||'null');
+ categoryFolds.forEach(f=>{clearTimeout(f.timer);f.animation?.cancel();});
+ categoryFolds.clear();chatHistory=[];
+ updateListUI();render();connectActiveList();
+ if(navigate&&window.location.hash!=='#'+next)window.location.hash=next;
+}
+window.addEventListener('hashchange',()=>{
+ switchList(window.location.hash==='#general'?'general':'food',false);
+});
+async function quickAddItem(e){
+ e.preventDefault();
+ if(!listReady||_finishingShopping)return;
+ const input=document.getElementById('quick-add-name');
+ const name=input.value.trim();if(!name)return;
+ const chosen=document.getElementById('quick-add-category').value;
+ const category=chosen!=='אחר'?chosen:(activeList==='general'?guessGeneralCategory(name):'אחר');
+ const result=await addItemsSeq([{name,qty:null,category,note:null}]);
+ if(result.newIds.length){input.value='';showAddedFeedback([name]);}
+ else showToast('המוצר כבר ברשימה');
+}
 function setSyncStatus(cls, text) {
   const el = document.getElementById('sync-status');
   el.className = cls;
@@ -578,6 +657,7 @@ function setSyncStatus(cls, text) {
 // ── Init ──────────────────────────────────────────────────
 function initApp() {
   document.getElementById('main-screen').classList.add('active');
+  updateListUI();
   initFirebase();
 }
 
@@ -589,6 +669,13 @@ function mkIcon(paths, color) {
   return `<span class="ci" style="background:${color}20;color:${color}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${paths}</svg></span>`;
 }
 const CAT_ICONS = {
+  'חשמל ואלקטרוניקה': mkIcon('<rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>','#6366f1'),
+  'בית וריהוט': mkIcon('<path d="M3 11L12 3l9 8v10H3V11Z"/><path d="M9 21v-8h6v8"/>','#14b8a6'),
+  'ביגוד והנעלה': mkIcon('<path d="M7 3l5 2 5-2 4 6-4 3v9L3 9Z"/>','#ec4899'),
+  'כלי עבודה': mkIcon('<path d="M6 3l3 3-3 3-3-3M8 8l13 13M15 4h6v6"/>','#f59e0b'),
+  'פארם וטיפוח': mkIcon('<rect x="5" y="4" width="14" height="17" rx="3"/><path d="M9 2h6M12 9v7M9 12h6"/>','#06b6d4'),
+  'מתנות': mkIcon('<rect x="3" y="9" width="18" height="13"/><path d="M3 13h18M12 9v13M12 9C3 9 6 2 10 5l2 4M12 9c9 0 6-7 2-4l-2 4"/>','#a78bfa'),
+  'סידורים': mkIcon('<path d="M5 4h14v17H5zM9 4V2h6v2M8 11l2 2 5-5M8 17h8"/>','#84cc16'),
   'ירקות ופירות': mkIcon('<path d="M12 22V12"/><path d="M12 12C9 10 5 7 5 3C9 3 12 7 12 12"/><path d="M12 12C15 10 19 7 19 3C15 3 12 7 12 12"/>', '#22c55e'),
   'מאפייה':       mkIcon('<path d="M5 12C5 8 8 5 12 5C16 5 19 8 19 12"/><rect x="4" y="12" width="16" height="7" rx="2"/>', '#f59e0b'),
   'חלב וביצים':   mkIcon('<path d="M8 2H16L18 22H6Z"/><line x1="7" y1="9" x2="17" y2="9"/>', '#38bdf8'),
@@ -1011,7 +1098,7 @@ function startCatDrag(e) {
     ghost.remove();
     group.classList.remove('dragging');
     catOrderOverride = [...container.querySelectorAll('.cat-group')].map(g => g.dataset.cat);
-    localStorage.setItem('cat_order', JSON.stringify(catOrderOverride));
+    localStorage.setItem(activeList==='food'?'cat_order':'cat_order_general', JSON.stringify(catOrderOverride));
   };
 
   document.addEventListener('pointermove', onMove);
@@ -1029,7 +1116,7 @@ function openCatPicker(id, btn, e) {
   if (!it) return;
   _catTarget = id;
   const picker = document.getElementById('cat-picker');
-  picker.innerHTML = CATS.map(c =>
+  picker.innerHTML = listCats().map(c =>
     `<button class="cat-pick-item${c===it.category?' current':''}" onclick="pickCat('${c}')">${CAT_ICONS[c]||CAT_ICONS['אחר']} ${c}</button>`
   ).join('');
   const r = btn.getBoundingClientRect();
@@ -1152,7 +1239,7 @@ async function animatePurchasedRow(row) {
   }
 }
 async function finishShoppingList() {
-  if (_finishingShopping || !items.length) return 0;
+  if (_finishingShopping || !items.length || !listReady) return 0;
   _finishingShopping = true;
   document.getElementById('list-panel').classList.add('shopping-finishing');
   const purchased = items.filter(it => it.done);
@@ -1296,11 +1383,18 @@ function localShoppingCommand(input) {
       if(q){name=q[1].trim();qty=q[2];}
     }
     name=name.replace(/^(?:את|ה)\s+(?=[א-ת])/,'').trim();
-    const cat=categories.find(([_,rx])=>rx.test(name));
-    return {name,qty,category:cat?cat[0]:'אחר',note:null};
+    const cat=activeList==='general'?null:categories.find(([_,rx])=>rx.test(name));
+    const category=activeList==='general'?guessGeneralCategory(name):(cat?cat[0]:'אחר');
+    return {name,qty,category,note:null};
   }).filter(it=>it.name&&it.name.length<=100);
   return parsed.length?{action:'add',items:parsed}:null;
 }
+
+const SYSTEM_GENERAL = `ניהול רשימת קניות כללית של דברים לבית, מוצרי חשמל, בגדים, אביזרים, מתנות וסידורים. החזר JSON בלבד.
+פעולות: add | remove | update | toggle_done | finish_shopping | clear_done | clear_all | chat
+קטגוריות: חשמל ואלקטרוניקה, בית וריהוט, ביגוד והנעלה, כלי עבודה, פארם וטיפוח, מתנות, סידורים, אחר.
+פורמט: {"action":"...","items":[{"name":"...","qty":"...","category":"...","note":"..."}],"target":"...","new_name":"...","category":"...","reply":"..."}
+כללים: אל תעביר פריטים למסך המזון. שמור שמות מותגים, דגם, צבע, גודל והערות קנייה. החזר פעולות מדויקות בלבד, עם reply קצר בעברית.`;
 
 async function callClaude(userMsg) {
   const local=localShoppingCommand(userMsg);
@@ -1317,7 +1411,7 @@ async function callClaude(userMsg) {
     body: JSON.stringify({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 2000,
-      system: SYSTEM + listCtx,
+      system: (activeList==='general'?SYSTEM_GENERAL:SYSTEM) + listCtx,
       messages: chatHistory.slice(-4)
     })
   });
@@ -1348,7 +1442,9 @@ fun_fact: עובדה מפתיעה או טיפ שימושי על המוצר. פת
 tip: המלצה על מוצר ישראלי ספציפי מהסופר שעדיף בריאותית (מותג ספציפי אם אפשר), או חלופה בריאה יותר. null אם לא רלוונטי.`;
 
 async function enrichItem(item) {
-  if (!cfg?.antKey || item.health !== undefined) return;
+  // Optional product enrichment is disabled to avoid surprise API charges.
+  if (activeList==='general' || item.health !== undefined) return;
+  return;
   try {
     const resp = await fetch('https://carty-api.aviadchai.workers.dev', {
       method: 'POST',
@@ -1371,7 +1467,7 @@ async function showDyk(id, btn) {
   const it = items.find(i => i.id === id);
   if (!it) return;
   if (it.fun_fact || it.health_note) { showInfoPopup(id, btn); return; }
-  if (!cfg?.antKey) { showInfoPopup(id, btn); return; }
+  if (activeList==='general') { showInfoPopup(id, btn); return; }
   btn.classList.add('loading');
   await enrichItem(it);
   btn.classList.remove('loading');
@@ -1386,6 +1482,7 @@ async function enrichNewItems(newIds) {
 }
 
 async function addItemsSeq(cmdItems, onProgress) {
+  const operationList=activeList;
   const toAdd = [], skipped = [];
   for (const { name, qty, category, note } of cmdItems) {
     const n = nn(name); if (!n) continue;
@@ -1395,13 +1492,14 @@ async function addItemsSeq(cmdItems, onProgress) {
   }
   const big = toAdd.length > 4;
   for (let i = 0; i < toAdd.length; i++) {
+    if(operationList!==activeList) break;
     items.push(toAdd[i]);
     render();
     onProgress?.(i + 1, toAdd.length);
     if (big && i < toAdd.length - 1) await new Promise(r => setTimeout(r, 35));
   }
-  if (toAdd.length || skipped.length) { render(); await persistItems(); }
-  return { skipped, newIds: toAdd.map(i => i.id) };
+  if(operationList===activeList && (toAdd.length || skipped.length)){render();await persistItems();}
+  return {skipped,newIds:operationList===activeList?toAdd.map(i=>i.id):[]};
 }
 
 function applyCmd(cmd) {
@@ -1470,7 +1568,7 @@ function addUser(text) {
 async function sendMsg() {
   const inp = document.getElementById('txt');
   const text = inp.value.trim();
-  if (!text) return;
+  if (!text || !listReady) return;
   addUser(text);
   inp.value = ''; autoResize(inp);
 
@@ -1486,7 +1584,9 @@ async function sendMsg() {
   const typing = document.getElementById('typing');
   typing.classList.add('show');
   try {
+    const sendingList=activeList;
     const cmd = await callClaude(text);
+    if(sendingList!==activeList) return; // Never apply a late AI response to another list.
     let skipped = [];
     let addedNames = [];
 
@@ -1512,7 +1612,7 @@ async function sendMsg() {
     }
   } catch(e) {
     addBot('<span class="r">שגיאה: ' + esc(e.message || 'הפעולה נכשלה') + '</span>');
-    if (!inp.value.trim()) { inp.value=text; autoResize(inp); }
+    if (!inp.value.trim() && listReady) { inp.value=text; autoResize(inp); }
   } finally {
     typing.classList.remove('show');
   }
