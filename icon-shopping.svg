@@ -1,15 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="108" fill="#1e3a5f"/>
-  <g fill="none" stroke="#fff" stroke-width="24" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M140 160h32l40 192h160"/>
-    <path d="M212 352l-16-80h200l-24 80"/>
-    <circle cx="220" cy="400" r="28" fill="#fff"/>
-    <circle cx="360" cy="400" r="28" fill="#fff"/>
-    <path d="M196 272h176" stroke-width="16" opacity="0.5"/>
-  </g>
-  <g fill="#4ade80">
-    <circle cx="380" cy="140" r="52"/>
-    <rect x="372" y="108" width="16" height="64" rx="8" fill="#fff"/>
-    <rect x="348" y="132" width="64" height="16" rx="8" fill="#fff"/>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Carty">
+  <rect width="512" height="512" rx="104" fill="#0f172a"/>
+  <text x="256" y="274" text-anchor="middle" dominant-baseline="middle" font-family="Inter,Arial,Helvetica,sans-serif" font-weight="800" font-size="156" letter-spacing="-7" fill="#f8fafc">Carty</text>
 </svg>
