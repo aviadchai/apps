@@ -371,6 +371,20 @@ header { min-height:66px; padding-inline:20px; }
 .carty-wordmark { color:#2563eb!important; }
 .carty-smile path { stroke:#22a6f2; }
 .carty-wink path { stroke:#a78bfa; }
+
+/* Separate grocery and general purchase views */
+#list-tabs{display:flex;gap:8px;padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0;}
+.list-tab{flex:1;min-height:44px;border:1px solid var(--border2);border-radius:14px;background:var(--surface);color:var(--muted);display:flex;align-items:center;justify-content:center;gap:7px;font:650 14px system-ui;cursor:pointer;}
+.list-tab[aria-selected=true]{color:var(--accent);background:var(--accent-dim);border-color:var(--accent);}
+#quick-add-form{display:flex;flex-wrap:wrap;gap:8px;padding:11px 13px;background:var(--surface);border-bottom:1px solid var(--border);align-items:center;flex-shrink:0;}
+#quick-add-name{flex:1;min-width:100px;max-width:100%;height:40px;border:1px solid var(--border2);border-radius:10px;background:var(--bg);color:var(--text);font:14px system-ui;padding:0 10px;outline:none;}
+#quick-add-name:focus{border-color:var(--accent);}
+#quick-add-category{width:118px;max-width:35%;height:40px;border-radius:10px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font:12px system-ui;padding:0 5px;}
+#quick-add-button{height:40px;padding:0 13px;border:none;border-radius:10px;background:var(--accent);color:#fff;font:700 14px system-ui;cursor:pointer;}
+#quick-add-name:disabled,#quick-add-button:disabled,#send-btn:disabled{opacity:.55;}
+.carty-wordmark{color:#72aaff!important;}
+[data-theme=light] .carty-wordmark{color:#1553c4!important;}
+@media(max-width:420px){#list-tabs{padding-inline:9px}.list-tab{font-size:13px}#quick-add-form{padding:9px;gap:6px}#quick-add-category{width:105px}}
 </style>
 </head>
 <body>
@@ -380,13 +394,17 @@ header { min-height:66px; padding-inline:20px; }
   <header>
 
     <div class="header-text">
-      <h1 class="carty-wordmark">Carty<svg class="carty-smile" viewBox="0 0 100 22" aria-hidden="true"><path d="M6 5 Q49 33 94 5" fill="none" stroke="#9660f6" stroke-width="6.5" stroke-linecap="round"/></svg><svg class="carty-wink" viewBox="0 0 31 30" aria-hidden="true"><path d="M6 15 L5 7 M16 12 L20 3 M23 20 L30 16" fill="none" stroke="#b391fa" stroke-width="6" stroke-linecap="round"/></svg></h1>
+      <h1 class="carty-wordmark">Carty<svg class="carty-smile" viewBox="0 0 100 22" aria-hidden="true"><path d="M6 5 Q49 33 94 5" fill="none" stroke="#248bea" stroke-width="6.5" stroke-linecap="round"/></svg><svg class="carty-wink" viewBox="0 0 31 30" aria-hidden="true"><path d="M6 15 L5 7 M16 12 L20 3 M23 20 L30 16" fill="none" stroke="#b391fa" stroke-width="6" stroke-linecap="round"/></svg></h1>
     </div>
     <span id="sync-status">⟳ מתחבר</span>
     <button id="theme-btn" onclick="toggleTheme()" title="מצב תצוגה"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg></button>
   </header>
 
 
+  <nav id="list-tabs" role="tablist" aria-label="סוג רשימת קניות">
+    <button id="tab-food" class="list-tab" type="button" role="tab" aria-selected="true" onclick="switchList('food')">🥑 מזון וסופר</button>
+    <button id="tab-general" class="list-tab" type="button" role="tab" aria-selected="false" onclick="switchList('general')">⌂ קניות אחרות</button>
+  </nav>
   <!-- Main screen -->
   <div id="main-screen">
     <div class="body">
@@ -417,14 +435,19 @@ header { min-height:66px; padding-inline:20px; }
       <!-- List -->
       <div id="list-panel">
         <div class="panel-head">
-          <span>רשימה</span>
+          <span id="list-title">רשימת מזון</span>
           <span class="badge" id="item-count">0</span>
           <div class="list-progress-bar"><div id="list-progress-fill"></div></div>
           <span id="list-progress-pct" style="font-size:10px;color:var(--muted);flex-shrink:0"></span>
           <button class="clear-done-btn" onclick="finishShopping()" title="מחק נקנו והעבר חסרים לקנייה הבאה">סיים קנייה</button>
           <button class="clear-done-btn" style="color:var(--danger);border-color:var(--danger)" onclick="clearAll()">מחק הכל</button>
         </div>
-        <div id="items-scroll">
+        <form id="quick-add-form" onsubmit="quickAddItem(event)">
+           <input id="quick-add-name" type="text" maxlength="120" autocomplete="off" placeholder="מוצר להוספה..." aria-label="מוצר להוספה" disabled required>
+           <select id="quick-add-category" aria-label="קטגוריית מוצר"></select>
+           <button id="quick-add-button" type="submit" disabled>+ הוסף</button>
+         </form>
+         <div id="items-scroll">
           <div class="empty-list"><svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--border2)"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg><span>הרשימה ריקה</span></div>
         </div>
       </div>
@@ -589,6 +612,13 @@ function mkIcon(paths, color) {
   return `<span class="ci" style="background:${color}20;color:${color}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${paths}</svg></span>`;
 }
 const CAT_ICONS = {
+  'חשמל ואלקטרוניקה': mkIcon('<rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>','#6366f1'),
+  'בית וריהוט': mkIcon('<path d="M3 11L12 3l9 8v10H3V11Z"/><path d="M9 21v-8h6v8"/>','#14b8a6'),
+  'ביגוד והנעלה': mkIcon('<path d="M7 3l5 2 5-2 4 6-4 3v9L3 9Z"/>','#ec4899'),
+  'כלי עבודה': mkIcon('<path d="M6 3l3 3-3 3-3-3M8 8l13 13M15 4h6v6"/>','#f59e0b'),
+  'פארם וטיפוח': mkIcon('<rect x="5" y="4" width="14" height="17" rx="3"/><path d="M9 2h6M12 9v7M9 12h6"/>','#06b6d4'),
+  'מתנות': mkIcon('<rect x="3" y="9" width="18" height="13"/><path d="M3 13h18M12 9v13M12 9C3 9 6 2 10 5l2 4M12 9c9 0 6-7 2-4l-2 4"/>','#a78bfa'),
+  'סידורים': mkIcon('<path d="M5 4h14v17H5zM9 4V2h6v2M8 11l2 2 5-5M8 17h8"/>','#84cc16'),
   'ירקות ופירות': mkIcon('<path d="M12 22V12"/><path d="M12 12C9 10 5 7 5 3C9 3 12 7 12 12"/><path d="M12 12C15 10 19 7 19 3C15 3 12 7 12 12"/>', '#22c55e'),
   'מאפייה':       mkIcon('<path d="M5 12C5 8 8 5 12 5C16 5 19 8 19 12"/><rect x="4" y="12" width="16" height="7" rx="2"/>', '#f59e0b'),
   'חלב וביצים':   mkIcon('<path d="M8 2H16L18 22H6Z"/><line x1="7" y1="9" x2="17" y2="9"/>', '#38bdf8'),
