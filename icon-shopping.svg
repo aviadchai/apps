@@ -1,4 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Carty">
-  <rect width="512" height="512" rx="104" fill="#0f172a"/>
-  <text x="256" y="274" text-anchor="middle" dominant-baseline="middle" font-family="Inter,Arial,Helvetica,sans-serif" font-weight="800" font-size="156" letter-spacing="-7" fill="#f8fafc">Carty</text>
+<rect width="512" height="512" rx="106" fill="#f8f7ff"/>
+<text x="256" y="284" text-anchor="middle" font-family="Arial Rounded MT Bold,Arial,Helvetica,sans-serif" font-size="153" letter-spacing="-8" font-weight="900" fill="#071832">Carty</text>
+<path d="M146 331 Q241 396 339 331" fill="none" stroke="#945af4" stroke-width="14" stroke-linecap="round"/>
+<path d="M406 163 L401 144 M430 159 L444 139 M445 183 L462 175" fill="none" stroke="#b391fa" stroke-width="15" stroke-linecap="round"/>
 </svg>
