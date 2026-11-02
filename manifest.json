@@ -1,6 +1,6 @@
 {
-  "name": "רשימת קניות חכמה",
-  "short_name": "קניות",
+  "name": "Carty — רשימת קניות חכמה",
+  "short_name": "Carty",
   "description": "רשימת קניות עם AI",
   "start_url": "./shopping-list.html",
   "scope": ".",
@@ -11,7 +11,17 @@
   "lang": "he",
   "dir": "rtl",
   "icons": [
-    { "src": "icon-shopping.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
-    { "src": "icon-shopping-180.png", "sizes": "180x180", "type": "image/png", "purpose": "any maskable" }
+    {
+      "src": "icon-shopping.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-shopping-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
   ]
 }
