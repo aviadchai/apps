@@ -501,8 +501,26 @@ const cfg = {
   fbAppId:   _stored.fbAppId   || '1:508380767537:web:20410bed78a0ed36587c10'
 };
 
-let db = null, unsubscribe = null;
-let items = [];
+let db = null, unsubscribe = null, activeDoc = null, loadGeneration = 0, listReady = false;
+const listDocs = {food:'main', general:'general'}; // Preserve existing groceries at lists/main.
+const GENERAL_CATS = ['חשמל ואלקטרוניקה','בית וריהוט','ביגוד והנעלה','כלי עבודה','פארם וטיפוח','מתנות','סידורים','אחר'];
+const FOOD_CATS = ['ירקות ופירות','מאפייה','חלב וביצים','בשר ודגים','מוצרי ניקיון','שימורים ויבשים','משקאות','קפואים','ממתקים וחטיפים','אחר'];
+const listsByType = {food:[], general:[]};
+let activeList = window.location.hash === '#general' ? 'general' : 'food';
+let items = listsByType[activeList];
+function listCats(){return activeList === 'general' ? GENERAL_CATS : FOOD_CATS;}
+function guessGeneralCategory(name) {
+ const rules=[
+  [/מחשב|מסך|טלויז|טלוויז|טלפון|מטען|כבל|אוזני|מיקרוגל|תנור|מקרר|מכונת כביסה|USB|HDMI|חשמל|מצלמה|סוללה/i,'חשמל ואלקטרוניקה'],
+  [/שולחן|כיסא|כסא|ארון|מנורה|ספה|מיטה|וילון|שטיח|כרית|מדף|מראה/,'בית וריהוט'],
+  [/נעל|חולצה|מכנס|גרב|מעיל|שמלה|כובע|בגד/,'ביגוד והנעלה'],
+  [/מברג|מקדחה|פטיש|בורג|מסמר|כלי עבודה|מפתח שוודי/,'כלי עבודה'],
+  [/שמפו|בושם|קרם|סבון|ויטמין|משחת שיניים|פארם/,'פארם וטיפוח'],
+  [/מתנה|ברכה|זר פרחים/,'מתנות'],
+  [/לאסוף|להביא|סידור|דואר|לשלוח|לקחת/,'סידורים']
+ ];
+ return rules.find(([re])=>re.test(name))?.[1] || 'אחר';
+}
 let _finishingShopping = false;
 function findItemRow(id) {
   return [...document.querySelectorAll('#items-scroll .item[data-id]')]
@@ -520,7 +538,7 @@ function markItemAnimation(id, type) {
 }
 let chatHistory = [];
 let recog = null, isRec = false;
-let collapsedCats = new Set(JSON.parse(localStorage.getItem('collapsed_cats') || '[]'));
+let collapsedCats = new Set(JSON.parse(localStorage.getItem(activeList==='food'?'collapsed_cats':'collapsed_cats_general') || '[]'));
 const categoryFolds = new Map(); // running delayed/category closing/opening animations
 let _suppressListFLIP = false;
 function renderWithoutListFLIP() {
@@ -528,70 +546,108 @@ function renderWithoutListFLIP() {
   try { render(); } finally { _suppressListFLIP = false; }
 }
 function saveCollapsedCats() {
-  localStorage.setItem('collapsed_cats', JSON.stringify([...collapsedCats]));
+  localStorage.setItem(activeList==='food'?'collapsed_cats':'collapsed_cats_general', JSON.stringify([...collapsedCats]));
 }
 function findCategoryGroup(cat) {
   return [...document.querySelectorAll('#items-scroll .cat-group')]
     .find(el => el.dataset.cat === cat);
 }
-let catOrderOverride = JSON.parse(localStorage.getItem('cat_order') || 'null');
+let catOrderOverride = JSON.parse(localStorage.getItem(activeList==='food'?'cat_order':'cat_order_general') || 'null');
 
-// ── Firebase init ─────────────────────────────────────────
+// ── Firebase init: independent lists, existing food doc untouched ──
 function initFirebase() {
-  if (!window._fbReady) { window.addEventListener('fb-ready', initFirebase, { once: true }); return; }
-  const { initializeApp, getFirestore, doc, onSnapshot, setDoc, getDoc } = window._fbModules;
-
-  const fbApp = initializeApp({
-    apiKey: cfg.fbApiKey,
-    authDomain: `${cfg.fbProject}.firebaseapp.com`,
-    projectId: cfg.fbProject,
-    appId: cfg.fbAppId
-  }, 'shopping-app');
-
-  db = getFirestore(fbApp);
-  const docRef = doc(db, 'lists', 'main');
-
-  setSyncStatus('syncing', '⟳ מתחבר');
-
-  // Load once first
-  getDoc(docRef).then(snap => {
-    if (snap.exists() && !_finishingShopping) {
-      const incoming = snap.data().items || [];
-      if (JSON.stringify(incoming) !== JSON.stringify(items)) {
-        items = incoming;
-        render();
-      }
-    }
-    setSyncStatus('synced', '✓ מסונכרן');
-  }).catch(() => setSyncStatus('', '✗ שגיאה'));
-
-  // Live listener
-  if (unsubscribe) unsubscribe();
-  unsubscribe = onSnapshot(docRef, snap => {
-    if (snap.exists() && !_finishingShopping) {
-      const incoming = snap.data().items || [];
-      // Firestore echoes local writes: skip redundant re-renders during motion.
-      if (JSON.stringify(incoming) !== JSON.stringify(items)) {
-        items = incoming;
-        render();
-      }
-    }
-    setSyncStatus('synced', '✓ מסונכרן');
-  }, () => setSyncStatus('', '✗ שגיאה'));
-
-  window._fbDoc = docRef;
-  window._fbSetDoc = setDoc;
+ if(!window._fbReady){window.addEventListener('fb-ready',initFirebase,{once:true});return;}
+ const {initializeApp,getFirestore,setDoc}=window._fbModules;
+ const fbApp=initializeApp({
+  apiKey:cfg.fbApiKey,authDomain:`${cfg.fbProject}.firebaseapp.com`,
+  projectId:cfg.fbProject,appId:cfg.fbAppId
+ },'shopping-app');
+ db=getFirestore(fbApp);window._fbSetDoc=setDoc;
+ connectActiveList();
 }
-
+function setListReady(ready) {
+ listReady=ready;
+ for(const id of ['quick-add-name','quick-add-button','send-btn']){
+  document.getElementById(id).disabled=!ready;
+ }
+ document.getElementById('items-scroll').style.pointerEvents=ready?'':'none';
+}
+function connectActiveList() {
+ if(!db)return;
+ if(unsubscribe){unsubscribe();unsubscribe=null;}
+ const type=activeList, token=++loadGeneration;
+ const {doc,onSnapshot}=window._fbModules;
+ activeDoc=doc(db,'lists',listDocs[type]);
+ setListReady(false);
+ setSyncStatus('syncing','⟳ טוען');
+ unsubscribe=onSnapshot(activeDoc,snap=>{
+  if(token!==loadGeneration||type!==activeList)return;
+  if(!_finishingShopping){
+   const incoming=snap.exists()?(snap.data().items||[]):[];
+   if(JSON.stringify(incoming)!==JSON.stringify(items)){
+    items=incoming;listsByType[type]=items;render();
+   }
+  }
+  setListReady(true);
+  setSyncStatus('synced','✓ מסונכרן');
+ },()=>{
+  if(token!==loadGeneration||type!==activeList)return;
+  setListReady(false);setSyncStatus('','✗ שגיאת סנכרון');
+ });
+}
 async function persistItems() {
-  if (!db || !window._fbDoc) return;
-  setSyncStatus('syncing', '⟳ שומר');
-  try {
-    await window._fbSetDoc(window._fbDoc, { items }, { merge: true });
-    setSyncStatus('synced', '✓ מסונכרן');
-  } catch(e) { setSyncStatus('', '✗ שגיאה'); }
+ if(!db||!activeDoc||!listReady){showToast('הרשימה עדיין נטענת');return;}
+ const type=activeList, docRef=activeDoc;
+ const outgoing=items.map(item=>({...item}));
+ listsByType[type]=items;
+ setSyncStatus('syncing','⟳ שומר');
+ try{
+  await window._fbSetDoc(docRef,{items:outgoing},{merge:true});
+  if(type===activeList)setSyncStatus('synced','✓ מסונכרן');
+ }catch(e){if(type===activeList)setSyncStatus('','✗ שגיאת שמירה');}
 }
-
+function updateListUI(){
+ const general=activeList==='general';
+ for(const type of ['food','general']){
+  document.getElementById('tab-'+type).setAttribute('aria-selected',String(type===activeList));
+ }
+ document.getElementById('list-title').textContent=general?'רשימה כללית':'רשימת מזון';
+ document.getElementById('txt').placeholder=general?'מה צריך לקנות או להביא?':'תגיד מה לקנות...';
+ document.getElementById('quick-add-name').placeholder=general?'מה צריך לקנות או להביא?':'מוצר להוספה...';
+ document.getElementById('quick-add-category').innerHTML=listCats().map(c=>`<option value="${c}">${c}</option>`).join('');
+ document.getElementById('quick-add-category').value='אחר';
+ document.getElementById('quick-add-name').value='';
+ document.getElementById('txt').value='';
+ document.getElementById('cat-picker').classList.remove('open');
+ closePopup();
+}
+function switchList(next,navigate=true){
+ if(!(next in listDocs)||next===activeList)return;
+ if(_finishingShopping){showToast('יש להמתין לסיום הקנייה');return;}
+ hideConfirm();closeToast();
+ listsByType[activeList]=items;
+ activeList=next;items=listsByType[next];
+ collapsedCats=new Set(JSON.parse(localStorage.getItem(next==='food'?'collapsed_cats':'collapsed_cats_general')||'[]'));
+ catOrderOverride=JSON.parse(localStorage.getItem(next==='food'?'cat_order':'cat_order_general')||'null');
+ categoryFolds.forEach(f=>{clearTimeout(f.timer);f.animation?.cancel();});
+ categoryFolds.clear();chatHistory=[];
+ updateListUI();render();connectActiveList();
+ if(navigate&&window.location.hash!=='#'+next)window.location.hash=next;
+}
+window.addEventListener('hashchange',()=>{
+ switchList(window.location.hash==='#general'?'general':'food',false);
+});
+async function quickAddItem(e){
+ e.preventDefault();
+ if(!listReady||_finishingShopping)return;
+ const input=document.getElementById('quick-add-name');
+ const name=input.value.trim();if(!name)return;
+ const chosen=document.getElementById('quick-add-category').value;
+ const category=chosen!=='אחר'?chosen:(activeList==='general'?guessGeneralCategory(name):'אחר');
+ const result=await addItemsSeq([{name,qty:null,category,note:null}]);
+ if(result.newIds.length){input.value='';showAddedFeedback([name]);}
+ else showToast('המוצר כבר ברשימה');
+}
 function setSyncStatus(cls, text) {
   const el = document.getElementById('sync-status');
   el.className = cls;
@@ -601,6 +657,7 @@ function setSyncStatus(cls, text) {
 // ── Init ──────────────────────────────────────────────────
 function initApp() {
   document.getElementById('main-screen').classList.add('active');
+  updateListUI();
   initFirebase();
 }
 
@@ -1041,7 +1098,7 @@ function startCatDrag(e) {
     ghost.remove();
     group.classList.remove('dragging');
     catOrderOverride = [...container.querySelectorAll('.cat-group')].map(g => g.dataset.cat);
-    localStorage.setItem('cat_order', JSON.stringify(catOrderOverride));
+    localStorage.setItem(activeList==='food'?'cat_order':'cat_order_general', JSON.stringify(catOrderOverride));
   };
 
   document.addEventListener('pointermove', onMove);
