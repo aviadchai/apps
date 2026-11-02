@@ -1116,7 +1116,7 @@ function openCatPicker(id, btn, e) {
   if (!it) return;
   _catTarget = id;
   const picker = document.getElementById('cat-picker');
-  picker.innerHTML = CATS.map(c =>
+  picker.innerHTML = listCats().map(c =>
     `<button class="cat-pick-item${c===it.category?' current':''}" onclick="pickCat('${c}')">${CAT_ICONS[c]||CAT_ICONS['אחר']} ${c}</button>`
   ).join('');
   const r = btn.getBoundingClientRect();
@@ -1239,7 +1239,7 @@ async function animatePurchasedRow(row) {
   }
 }
 async function finishShoppingList() {
-  if (_finishingShopping || !items.length) return 0;
+  if (_finishingShopping || !items.length || !listReady) return 0;
   _finishingShopping = true;
   document.getElementById('list-panel').classList.add('shopping-finishing');
   const purchased = items.filter(it => it.done);
@@ -1383,11 +1383,18 @@ function localShoppingCommand(input) {
       if(q){name=q[1].trim();qty=q[2];}
     }
     name=name.replace(/^(?:את|ה)\s+(?=[א-ת])/,'').trim();
-    const cat=categories.find(([_,rx])=>rx.test(name));
-    return {name,qty,category:cat?cat[0]:'אחר',note:null};
+    const cat=activeList==='general'?null:categories.find(([_,rx])=>rx.test(name));
+    const category=activeList==='general'?guessGeneralCategory(name):(cat?cat[0]:'אחר');
+    return {name,qty,category,note:null};
   }).filter(it=>it.name&&it.name.length<=100);
   return parsed.length?{action:'add',items:parsed}:null;
 }
+
+const SYSTEM_GENERAL = `ניהול רשימת קניות כללית של דברים לבית, מוצרי חשמל, בגדים, אביזרים, מתנות וסידורים. החזר JSON בלבד.
+פעולות: add | remove | update | toggle_done | finish_shopping | clear_done | clear_all | chat
+קטגוריות: חשמל ואלקטרוניקה, בית וריהוט, ביגוד והנעלה, כלי עבודה, פארם וטיפוח, מתנות, סידורים, אחר.
+פורמט: {"action":"...","items":[{"name":"...","qty":"...","category":"...","note":"..."}],"target":"...","new_name":"...","category":"...","reply":"..."}
+כללים: אל תעביר פריטים למסך המזון. שמור שמות מותגים, דגם, צבע, גודל והערות קנייה. החזר פעולות מדויקות בלבד, עם reply קצר בעברית.`;
 
 async function callClaude(userMsg) {
   const local=localShoppingCommand(userMsg);
@@ -1404,7 +1411,7 @@ async function callClaude(userMsg) {
     body: JSON.stringify({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 2000,
-      system: SYSTEM + listCtx,
+      system: (activeList==='general'?SYSTEM_GENERAL:SYSTEM) + listCtx,
       messages: chatHistory.slice(-4)
     })
   });
@@ -1435,7 +1442,9 @@ fun_fact: עובדה מפתיעה או טיפ שימושי על המוצר. פת
 tip: המלצה על מוצר ישראלי ספציפי מהסופר שעדיף בריאותית (מותג ספציפי אם אפשר), או חלופה בריאה יותר. null אם לא רלוונטי.`;
 
 async function enrichItem(item) {
-  if (!cfg?.antKey || item.health !== undefined) return;
+  // Optional product enrichment is disabled to avoid surprise API charges.
+  if (activeList==='general' || item.health !== undefined) return;
+  return;
   try {
     const resp = await fetch('https://carty-api.aviadchai.workers.dev', {
       method: 'POST',
@@ -1458,7 +1467,7 @@ async function showDyk(id, btn) {
   const it = items.find(i => i.id === id);
   if (!it) return;
   if (it.fun_fact || it.health_note) { showInfoPopup(id, btn); return; }
-  if (!cfg?.antKey) { showInfoPopup(id, btn); return; }
+  if (activeList==='general') { showInfoPopup(id, btn); return; }
   btn.classList.add('loading');
   await enrichItem(it);
   btn.classList.remove('loading');
@@ -1473,6 +1482,7 @@ async function enrichNewItems(newIds) {
 }
 
 async function addItemsSeq(cmdItems, onProgress) {
+  const operationList=activeList;
   const toAdd = [], skipped = [];
   for (const { name, qty, category, note } of cmdItems) {
     const n = nn(name); if (!n) continue;
@@ -1482,13 +1492,14 @@ async function addItemsSeq(cmdItems, onProgress) {
   }
   const big = toAdd.length > 4;
   for (let i = 0; i < toAdd.length; i++) {
+    if(operationList!==activeList) break;
     items.push(toAdd[i]);
     render();
     onProgress?.(i + 1, toAdd.length);
     if (big && i < toAdd.length - 1) await new Promise(r => setTimeout(r, 35));
   }
-  if (toAdd.length || skipped.length) { render(); await persistItems(); }
-  return { skipped, newIds: toAdd.map(i => i.id) };
+  if(operationList===activeList && (toAdd.length || skipped.length)){render();await persistItems();}
+  return {skipped,newIds:operationList===activeList?toAdd.map(i=>i.id):[]};
 }
 
 function applyCmd(cmd) {
@@ -1557,7 +1568,7 @@ function addUser(text) {
 async function sendMsg() {
   const inp = document.getElementById('txt');
   const text = inp.value.trim();
-  if (!text) return;
+  if (!text || !listReady) return;
   addUser(text);
   inp.value = ''; autoResize(inp);
 
@@ -1573,7 +1584,9 @@ async function sendMsg() {
   const typing = document.getElementById('typing');
   typing.classList.add('show');
   try {
+    const sendingList=activeList;
     const cmd = await callClaude(text);
+    if(sendingList!==activeList) return; // Never apply a late AI response to another list.
     let skipped = [];
     let addedNames = [];
 
@@ -1599,7 +1612,7 @@ async function sendMsg() {
     }
   } catch(e) {
     addBot('<span class="r">שגיאה: ' + esc(e.message || 'הפעולה נכשלה') + '</span>');
-    if (!inp.value.trim()) { inp.value=text; autoResize(inp); }
+    if (!inp.value.trim() && listReady) { inp.value=text; autoResize(inp); }
   } finally {
     typing.classList.remove('show');
   }
