@@ -1363,6 +1363,130 @@ const SYSTEM = `ניהול רשימת קניות. החזר JSON בלבד.
 - reply קצר ונעים בעברית`;
 
 
+
+/* Offline-first recognition of space-separated shopping items, including
+   multiword product names and spoken Hebrew punctuation variants. */
+const KNOWN_FOOD_ITEMS = `
+חלב לחם ביצים חמאה קוטג קוטג' גבינה גבינות יוגורט שמנת מעדן
+עגבניה עגבניות מלפפון מלפפונים חמוצים בננה בננות תפוח תפוחים
+אבוקדו גזר גזרים בצל בצלים חסה תפוז תפוזים לימון לימונים שום
+סוכר מלח פלפל קפה תה אורז פסטה קמח שמן מים מיץ קולה שוקולד
+שוקו עוף בשר טונה דגים דג סלמון חומוס טחינה קטשופ מיונז
+קרקרים בייגלה פיתה פיתות טורטיות פטריות זיתים גרנולה
+ענבים תותים תות קישוא קישואים חציל חצילים ברוקולי בטטה
+גמבה כרוב כרובית סלרי כרישה שעועית אפונה
+אבטיח מלון אגס אגסים אפרסק אפרסקים תמרים צ'יפס צ׳יפס
+שניצל נקניק נקניקיות גלידה קפואים קרח בורקס פיצה
+במבה ביסלי וופלים עוגיות קרקר פופקורן קורנפלקס דגנים
+פפריקה קינמון כמון קוסקוס פתיתים בורגול רסק שימורים
+מגבונים טישו שמפו סבון אקונומיקה מרכך סוללות נרות
+`.trim().split(/\s+/);
+const KNOWN_FOOD_PHRASES = `
+מלפפונים חמוצים
+מלפפון חמוץ
+עגבניות שרי
+תפוחי אדמה
+לחם מלא
+לחם לבן
+לחם אחיד
+לחם פרוס
+לחם מחמצת
+לחם שיפון
+גבינה לבנה
+גבינה צהובה
+גבינת שמנת
+גבינת קוטג'
+חלב נטול לקטוז
+חלב שקדים
+חלב סויה
+חלב אורז
+ביצים גדולות
+ביצים אורגניות
+בצל ירוק
+פלפל אדום
+פלפל ירוק
+פלפל שחור
+חזה עוף
+שוקי עוף
+בשר טחון
+דג סלמון
+קפה שחור
+קפה נמס
+אורז בסמטי
+אורז פרסי
+שמן זית
+שמן קנולה
+מלח גס
+נייר טואלט
+נייר סופג
+סבון כלים
+סבון ידיים
+אבקת כביסה
+מרכך כביסה
+משחת שיניים
+דגני בוקר
+מיץ תפוזים
+מים מינרליים
+סודה לשתייה
+רסק עגבניות
+גבינה בולגרית
+ממרח שוקולד
+רוטב עגבניות
+פירות יער
+חטיף אנרגיה
+שקיות אשפה
+`.trim().split('\n');
+const KNOWN_GENERAL_ITEMS = `
+מיקרוגל טוסטר קומקום טלוויזיה טלויזיה מחשב מסך טלפון
+מטען כבל אוזניות מדפסת סוללות סוללה מנורה נורה מצלמה
+מקרר תנור כיריים שואב מדיח מייבש שעון טאבלט
+כיסא כסא שולחן ספה מיטה ארון מדף שטיח וילון כרית
+מגבת מגבות מצעים סדינים שמיכה כריות
+נעליים נעל חולצה חולצות גרב גרביים מעיל מכנסיים מכנס
+מברג מקדחה פטיש ברגים מסמרים תיק מתנה צעצוע אופניים
+קסדה ספר מחברת עיפרון עט
+`.trim().split(/\s+/);
+const KNOWN_GENERAL_PHRASES = `
+מחשב נייד
+טלפון נייד
+כבל usb
+כבל hdmi
+מכונת כביסה
+מייבש כביסה
+שואב אבק
+מטען נייד
+נורות לד
+שולחן כתיבה
+כיסא מחשב
+מיטת ילדים
+שידת לילה
+`.trim().split('\n');
+function splitKnownProducts(fragment) {
+  const norm=value=>String(value).toLowerCase().replace(/[׳’]/g,"'").replace(/\s+/g,' ').trim();
+  const known=new Set((activeList==='general'
+    ? [...KNOWN_GENERAL_ITEMS,...KNOWN_GENERAL_PHRASES]
+    : [...KNOWN_FOOD_ITEMS,...KNOWN_FOOD_PHRASES]).map(norm));
+  const words=fragment.trim().split(/\s+/);
+  if(words.length<2)return [fragment.trim()];
+  const result=[];
+  for(let i=0;i<words.length;){
+    let found=null;
+    for(let n=Math.min(4,words.length-i);n>=1;n--){
+      const slice=words.slice(i,i+n);
+      const candidate=slice.join(' ');
+      const w0=slice[0].startsWith('ו')&&slice[0].length>2?slice[0].slice(1):slice[0];
+      const bare=[w0,...slice.slice(1)].join(' ');
+      if(known.has(norm(candidate))||known.has(norm(bare))){
+        found={name:known.has(norm(candidate))?candidate:bare,used:n};
+        break;
+      }
+    }
+    if(!found)return [fragment.trim()]; // Unrecognized combinations stay intact, not guessed.
+    result.push(found.name);i+=found.used;
+  }
+  return result;
+}
+
 /* Shopping actions that do not need network or paid AI tokens. */
 function localShoppingCommand(input) {
   const clean=String(input||'').trim().replace(/\s+/g,' ').replace(/[.!?؟]+$/g,'').trim();
@@ -1391,7 +1515,7 @@ function localShoppingCommand(input) {
     return {action:'toggle_done',target:matchedName(target),done};
   }
   m=clean.match(/^(?:תוסיף|תוסיפי|הוסף|הוסיפי|תכניס|תכניסי|להוסיף|צריך|צריכה|אני צריך|אני צריכה|תקנה|תקני|קנה|קני)\s+(.+)$/);
-  const direct=(!m && clean.length<=70 && /^[א-ת\s,;0-9%.'"-]+$/.test(clean) && !/^(?:איך|מה|מי|מתי|כמה|למה|אפשר|יש|תן|תני|בבקשה)\s/.test(clean));
+  const direct=(!m && clean.length<=180 && /^[\p{L}\p{N}\s,;.%'"׳״’&+\-\/()]+$/u.test(clean) && !/^(?:איך|מה|מי|מתי|כמה|למה|אפשר|יש|תן|תני|בבקשה|האם|למה|תסביר|ספר)\s/.test(clean));
   if(!m && !direct) return null;
   const payload=(m?m[1]:clean).replace(/^(?:(?:לי|את|לרשימה|לקנות)\s+)+/,'').trim();
   if(!payload || /(?:מתכון|הוראות|איך מכינים|ארוחה ל)/.test(payload)) return null;
@@ -1403,7 +1527,7 @@ function localShoppingCommand(input) {
     ['בשר ודגים',/עוף|בשר|טונה|דג|סלמון|שניצל|נקניק/],
     ['מוצרי ניקיון',/סבון|שמפו|אבקת כביסה|מרכך|אקונומיק|נייר טואלט|נייר סופג|מגבונים|משחת שיניים|חומר ניקוי/],
     ['משקאות',/מים|קולה|מיץ|שתייה|סודה|קפה|תה|שוקו/],
-    ['קפואים',/קפוא|גליד|צ'יפס/],
+    ['קפואים',/קפוא|גליד|צ['׳]יפס/],
     ['ממתקים וחטיפים',/שוקולד|ביסלי|במבה|חטיף|סוכריות|קרקר|עוגיות/],
     ['שימורים ויבשים',/אורז|פסטה|קמח|סוכר|מלח|שמן|קוסקוס|שימור|טחינה|חומוס|קטשופ|דגני בוקר/]
   ];
@@ -1411,9 +1535,13 @@ function localShoppingCommand(input) {
   if(!raw.length||raw.length>25) return null;
   const parts=[];
   for(const part of raw){
-    const words=part.split(/\s+/);
-    if(words.length>1 && words.every(w=>singles.has(w))) parts.push(...words);
-    else parts.push(part);
+    const separated=splitKnownProducts(part);
+    if(separated.length>1)parts.push(...separated);
+    else {
+      const words=part.split(/\s+/);
+      if(words.length>1 && words.every(w=>singles.has(w)))parts.push(...words);
+      else parts.push(part);
+    }
   }
   const parsed=parts.map(part=>{
     let name=part.trim(),qty=null;
