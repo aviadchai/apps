@@ -1400,6 +1400,9 @@ const KNOWN_FOOD_ITEMS = `
 במבה ביסלי וופלים עוגיות קרקר פופקורן קורנפלקס דגנים
 פפריקה קינמון כמון קוסקוס פתיתים בורגול רסק שימורים
 מגבונים טישו שמפו סבון אקונומיקה מרכך סוללות נרות
+סלט סלטים חמוצים ציפס צ׳יפס מילקי קולה זירו קרמבו קורנפלור
+קינואה עדשים תירס חסה גבינה לחמנייה לחמניות קרוטונים פריכיות
+קפסולות שקדים בוטנים דבש ממרח חומוס טחינה סלט סלטים
 `.trim().split(/\s+/);
 const KNOWN_FOOD_PHRASES = `
 מלפפונים חמוצים
@@ -1455,6 +1458,29 @@ const KNOWN_FOOD_PHRASES = `
 פירות יער
 חטיף אנרגיה
 שקיות אשפה
+סלט חומוס
+סלט ביצים
+סלט טונה
+סלט ירקות
+סלט קצוץ
+חומוס צבר
+חומוס אחלה
+חלב תנובה
+חלב טרה
+חלב יטבתה
+קוטג' תנובה
+צ'יפס קפוא
+לחם דגנים
+קולה זירו
+קוקה קולה
+פפסי מקס
+שוקולד חלב
+שוקולד מריר
+גבינה צהובה עמק
+שוקו יטבתה
+במבה אסם
+סלט כרוב
+נייר טואלט
 `.trim().split('\n');
 const KNOWN_GENERAL_ITEMS = `
 מיקרוגל טוסטר קומקום טלוויזיה טלויזיה מחשב מסך טלפון
@@ -1481,35 +1507,73 @@ const KNOWN_GENERAL_PHRASES = `
 מיטת ילדים
 שידת לילה
 `.trim().split('\n');
-function splitKnownProducts(fragment) {
-  const norm=value=>String(value).toLowerCase().replace(/[׳’]/g,"'").replace(/\s+/g,' ').trim();
-  const known=new Set((activeList==='general'
-    ? [...KNOWN_GENERAL_ITEMS,...KNOWN_GENERAL_PHRASES]
-    : [...KNOWN_FOOD_ITEMS,...KNOWN_FOOD_PHRASES]).map(norm));
-  const words=fragment.trim().split(/\s+/);
-  if(words.length<2)return [fragment.trim()];
-  const result=[];
-  for(let i=0;i<words.length;){
-    let found=null;
-    for(let n=Math.min(4,words.length-i);n>=1;n--){
-      const slice=words.slice(i,i+n);
-      const candidate=slice.join(' ');
-      const w0=slice[0].startsWith('ו')&&slice[0].length>2?slice[0].slice(1):slice[0];
-      const bare=[w0,...slice.slice(1)].join(' ');
-      if(known.has(norm(candidate))||known.has(norm(bare))){
-        found={name:known.has(norm(candidate))?candidate:bare,used:n};
-        break;
-      }
-    }
-    if(!found)return [fragment.trim()]; // Unrecognized combinations stay intact, not guessed.
-    result.push(found.name);i+=found.used;
+
+const CATALOG_BRANDS = 'תנובה טרה יטבתה שטראוס עלית אסם אוסם אחלה צבר סוגת תלמה נסטלה דנונה מולר פריגת נביעות שופרסל מילקה נוטלה היינץ הלמנס פפסי אוראו סנו פינוק סמסונג אלקטרה שיאומי אפל'.split(' ');
+const CATALOG_DESCRIPTORS = new Set('לבן לבנה צהוב צהובה שחור שחורה ירוק ירוקה אדום אדומה גדול גדולה קטן קטנה מלא דל רזה טרי טרייה אורגני אורגנית קפוא קפואה מתוק מתוקה חריף חריפה נטול ללא של זירו מקס ליטר קילו גרם שומן'.split(' '));
+function productNorm(x){
+  return String(x).toLowerCase().replace(/[\u0591-\u05c7]/g,'').replace(/[׳’'"]/g,'').replace(/[־-]/g,' ').replace(/\s+/g,' ').trim();
+}
+function typoOne(a,b){
+  if(Math.abs(a.length-b.length)>1)return false;
+  let i=0,j=0,d=0;
+  while(i<a.length&&j<b.length){
+    if(a[i]===b[j]){i++;j++;continue;}
+    if(++d>1)return false;
+    if(a.length>b.length)i++;else if(a.length<b.length)j++;else{i++;j++;}
   }
-  return result;
+  return d+a.length-i+b.length-j<=1;
+}
+function splitKnownProducts(fragment) {
+  const words=String(fragment).trim().split(/\s+/).filter(Boolean);
+  if(words.length<2)return words;
+  const entries=activeList==='general'
+    ? [...KNOWN_GENERAL_ITEMS,...KNOWN_GENERAL_PHRASES]
+    : [...KNOWN_FOOD_ITEMS,...KNOWN_FOOD_PHRASES];
+  const products=new Set(entries.map(productNorm));
+  const brands=new Set(CATALOG_BRANDS.map(productNorm));
+  const oneWord=[...products].filter(x=>!x.includes(' '));
+  const result=[];let pending=[],hits=0,last='none';
+  function classify(start){
+    for(let n=Math.min(4,words.length-start);n>=1;n--){
+      const original=words.slice(start,start+n).join(' ');
+      const value=productNorm(original);
+      const unprefixed=productNorm(original.replace(/^ו(?=[\u05d0-\u05ea]{3,})/,''));
+      if(products.has(value)||products.has(unprefixed))return {type:'product',n,original};
+      if(brands.has(value)||brands.has(unprefixed))return {type:'brand',n,original};
+      if(n===1&&CATALOG_DESCRIPTORS.has(value))return {type:'descriptor',n,original};
+    }
+    const value=productNorm(words[start]);
+    if(value.length>=5){
+      const near=oneWord.filter(x=>Math.abs(x.length-value.length)<=1&&typoOne(x,value));
+      if(near.length===1)return {type:'product',n:1,original:words[start]};
+    }
+    return {type:'unknown',n:1,original:words[start]};
+  }
+  for(let i=0;i<words.length;){
+    const t=classify(i);i+=t.n;
+    if(t.type==='product'){
+      result.push([...pending,t.original].join(' '));
+      pending=[];hits++;last='product';
+    }else if(t.type==='brand'){
+      if(result.length && last==='product')result[result.length-1]+=' '+t.original;
+      else pending.push(t.original);
+      last='brand';
+    }else{
+      if(result.length)result[result.length-1]+=' '+t.original;
+      else pending.push(t.original);
+      last=t.type;
+    }
+  }
+  if(pending.length){
+    if(result.length)result[result.length-1]+=' '+pending.join(' ');
+    else return [fragment.trim()];
+  }
+  return hits?result:[fragment.trim()];
 }
 
 /* Shopping actions that do not need network or paid AI tokens. */
 function localShoppingCommand(input) {
-  const clean=String(input||'').trim().replace(/\s+/g,' ').replace(/[.!?؟]+$/g,'').trim();
+  const clean=String(input||'').trim().replace(/\r\n?/g,'\n').replace(/[ \t]+/g,' ').replace(/\n+/g,', ').replace(/[.!?؟]+$/g,'').trim();
   if(!clean) return null;
   if(/^(?:מחק הכל|תמחק הכל|מחקי הכל|נקה הכל|רוקן רשימה|רוקן את הרשימה|תמחק את כל הרשימה)$/.test(clean)) return {action:'clear_all'};
   if(/^(?:סיימתי קנייה|סיימתי קניה|סיים קנייה|סיים קניה|תסיים קנייה|סיום קנייה|תתחיל רשימת קניות חדשה)$/.test(clean)) return {action:'finish_shopping'};
@@ -1547,7 +1611,7 @@ function localShoppingCommand(input) {
     ['בשר ודגים',/עוף|בשר|טונה|דג|סלמון|שניצל|נקניק/],
     ['מוצרי ניקיון',/סבון|שמפו|אבקת כביסה|מרכך|אקונומיק|נייר טואלט|נייר סופג|מגבונים|משחת שיניים|חומר ניקוי/],
     ['משקאות',/מים|קולה|מיץ|שתייה|סודה|קפה|תה|שוקו/],
-    ['קפואים',/קפוא|גליד|צ['׳]יפס/],
+    ['קפואים',/קפוא|גליד|צ['׳]?יפס/],
     ['ממתקים וחטיפים',/שוקולד|ביסלי|במבה|חטיף|סוכריות|קרקר|עוגיות/],
     ['שימורים ויבשים',/אורז|פסטה|קמח|סוכר|מלח|שמן|קוסקוס|שימור|טחינה|חומוס|קטשופ|דגני בוקר/]
   ];
