@@ -372,19 +372,20 @@ header { min-height:66px; padding-inline:20px; }
 .carty-smile path { stroke:#22a6f2; }
 .carty-wink path { stroke:#a78bfa; }
 
-/* Separate grocery and general purchase views */
-#list-tabs{display:flex;gap:8px;padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0;}
-.list-tab{flex:1;min-height:44px;border:1px solid var(--border2);border-radius:14px;background:var(--surface);color:var(--muted);display:flex;align-items:center;justify-content:center;gap:7px;font:650 14px system-ui;cursor:pointer;}
+/* Compact list navigation and actions. The bottom composer is the only add entry point. */
+#list-tabs{display:flex;gap:8px;padding:8px 12px;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0;}
+.list-tab{flex:1;min-height:40px;padding:6px 8px;border:1px solid var(--border2);border-radius:12px;background:var(--surface);color:var(--muted);display:flex;align-items:center;justify-content:center;gap:6px;font:600 13px system-ui;cursor:pointer;transition:background .18s,border-color .18s;}
 .list-tab[aria-selected=true]{color:var(--accent);background:var(--accent-dim);border-color:var(--accent);}
-#quick-add-form{display:flex;flex-wrap:wrap;gap:8px;padding:11px 13px;background:var(--surface);border-bottom:1px solid var(--border);align-items:center;flex-shrink:0;}
-#quick-add-name{flex:1;min-width:100px;max-width:100%;height:40px;border:1px solid var(--border2);border-radius:10px;background:var(--bg);color:var(--text);font:14px system-ui;padding:0 10px;outline:none;}
-#quick-add-name:focus{border-color:var(--accent);}
-#quick-add-category{width:118px;max-width:35%;height:40px;border-radius:10px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font:12px system-ui;padding:0 5px;}
-#quick-add-button{height:40px;padding:0 13px;border:none;border-radius:10px;background:var(--accent);color:#fff;font:700 14px system-ui;cursor:pointer;}
-#quick-add-name:disabled,#quick-add-button:disabled,#send-btn:disabled{opacity:.55;}
+#list-panel .panel-head{padding:8px 12px;gap:6px;min-height:42px;}
+#list-panel .clear-done-btn{font-size:10.5px;padding:5px 8px;min-height:32px;line-height:1.15;}
 .carty-wordmark{color:#72aaff!important;}
 [data-theme=light] .carty-wordmark{color:#1553c4!important;}
-@media(max-width:420px){#list-tabs{padding-inline:9px}.list-tab{font-size:13px}#quick-add-form{padding:9px;gap:6px}#quick-add-category{width:105px}}
+@media(max-width:420px){
+ #list-tabs{padding:7px 10px;gap:7px}
+ .list-tab{min-height:40px;font-size:12.5px;border-radius:11px}
+ #list-panel .panel-head{padding:7px 9px;gap:5px}
+ #list-panel .clear-done-btn{font-size:10px;padding:5px 7px}
+}
 </style>
 </head>
 <body>
@@ -442,11 +443,7 @@ header { min-height:66px; padding-inline:20px; }
           <button class="clear-done-btn" onclick="finishShopping()" title="מחק נקנו והעבר חסרים לקנייה הבאה">סיים קנייה</button>
           <button class="clear-done-btn" style="color:var(--danger);border-color:var(--danger)" onclick="clearAll()">מחק הכל</button>
         </div>
-        <form id="quick-add-form" onsubmit="quickAddItem(event)">
-           <input id="quick-add-name" type="text" maxlength="120" autocomplete="off" placeholder="מוצר להוספה..." aria-label="מוצר להוספה" disabled required>
-           <select id="quick-add-category" aria-label="קטגוריית מוצר"></select>
-           <button id="quick-add-button" type="submit" disabled>+ הוסף</button>
-         </form>
+
          <div id="items-scroll">
           <div class="empty-list"><svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--border2)"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg><span>הרשימה ריקה</span></div>
         </div>
@@ -567,7 +564,7 @@ function initFirebase() {
 }
 function setListReady(ready) {
  listReady=ready;
- for(const id of ['quick-add-name','quick-add-button','send-btn']){
+ for(const id of ['send-btn']){
   document.getElementById(id).disabled=!ready;
  }
  document.getElementById('items-scroll').style.pointerEvents=ready?'':'none';
@@ -613,10 +610,6 @@ function updateListUI(){
  }
  document.getElementById('list-title').textContent=general?'רשימה כללית':'רשימת מזון';
  document.getElementById('txt').placeholder=general?'מה צריך לקנות או להביא?':'תגיד מה לקנות...';
- document.getElementById('quick-add-name').placeholder=general?'מה צריך לקנות או להביא?':'מוצר להוספה...';
- document.getElementById('quick-add-category').innerHTML=listCats().map(c=>`<option value="${c}">${c}</option>`).join('');
- document.getElementById('quick-add-category').value='אחר';
- document.getElementById('quick-add-name').value='';
  document.getElementById('txt').value='';
  document.getElementById('cat-picker').classList.remove('open');
  closePopup();
@@ -637,17 +630,6 @@ function switchList(next,navigate=true){
 window.addEventListener('hashchange',()=>{
  switchList(window.location.hash==='#general'?'general':'food',false);
 });
-async function quickAddItem(e){
- e.preventDefault();
- if(!listReady||_finishingShopping)return;
- const input=document.getElementById('quick-add-name');
- const name=input.value.trim();if(!name)return;
- const chosen=document.getElementById('quick-add-category').value;
- const category=chosen!=='אחר'?chosen:(activeList==='general'?guessGeneralCategory(name):'אחר');
- const result=await addItemsSeq([{name,qty:null,category,note:null}]);
- if(result.newIds.length){input.value='';showAddedFeedback([name]);}
- else showToast('המוצר כבר ברשימה');
-}
 function setSyncStatus(cls, text) {
   const el = document.getElementById('sync-status');
   el.className = cls;
