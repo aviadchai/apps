@@ -386,6 +386,23 @@ header { min-height:66px; padding-inline:20px; }
  #list-panel .panel-head{padding:7px 9px;gap:5px}
  #list-panel .clear-done-btn{font-size:10px;padding:5px 7px}
 }
+
+/* Contextual list actions and rolling count */
+#list-panel .panel-head[hidden]{display:none!important;}
+#list-panel .panel-head:not([hidden]){animation:panelActionsIn .22s ease-out both;}
+@keyframes panelActionsIn{from{opacity:.4;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+#item-count{box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:26px;padding:0 6px;border-radius:999px;overflow:hidden;flex-shrink:0;line-height:1;font-variant-numeric:tabular-nums;}
+.count-viewport{position:relative;display:block;height:1.15em;line-height:1.15em;min-width:1.3ch;text-align:center;overflow:hidden;}
+.count-number{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;white-space:nowrap;}
+.count-exit.count-up{animation:countOutUp .19s cubic-bezier(.25,.8,.25,1) both;}
+.count-enter.count-up{animation:countInUp .19s cubic-bezier(.25,.8,.25,1) both;}
+.count-exit.count-down{animation:countOutDown .19s cubic-bezier(.25,.8,.25,1) both;}
+.count-enter.count-down{animation:countInDown .19s cubic-bezier(.25,.8,.25,1) both;}
+@keyframes countOutUp{from{transform:translateY(0)}to{transform:translateY(-110%)}}
+@keyframes countInUp{from{transform:translateY(110%)}to{transform:translateY(0)}}
+@keyframes countOutDown{from{transform:translateY(0)}to{transform:translateY(110%)}}
+@keyframes countInDown{from{transform:translateY(-110%)}to{transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){#list-panel .panel-head:not([hidden]){animation:none}.count-number{animation:none!important;}}
 </style>
 </head>
 <body>
@@ -435,7 +452,7 @@ header { min-height:66px; padding-inline:20px; }
 
       <!-- List -->
       <div id="list-panel">
-        <div class="panel-head">
+        <div class="panel-head" id="list-panel-header" hidden>
           <span id="list-title">רשימת מזון</span>
           <span class="badge" id="item-count">0</span>
           <div class="list-progress-bar"><div id="list-progress-fill"></div></div>
@@ -624,7 +641,7 @@ function switchList(next,navigate=true){
  catOrderOverride=JSON.parse(localStorage.getItem(next==='food'?'cat_order':'cat_order_general')||'null');
  categoryFolds.forEach(f=>{clearTimeout(f.timer);f.animation?.cancel();});
  categoryFolds.clear();chatHistory=[];
- updateListUI();render();connectActiveList();
+ updateListUI();resetCountMotion();render();connectActiveList();
  if(navigate&&window.location.hash!=='#'+next)window.location.hash=next;
 }
 window.addEventListener('hashchange',()=>{
@@ -703,11 +720,53 @@ function getCatIcon(cat) {
   return CAT_ICONS['אחר'];
 }
 
+// Count rolls one step at a time: 1 → 2 → 3 → 4 → 5, even in batch additions.
+let _visibleCount = null, _requestedCount = 0, _countTick = null;
+function resetCountMotion() {
+  if (_countTick !== null) clearTimeout(_countTick);
+  _countTick = null;
+  _visibleCount = null;
+}
+function updateCountDisplay(value, instant = false) {
+  const badge = document.getElementById('item-count');
+  badge.setAttribute('aria-label', value + ' פריטים שנותרו לקנות');
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (instant || reduce || _visibleCount === null || Math.abs(value - _visibleCount) > 40) {
+    resetCountMotion();
+    _visibleCount = _requestedCount = value;
+    badge.textContent = String(value);
+    return;
+  }
+  _requestedCount = value;
+  if (_countTick === null) rollCountStep();
+}
+function rollCountStep() {
+  const badge = document.getElementById('item-count');
+  if (_visibleCount === _requestedCount) {
+    badge.textContent = String(_visibleCount);
+    _countTick = null;
+    return;
+  }
+  const rising = _requestedCount > _visibleCount;
+  const next = _visibleCount + (rising ? 1 : -1);
+  const direction = rising ? 'up' : 'down';
+  badge.innerHTML = '<span class="count-viewport" aria-hidden="true">' +
+    '<span class="count-number count-exit count-' + direction + '">' + _visibleCount + '</span>' +
+    '<span class="count-number count-enter count-' + direction + '">' + next + '</span></span>';
+  _visibleCount = next;
+  _countTick = setTimeout(() => {
+    _countTick = null;
+    rollCountStep();
+  }, 190);
+}
+
 function render() {
   const scroll = document.getElementById('items-scroll');
-  const count = document.getElementById('item-count');
+  const header = document.getElementById('list-panel-header');
+  const wasHidden = header.hidden;
+  header.hidden = items.length === 0;
   const undone = items.filter(i => !i.done);
-  count.textContent = undone.length;
+  updateCountDisplay(undone.length, header.hidden || wasHidden);
   const completed = items.filter(i => i.done).length;
   const fill = document.getElementById('list-progress-fill');
   if (fill) fill.style.width = (items.length ? (completed / items.length * 100) : 0) + '%';
