@@ -394,15 +394,35 @@ header { min-height:66px; padding-inline:20px; }
 #item-count{box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:26px;padding:0 6px;border-radius:999px;overflow:hidden;flex-shrink:0;line-height:1;font-variant-numeric:tabular-nums;}
 .count-viewport{position:relative;display:block;height:1.15em;line-height:1.15em;min-width:1.3ch;text-align:center;overflow:hidden;}
 .count-number{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;white-space:nowrap;}
-.count-exit.count-up{animation:countOutUp .19s cubic-bezier(.25,.8,.25,1) both;}
-.count-enter.count-up{animation:countInUp .19s cubic-bezier(.25,.8,.25,1) both;}
-.count-exit.count-down{animation:countOutDown .19s cubic-bezier(.25,.8,.25,1) both;}
-.count-enter.count-down{animation:countInDown .19s cubic-bezier(.25,.8,.25,1) both;}
+.count-exit.count-up{animation:countOutUp .39s cubic-bezier(.42,0,.58,1) both;}
+.count-enter.count-up{animation:countInUp .39s cubic-bezier(.42,0,.58,1) both;}
+.count-exit.count-down{animation:countOutDown .39s cubic-bezier(.42,0,.58,1) both;}
+.count-enter.count-down{animation:countInDown .39s cubic-bezier(.42,0,.58,1) both;}
 @keyframes countOutUp{from{transform:translateY(0)}to{transform:translateY(-110%)}}
 @keyframes countInUp{from{transform:translateY(110%)}to{transform:translateY(0)}}
 @keyframes countOutDown{from{transform:translateY(0)}to{transform:translateY(110%)}}
 @keyframes countInDown{from{transform:translateY(-110%)}to{transform:translateY(0)}}
 @media(prefers-reduced-motion:reduce){#list-panel .panel-head:not([hidden]){animation:none}.count-number{animation:none!important;}}
+
+/* iPhone keyboard: hold the app shell in place while only the composer follows
+   visualViewport. 100dvh otherwise shrinks the entire document on focus. */
+html,body{
+  position:fixed;
+  inset:0;
+  width:100%;
+  height:100%!important;
+  overflow:hidden!important;
+  overscroll-behavior:none;
+}
+#app{
+  position:fixed;
+  top:0;
+  left:0;
+  right:0;
+  height:var(--stable-app-height,100dvh)!important;
+  min-height:0;
+  overflow:hidden;
+}
 </style>
 </head>
 <body>
@@ -641,7 +661,7 @@ function switchList(next,navigate=true){
  catOrderOverride=JSON.parse(localStorage.getItem(next==='food'?'cat_order':'cat_order_general')||'null');
  categoryFolds.forEach(f=>{clearTimeout(f.timer);f.animation?.cancel();});
  categoryFolds.clear();chatHistory=[];
- updateListUI();resetCountMotion();render();connectActiveList();
+ updateListUI();resetCountMotion();setListReady(false);render();connectActiveList();
  if(navigate&&window.location.hash!=='#'+next)window.location.hash=next;
 }
 window.addEventListener('hashchange',()=>{
@@ -757,7 +777,7 @@ function rollCountStep() {
   _countTick = setTimeout(() => {
     _countTick = null;
     rollCountStep();
-  }, 190);
+  }, 400);
 }
 
 function render() {
@@ -766,7 +786,7 @@ function render() {
   const wasHidden = header.hidden;
   header.hidden = items.length === 0;
   const undone = items.filter(i => !i.done);
-  updateCountDisplay(undone.length, header.hidden || wasHidden);
+  updateCountDisplay(undone.length, header.hidden || (wasHidden && !listReady));
   const completed = items.filter(i => i.done).length;
   const fill = document.getElementById('list-progress-fill');
   if (fill) fill.style.width = (items.length ? (completed / items.length * 100) : 0) + '%';
@@ -1834,23 +1854,43 @@ function showAddedFeedback(names, edited = false) {
 (function trackKeyboard() {
   const viewport = window.visualViewport;
   const root = document.documentElement.style;
-  let frame = 0, last = { bottom: -1, height: -1, top: -1, gap: '' };
+  let stableHeight = Math.round(window.innerHeight);
+  let stableWidth = Math.round(window.innerWidth);
+  let frame = 0;
+  let last = {bottom:-1,height:-1,top:-1,gap:''};
+  root.setProperty('--stable-app-height', stableHeight + 'px');
 
   function update() {
     cancelAnimationFrame(frame);
     frame = requestAnimationFrame(() => {
       if (viewport && Math.abs(viewport.scale - 1) > .05) return;
-      const height = Math.round(viewport ? viewport.height : window.innerHeight);
-      if (!height) return;
-      const top = Math.round(viewport ? viewport.offsetTop : 0);
-      const layoutHeight = Math.round(window.innerHeight);
-      // One offset only: fixed-position composer is measured from the layout
-      // viewport, so subtract the visual viewport's actual bottom once.
-      const inset = Math.max(0, layoutHeight - top - height);
-      const bottom = inset < 3 ? 0 : inset;
-      const keyboardOpen = height < layoutHeight - 110;
+      const vvHeight = Math.round(viewport ? viewport.height : window.innerHeight);
+      if (!vvHeight) return;
+      const vvTop = Math.round(viewport ? viewport.offsetTop : 0);
+      const width = Math.round(window.innerWidth);
+      const resizedForKeyboard = vvHeight < stableHeight - 110;
+      const keyboardFocused = document.activeElement?.id === 'txt';
+      if (width !== stableWidth) {
+        // Rotation, not a keyboard resize: capture the new screen dimensions.
+        stableWidth = width;
+        stableHeight = Math.round(window.innerHeight);
+        root.setProperty('--stable-app-height', stableHeight + 'px');
+      } else if (!keyboardFocused && !resizedForKeyboard) {
+        // Browser toolbar changes outside of typing may legitimately alter the
+        // usable viewport. Never accept a shrunken keyboard height as the shell.
+        const usable = Math.round(window.innerHeight);
+        if (Math.abs(usable - stableHeight) > 2) {
+          stableHeight = usable;
+          root.setProperty('--stable-app-height', stableHeight + 'px');
+        }
+      }
+      const keyboardOpen = vvHeight < stableHeight - 110;
+      // Composer moves only by the obscured portion of the *stable* screen.
+      // Include visualViewport.offsetTop when iOS pans for a focused field.
+      const bottomInset = Math.max(0, stableHeight - vvTop - vvHeight);
+      const bottom = bottomInset < 3 ? 0 : bottomInset;
       const gap = keyboardOpen ? '8px' : 'max(8px,env(safe-area-inset-bottom))';
-      if (last.bottom < 0 || Math.abs(bottom - last.bottom) >= 2) {
+      if (last.bottom < 0 || Math.abs(bottom-last.bottom) >= 2) {
         root.setProperty('--keyboard-inset', bottom + 'px');
         last.bottom = bottom;
       }
@@ -1858,24 +1898,23 @@ function showAddedFeedback(names, edited = false) {
         root.setProperty('--composer-gap', gap);
         last.gap = gap;
       }
-
-      // Read-only visual viewport measurements for centered notifications.
-      // Neither of these variables changes the app or composer dimensions.
-      if (last.height < 0 || Math.abs(height - last.height) >= 2) {
-        root.setProperty('--visible-height', height + 'px');
-        last.height = height;
+      if (last.height < 0 || Math.abs(vvHeight-last.height) >= 2) {
+        root.setProperty('--visible-height', vvHeight + 'px');
+        last.height = vvHeight;
       }
-      if (last.top < 0 || Math.abs(top - last.top) >= 2) {
-        root.setProperty('--visible-top', top + 'px');
-        last.top = top;
+      if (last.top < 0 || Math.abs(vvTop-last.top) >= 2) {
+        root.setProperty('--visible-top', vvTop + 'px');
+        last.top = vvTop;
       }
-      root.setProperty('--visible-center', Math.round(top + height/2) + 'px');
+      root.setProperty('--visible-center', Math.round(vvTop + vvHeight / 2) + 'px');
     });
   }
   viewport?.addEventListener('resize', update);
   viewport?.addEventListener('scroll', update);
   window.addEventListener('resize', update);
   window.addEventListener('orientationchange', update);
+  document.getElementById('txt')?.addEventListener('focus', update);
+  document.getElementById('txt')?.addEventListener('blur', update);
   update();
 })();
 
