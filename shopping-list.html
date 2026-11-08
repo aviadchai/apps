@@ -1632,7 +1632,6 @@ function localShoppingCommand(input) {
   if(!m && !direct) return null;
   const payload=(m?m[1]:clean).replace(/^(?:(?:לי|את|לרשימה|לקנות)\s+)+/,'').trim();
   if(!payload || /(?:מתכון|הוראות|איך מכינים|ארוחה ל)/.test(payload)) return null;
-  const singles=new Set('חלב לחם ביצים חמאה קוטג גבינה יוגורט עגבניות מלפפונים בננות תפוחים אבוקדו גזר בצל חסה תפוזים לימונים סוכר מלח פלפל קפה תה אורז פסטה קמח שמן מים מיץ קולה שוקולד שוקו עוף בשר טונה דגים חומוס טחינה קטשופ מיונז קרקרים בייגלה פיתות טורטיות פטריות זיתים גרנולה'.split(' '));
   const categories=[
     ['ירקות ופירות',/עגבנ|מלפפ|בננ|תפוח|אבוקד|גזר|גמבה|בצל|חס[הא]|לימון|תפוז|פלפל|ענב|תות|קישוא|פטריות|בטטה|ברוקולי|חציל/],
     ['חלב וביצים',/חלב|גבינ|קוטג|יוגורט|ביצים|חמאה|שמנת|מעדן/],
@@ -1648,13 +1647,9 @@ function localShoppingCommand(input) {
   if(!raw.length||raw.length>100) return null;
   const parts=[];
   for(const part of raw){
-    const separated=splitKnownProducts(part);
-    if(separated.length>1)parts.push(...separated);
-    else {
-      const words=part.split(/\s+/);
-      if(words.length>1 && words.every(w=>singles.has(w)))parts.push(...words);
-      else parts.push(part);
-    }
+    // Trust the longest known catalog phrase before splitting standalone words.
+    // "שוקולד חלב" is one product, whereas "חלב לחם ביצים" is three.
+    parts.push(...splitKnownProducts(part));
   }
   const parsed=parts.map(part=>{
     let name=part.trim(),qty=null;
