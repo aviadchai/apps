@@ -1368,21 +1368,7 @@ function clearAll() {
   });
 }
 
-// ── Claude API ────────────────────────────────────────────
-const SYSTEM = `ניהול רשימת קניות. החזר JSON בלבד.
-פעולות: add | remove | update | toggle_done | finish_shopping | clear_done | clear_all | chat
-מחלקות: ירקות ופירות, מאפייה, חלב וביצים, בשר ודגים, מוצרי ניקיון, שימורים ויבשים, משקאות, קפואים, ממתקים וחטיפים, אחר
-פורמט: {"action":"...","items":[{"name":"...","qty":"...","category":"...","note":"..."}],"target":"...","new_name":"...","category":"...","reply":"..."}
-כללים:
-- add תמיד מיד. וריאנטים = הוסף גנרי + ב-reply הצע: "הוספתי! רוצה לדייק? 🔹 למריחה 🔹 גרגירים"
-- שם הפריט כולל צבע/גודל/מותג אם צוין. note לאדם/הוראה ספציפית
-- מילות כמות עמומות שאינן מספר (קצת, הרבה, מעט, כמה, חצי) — שמור אותן ב-note ואל תשמיט. למשל "קצת עגבניות" → name:"עגבניות", note:"קצת"
-- מתכון = חלץ רק מרכיבים (שם+כמות), דלג הוראות הכנה
-- "סיימתי קנייה" או "תתחיל רשימת קניות חדשה" → finish_shopping. פריטים שנקנו מוסרים; פריטים חסרים ושלא נקנו נשארים ומסומנים מחדש כלא נקנו ולא חסרים.
-- chat: המלצות ועצות ישירות ואמינות
-- reply קצר ונעים בעברית`;
-
-
+// ── Offline shopping-list command engine ─────────────────
 
 /* Offline-first recognition of space-separated shopping items, including
    multiword product names and spoken Hebrew punctuation variants. */
@@ -1571,9 +1557,48 @@ function splitKnownProducts(fragment) {
   return hits?result:[fragment.trim()];
 }
 
+// Parse common iPhone dictation output that joins adjacent Hebrew words together.
+// Unknown brands and products are never modified unless the entire token can
+// be separated into known catalog words.
+const HEBREW_QUANTITIES = {
+  אחד:1, אחת:1, שניים:2, שתיים:2, שתי:2, שני:2, שתיי:2,
+  שלוש:3, שלושה:3, ארבע:4, ארבעה:4, חמש:5, חמישה:5,
+  שש:6, שישה:6, שבע:7, שבעה:7, שמונה:8, תשע:9, תשעה:9, עשר:10, עשרה:10
+};
+function separateGluedProducts(input) {
+  const dictionary = new Set([
+    ...KNOWN_FOOD_ITEMS, ...KNOWN_GENERAL_ITEMS,
+    ...KNOWN_FOOD_PHRASES.flatMap(s=>s.split(/\s+/)),
+    ...KNOWN_GENERAL_PHRASES.flatMap(s=>s.split(/\s+/)),
+    ...CATALOG_BRANDS, ...Object.keys(HEBREW_QUANTITIES), 'שרי'
+  ].map(productNorm));
+  return String(input).replace(/[א-ת]{6,}/g, token => {
+    if (dictionary.has(productNorm(token))) return token;
+    const memo = new Map();
+    function segment(start) {
+      if (start===token.length) return [];
+      if (memo.has(start)) return memo.get(start);
+      let best=null;
+      for (let end=start+3;end<=token.length;end++){
+        const part=token.slice(start,end);
+        if (!dictionary.has(productNorm(part))) continue;
+        const rest=segment(end);
+        if (rest===null) continue;
+        const candidate=[part,...rest];
+        if (!best || candidate.length<best.length ||
+          (candidate.length===best.length && part.length>best[0].length)) best=candidate;
+      }
+      memo.set(start,best);
+      return best;
+    }
+    const parts=segment(0);
+    return parts?.length>1 ? parts.join(' ') : token;
+  });
+}
+
 /* Shopping actions that do not need network or paid AI tokens. */
 function localShoppingCommand(input) {
-  const clean=String(input||'').trim().replace(/\r\n?/g,'\n').replace(/[ \t]+/g,' ').replace(/\n+/g,', ').replace(/[.!?؟]+$/g,'').trim();
+  const clean=separateGluedProducts(String(input||'').trim()).replace(/\r\n?/g,'\n').replace(/[ \t]+/g,' ').replace(/\n+/g,', ').replace(/[.!?؟]+$/g,'').trim();
   if(!clean) return null;
   if(/^(?:מחק הכל|תמחק הכל|מחקי הכל|נקה הכל|רוקן רשימה|רוקן את הרשימה|תמחק את כל הרשימה)$/.test(clean)) return {action:'clear_all'};
   if(/^(?:סיימתי קנייה|סיימתי קניה|סיים קנייה|סיים קניה|תסיים קנייה|סיום קנייה|תתחיל רשימת קניות חדשה)$/.test(clean)) return {action:'finish_shopping'};
@@ -1599,13 +1624,13 @@ function localShoppingCommand(input) {
     return {action:'toggle_done',target:matchedName(target),done};
   }
   m=clean.match(/^(?:תוסיף|תוסיפי|הוסף|הוסיפי|תכניס|תכניסי|להוסיף|צריך|צריכה|אני צריך|אני צריכה|תקנה|תקני|קנה|קני)\s+(.+)$/);
-  const direct=(!m && clean.length<=180 && /^[\p{L}\p{N}\s,;.%'"׳״’&+\-\/()]+$/u.test(clean) && !/^(?:איך|מה|מי|מתי|כמה|למה|אפשר|יש|תן|תני|בבקשה|האם|למה|תסביר|ספר)\s/.test(clean));
+  const direct=(!m && clean.length<=500 && !/^(?:איך|מה|מי|מתי|כמה|למה|אפשר|יש|תן|תני|בבקשה|האם|תסביר|ספר)\s/.test(clean));
   if(!m && !direct) return null;
   const payload=(m?m[1]:clean).replace(/^(?:(?:לי|את|לרשימה|לקנות)\s+)+/,'').trim();
   if(!payload || /(?:מתכון|הוראות|איך מכינים|ארוחה ל)/.test(payload)) return null;
   const singles=new Set('חלב לחם ביצים חמאה קוטג גבינה יוגורט עגבניות מלפפונים בננות תפוחים אבוקדו גזר בצל חסה תפוזים לימונים סוכר מלח פלפל קפה תה אורז פסטה קמח שמן מים מיץ קולה שוקולד שוקו עוף בשר טונה דגים חומוס טחינה קטשופ מיונז קרקרים בייגלה פיתות טורטיות פטריות זיתים גרנולה'.split(' '));
   const categories=[
-    ['ירקות ופירות',/עגבנ|מלפפ|בננ|תפוח|אבוקד|גזר|בצל|חס[הא]|לימון|תפוז|פלפל|ענב|תות|קישוא|פטריות|בטטה|ברוקולי|חציל/],
+    ['ירקות ופירות',/עגבנ|מלפפ|בננ|תפוח|אבוקד|גזר|גמבה|בצל|חס[הא]|לימון|תפוז|פלפל|ענב|תות|קישוא|פטריות|בטטה|ברוקולי|חציל/],
     ['חלב וביצים',/חלב|גבינ|קוטג|יוגורט|ביצים|חמאה|שמנת|מעדן/],
     ['מאפייה',/לחם|פית|בגט|חלה|לחמני|טורטיי|קרואסון/],
     ['בשר ודגים',/עוף|בשר|טונה|דג|סלמון|שניצל|נקניק/],
@@ -1616,7 +1641,7 @@ function localShoppingCommand(input) {
     ['שימורים ויבשים',/אורז|פסטה|קמח|סוכר|מלח|שמן|קוסקוס|שימור|טחינה|חומוס|קטשופ|דגני בוקר/]
   ];
   const raw=payload.replace(/\s+וגם\s+/g,',').replace(/\s+ו(?=[א-ת])/g,',').split(/[,;]+/).map(s=>s.trim()).filter(Boolean);
-  if(!raw.length||raw.length>25) return null;
+  if(!raw.length||raw.length>100) return null;
   const parts=[];
   for(const part of raw){
     const separated=splitKnownProducts(part);
@@ -1635,6 +1660,21 @@ function localShoppingCommand(input) {
       q=name.match(/^(.+?)\s+(\d+(?:[.,]\d+)?)$/);
       if(q){name=q[1].trim();qty=q[2];}
     }
+    // Hebrew number words may precede or follow an item in speech-to-text.
+    if(!qty) {
+      const tokens=name.split(/\s+/);
+      if(tokens.length>1 && HEBREW_QUANTITIES[tokens[0]]){
+        qty=String(HEBREW_QUANTITIES[tokens[0]]); name=tokens.slice(1).join(' ');
+      } else if(tokens.length>1 && HEBREW_QUANTITIES[tokens[tokens.length-1]]){
+        const last=tokens.pop();
+        // Ambiguous consecutive numbers are preserved as dictated, not guessed.
+        if(tokens.length>1 && HEBREW_QUANTITIES[tokens[tokens.length-1]]){
+          const previous=tokens.pop();
+          qty=previous+' '+last;
+        } else qty=String(HEBREW_QUANTITIES[last]);
+        name=tokens.join(' ');
+      }
+    }
     name=name.replace(/^(?:את|ה)\s+(?=[א-ת])/,'').trim();
     const cat=activeList==='general'?null:categories.find(([_,rx])=>rx.test(name));
     const category=activeList==='general'?guessGeneralCategory(name):(cat?cat[0]:'אחר');
@@ -1643,78 +1683,17 @@ function localShoppingCommand(input) {
   return parsed.length?{action:'add',items:parsed}:null;
 }
 
-const SYSTEM_GENERAL = `ניהול רשימת קניות כללית של דברים לבית, מוצרי חשמל, בגדים, אביזרים, מתנות וסידורים. החזר JSON בלבד.
-פעולות: add | remove | update | toggle_done | finish_shopping | clear_done | clear_all | chat
-קטגוריות: חשמל ואלקטרוניקה, בית וריהוט, ביגוד והנעלה, כלי עבודה, פארם וטיפוח, מתנות, סידורים, אחר.
-פורמט: {"action":"...","items":[{"name":"...","qty":"...","category":"...","note":"..."}],"target":"...","new_name":"...","category":"...","reply":"..."}
-כללים: אל תעביר פריטים למסך המזון. שמור שמות מותגים, דגם, צבע, גודל והערות קנייה. החזר פעולות מדויקות בלבד, עם reply קצר בעברית.`;
-
-async function callClaude(userMsg) {
+// All grocery and general-list commands run locally. No paid AI API calls.
+async function processShoppingCommand(userMsg) {
   const local=localShoppingCommand(userMsg);
   if(local) return local;
-  const listCtx = items.length
-    ? '\n\nרשימה נוכחית:\n' + items.map(i=>`- ${i.name}${i.qty?' x'+i.qty:''}${i.done?' [נקנה]':''} [${i.category||'אחר'}]`).join('\n')
-    : '\n\nהרשימה ריקה.';
-
-  chatHistory.push({ role: 'user', content: userMsg });
-
-  const resp = await fetch('https://carty-api.aviadchai.workers.dev', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 2000,
-      system: (activeList==='general'?SYSTEM_GENERAL:SYSTEM) + listCtx,
-      messages: chatHistory.slice(-4)
-    })
-  });
-
-  const data=await resp.json().catch(()=>({}));
-  if(!resp.ok||data.error){
-    const raw=String(data.error?.message||resp.statusText||'');
-    if(/prepay|prepayment|credit|billing|quota|429|insufficient/i.test(raw+' '+resp.status))
-      throw new Error('שירות ה-AI החיצוני ללא קרדיטים. פעולות קנייה בסיסיות זמינות בחינם — למשל "תוסיף חלב, לחם וביצים".');
-    throw new Error('שירות ה-AI לא זמין כרגע. אפשר להמשיך להוסיף ולנהל מוצרים בפקודות פשוטות.');
-  }
-  const text = data.content?.[0]?.text || '{}';
-  chatHistory.push({ role: 'assistant', content: text });
-  try {
-    return JSON.parse(text.replace(/```json|```/g, '').trim());
-  } catch(e) {
-    return { action: 'chat', reply: text };
-  }
+  return {action:'chat',reply:'אפשר להוסיף מוצרים עם שמות ומותגים גם אם אינם במאגר, למחוק פריטים או לסיים קנייה. כדי להוסיף פריטים, כתוב "תוסיף..." ואחריו את המוצרים.'};
 }
 
 const nn = v => (v == null || v === 'null' || v === '') ? null : v;
 
-const ENRICH_SYS = `החזר JSON בלבד ללא הסברים:
-{"health":3,"health_note":"...","fun_fact":"...","tip":"..."}
-health: מספר 1-5 (1=לא בריא כלל, 5=בריא מאוד). null אם לא ידוע.
-health_note: משפט תזונתי קצר וקונקרטי, עברית. null אם לא ידוע.
-fun_fact: עובדה מפתיעה או טיפ שימושי על המוצר. פתח ב"הידעת?" אם מתאים. עברית.
-tip: המלצה על מוצר ישראלי ספציפי מהסופר שעדיף בריאותית (מותג ספציפי אם אפשר), או חלופה בריאה יותר. null אם לא רלוונטי.`;
-
-async function enrichItem(item) {
-  // Optional product enrichment is disabled to avoid surprise API charges.
-  if (activeList==='general' || item.health !== undefined) return;
-  return;
-  try {
-    const resp = await fetch('https://carty-api.aviadchai.workers.dev', {
-      method: 'POST',
-      headers: { 'Content-Type':'application/json' },
-      body: JSON.stringify({ model:'claude-haiku-4-5-20251001', max_tokens:200, system:ENRICH_SYS, messages:[{role:'user',content:item.name}] })
-    });
-    const data = await resp.json();
-    const text = data.content?.[0]?.text || '{}';
-    const r = JSON.parse(text.replace(/```json|```/g,'').trim());
-    item.health = Number(r.health)||null;
-    item.health_note = nn(r.health_note);
-    item.fun_fact = nn(r.fun_fact);
-    item.tip = nn(r.tip);
-    render();
-    persistItems();
-  } catch(e) {}
-}
+// Paid AI enrichment is intentionally disabled.
+async function enrichItem(item) { return; }
 
 async function showDyk(id, btn) {
   const it = items.find(i => i.id === id);
@@ -1838,7 +1817,7 @@ async function sendMsg() {
   typing.classList.add('show');
   try {
     const sendingList=activeList;
-    const cmd = await callClaude(text);
+    const cmd = await processShoppingCommand(text);
     if(sendingList!==activeList) return; // Never apply a late AI response to another list.
     let skipped = [];
     let addedNames = [];
